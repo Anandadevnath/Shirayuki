@@ -1,0 +1,44 @@
+import React from 'react';
+
+const LoadingSpinner = ({ size = 'medium' }) => {
+  const sizeClasses = {
+    small: 'w-6 h-6',
+    medium: 'w-12 h-12',
+    large: 'w-16 h-16'
+  };
+
+  return (
+    <div className="flex items-center justify-center p-8">
+      <div className="relative">
+        <div className={`${sizeClasses[size]} animate-spin rounded-full border-4 border-white/20`} />
+        <div className={`${sizeClasses[size]} animate-spin rounded-full border-4 border-transparent border-t-pink-500 absolute top-0 left-0`} />
+      </div>
+    </div>
+  );
+};
+
+const ErrorMessage = ({ message, onRetry }) => {
+  return (
+    <div className="text-center p-8 bg-white/5 backdrop-blur-xl rounded-3xl border border-white/10 shadow-2xl">
+      <div className="text-red-400 mb-6">
+        <div className="w-16 h-16 mx-auto bg-gradient-to-r from-red-500/20 to-pink-500/20 rounded-full flex items-center justify-center border border-red-500/30 backdrop-blur-sm">
+          <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L4.082 16.5c-.77.833.192 2.5 1.732 2.5z" />
+          </svg>
+        </div>
+      </div>
+      <h3 className="text-white text-xl font-bold mb-3">Oops! Something went wrong</h3>
+      <p className="text-gray-300 mb-6 max-w-md mx-auto">{message}</p>
+      {onRetry && (
+        <button
+          onClick={onRetry}
+          className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-6 py-3 rounded-xl font-semibold transition-all duration-300 transform hover:scale-105 shadow-lg"
+        >
+          Try Again
+        </button>
+      )}
+    </div>
+  );
+};
+
+export { LoadingSpinner, ErrorMessage };
