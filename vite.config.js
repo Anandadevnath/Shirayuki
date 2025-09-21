@@ -11,7 +11,7 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'https://hi-anime-proxy-1.onrender.com',
+        target: 'https://hi-anime-api-one.vercel.app',
         changeOrigin: true,
         secure: true,
         headers: {

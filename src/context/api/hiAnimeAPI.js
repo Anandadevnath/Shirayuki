@@ -1,9 +1,5 @@
 import apiClient from './apiClient.js';
 
-/**
- * Hi-Anime API Service
- * Provides methods to interact with all Hi-Anime API endpoints
- */
 class HiAnimeAPI {
   /**
    * Get anime home page data
