@@ -14,6 +14,8 @@ function Episodes() {
   const [playingSource, setPlayingSource] = useState(null);
   const [sources, setSources] = useState([]);
   const [servers, setServers] = useState([]);
+  const [activeSourceType, setActiveSourceType] = useState('sub');
+  const [activeServer, setActiveServer] = useState(null);
   const [serversError, setServersError] = useState(null);
   const [loadingSources, setLoadingSources] = useState(false);
   const playerRef = useRef(null);
@@ -99,7 +101,7 @@ function Episodes() {
     }
   };
 
-  const fetchStreamsForEpisode = async (episodeId, server = null, category = null) => {
+  const fetchStreamsForEpisode = async (episodeId, server = null, category = null, autoPlayType = null) => {
     setLoadingSources(true);
     try {
       const res = await api.getEpisodeStreamingLinks(episodeId, server, category);
@@ -107,10 +109,25 @@ function Episodes() {
       const list = Array.isArray(s) ? s : (typeof s === 'object' ? Object.values(s) : []);
       setSources(list);
       setServers([]); // clear server list on success
-      // pick first playable
-      const first = list[0];
-      const candidate = first?.file || first?.url || first?.link || first?.src || (typeof list === 'object' && Object.values(list)[0]?.file);
+      // If server and category are specified, just play the first returned source
+      let candidate = null;
+      if (server && category) {
+        candidate = list[0]?.file || list[0]?.url || list[0]?.link || list[0]?.src;
+      } else if (autoPlayType) {
+        // fallback for initial auto-play
+        const filtered = list.filter(src => {
+          const n = (src.name || src.server || '').toLowerCase();
+          const lang = (src.lang || src.language || '').toLowerCase();
+          if (autoPlayType === 'sub') return (!n.includes('dub') && !lang.includes('dub'));
+          if (autoPlayType === 'dub') return (n.includes('dub') || lang.includes('dub'));
+          return false;
+        });
+        candidate = filtered[0]?.file || filtered[0]?.url || filtered[0]?.link || filtered[0]?.src;
+      } else {
+        candidate = list[0]?.file || list[0]?.url || list[0]?.link || list[0]?.src;
+      }
       if (candidate) setPlayingSource(maybeProxy(candidate));
+      else setPlayingSource(null);
       return list;
     } catch (err) {
       setSources([]);
@@ -157,7 +174,7 @@ function Episodes() {
 
     if (!src) {
       // clear video src
-      try { video.removeAttribute('src'); video.load(); } catch (e) {}
+      try { video.removeAttribute('src'); video.load(); } catch (e) { }
       return;
     }
 
@@ -170,7 +187,7 @@ function Episodes() {
       if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = proxied;
         video.load();
-        video.play().catch(() => {});
+        video.play().catch(() => { });
       } else if (Hls.isSupported()) {
         // Create a custom loader that forces every request through the proxy
         const ProxyLoader = class extends Hls.DefaultConfig.loader {
@@ -193,7 +210,7 @@ function Episodes() {
 
         hls.on(Hls.Events.MANIFEST_PARSED, () => {
           // try autoplay when manifest parsed
-          video.play().catch(() => {});
+          video.play().catch(() => { });
         });
 
         hls.on(Hls.Events.ERROR, (event, data) => {
@@ -208,7 +225,7 @@ function Episodes() {
                 hls.recoverMediaError();
                 break;
               default:
-                try { hls.destroy(); } catch (e) {}
+                try { hls.destroy(); } catch (e) { }
                 break;
             }
           }
@@ -224,7 +241,7 @@ function Episodes() {
         video.src = src;
         video.load();
         // attempt autoplay (may be blocked by browser policy)
-        video.play().catch(() => {});
+        video.play().catch(() => { });
       } catch (e) {
         console.error('Error setting video src', e);
       }
@@ -232,7 +249,7 @@ function Episodes() {
 
     return () => {
       if (hlsRef.current) {
-        try { hlsRef.current.destroy(); } catch (e) {}
+        try { hlsRef.current.destroy(); } catch (e) { }
         hlsRef.current = null;
       }
     };
@@ -324,17 +341,58 @@ function Episodes() {
           <div className="mt-6 text-sm text-gray-400">Studios: {animeInfo?.moreInfo?.studios || animeInfo?.studios || '—'}</div>
           <div className="mt-2 text-sm text-gray-400">Producers: {Array.isArray(animeInfo?.moreInfo?.producers || animeInfo?.producers) ? (animeInfo?.moreInfo?.producers || animeInfo?.producers).join(', ') : (animeInfo?.moreInfo?.producers || animeInfo?.producers || '—')}</div>
 
-          {/* Source list with play buttons */}
+          {/* Always show HD-1 and HD-2 buttons for SUB and DUB, fetch on click */}
           <div className="mt-6">
-            <div className="text-sm text-gray-300 mb-2">Available sources</div>
-            <div className="space-y-2">
-              {sources.map((s, i) => (
-                <div key={i} className="flex items-center justify-between p-2 bg-black/30 rounded">
-                  <div className="text-sm">{s.server || s.name || `Source ${i + 1}`}</div>
-                  <button onClick={() => setPlayingSource(maybeProxy(s.file || s.url || s.link || s.src))} className="text-xs bg-pink-500 px-2 py-1 rounded">Play</button>
+            <div className="text-sm text-gray-300 mb-2">Select stream</div>
+            <div className="space-y-3">
+              {/* SUB row */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-pink-300 min-w-[40px]">SUB:</span>
+                <div className="flex flex-wrap gap-2">
+                  {['HD-1', 'HD-2'].map((label) => (
+                    <button
+                      key={label}
+                      onClick={async () => {
+                        setActiveSourceType('sub');
+                        setActiveServer(label);
+                        await fetchStreamsForEpisode(
+                          selectedEp?.id || selectedEp?._id || selectedEp?.episodeId || selectedEp?.linkId || selectedEp?.number,
+                          label.toLowerCase(),
+                          'sub',
+                          'sub'
+                        );
+                      }}
+                      className={`px-4 py-1 rounded text-xs font-semibold border ${activeSourceType === 'sub' && activeServer === label ? 'bg-pink-500 text-white border-pink-500' : 'bg-gray-700 text-pink-200 border-gray-600'} transition`}
+                    >
+                      {label}
+                    </button>
+                  ))}
                 </div>
-              ))}
-              {!sources.length && <div className="text-gray-500 text-sm">No sources loaded</div>}
+              </div>
+              {/* DUB row */}
+              <div className="flex items-center gap-3">
+                <span className="text-xs font-bold text-yellow-400 min-w-[40px]">DUB:</span>
+                <div className="flex flex-wrap gap-2">
+                  {['HD-1', 'HD-2'].map((label) => (
+                    <button
+                      key={label}
+                      onClick={async () => {
+                        setActiveSourceType('dub');
+                        setActiveServer(label);
+                        await fetchStreamsForEpisode(
+                          selectedEp?.id || selectedEp?._id || selectedEp?.episodeId || selectedEp?.linkId || selectedEp?.number,
+                          label.toLowerCase(),
+                          'dub',
+                          'dub'
+                        );
+                      }}
+                      className={`px-4 py-1 rounded text-xs font-semibold border ${activeSourceType === 'dub' && activeServer === label ? 'bg-yellow-400 text-black border-yellow-400' : 'bg-gray-700 text-yellow-200 border-gray-600'} transition`}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
             </div>
           </div>
 
