@@ -47,8 +47,8 @@ class HiAnimeAPI {
 
   /**
    * Get anime detailed info
-   * @param {string} animeId - The anime ID
-   * @returns {Promise} Anime detailed info
+   * @param {string} animeId 
+   * @returns {Promise}
    */
   async getAnimeInfo(animeId) {
     try {

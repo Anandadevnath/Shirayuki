@@ -1,8 +1,13 @@
 import React from 'react';
 
-const TrendingCard = ({ anime, rank }) => {
+const TrendingCard = ({ anime, rank, onClick }) => {
+  const handleKeyDown = (e) => {
+    if (!onClick) return;
+    if (e.key === 'Enter' || e.key === ' ') onClick();
+  };
+
   return (
-    <div className="flex items-center gap-3 p-3 hover:bg-white/10 rounded-xl transition-all duration-300 cursor-pointer group border border-transparent hover:border-white/20">
+    <div className="flex items-center gap-3 p-3 hover:bg-white/10 rounded-xl transition-all duration-300 cursor-pointer group border border-transparent hover:border-white/20" onClick={onClick} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={handleKeyDown}>
       {/* Rank */}
       <div className="text-2xl font-bold bg-gradient-to-r from-red-500 to-pink-500 bg-clip-text text-transparent min-w-[2.5rem] group-hover:scale-110 transition-transform">
         {rank}
@@ -11,11 +16,11 @@ const TrendingCard = ({ anime, rank }) => {
       {/* Poster */}
       <div className="w-14 h-20 flex-shrink-0 relative overflow-hidden rounded-lg">
         <img
-          src={anime?.poster || anime?.image || '/placeholder-anime.jpg'}
+          src={anime?.poster || anime?.image || '/placeholder-anime.svg'}
           alt={anime?.name || anime?.title}
           className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-110"
           onError={(e) => {
-            e.target.src = '/placeholder-anime.jpg';
+            e.target.src = '/placeholder-anime.svg';
           }}
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/50 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />

@@ -4,11 +4,13 @@ import AnimeCard from '../components/AnimeCard';
 import TrendingCard from '../components/TrendingCard';
 import SectionHeader from '../components/SectionHeader';
 import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
+import { useNavigate } from 'react-router-dom';
 
 function Home() {
   const { api, isLoading, error } = useAPI();
   const [homeData, setHomeData] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchHomeData();
@@ -38,6 +40,27 @@ function Home() {
 
   const getCurrentSpotlight = () => {
     return homeData?.data?.spotlightAnimes?.[currentSlide];
+  };
+
+  const handleAnimeClick = (animeOrId) => {
+    // Accept either an id string or an anime object
+    let resolvedId = null;
+    if (!animeOrId) return;
+
+    if (typeof animeOrId === 'string') {
+      resolvedId = animeOrId;
+    } else if (typeof animeOrId === 'object') {
+      resolvedId = animeOrId.id || animeOrId.slug || animeOrId.animeId || animeOrId._id;
+    }
+
+    console.log('Anime clicked, resolved id:', resolvedId, 'original:', animeOrId);
+
+    if (!resolvedId) {
+      // nothing to navigate to
+      return;
+    }
+
+    navigate(`/anime/${resolvedId}`);
   };
 
   if (isLoading && !homeData) {
@@ -253,6 +276,7 @@ function Home() {
                         anime={anime}
                         rank={index + 1}
                         size="medium"
+                        onClick={() => handleAnimeClick(anime.id)}
                       />
                     </div>
                   ))}
@@ -276,7 +300,7 @@ function Home() {
                     <div className="space-y-3">
                       {homeData.data.topAiringAnimes.slice(0, 10).map((anime, index) => (
                         <div key={anime.id || index} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
-                          <TrendingCard anime={anime} rank={index + 1} />
+                          <TrendingCard anime={anime} rank={index + 1} onClick={() => handleAnimeClick(anime.id)} />
                         </div>
                       ))}
                     </div>
@@ -293,7 +317,7 @@ function Home() {
                     <div className="space-y-3">
                       {homeData.data.mostPopular.slice(0, 10).map((anime, index) => (
                         <div key={anime.id || index} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
-                          <TrendingCard anime={anime} rank={index + 1} />
+                          <TrendingCard anime={anime} rank={index + 1} onClick={() => handleAnimeClick(anime.id)} />
                         </div>
                       ))}
                     </div>
@@ -310,7 +334,7 @@ function Home() {
                     <div className="space-y-3">
                       {homeData.data.mostFavorite.slice(0, 10).map((anime, index) => (
                         <div key={anime.id || index} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
-                          <TrendingCard anime={anime} rank={index + 1} />
+                          <TrendingCard anime={anime} rank={index + 1} onClick={() => handleAnimeClick(anime.id)} />
                         </div>
                       ))}
                     </div>
@@ -327,7 +351,7 @@ function Home() {
                     <div className="space-y-3">
                       {homeData.data.latestEpisodeAnimes.slice(0, 10).map((anime, index) => (
                         <div key={anime.id || index} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
-                          <TrendingCard anime={anime} rank={index + 1} />
+                          <TrendingCard anime={anime} rank={index + 1} onClick={() => handleAnimeClick(anime.id)} />
                         </div>
                       ))}
                     </div>
@@ -344,7 +368,7 @@ function Home() {
                     <div className="space-y-3">
                       {homeData.data.topUpcomingAnimes.slice(0, 10).map((anime, index) => (
                         <div key={anime.id || index} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
-                          <TrendingCard anime={anime} rank={index + 1} />
+                          <TrendingCard anime={anime} rank={index + 1} onClick={() => handleAnimeClick(anime.id)} />
                         </div>
                       ))}
                     </div>
@@ -378,6 +402,7 @@ function Home() {
                         anime={anime}
                         showProgress={true}
                         size="medium"
+                        onClick={() => handleAnimeClick(anime.id)}
                       />
                     </div>
                   ))}

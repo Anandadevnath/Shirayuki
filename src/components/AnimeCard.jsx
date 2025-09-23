@@ -1,14 +1,21 @@
 import React from 'react';
 
-const AnimeCard = ({ anime, showProgress = false, rank = null, size = 'medium' }) => {
+const AnimeCard = ({ anime, showProgress = false, rank = null, size = 'medium', onClick }) => {
   const sizeClasses = {
     small: 'w-32 h-48',
     medium: 'w-40 h-60',
     large: 'w-48 h-72'
   };
 
+  const handleKeyDown = (e) => {
+    if (!onClick) return;
+    if (e.key === 'Enter' || e.key === ' ') {
+      onClick();
+    }
+  };
+
   return (
-    <div className="relative group cursor-pointer">
+    <div className="relative group cursor-pointer" onClick={onClick} role={onClick ? 'button' : undefined} tabIndex={onClick ? 0 : undefined} onKeyDown={handleKeyDown}>
       {/* Rank Badge */}
       {rank && (
         <div className="absolute top-3 left-3 bg-gradient-to-r from-red-500 to-pink-500 text-white px-3 py-1 rounded-full text-sm font-bold z-10 shadow-lg">
@@ -20,11 +27,11 @@ const AnimeCard = ({ anime, showProgress = false, rank = null, size = 'medium' }
       <div className={`${sizeClasses[size]} relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 transition-all duration-500 group-hover:scale-105 group-hover:bg-white/20 shadow-xl`}>
         {/* Poster Image */}
         <img
-          src={anime?.poster || anime?.image || '/placeholder-anime.jpg'}
+          src={anime?.poster || anime?.image || '/placeholder-anime.svg'}
           alt={anime?.name || anime?.title}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
           onError={(e) => {
-            e.target.src = '/placeholder-anime.jpg';
+            e.target.src = '/placeholder-anime.svg';
           }}
         />
         
