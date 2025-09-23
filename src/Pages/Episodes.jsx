@@ -20,6 +20,8 @@ function Episodes() {
   const [loadingSources, setLoadingSources] = useState(false);
   const playerRef = useRef(null);
   const hlsRef = useRef(null);
+  // For cancelling retries on new click
+  const retryController = useRef({ cancel: false, timeoutId: null });
 
   useEffect(() => {
     if (animeId) {
@@ -101,18 +103,39 @@ function Episodes() {
     }
   };
 
-  const fetchStreamsForEpisode = async (episodeId, server = null, category = null, autoPlayType = null) => {
+
+  // Retry logic: keep fetching until sources found or max retries
+
+  // Robust retry logic with cancellation
+  const fetchStreamsForEpisode = async (episodeId, server = null, category = null, autoPlayType = null, retryCount = 0, retryToken = null) => {
+    if (!retryToken) {
+      // New request: cancel previous
+      if (retryController.current.timeoutId) clearTimeout(retryController.current.timeoutId);
+      retryController.current.cancel = false;
+      retryToken = Symbol('retry');
+      retryController.current.token = retryToken;
+    } else if (retryController.current.cancel || retryController.current.token !== retryToken) {
+      // Cancelled by new click
+      return;
+    }
     setLoadingSources(true);
+    const MAX_RETRIES = 12;
+    const RETRY_DELAY = 1200; // ms
     try {
       const res = await api.getEpisodeStreamingLinks(episodeId, server, category);
       const s = res?.data?.sources || res?.sources || res || [];
       const list = Array.isArray(s) ? s : (typeof s === 'object' ? Object.values(s) : []);
       setSources(list);
       setServers([]); // clear server list on success
-      // If server and category are specified, just play the first returned source
       let candidate = null;
       if (server && category) {
         candidate = list[0]?.file || list[0]?.url || list[0]?.link || list[0]?.src;
+        if (!candidate && retryCount < MAX_RETRIES) {
+          retryController.current.timeoutId = setTimeout(() => {
+            fetchStreamsForEpisode(episodeId, server, category, autoPlayType, retryCount + 1, retryToken);
+          }, RETRY_DELAY);
+          return list;
+        }
       } else if (autoPlayType) {
         // fallback for initial auto-play
         const filtered = list.filter(src => {
@@ -338,9 +361,6 @@ function Episodes() {
             <button onClick={() => navigate(`/anime/${animeId}`)} className="bg-white/10 text-white px-3 py-2 rounded">View detail</button>
           </div>
 
-          <div className="mt-6 text-sm text-gray-400">Studios: {animeInfo?.moreInfo?.studios || animeInfo?.studios || '—'}</div>
-          <div className="mt-2 text-sm text-gray-400">Producers: {Array.isArray(animeInfo?.moreInfo?.producers || animeInfo?.producers) ? (animeInfo?.moreInfo?.producers || animeInfo?.producers).join(', ') : (animeInfo?.moreInfo?.producers || animeInfo?.producers || '—')}</div>
-
           {/* Always show HD-1 and HD-2 buttons for SUB and DUB, fetch on click */}
           <div className="mt-6">
             <div className="text-sm text-gray-300 mb-2">Select stream</div>
@@ -355,6 +375,8 @@ function Episodes() {
                       onClick={async () => {
                         setActiveSourceType('sub');
                         setActiveServer(label);
+                        // Cancel any previous retry
+                        retryController.current.cancel = true;
                         await fetchStreamsForEpisode(
                           selectedEp?.id || selectedEp?._id || selectedEp?.episodeId || selectedEp?.linkId || selectedEp?.number,
                           label.toLowerCase(),
@@ -379,6 +401,8 @@ function Episodes() {
                       onClick={async () => {
                         setActiveSourceType('dub');
                         setActiveServer(label);
+                        // Cancel any previous retry
+                        retryController.current.cancel = true;
                         await fetchStreamsForEpisode(
                           selectedEp?.id || selectedEp?._id || selectedEp?.episodeId || selectedEp?.linkId || selectedEp?.number,
                           label.toLowerCase(),
