@@ -143,7 +143,7 @@ function AnimeDetails() {
                   </div>
 
                   <div className="flex items-center gap-4 mb-6">
-                    <button className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-3 rounded-full font-semibold">Play</button>
+                    <button onClick={() => navigate(`/anime/${resolveId(info)}/episodes`)} className="bg-pink-500 hover:bg-pink-600 text-white px-6 py-3 rounded-full font-semibold">Play</button>
                     <button className="bg-white/10 hover:bg-white/20 text-white px-5 py-3 rounded-full">+ Add to list</button>
                   </div>
 
