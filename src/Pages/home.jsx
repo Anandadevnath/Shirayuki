@@ -251,7 +251,7 @@ function Home() {
 
                 <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 px-2 sm:px-0 items-stretch">
                   {homeData.data.trendingAnimes.slice(0, 12).map((anime, index) => (
-                    <div key={anime.id || index} className="group h-full flex flex-col min-w-0">
+                    <div key={`${anime.id || 'anime'}-${index}`} className="group h-full flex flex-col min-w-0">
                       <AnimeCard
                         anime={anime}
                         rank={index + 1}
@@ -280,7 +280,7 @@ function Home() {
                     </div>
                     <div className="space-y-3">
                       {homeData.data.topAiringAnimes.slice(0, 10).map((anime, index) => (
-                        <div key={anime.id || index} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
+                        <div key={`${anime.id || 'anime'}-${index}`} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
                           <TrendingCard anime={anime} rank={index + 1} onClick={() => handleAnimeClick(anime.id)} />
                         </div>
                       ))}
@@ -297,7 +297,7 @@ function Home() {
                     </div>
                     <div className="space-y-3">
                       {homeData.data.mostPopular.slice(0, 10).map((anime, index) => (
-                        <div key={anime.id || index} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
+                        <div key={`${anime.id || 'anime'}-${index}`} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
                           <TrendingCard anime={anime} rank={index + 1} onClick={() => handleAnimeClick(anime.id)} />
                         </div>
                       ))}
@@ -314,7 +314,7 @@ function Home() {
                     </div>
                     <div className="space-y-3">
                       {homeData.data.mostFavorite.slice(0, 10).map((anime, index) => (
-                        <div key={anime.id || index} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
+                        <div key={`${anime.id || 'anime'}-${index}`} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
                           <TrendingCard anime={anime} rank={index + 1} onClick={() => handleAnimeClick(anime.id)} />
                         </div>
                       ))}
@@ -331,7 +331,7 @@ function Home() {
                     </div>
                     <div className="space-y-3">
                       {homeData.data.latestEpisodeAnimes.slice(0, 10).map((anime, index) => (
-                        <div key={anime.id || index} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
+                        <div key={`${anime.id || 'anime'}-${index}`} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
                           <TrendingCard anime={anime} rank={index + 1} onClick={() => handleAnimeClick(anime.id)} />
                         </div>
                       ))}
@@ -348,7 +348,7 @@ function Home() {
                     </div>
                     <div className="space-y-3">
                       {homeData.data.topUpcomingAnimes.slice(0, 10).map((anime, index) => (
-                        <div key={anime.id || index} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
+                        <div key={`${anime.id || 'anime'}-${index}`} className="bg-black/20 backdrop-blur-sm rounded-xl p-3 border border-white/5 hover:bg-black/40 hover:border-white/10 transition-all duration-300">
                           <TrendingCard anime={anime} rank={index + 1} onClick={() => handleAnimeClick(anime.id)} />
                         </div>
                       ))}
@@ -378,7 +378,7 @@ function Home() {
 
                 <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 px-2 sm:px-0">
                   {homeData.data.recentlyUpdated.slice(0, 12).map((anime, index) => (
-                    <div key={anime.id || index} className="relative rounded-2xl shadow-lg border border-white/10 bg-black/40 overflow-hidden group flex flex-col h-40 sm:h-48 md:h-56 min-w-0 m-2">
+                    <div key={`${anime.id || 'anime'}-${index}`} className="relative rounded-2xl shadow-lg border border-white/10 bg-black/40 overflow-hidden group flex flex-col h-40 sm:h-48 md:h-56 min-w-0 m-2">
                       {/* Badge */}
                       {anime.isAdult && (
                         <span className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg z-10">18+</span>
