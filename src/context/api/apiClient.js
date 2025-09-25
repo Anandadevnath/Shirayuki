@@ -1,9 +1,5 @@
 import axios from 'axios';
 
-// Base URL for the Hi-Anime API
-// You can override this in development by setting VITE_API_BASE_URL in a .env file.
-// If not set, DEV will use an empty base so the Vite dev server proxy (vite.config.js)
-// forwards /api requests to the remote API. In production we use the full remote URL.
 const BASE_URL = import.meta.env.VITE_API_BASE_URL || (import.meta.env.DEV ? '' : 'https://hi-anime-api-one.vercel.app');
 
 const apiClient = axios.create({
@@ -41,3 +37,11 @@ apiClient.interceptors.response.use(
 
 export default apiClient;
 export { BASE_URL };
+
+// Fetch anime A-Z list
+export async function fetchAZList(sortOption, page = 1) {
+  const url = `/api/v2/hianime/azlist/${sortOption}?page=${page}`;
+  const res = await fetch(url);
+  if (!res.ok) throw new Error('Failed to fetch');
+  return res.json();
+}
