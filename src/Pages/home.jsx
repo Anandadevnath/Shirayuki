@@ -12,6 +12,15 @@ function Home() {
   const [currentSlide, setCurrentSlide] = useState(0);
   const navigate = useNavigate();
 
+  // Auto-slide for spotlight slider
+  useEffect(() => {
+    if (!homeData?.data?.spotlightAnimes || homeData.data.spotlightAnimes.length <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % homeData.data.spotlightAnimes.length);
+    }, 5000); // 5 seconds
+    return () => clearInterval(interval);
+  }, [homeData]);
+
   useEffect(() => {
     fetchHomeData();
   }, []);
@@ -27,7 +36,7 @@ function Home() {
 
   const handleSlideChange = (direction) => {
     if (!homeData?.data?.spotlightAnimes) return;
-    
+
     const maxSlides = homeData.data.spotlightAnimes.length;
     let newSlide;
     if (direction === 'next') {
@@ -74,8 +83,8 @@ function Home() {
   if (error && !homeData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 p-4">
-        <ErrorMessage 
-          message={error.message} 
+        <ErrorMessage
+          message={error.message}
           onRetry={fetchHomeData}
         />
       </div>
@@ -83,7 +92,7 @@ function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-x-hidden">
+    <div className="lg:w-[102vw] lg:right-50 w-[101vw] right-5 bg-gradient-to-br from-slate-900 via-blue-900 to-slate-900 relative overflow-x-hidden">
       {/* Animated background effects */}
       <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-blue-900/10 to-indigo-900/10"></div>
       <div className="absolute inset-0" style={{
@@ -91,48 +100,6 @@ function Home() {
                          radial-gradient(circle at 75% 75%, rgba(147, 51, 234, 0.08) 0%, transparent 60%),
                          radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.05) 0%, transparent 70%)`
       }}></div>
-      
-      {/* Modern Glass Header */}
-      <header className="fixed top-0 left-0 right-0 z-50 bg-black/20 backdrop-blur-xl border-b border-white/10">
-        <div className="max-w-7xl mx-auto px-6 py-4">
-          <div className="flex items-center justify-between">
-            {/* Logo */}
-            <div className="flex items-center gap-3">
-              <div className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-xl font-bold text-xl shadow-lg">
-                HiAnime
-              </div>
-            </div>
-
-            {/* Search Bar */}
-            <div className="flex-1 max-w-2xl mx-8">
-              <div className="relative group">
-                <input
-                  type="text"
-                  placeholder="Search for anime..."
-                  className="w-full bg-white/10 backdrop-blur-sm text-white placeholder-white/60 px-6 py-3 rounded-2xl border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-500/50 focus:border-pink-500/50 transition-all duration-300 pl-12"
-                />
-                <svg className="absolute left-4 top-1/2 transform -translate-y-1/2 w-5 h-5 text-white/60 group-focus-within:text-pink-400 transition-colors" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
-                </svg>
-              </div>
-            </div>
-
-            {/* User Actions */}
-            <div className="flex items-center gap-4">
-              <button className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all duration-300">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4.318 6.318a4.5 4.5 0 000 6.364L12 20.364l7.682-7.682a4.5 4.5 0 00-6.364-6.364L12 7.636l-1.318-1.318a4.5 4.5 0 00-6.364 0z" />
-                </svg>
-              </button>
-              <button className="p-3 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 text-white hover:bg-white/20 transition-all duration-300">
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                </svg>
-              </button>
-            </div>
-          </div>
-        </div>
-      </header>
 
       {/* Spotlight Slider */}
       {homeData?.data?.spotlightAnimes && (
@@ -158,32 +125,51 @@ function Home() {
                   <span className="text-white font-semibold text-sm">#1 SPOTLIGHT</span>
                 </div>
 
-                <h1 className="text-6xl md:text-7xl font-bold text-white mb-6 leading-tight">
+                <h1 className="text-6xl md:text-7xl font-bold text-white mb-2 leading-tight">
                   {getCurrentSpotlight()?.name}
                 </h1>
-                
+                {/* Japanese name */}
+                {getCurrentSpotlight()?.jname && (
+                  <div className="text-lg text-pink-200 font-medium mb-4">
+                    {getCurrentSpotlight().jname}
+                  </div>
+                )}
+
                 {/* Tags */}
-                <div className="flex items-center gap-3 mb-6">
+                <div className="flex flex-wrap items-center gap-3 mb-4">
                   <span className="bg-gradient-to-r from-red-500 to-pink-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
                     {getCurrentSpotlight()?.rank || 'TOP RATED'}
                   </span>
                   <span className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm border border-white/30">
-                    {getCurrentSpotlight()?.releaseDate || '2025'}
-                  </span>
-                  <span className="bg-white/20 backdrop-blur-sm text-white px-4 py-2 rounded-full text-sm border border-white/30">
                     {getCurrentSpotlight()?.type || 'TV Series'}
                   </span>
-                  <span className="bg-gradient-to-r from-blue-500 to-cyan-500 text-white px-4 py-2 rounded-full text-sm font-semibold shadow-lg">
-                    {getCurrentSpotlight()?.quality || 'HD'}
-                  </span>
+                  {/* Episodes */}
+                  {getCurrentSpotlight()?.episodes && (
+                    <span className="bg-blue-500/20 text-blue-200 px-4 py-2 rounded-full text-sm font-semibold border border-blue-400/30">
+                      Sub: {getCurrentSpotlight().episodes.sub} | Dub: {getCurrentSpotlight().episodes.dub}
+                    </span>
+                  )}
+                  {/* Other Info */}
+                  {Array.isArray(getCurrentSpotlight()?.otherInfo) && getCurrentSpotlight().otherInfo.map((info, idx) => (
+                    <span key={idx} className="bg-white/10 text-white px-3 py-1 rounded-full text-xs border border-white/20">
+                      {info}
+                    </span>
+                  ))}
                 </div>
 
-                <p className="text-gray-300 text-xl leading-relaxed mb-8 line-clamp-3 max-w-2xl">
+                {/* Release Date */}
+                {getCurrentSpotlight()?.otherInfo?.[2] && (
+                  <div className="text-sm text-gray-300 mb-2">
+                    Release Date: {getCurrentSpotlight().otherInfo[2]}
+                  </div>
+                )}
+
+                <p className="text-gray-300 text-xl leading-relaxed mb-6 line-clamp-3 max-w-2xl">
                   {getCurrentSpotlight()?.description || "Experience an incredible journey filled with adventure, friendship, and unforgettable moments in this amazing anime series."}
                 </p>
 
                 {/* Action Buttons */}
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-4 mt-2">
                   <button className="bg-gradient-to-r from-red-500 to-pink-500 hover:from-red-600 hover:to-pink-600 text-white px-8 py-4 rounded-2xl font-semibold transition-all duration-300 flex items-center gap-3 shadow-xl hover:shadow-2xl transform hover:scale-105">
                     <svg className="w-6 h-6" fill="currentColor" viewBox="0 0 20 20">
                       <path d="M8 5v10l7-5z" />
@@ -211,13 +197,13 @@ function Home() {
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
               </svg>
             </button>
-            
+
             <div className="bg-white/10 backdrop-blur-sm border border-white/30 px-4 py-2 rounded-xl">
               <span className="text-white font-semibold">
                 {currentSlide + 1} / {homeData?.data?.spotlightAnimes?.length || 1}
               </span>
             </div>
-            
+
             <button
               onClick={() => handleSlideChange('next')}
               className="bg-white/10 backdrop-blur-sm border border-white/30 hover:bg-white/20 text-white p-3 rounded-xl transition-all duration-300"
@@ -234,11 +220,10 @@ function Home() {
               <button
                 key={index}
                 onClick={() => setCurrentSlide(index)}
-                className={`w-3 h-3 rounded-full transition-all duration-300 ${
-                  index === currentSlide 
-                    ? 'bg-white scale-125' 
-                    : 'bg-white/40 hover:bg-white/60'
-                }`}
+                className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide
+                  ? 'bg-white scale-125'
+                  : 'bg-white/40 hover:bg-white/60'
+                  }`}
               />
             ))}
           </div>
@@ -251,7 +236,7 @@ function Home() {
       {/* Main Content */}
       <div className="relative z-10 bg-gradient-to-b from-transparent via-black/60 to-black/80 backdrop-blur-sm -mt-16">
         <div className="max-w-7xl mx-auto px-6 py-12 pt-24">
-          
+
           {/* Trending Section */}
           {homeData?.data?.trendingAnimes && (
             <section className="mb-16">
@@ -259,23 +244,19 @@ function Home() {
                 <div className="flex items-center justify-between mb-8">
                   <div className="flex items-center gap-4">
                     <div className="w-1 h-8 bg-gradient-to-b from-red-500 to-pink-500 rounded-full"></div>
-                    <h2 className="text-3xl font-bold text-white">🔥 Trending Now</h2>
+                    <h2 className="text-xl lg:text-3xl font-bold text-white">🔥Trending Now</h2>
                   </div>
-                  <button className="text-pink-400 hover:text-pink-300 font-semibold transition-colors flex items-center gap-2">
-                    View All 
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
-                    </svg>
-                  </button>
+
                 </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+
+                <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-8 px-2 sm:px-0 items-stretch">
                   {homeData.data.trendingAnimes.slice(0, 12).map((anime, index) => (
-                    <div key={anime.id || index} className="group">
+                    <div key={anime.id || index} className="group h-full flex flex-col min-w-0">
                       <AnimeCard
                         anime={anime}
                         rank={index + 1}
                         size="medium"
+                        className="h-40 sm:h-48 md:h-56 aspect-[3/4] flex flex-col justify-between min-w-0"
                         onClick={() => handleAnimeClick(anime.id)}
                       />
                     </div>
@@ -289,7 +270,7 @@ function Home() {
           <section className="mb-16">
             <div className="bg-black/20 backdrop-blur-2xl rounded-3xl border border-white/20 p-8 shadow-2xl">
               <div className="grid grid-auto-fit gap-6 equal-height">
-                
+
                 {/* Top Airing */}
                 {homeData?.data?.topAiringAnimes && (
                   <div className="bg-black/30 backdrop-blur-xl rounded-2xl p-6 border border-white/10 hover:border-white/20 transition-all duration-300">
@@ -388,29 +369,49 @@ function Home() {
                     <h2 className="text-3xl font-bold text-white">Continue Watching</h2>
                   </div>
                   <button className="text-orange-400 hover:text-orange-300 font-semibold transition-colors flex items-center gap-2">
-                    View All 
+                    View All
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 8l4 4m0 0l-4 4m4-4H3" />
                     </svg>
                   </button>
                 </div>
-                
-                <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6">
+
+                <div className="grid grid-cols-2 xs:grid-cols-2 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-6 px-2 sm:px-0">
                   {homeData.data.recentlyUpdated.slice(0, 12).map((anime, index) => (
-                    <div key={anime.id || index} className="group">
-                      <AnimeCard
-                        anime={anime}
-                        showProgress={true}
-                        size="medium"
-                        onClick={() => handleAnimeClick(anime.id)}
-                      />
+                    <div key={anime.id || index} className="relative rounded-2xl shadow-lg border border-white/10 bg-black/40 overflow-hidden group flex flex-col h-40 sm:h-48 md:h-56 min-w-0 m-2">
+                      {/* Badge */}
+                      {anime.isAdult && (
+                        <span className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg z-10">18+</span>
+                      )}
+                      {/* Close Button */}
+                      <button className="absolute top-3 right-3 bg-black/60 text-white rounded-full w-7 h-7 flex items-center justify-center z-10 shadow-md hover:bg-black/80">
+                        &#10005;
+                      </button>
+                      {/* Anime Image */}
+                      <img src={anime.poster || '/placeholder-anime.svg'} alt={anime.name} className="w-full h-40 sm:h-48 md:h-56 object-cover rounded-t-2xl" />
+                      {/* Card Content */}
+                      <div className="p-3">
+                        <div className="flex flex-wrap gap-2 mb-1">
+                          {/* Progress Badges */}
+                          {anime.progress && (
+                            <span className="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded font-semibold">{anime.progress.sub}</span>
+                          )}
+                          {anime.progress && (
+                            <span className="bg-blue-900 text-blue-200 text-xs px-2 py-1 rounded font-semibold">{anime.progress.dub}</span>
+                          )}
+                        </div>
+                        <div className="font-bold text-white text-base leading-tight mb-1 line-clamp-2">{anime.name}</div>
+                        <div className="flex justify-between text-xs text-gray-300 mb-1">
+                          <span>EP {anime.episode || '--'}</span>
+                          <span className="font-bold text-pink-400">{anime.progressTime || '--:--'} / {anime.totalTime || '--:--'}</span>
+                        </div>
+                      </div>
                     </div>
                   ))}
                 </div>
               </div>
             </section>
           )}
-
         </div>
       </div>
     </div>

@@ -28,12 +28,12 @@ export default function Footer() {
               </button>
             ))}
           </div>
-        </div>
-        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          {/* Removed misplaced Shirayuki title here */}
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4 mt-10">
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 bg-gradient-to-br from-pink-500 to-indigo-500 rounded-lg flex items-center justify-center text-white font-bold">HA</div>
+            <img src="../../public/shirayuki.png" alt="Shirayuki Logo" className="w-20 h-20 object-contain" />
             <div>
-              <div className="text-white font-semibold">Hi-Anime</div>
+              <div className="text-white text-2xl font-semibold">Shirayuki</div>
               <div className="text-xs text-gray-400">Built with ❤️ for anime lovers</div>
             </div>
           </div>
@@ -47,6 +47,7 @@ export default function Footer() {
           <div className="text-sm text-gray-400">© {new Date().getFullYear()} Hi-Anime. All rights reserved.</div>
         </div>
       </div>
+    </div>
     </footer>
   );
 }

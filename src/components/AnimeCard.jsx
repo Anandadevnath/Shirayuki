@@ -3,7 +3,7 @@ import React from 'react';
 const AnimeCard = ({ anime, showProgress = false, rank = null, size = 'medium', onClick }) => {
   const sizeClasses = {
     small: 'w-32 h-48',
-    medium: 'w-40 h-60',
+    medium: 'w-full h-44 sm:w-40 sm:h-60 md:w-40 md:h-60 lg:w-40 lg:h-60',
     large: 'w-48 h-72'
   };
 
@@ -24,7 +24,7 @@ const AnimeCard = ({ anime, showProgress = false, rank = null, size = 'medium', 
       )}
       
       {/* Main Card */}
-      <div className={`${sizeClasses[size]} relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 transition-all duration-500 group-hover:scale-105 group-hover:bg-white/20 shadow-xl`}>
+  <div className={`${sizeClasses[size]} relative overflow-hidden rounded-2xl bg-white/10 backdrop-blur-sm border border-white/20 transition-all duration-500 group-hover:scale-105 group-hover:bg-white/20 shadow-xl`}>
         {/* Poster Image */}
         <img
           src={anime?.poster || anime?.image || '/placeholder-anime.svg'}

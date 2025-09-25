@@ -61,7 +61,7 @@ export default function AZList() {
                 </div>
             </div>
 
-            <h2 className="text-2xl font-bold mb-4">Anime List: {sort}</h2>
+            <h2 className="text-2xl font-bold mb-2">Anime List: {sort}</h2>
 
             <div className="flex justify-center mt-2 mb-8 gap-2">
                 <button
