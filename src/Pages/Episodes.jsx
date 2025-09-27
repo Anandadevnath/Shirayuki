@@ -163,7 +163,7 @@ function Episodes() {
 
   // Proxy configuration: prefer Vite env var or default to the IP used in your proxy.js
   // proxy.js logs show access via http://192.168.10.138:8081 so we default to that to match its rewriting
-  const PROXY_BASE = import.meta.env.VITE_PLAYER_PROXY || 'http://192.168.10.138:8081';
+  const PROXY_BASE = import.meta.env.VITE_PLAYER_PROXY || 'http://127.0.0.1:8081';
 
   // Decide whether to route a source through the CORS proxy.
   const maybeProxy = (src) => {

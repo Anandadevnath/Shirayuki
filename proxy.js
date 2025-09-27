@@ -17,14 +17,20 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // Extract the target URL from query parameter
+  // Extract the target URL from query parameter or construct from path
   const parsedUrl = url.parse(req.url, true);
-  const targetUrl = parsedUrl.query.url;
+  let targetUrl = parsedUrl.query.url;
+  
+  // If no URL parameter, check if it's a relative path request for HLS segments
+  if (!targetUrl && parsedUrl.pathname !== '/') {
+    // This is likely a relative HLS segment request
+    const baseUrl = 'https://sunburst93.live/_v7/d8e56d406f04d29b74b4e03042fca324d71f0cd196c65f1fcb9c6d27377df7bd17b6ce13536ee8f21bbfe92902b58f639455ccab8671ba0aa00782c152a6b8084cc518d7e32b2415bbe87dad7d55eb0736a3a15011d0533eceafe7a5841fde57bf868c98b776c63a5d23bbb687bf37df7365905359f738d51b40f6138f9e5d77';
+    targetUrl = baseUrl + parsedUrl.pathname;
+  }
 
-  // If no URL parameter, return error
   if (!targetUrl) {
     res.writeHead(400, { 'Content-Type': 'text/plain' });
-    res.end('Missing url parameter. Please provide the full playlist or segment URL as ?url=<target_url>');
+    res.end('Missing url parameter or invalid path');
     return;
   }
 
@@ -86,22 +92,22 @@ const server = http.createServer((req, res) => {
         
         // Rewrite relative .m3u8 playlist references
         rewrittenData = rewrittenData.replace(/^(?!https?:\/\/)([^\s\n]+\.m3u8)/gm, (match, filename) => {
-          return `http://192.168.10.138:8081?url=${encodeURIComponent(baseUrl + filename)}`;
+          return `http://127.0.0.1:8081?url=${encodeURIComponent(baseUrl + filename)}`;
         });
         
         // Rewrite absolute .m3u8 playlist references
         rewrittenData = rewrittenData.replace(/^(https?:\/\/[^\s\n]+\.m3u8)/gm, (match, fullUrl) => {
-          return `http://192.168.10.138:8081?url=${encodeURIComponent(fullUrl)}`;
+          return `http://127.0.0.1:8081?url=${encodeURIComponent(fullUrl)}`;
         });
         
         // Rewrite relative video segment references
         rewrittenData = rewrittenData.replace(/^(?!https?:\/\/)([^\s\n]+\.(ts|jpg|jpeg|mp4|webm|html))/gm, (match, filename) => {
-          return `http://192.168.10.138:8081?url=${encodeURIComponent(baseUrl + filename)}`;
+          return `http://127.0.0.1:8081?url=${encodeURIComponent(baseUrl + filename)}`;
         });
         
         // Rewrite absolute video segment references  
         rewrittenData = rewrittenData.replace(/^(https?:\/\/[^\s\n]+\.(ts|jpg|jpeg|mp4|webm|html))/gm, (match, fullUrl) => {
-          return `http://192.168.10.138:8081?url=${encodeURIComponent(fullUrl)}`;
+          return `http://127.0.0.1:8081?url=${encodeURIComponent(fullUrl)}`;
         });
         
         res.end(rewrittenData);
@@ -123,7 +129,7 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`CORS proxy server running on http://0.0.0.0:${PORT}`);
-  console.log(`Access from network: http://192.168.10.138:${PORT}`);
-  console.log(`Usage: http://192.168.10.138:${PORT}?url=<target_url>`);
+  console.log(`CORS proxy server running on http://127.0.0.1:${PORT}`);
+  console.log(`Access from network: http://127.0.0.1:${PORT}`);
+  console.log(`Usage: http://127.0.0.1:${PORT}?url=<target_url>`);
 });
