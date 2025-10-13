@@ -1,10 +1,10 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useAPI } from '../context/APIContext';
+import { useShirayukiAPI } from '../context';
 import { useLocation } from 'react-router-dom';
 
 export default function Navbar() {
   const loc = useLocation();
-  const { api } = useAPI();
+  const { getSearchSuggestions, searchAnime } = useShirayukiAPI();
   const [query, setQuery] = useState("");
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -26,7 +26,7 @@ export default function Navbar() {
       setLoading(true);
       debounceTimeout.current = setTimeout(async () => {
         try {
-          const data = await api.getSearchSuggestions(value);
+          const data = await getSearchSuggestions(value);
           console.log('Suggestion API response:', data);
           // Support array, data.suggestions, or data.data.suggestions
           let suggestionsArr = [];

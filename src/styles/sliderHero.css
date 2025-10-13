@@ -1,0 +1,118 @@
+/* Ensure the home page background stretches full width */
+.home-full-bg {
+  width: 100vw;
+  min-height: 100vh;
+  margin: 0;
+  padding: 0;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  transform: translateX(-50%);
+  box-sizing: border-box;
+}
+/* Slider Hero Section Styles */
+.slider-hero-container {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  background: #181c2a;
+}
+.slider-hero-bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  filter: brightness(0.6) blur(0.5px);
+  z-index: 1;
+}
+.slider-hero-overlay {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.2) 100%);
+  z-index: 2;
+}
+.slider-hero-content {
+  position: relative;
+  z-index: 3;
+  max-width: 900px;
+  margin-left: 4vw;
+  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+.slider-hero-title {
+  font-size: 3rem;
+  font-weight: 800;
+  line-height: 1.1;
+  margin-bottom: 0.5rem;
+}
+.slider-hero-desc {
+  font-size: 1.25rem;
+  color: #e5e7eb;
+  max-width: 700px;
+  margin-bottom: 1.5rem;
+}
+.slider-hero-btn {
+  background: linear-gradient(90deg, #ef476f 0%, #ff6a00 100%);
+  color: #fff;
+  font-weight: 600;
+  font-size: 1.1rem;
+  border: none;
+  border-radius: 1.5rem;
+  padding: 0.9rem 2.5rem;
+  margin-right: 1rem;
+  box-shadow: 0 4px 24px 0 rgba(239,71,111,0.15);
+  transition: background 0.2s, transform 0.2s;
+  cursor: pointer;
+}
+.slider-hero-btn:hover {
+  background: linear-gradient(90deg, #ff6a00 0%, #ef476f 100%);
+  transform: scale(1.05);
+}
+.slider-hero-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  background: rgba(255, 106, 0, 0.18);
+  color: #fff;
+  font-size: 0.85rem;
+  font-weight: 600;
+  border-radius: 0.8rem;
+  padding: 0.12rem 0.7rem;
+  margin-bottom: 0.7rem;
+  box-shadow: none;
+  width: fit-content;
+  min-width: unset;
+  max-width: 220px;
+  -webkit-backdrop-filter: blur(2px);
+  backdrop-filter: blur(2px);
+  background-blend-mode: lighten;
+}
+.slider-hero-arrows {
+  position: absolute;
+  bottom: 2.5rem;
+  right: 2.5rem;
+  display: flex;
+  gap: 1.2rem;
+  z-index: 4;
+}
+.slider-hero-arrow-btn {
+  background: rgba(255,255,255,0.12);
+  border: none;
+  border-radius: 1rem;
+  padding: 0.7rem 1.1rem;
+  color: #fff;
+  font-size: 1.5rem;
+  cursor: pointer;
+  transition: background 0.2s, transform 0.2s;
+}
+.slider-hero-arrow-btn:hover {
+  background: rgba(255,255,255,0.22);
+  transform: scale(1.1);
+}

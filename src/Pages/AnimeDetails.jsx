@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import { useAPI } from '../context/APIContext';
+import { useShirayukiAPI } from '../context';
 import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
 
 function AnimeDetails() {
   const { animeId } = useParams();
   const navigate = useNavigate();
-  const { api, isLoading, error } = useAPI();
+  const { getAnimeDetails, getHomepage, loading, error, clearError } = useShirayukiAPI();
   const [animeData, setAnimeData] = useState(null);
   const [episodesData, setEpisodesData] = useState(null);
   const [recommended, setRecommended] = useState([]);
@@ -18,18 +18,21 @@ function AnimeDetails() {
 
   const fetchAnimeDetails = async () => {
     try {
-      const details = await api.getAnimeInfo(animeId);
+      const details = await getAnimeDetails(animeId);
       setAnimeData(details);
 
+      // Note: getAnimeEpisodes is not available in the new API context
+      // You may need to add this method to your API service
       try {
-        const eps = await api.getAnimeEpisodes(animeId);
-        setEpisodesData(eps);
+        // const eps = await getAnimeEpisodes(animeId);
+        // setEpisodesData(eps);
+        setEpisodesData(null); // Temporarily set to null until you add episode fetching
       } catch (e) {
         setEpisodesData(null);
       }
 
       try {
-        const home = await api.getHomePage();
+        const home = await getHomepage();
         setRecommended(home?.data?.trendingAnimes?.slice(0, 8) || []);
       } catch (e) {
         setRecommended([]);
@@ -39,7 +42,7 @@ function AnimeDetails() {
     }
   };
 
-  if (isLoading && !animeData) {
+  if (loading && !animeData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900">
         <LoadingSpinner size="large" />
@@ -50,7 +53,7 @@ function AnimeDetails() {
   if (error && !animeData) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-purple-900 p-4">
-        <ErrorMessage message={error.message} onRetry={fetchAnimeDetails} />
+        <ErrorMessage message={error} onRetry={fetchAnimeDetails} />
       </div>
     );
   }
