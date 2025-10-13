@@ -14,7 +14,6 @@ export default function Navbar() {
   const inputRef = useRef(null);
   const debounceTimeout = useRef();
 
-  // Debounced fetch suggestions
   const handleInputChange = (e) => {
     const value = e.target.value;
     setQuery(value);
@@ -28,7 +27,6 @@ export default function Navbar() {
         try {
           const data = await getSearchSuggestions(value);
           console.log('Suggestion API response:', data);
-          // Support array, data.suggestions, or data.data.suggestions
           let suggestionsArr = [];
           if (Array.isArray(data)) {
             suggestionsArr = data;
@@ -53,7 +51,6 @@ export default function Navbar() {
     }
   };
 
-  // Keyboard navigation for suggestions
   const handleKeyDown = (e) => {
     if (!showSuggestions || suggestions.length === 0) return;
     if (e.key === "ArrowDown") {
@@ -70,7 +67,6 @@ export default function Navbar() {
     }
   };
 
-  // Hide suggestions on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (inputRef.current && !inputRef.current.contains(event.target)) {
@@ -83,7 +79,6 @@ export default function Navbar() {
     };
   }, []);
 
-  // Handle suggestion click
   const handleSuggestionClick = (suggestion) => {
     setQuery(suggestion.name);
     setShowSuggestions(false);
@@ -92,23 +87,21 @@ export default function Navbar() {
 
   return (
     <header className="fixed w-full z-30 backdrop-blur-lg bg-gradient-to-b from-black/60 to-transparent border-none">
-      <div className="max-w-7xl mx-auto px-4 py-1 flex items-center justify-between">
-        {/* Logo and Title */}
-        <div className="flex items-center gap-4">
-          <img src="../../public/shirayuki.png" alt="Shirayuki Logo" className="w-16 h-16 object-contain" />
-          <span className="text-pink-400 font-bold text-3xl tracking-wide">Shirayuki</span>
-        </div>
-
-        {/* Search Bar */}
-        <div className="flex-1 flex justify-center">
-          <form className="relative w-full max-w-xl" onSubmit={e => e.preventDefault()} ref={inputRef}>
+      <div className="max-w-7xl mx-16 px-4 py-2 flex items-cente ">
+        {/* Logo, Title, and Search Bar in a row */}
+        <div className="flex items-center w-full" style={{ gap: '2.5rem' }}>
+          <div className="flex items-center gap-3 flex-shrink-0" style={{ minWidth: '15rem' }}>
+            <img src="../../public/shirayuki.png" alt="Shirayuki Logo" className="w-16 h-16 object-contain" />
+            <span className="text-white font-bold text-3xl tracking-wide">𝚂𝚑𝚒𝚛𝚊𝚢𝚞𝚔𝚒</span>
+          </div>
+          <form className="relative flex-1 max-w-2xl ml-8" onSubmit={e => e.preventDefault()} ref={inputRef}>
             <input
               type="text"
               value={query}
               onChange={handleInputChange}
               onKeyDown={handleKeyDown}
               placeholder="Enter your keywords to search..."
-              className="w-full pl-10 pr-20 py-3 rounded-lg bg-white/10 text-white placeholder-gray-300 border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400"
+              className="w-full pl-10 pr-4 py-3 rounded-lg bg-white/10 text-white placeholder-gray-300 border border-white/20 focus:outline-none focus:ring-2 focus:ring-pink-400"
               autoComplete="off"
               onFocus={() => query.length > 1 && setShowSuggestions(true)}
             />
@@ -144,11 +137,6 @@ export default function Navbar() {
               </ul>
             )}
           </form>
-        </div>
-
-        {/* Login Button */}
-        <div className="flex items-center">
-          <button className="bg-white text-black px-6 py-2 rounded-lg font-semibold shadow hover:bg-pink-500 hover:text-white transition">Login</button>
         </div>
       </div>
     </header>

@@ -22,7 +22,7 @@
 }
 /* Ensure the home page background stretches full width */
 .home-full-bg {
-  width: 100vw;
+  width: 99.5vw;
   min-height: 100vh;
   margin: 0;
   padding: 0;
@@ -35,7 +35,7 @@
 /* Slider Hero Section Styles */
 .slider-hero-container {
   position: relative;
-  width: 100vw;
+  width: 99.5vw;
   height: 100vh;
   overflow: hidden;
   display: flex;
