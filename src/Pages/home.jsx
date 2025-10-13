@@ -14,6 +14,47 @@ function Home() {
   const { getHomepage, loading, error, clearError } = useShirayukiAPI();
   const [homeData, setHomeData] = useState(null);
   const [currentSlide, setCurrentSlide] = useState(0);
+  // For drag/swipe
+  const [dragStartX, setDragStartX] = useState(null);
+  const [dragging, setDragging] = useState(false);
+  // For slide animation
+  const [slideDirection, setSlideDirection] = useState('right');
+  const [slideAnimClass, setSlideAnimClass] = useState('');
+  // Mouse/touch event handlers for slider drag
+  const handleDragStart = (e) => {
+    setDragging(true);
+    if (e.type === 'touchstart') {
+      setDragStartX(e.touches[0].clientX);
+    } else {
+      setDragStartX(e.clientX);
+    }
+  };
+
+  const handleDragMove = (e) => {
+    if (!dragging || dragStartX === null) return;
+    let clientX;
+    if (e.type === 'touchmove') {
+      clientX = e.touches[0].clientX;
+    } else {
+      clientX = e.clientX;
+    }
+    const diff = clientX - dragStartX;
+    // Only trigger if drag is significant (e.g., 50px)
+    if (Math.abs(diff) > 50) {
+      if (diff > 0) {
+        handleSlideChange('prev');
+      } else {
+        handleSlideChange('next');
+      }
+      setDragging(false);
+      setDragStartX(null);
+    }
+  };
+
+  const handleDragEnd = () => {
+    setDragging(false);
+    setDragStartX(null);
+  };
   // Only slider section animes for the spotlight/slider
   const sliderData = Array.isArray(homeData) ? homeData.filter(a => a.section === 'slider') : [];
   const navigate = useNavigate();
@@ -47,9 +88,13 @@ function Home() {
     let newSlide;
     if (direction === 'next') {
       newSlide = (currentSlide + 1) % maxSlides;
+      setSlideDirection('right');
     } else {
       newSlide = (currentSlide - 1 + maxSlides) % maxSlides;
+      setSlideDirection('left');
     }
+    // Trigger animation class
+    setSlideAnimClass(direction === 'next' ? 'slide-in-right' : 'slide-in-left');
     setCurrentSlide(newSlide);
   };
 
@@ -76,6 +121,14 @@ function Home() {
 
     navigate(`/anime/${resolvedId}`);
   };
+
+
+  // Reset animation class after animation ends
+  useEffect(() => {
+    if (!slideAnimClass) return;
+    const timeout = setTimeout(() => setSlideAnimClass(''), 500);
+    return () => clearTimeout(timeout);
+  }, [slideAnimClass, currentSlide]);
 
   if (loading && !homeData) {
     return (
@@ -106,81 +159,85 @@ function Home() {
                          radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.05) 0%, transparent 70%)`
       }}></div>
 
-      {/* Spotlight Slider - Only show slider section animes */}
+
       {sliderData.length > 0 && (
-        <section className="slider-hero-container">
-          <img
-            className="slider-hero-bg"
-            src={getCurrentSpotlight()?.image || '/placeholder-hero.jpg'}
-            alt={getCurrentSpotlight()?.title}
-          />
-          <div className="slider-hero-overlay" />
-          <div className="slider-hero-content">
-            <div className="slider-hero-badge">
-              <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#fff2"/><path d="M7 10v4a2 2 0 002 2h6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M15 14V8a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2h6z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-              <span>#{currentSlide + 1} Spotlight</span>
+        <section
+          className="slider-hero-container"
+          onMouseDown={handleDragStart}
+          onMouseMove={handleDragMove}
+          onMouseUp={handleDragEnd}
+          onMouseLeave={handleDragEnd}
+          onTouchStart={handleDragStart}
+          onTouchMove={handleDragMove}
+          onTouchEnd={handleDragEnd}
+          style={{ userSelect: dragging ? 'none' : undefined }}
+        >
+          <div className={`slider-hero-anim-wrapper ${slideAnimClass}`} style={{width: '100%', height: '100%'}}>
+            <img
+              className="slider-hero-bg"
+              src={getCurrentSpotlight()?.image || '/placeholder-hero.jpg'}
+              alt={getCurrentSpotlight()?.title}
+            />
+            <div className="slider-hero-overlay" />
+            <div className={`slider-hero-content ${slideAnimClass}`}> 
+              <div className="slider-hero-badge">
+                <svg width="20" height="20" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#fff2"/><path d="M7 10v4a2 2 0 002 2h6" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/><path d="M15 14V8a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2h6z" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                <span>#{currentSlide + 1} Spotlight</span>
+              </div>
+              <div className="slider-hero-title">
+                {getCurrentSpotlight()?.title || 'Anime Title'}
+              </div>
+              {/* Meta info row */}
+              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
+                {getCurrentSpotlight()?.sub && (
+                  <span className="slider-hero-badge" style={{ background: 'rgba(30,41,59,0.7)', color: '#fff', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
+                    <BsFillChatLeftTextFill style={{ marginRight: 4, fontSize: 15 }} /> SUB
+                  </span>
+                )}
+                {getCurrentSpotlight()?.dub && (
+                  <span className="slider-hero-badge" style={{ background: 'rgba(30,41,59,0.7)', color: '#fff', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
+                    <BsFillVolumeUpFill style={{ marginRight: 4, fontSize: 15 }} /> DUB
+                  </span>
+                )}
+                {getCurrentSpotlight()?.duration && (
+                  <span className="slider-hero-badge" style={{ background: 'rgba(30,41,59,0.7)', color: '#fff', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
+                    <FiClock style={{ marginRight: 4, fontSize: 15 }} /> {getCurrentSpotlight().duration}
+                  </span>
+                )}
+                {getCurrentSpotlight()?.quality && (
+                  <span className="slider-hero-badge" style={{ background: 'rgba(30,41,59,0.7)', color: '#fff', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
+                    <MdOutlineHd style={{ marginRight: 4, fontSize: 16 }} /> {getCurrentSpotlight().quality}
+                  </span>
+                )}
+                {getCurrentSpotlight()?.releaseDate && (
+                  <span className="slider-hero-badge" style={{ background: 'rgba(30,41,59,0.7)', color: '#a78bfa', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
+                    <FiCalendar style={{ marginRight: 4, fontSize: 15 }} /> {getCurrentSpotlight().releaseDate}
+                  </span>
+                )}
+              </div>
+              <div className="slider-hero-desc">
+                {(() => {
+                  const desc = getCurrentSpotlight()?.description || '';
+                  if (desc.length < 10) return desc;
+                  const half = Math.ceil(desc.length / 2);
+                  return desc.slice(0, half) + (desc.length > half ? '...' : '');
+                })()}
+              </div>
+              <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+                <button
+                  className="slider-hero-btn"
+                  onClick={() => handleAnimeClick(getCurrentSpotlight())}
+                >
+                  Learn More
+                </button>
+                {getCurrentSpotlight()?.episodes && (
+                  <span className="slider-hero-badge" style={{ background: '#2563ebcc' }}>
+                    <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#fff2"/><path d="M8 12h8m-8 4h8m-8-8h8" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    Episodes: {getCurrentSpotlight().episodes}
+                  </span>
+                )}
+              </div>
             </div>
-            <div className="slider-hero-title">
-              {getCurrentSpotlight()?.title || 'Anime Title'}
-            </div>
-            {/* Meta info row */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', flexWrap: 'wrap' }}>
-              {getCurrentSpotlight()?.sub && (
-                <span className="slider-hero-badge" style={{ background: 'rgba(30,41,59,0.7)', color: '#fff', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                  <BsFillChatLeftTextFill style={{ marginRight: 4, fontSize: 15 }} /> SUB
-                </span>
-              )}
-              {getCurrentSpotlight()?.dub && (
-                <span className="slider-hero-badge" style={{ background: 'rgba(30,41,59,0.7)', color: '#fff', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                  <BsFillVolumeUpFill style={{ marginRight: 4, fontSize: 15 }} /> DUB
-                </span>
-              )}
-              {getCurrentSpotlight()?.duration && (
-                <span className="slider-hero-badge" style={{ background: 'rgba(30,41,59,0.7)', color: '#fff', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                  <FiClock style={{ marginRight: 4, fontSize: 15 }} /> {getCurrentSpotlight().duration}
-                </span>
-              )}
-              {getCurrentSpotlight()?.quality && (
-                <span className="slider-hero-badge" style={{ background: 'rgba(30,41,59,0.7)', color: '#fff', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                  <MdOutlineHd style={{ marginRight: 4, fontSize: 16 }} /> {getCurrentSpotlight().quality}
-                </span>
-              )}
-              {getCurrentSpotlight()?.releaseDate && (
-                <span className="slider-hero-badge" style={{ background: 'rgba(30,41,59,0.7)', color: '#a78bfa', display: 'flex', alignItems: 'center', fontWeight: 500 }}>
-                  <FiCalendar style={{ marginRight: 4, fontSize: 15 }} /> {getCurrentSpotlight().releaseDate}
-                </span>
-              )}
-            </div>
-            <div className="slider-hero-desc">
-              {(() => {
-                const desc = getCurrentSpotlight()?.description || '';
-                if (desc.length < 10) return desc;
-                const half = Math.ceil(desc.length / 2);
-                return desc.slice(0, half) + (desc.length > half ? '...' : '');
-              })()}
-            </div>
-            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-              <button
-                className="slider-hero-btn"
-                onClick={() => handleAnimeClick(getCurrentSpotlight())}
-              >
-                Learn More
-              </button>
-              {getCurrentSpotlight()?.episodes && (
-                <span className="slider-hero-badge" style={{ background: '#2563ebcc' }}>
-                  <svg width="18" height="18" fill="none" viewBox="0 0 24 24"><rect width="24" height="24" rx="12" fill="#fff2"/><path d="M8 12h8m-8 4h8m-8-8h8" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-                  Episodes: {getCurrentSpotlight().episodes}
-                </span>
-              )}
-            </div>
-          </div>
-          <div className="slider-hero-arrows">
-            <button className="slider-hero-arrow-btn" onClick={() => handleSlideChange('prev')}>
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M15 19l-7-7 7-7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </button>
-            <button className="slider-hero-arrow-btn" onClick={() => handleSlideChange('next')}>
-              <svg width="28" height="28" fill="none" viewBox="0 0 24 24"><path d="M9 5l7 7-7 7" stroke="#fff" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/></svg>
-            </button>
           </div>
         </section>
       )}
