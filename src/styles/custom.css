@@ -21,7 +21,42 @@
 
 /* Thin scrollbar utilities */
 .scrollbar-thin {
+  /* 'scrollbar-width' is only supported in Firefox. For Chrome, Safari, and others, see ::-webkit-scrollbar below. */
   scrollbar-width: thin;
+}
+
+.scrollbar-thin::-webkit-scrollbar {
+  width: 8px; /* For Chrome, Safari, and Opera */
+  height: 8px;
+}
+
+/* Hide scrollbar utilities */
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* Internet Explorer 10+ */
+  scrollbar-width: none;  /* Firefox (not supported in Chrome <121, Safari, iOS, Samsung Internet) */
+}
+
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;  /* Safari and Chrome */
+}
+
+/* Line clamp utilities */
+.line-clamp-2 {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Trending card hover effects */
+.trending-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.trending-card:hover {
+  transform: translateY(-4px) scale(1.02);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
 }
 
 .scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {

@@ -1,10 +1,4 @@
-/**
- * Shirayuki API Context - Index
- * 
- * Centralized exports for all API-related functionality
- */
 
-// API Configuration and Endpoints
 export { 
   API_CONFIG, 
   API_ENDPOINTS, 

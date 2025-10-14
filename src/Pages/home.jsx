@@ -217,7 +217,7 @@ function Home() {
                   className="slider-hero-btn"
                   onClick={() => handleAnimeClick(getCurrentSpotlight())}
                 >
-                  Learn More
+                  Watch Now
                 </button>
                 {getCurrentSpotlight()?.episodes && (
                   <span className="slider-hero-badge" style={{ background: '#2563ebcc' }}>
@@ -234,6 +234,81 @@ function Home() {
       {/* Main Content */}
       <div className="relative z-10 -mt-16">
         <div className="max-w-7xl mx-auto px-6 py-12 pt-24">
+
+          {/* Trending Section */}
+          {homeData && Array.isArray(homeData) && homeData.filter(anime => anime.section === 'trending').length > 0 && (
+            <section className="mb-16">
+              <div className="max-w-7xl mx-auto px-6 mb-6">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-2xl lg:text-4xl font-bold text-white">Trending</h2>
+                  <div className="flex items-center gap-3">
+                    <button className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-200 border border-white/20">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                      </svg>
+                    </button>
+                    <button className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-200 border border-white/20">
+                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="w-full overflow-x-auto scrollbar-hide">
+                <div className="flex gap-3 pl-6 pr-6 pb-4" style={{ width: 'max-content' }}>
+                  {homeData
+                    .filter(anime => anime.section === 'trending')
+                    .map((anime, index) => (
+                      <div key={`trending-${anime.href || 'anime'}-${index}`} className="flex-shrink-0 group relative">
+                        <div 
+                          className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
+                          onClick={() => handleAnimeClick(anime.href)}
+                          style={{ width: '220px', height: '300px' }}
+                        >
+                          <img
+                            src={anime.image || '/placeholder-anime.jpg'}
+                            alt={anime.title}
+                            className="w-full h-full object-cover"
+                          />
+                          
+                          {/* Gradient overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                          
+                          {/* Ranking Number - positioned like in the image */}
+                          <div className="absolute top-3 left-3">
+                            <div className="text-white text-4xl font-black leading-none opacity-90" style={{ 
+                              fontFamily: 'system-ui, -apple-system, sans-serif',
+                              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                              WebkitTextStroke: '1px rgba(255,255,255,0.1)'
+                            }}>
+                              {String(anime.number || index + 1).padStart(2, '0')}
+                            </div>
+                          </div>
+
+                          {/* Title at bottom */}
+                          <div className="absolute bottom-3 left-3 right-3">
+                            <h3 className="text-white font-bold text-sm line-clamp-2 drop-shadow-lg">
+                              {anime.title}
+                            </h3>
+                          </div>
+
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/20 backdrop-blur-sm rounded-full p-3">
+                              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8 5v10l7-5z" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              </div>
+            </section>
+          )}
 
           {/* Latest Anime Section */}
           {homeData && Array.isArray(homeData) && homeData.length > 0 && (
