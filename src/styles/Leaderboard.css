@@ -88,15 +88,15 @@
   opacity: 1;
 }
 .leaderboard-container {
-  background: #232336;
+  background: #000;
   border-radius: 10px;
 }
 .leaderboard-container {
-  background: #232336;
+  background: #000;
   border-radius: 10px;
 }
 .leaderboard-container {
-  background: #232336;
+  background: #000;
   border-radius: 10px;
   padding: 24px 16px;
   width: 360px;
@@ -141,7 +141,7 @@
 }
 .leaderboard-tab.active {
   background: #ffffff;
-  color: #232336;
+  color: #000;
   font-weight: 700;
 }
 .leaderboard-list {

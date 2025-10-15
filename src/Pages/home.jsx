@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import Leaderboard from '../components/Leaderboard.jsx';
+import ScheduleSection from '../components/ScheduleSection.jsx';
 import LatestAnimeCard from '../components/LatestAnimeCard.jsx';
 import { FiClock, FiCalendar } from 'react-icons/fi';
 import { MdOutlineHd } from 'react-icons/md';
@@ -57,9 +58,8 @@ function Home() {
     const trendingData = homeData?.filter((anime) => anime.section === 'trending') || [];
     if (trendingData.length <= 1) return;
 
-    // Number of cards visible at once (based on your card width and container size)
-    const CARD_WIDTH = 220 + 12; // card width + gap
-    const CONTAINER_WIDTH = window.innerWidth * 0.9; // 90vw as in your max-w-[90vw]
+    const CARD_WIDTH = 220 + 12;
+    const CONTAINER_WIDTH = window.innerWidth * 0.9;
     const visibleCards = Math.floor(CONTAINER_WIDTH / CARD_WIDTH);
     const maxIndex = Math.max(0, trendingData.length - visibleCards);
 
@@ -353,27 +353,27 @@ function Home() {
             {homeData && Array.isArray(homeData) && homeData.length > 0 && (
               <section className="mb-16">
                 <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1 }}>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                     <div className="bg-black/10 backdrop-blur-xl rounded-xl border border-white/10 p-8 shadow-xl">
-                      <h2 className="text-3xl font-bold text-white mb-8" style={{display:'flex',alignItems:'center',gap:'12px'}}>
+                      <h2 className="text-3xl font-bold text-white mb-8" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         {/* Fire Icon SVG for better consistency */}
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
-                          <path d="M16 2C16 2 13 7 13 10C13 13 16 15 16 15C16 15 19 13 19 10C19 7 16 2 16 2Z" fill="#FF9800"/>
-                          <path d="M16 15C16 15 10 17 10 22C10 26 16 30 16 30C16 30 22 26 22 22C22 17 16 15 16 15Z" fill="#FF5252"/>
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
+                          <path d="M16 2C16 2 13 7 13 10C13 13 16 15 16 15C16 15 19 13 19 10C19 7 16 2 16 2Z" fill="#FF9800" />
+                          <path d="M16 15C16 15 10 17 10 22C10 26 16 30 16 30C16 30 22 26 22 22C22 17 16 15 16 15Z" fill="#FF5252" />
                         </svg>
-                        <span style={{position:'relative',display:'inline-block',width:'fit-content'}}>
-                          <span style={{fontWeight:'bold'}}>Recently Updated</span>
+                        <span style={{ position: 'relative', display: 'inline-block', width: 'fit-content' }}>
+                          <span style={{ fontWeight: 'bold' }}>Recently Updated</span>
                           <span style={{
-                            display:'inline-block',
-                            position:'absolute',
-                            left:'110%',
-                            top:'50%',
-                            width:'580px',
-                            height:'4px',
-                            background:'#ef4444',
-                            borderRadius:'2px',
-                            transform:'translateY(-50%)',
-                            marginLeft:'12px',
+                            display: 'inline-block',
+                            position: 'absolute',
+                            left: '110%',
+                            top: '50%',
+                            width: '580px',
+                            height: '4px',
+                            background: '#ef4444',
+                            borderRadius: '2px',
+                            transform: 'translateY(-50%)',
+                            marginLeft: '12px',
                           }}></span>
                         </span>
                       </h2>
@@ -388,6 +388,7 @@ function Home() {
                         ))}
                       </div>
                     </div>
+                    <ScheduleSection />
                   </div>
                   <div style={{ minWidth: 320, maxWidth: 360, width: '100%' }}>
                     {/* Leaderboard Section */}
@@ -399,6 +400,7 @@ function Home() {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

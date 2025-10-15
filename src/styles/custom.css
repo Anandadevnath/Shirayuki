@@ -1,3 +1,6 @@
+html, body {
+  overflow-x: hidden;
+}
 /* Footer blend effect */
 .footer-blend {
   background: linear-gradient(
@@ -55,6 +58,7 @@
 /* Thin scrollbar utilities */
 .scrollbar-thin {
   /* 'scrollbar-width' is only supported in Firefox. For Chrome, Safari, and others, see ::-webkit-scrollbar below. */
+  /* Note: 'scrollbar-width' is not supported by Chrome <121, Safari, iOS, Samsung Internet. */
   scrollbar-width: thin;
 }
 
