@@ -41,26 +41,60 @@
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  background: #181c2a;
+  background: #000000;
 }
+
+/* Add a bottom gradient for smooth transition */
+.slider-hero-container::after {
+  content: '';
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 40vh;
+  background: linear-gradient(180deg, 
+    rgba(0, 0, 0, 0) 0%, 
+    rgba(0, 0, 0, 0.1) 10%, 
+    rgba(0, 0, 0, 0.2) 20%, 
+    rgba(0, 0, 0, 0.4) 40%, 
+    rgba(0, 0, 0, 0.6) 60%, 
+    rgba(0, 0, 0, 0.8) 80%, 
+    rgba(0, 0, 0, 1) 100%
+  );
+  z-index: 3;
+  pointer-events: none;
+}
+
 .slider-hero-bg {
   position: absolute;
   inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  filter: brightness(0.6) blur(0.5px);
+  filter: brightness(0.3) blur(0.3px);
   z-index: 1;
 }
 .slider-hero-overlay {
   position: absolute;
   inset: 0;
-  background: linear-gradient(90deg, rgba(0,0,0,0.85) 40%, rgba(0,0,0,0.2) 100%);
+  background: linear-gradient(180deg, 
+    rgba(0,0,0,0.3) 0%, 
+    rgba(0,0,0,0.5) 25%, 
+    rgba(0,0,0,0.7) 60%, 
+    rgba(0,0,0,0.9) 85%, 
+    rgba(0,0,0,0.95) 100%
+  ),
+  linear-gradient(90deg, 
+    rgba(0,0,0,0.9) 0%, 
+    rgba(0,0,0,0.7) 30%, 
+    rgba(0,0,0,0.5) 60%, 
+    rgba(0,0,0,0.2) 100%
+  );
   z-index: 2;
 }
 .slider-hero-content {
   position: relative;
-  z-index: 3;
+  z-index: 4;
   max-width: 900px;
   margin-left: 4vw;
   color: #fff;

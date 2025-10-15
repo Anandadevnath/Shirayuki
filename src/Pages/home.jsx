@@ -4,7 +4,6 @@ import { MdOutlineHd } from 'react-icons/md';
 import { BsFillVolumeUpFill, BsFillChatLeftTextFill } from 'react-icons/bs';
 import '../styles/sliderHero.css';
 import { useShirayukiAPI } from '../context';
-import AnimeCard from '../components/AnimeCard';
 import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
 import { useNavigate } from 'react-router-dom';
 
@@ -15,6 +14,7 @@ function Home() {
   const [dragStartX, setDragStartX] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [slideAnimClass, setSlideAnimClass] = useState('');
+  const [trendingSlideIndex, setTrendingSlideIndex] = useState(0);
   const handleDragStart = (e) => {
     setDragging(true);
     setDragStartX(e.type === 'touchstart' ? e.touches[0].clientX : e.clientX);
@@ -45,6 +45,39 @@ function Home() {
     }, 5000);
     return () => clearInterval(interval);
   }, [sliderData]);
+
+  // Auto-scroll trending section with infinite loop
+  useEffect(() => {
+    const trendingData = homeData?.filter(anime => anime.section === 'trending') || [];
+    if (trendingData.length <= 1) return;
+
+    const interval = setInterval(() => {
+      setTrendingSlideIndex((prev) => {
+        const nextIndex = prev + 1;
+        
+        // When we reach the end of the first set, reset to 0 for seamless loop
+        if (nextIndex >= trendingData.length) {
+          // Use setTimeout to reset without transition for seamless loop
+          setTimeout(() => {
+            const container = document.querySelector('#trending-scroll-container .flex');
+            if (container) {
+              container.style.transition = 'none';
+              container.style.transform = 'translateX(0px)';
+              // Re-enable transition after reset
+              setTimeout(() => {
+                container.style.transition = 'transform 500ms ease-in-out';
+              }, 50);
+            }
+          }, 500);
+          return 0;
+        }
+        
+        return nextIndex;
+      });
+    }, 2000); // Change slide every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [homeData]);
 
   useEffect(() => {
     fetchHomeData();
@@ -107,13 +140,7 @@ function Home() {
 
   if (loading && !homeData) {
     return (
-      <div className="home-full-bg bg-gradient-to-br from-gray-900 via-black to-gray-800 relative overflow-x-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-blue-900/10 to-indigo-900/10"></div>
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 25% 25%, rgba(239, 68, 68, 0.08) 0%, transparent 60%),
-                           radial-gradient(circle at 75% 75%, rgba(147, 51, 234, 0.08) 0%, transparent 60%),
-                           radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.05) 0%, transparent 70%)`
-        }}></div>
+      <div className="home-full-bg relative overflow-x-hidden" style={{ background: '#000000' }}>
         <div className="relative z-10 min-h-screen flex items-center justify-center">
           <LoadingSpinner size="large" />
         </div>
@@ -123,13 +150,7 @@ function Home() {
 
   if (error && !homeData) {
     return (
-      <div className="home-full-bg bg-gradient-to-br from-gray-900 via-black to-gray-800 relative overflow-x-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-red-900/10 via-blue-900/10 to-indigo-900/10"></div>
-        <div className="absolute inset-0" style={{
-          backgroundImage: `radial-gradient(circle at 25% 25%, rgba(239, 68, 68, 0.08) 0%, transparent 60%),
-                           radial-gradient(circle at 75% 75%, rgba(147, 51, 234, 0.08) 0%, transparent 60%),
-                           radial-gradient(circle at 50% 10%, rgba(59, 130, 246, 0.05) 0%, transparent 70%)`
-        }}></div>
+      <div className="home-full-bg relative overflow-x-hidden" style={{ background: '#000000' }}>
         <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
           <ErrorMessage
             message={error}
@@ -141,12 +162,11 @@ function Home() {
   }
 
   return (
-    <div className="home-full-bg bg-gradient-to-br from-gray-900 via-black to-gray-800 relative overflow-x-hidden">
-      <div className="absolute inset-0 bg-gradient-to-br from-gray-800/10 via-black/10 to-gray-700/10"></div>
+    <div className="home-full-bg relative overflow-x-hidden" style={{
+      background: '#000000'
+    }}>
       <div className="absolute inset-0" style={{
-        backgroundImage: `radial-gradient(circle at 25% 25%, rgba(75, 85, 99, 0.08) 0%, transparent 60%),
-                         radial-gradient(circle at 75% 75%, rgba(55, 65, 81, 0.08) 0%, transparent 60%),
-                         radial-gradient(circle at 50% 10%, rgba(31, 41, 55, 0.05) 0%, transparent 70%)`
+        background: 'transparent'
       }}></div>
 
 
@@ -232,8 +252,24 @@ function Home() {
       )}
 
       {/* Main Content */}
-      <div className="relative z-10 -mt-16">
-        <div className="max-w-7xl mx-auto px-6 py-12 pt-24">
+      <div className="relative z-10" style={{ marginTop: '-20vh' }}>
+        <div className="relative">
+          {/* Blend transition area */}
+          <div 
+            className="absolute top-0 left-0 right-0 h-48 pointer-events-none"
+            style={{
+              background: `linear-gradient(180deg, 
+                rgba(0,0,0,0) 0%, 
+                rgba(0,0,0,0.1) 10%, 
+                rgba(0,0,0,0.3) 30%, 
+                rgba(0,0,0,0.6) 60%, 
+                rgba(0,0,0,0.9) 90%, 
+                rgba(0,0,0,1) 100%
+              )`
+            }}
+          ></div>
+          
+          <div className="max-w-7xl mx-auto px-6 py-12 pt-32 relative z-10">
 
           {/* Trending Section */}
           {homeData && Array.isArray(homeData) && homeData.filter(anime => anime.section === 'trending').length > 0 && (
@@ -241,27 +277,83 @@ function Home() {
               <div className="max-w-7xl mx-auto px-6 mb-6">
                 <div className="flex items-center justify-between">
                   <h2 className="text-2xl lg:text-4xl font-bold text-white">Trending</h2>
-                  <div className="flex items-center gap-3">
-                    <button className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-200 border border-white/20">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                      </svg>
-                    </button>
-                    <button className="p-3 rounded-full bg-white/10 hover:bg-white/20 transition-colors duration-200 border border-white/20">
-                      <svg className="w-5 h-5 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                      </svg>
-                    </button>
+                  <div className="flex items-center gap-2">
+                    <div className="flex gap-1">
+                      {homeData.filter(anime => anime.section === 'trending').map((_, index) => (
+                        <div
+                          key={index}
+                          className={`w-2 h-2 rounded-full transition-all duration-300 ${
+                            index === trendingSlideIndex ? 'bg-white' : 'bg-white/30'
+                          }`}
+                        />
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              <div className="w-full overflow-x-auto scrollbar-hide">
-                <div className="flex gap-3 pl-6 pr-6 pb-4" style={{ width: 'max-content' }}>
+              <div className="w-full overflow-hidden" id="trending-scroll-container">
+                <div 
+                  className="flex gap-3 pl-6 pr-6 pb-4 transition-transform duration-500 ease-in-out" 
+                  style={{ 
+                    width: `${homeData.filter(anime => anime.section === 'trending').length * 2 * (220 + 12)}px`,
+                    transform: `translateX(-${trendingSlideIndex * (220 + 12)}px)`
+                  }}
+                >
+                  {/* First set of anime cards */}
                   {homeData
                     .filter(anime => anime.section === 'trending')
                     .map((anime, index) => (
-                      <div key={`trending-${anime.href || 'anime'}-${index}`} className="flex-shrink-0 group relative">
+                      <div key={`trending-1-${anime.href || 'anime'}-${index}`} className="flex-shrink-0 group relative">
+                        <div 
+                          className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
+                          onClick={() => handleAnimeClick(anime.href)}
+                          style={{ width: '220px', height: '300px' }}
+                        >
+                          <img
+                            src={anime.image || '/placeholder-anime.jpg'}
+                            alt={anime.title}
+                            className="w-full h-full object-cover"
+                          />
+                          
+                          {/* Gradient overlay */}
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                          
+                          {/* Ranking Number - positioned like in the image */}
+                          <div className="absolute top-3 left-3">
+                            <div className="text-white text-4xl font-black leading-none opacity-90" style={{ 
+                              fontFamily: 'system-ui, -apple-system, sans-serif',
+                              textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                              WebkitTextStroke: '1px rgba(255,255,255,0.1)'
+                            }}>
+                              {String(anime.number || index + 1).padStart(2, '0')}
+                            </div>
+                          </div>
+
+                          {/* Title at bottom */}
+                          <div className="absolute bottom-3 left-3 right-3">
+                            <h3 className="text-white font-bold text-sm line-clamp-2 drop-shadow-lg">
+                              {anime.title}
+                            </h3>
+                          </div>
+
+                          {/* Hover overlay */}
+                          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all duration-300 flex items-center justify-center">
+                            <div className="opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-white/20 backdrop-blur-sm rounded-full p-3">
+                              <svg className="w-6 h-6 text-white" fill="currentColor" viewBox="0 0 20 20">
+                                <path d="M8 5v10l7-5z" />
+                              </svg>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  
+                  {/* Duplicate set for infinite loop effect */}
+                  {homeData
+                    .filter(anime => anime.section === 'trending')
+                    .map((anime, index) => (
+                      <div key={`trending-2-${anime.href || 'anime'}-${index}`} className="flex-shrink-0 group relative">
                         <div 
                           className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
                           onClick={() => handleAnimeClick(anime.href)}
@@ -414,6 +506,7 @@ function Home() {
               </div>
             </section>
           )}
+          </div>
         </div>
       </div>
     </div>
