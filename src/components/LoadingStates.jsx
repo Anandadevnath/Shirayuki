@@ -1,18 +1,54 @@
 import React from 'react';
 
-const LoadingSpinner = ({ size = 'medium' }) => {
-  const sizeClasses = {
-    small: 'w-6 h-6',
-    medium: 'w-12 h-12',
-    large: 'w-16 h-16'
-  };
+const spinnerSizes = {
+  small: 32,
+  medium: 48,
+  large: 72,
+};
 
+const LoadingSpinner = ({ size = 'medium' }) => {
+  const dimension = spinnerSizes[size] || spinnerSizes.medium;
   return (
-    <div className="flex items-center justify-center p-8">
-      <div className="relative">
-        <div className={`${sizeClasses[size]} animate-spin rounded-full border-4 border-white/20`} />
-        <div className={`${sizeClasses[size]} animate-spin rounded-full border-4 border-transparent border-t-pink-500 absolute top-0 left-0`} />
-      </div>
+    <div className="flex items-center justify-center" style={{ minHeight: dimension + 16 }}>
+      <svg
+        width={dimension}
+        height={dimension}
+        viewBox="0 0 64 64"
+        fill="none"
+        className="animate-spin"
+        style={{ display: 'block' }}
+      >
+        {/* Anime eye style spinner */}
+        <circle
+          cx="32"
+          cy="32"
+          r="28"
+          stroke="#f472b6"
+          strokeWidth="6"
+          strokeDasharray="44 88"
+          strokeLinecap="round"
+          opacity="0.7"
+        />
+        <circle
+          cx="32"
+          cy="32"
+          r="20"
+          stroke="#a78bfa"
+          strokeWidth="4"
+          strokeDasharray="32 64"
+          strokeLinecap="round"
+          opacity="0.5"
+        />
+        {/* Sparkle */}
+        <circle
+          cx="48"
+          cy="16"
+          r="3"
+          fill="#f9a8d4"
+          opacity="0.9"
+        />
+      </svg>
+      <span className="sr-only">Loading...</span>
     </div>
   );
 };
