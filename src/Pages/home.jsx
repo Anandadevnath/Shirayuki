@@ -291,7 +291,7 @@ function Home() {
               Array.isArray(homeData) &&
               homeData.filter((anime) => anime.section === 'trending').length >
                 0 && (
-                <section className="mb-20" style={{ marginTop: '-3rem' }}>
+                <section className="mb-20" style={{ marginTop: '-2rem' }}>
                   <div className="w-full overflow-hidden" id="trending-scroll-container">
                     <div
                       className="flex gap-3 pl-6 pr-6 pb-4 transition-transform duration-500 ease-in-out"
