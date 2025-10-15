@@ -39,7 +39,15 @@ export default function Leaderboard() {
 
   return (
     <div className="leaderboard-container">
-      <h2 className="leaderboard-title">Top 10</h2>
+      <h2 className="leaderboard-title" style={{display:'flex',alignItems:'center',gap:'10px'}}>
+        {/* Leaderboard Icon SVG */}
+        <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="2" y="14" width="6" height="10" rx="2" fill="#FFD700"/>
+          <rect x="11" y="6" width="6" height="18" rx="2" fill="#C0C0C0"/>
+          <rect x="20" y="10" width="6" height="14" rx="2" fill="#CD7F32"/>
+        </svg>
+        Leaderboard
+      </h2>
       <div className="leaderboard-tabs">
         {leaderboardTabs.map((tab, idx) => (
           <button
@@ -57,29 +65,34 @@ export default function Leaderboard() {
         ) : (
           animes && animes.length > 0 ? (
             animes.map((anime, i) => (
-              <div className="leaderboard-item" key={anime.id || i}>
-                <span className="leaderboard-rank">{String(i + 1).padStart(2, '0')}</span>
-                <img
-                  className="leaderboard-thumb"
-                  src={
-                    anime.image ||
-                    anime.cover ||
-                    anime.poster ||
-                    anime.thumbnail ||
-                    anime.img ||
-                    '/placeholder-anime.jpg'
-                  }
-                  alt={anime.title}
-                />
-                <div className="leaderboard-info">
-                  <div className="leaderboard-title-main">{anime.title}</div>
-                  <div className="leaderboard-meta">
-                    {anime.subCount !== undefined && (
-                      <span className="leaderboard-meta-badge sub">SUB: {anime.subCount}</span>
-                    )}
-                    {anime.dubCount !== undefined && (
-                      <span className="leaderboard-meta-badge dub">DUB: {anime.dubCount}</span>
-                    )}
+              <div className="leaderboard-item leaderboard-bgfill group" key={anime.id || i}>
+                <div
+                  className="leaderboard-bgfill-img"
+                  style={{
+                    backgroundImage: (() => {
+                      const imgSrc = anime.image || anime.cover || anime.poster || anime.thumbnail || anime.img || '/placeholder-anime.jpg';
+                      const safeImgSrc = typeof imgSrc === 'string' ? imgSrc.replace(/'/g, '%27') : '/placeholder-anime.jpg';
+                      return `url(${safeImgSrc})`;
+                    })()
+                  }}
+                >
+                  <div className="leaderboard-bgfill-overlay group-hover:backdrop-blur-md transition-all duration-300" />
+                  <div className="leaderboard-bgfill-content">
+                    <span className="leaderboard-bgfill-rank">{String(i + 1).padStart(2, '0')}</span>
+                    <span className="leaderboard-bgfill-title">{anime.title}</span>
+                  </div>
+                  <div className="leaderboard-play-icon">
+                    <svg width="38" height="38" viewBox="0 0 38 38" fill="none" xmlns="http://www.w3.org/2000/svg">
+                      <circle cx="19" cy="19" r="18" fill="rgba(255,255,255,0.18)" style={{backdropFilter:'blur(8px)'}} />
+                      <circle cx="19" cy="19" r="18" fill="url(#glassGradient)" fillOpacity="0.5" />
+                      <polygon points="15,12 28,19 15,26" fill="#fff" fillOpacity="0.85" />
+                      <defs>
+                        <linearGradient id="glassGradient" x1="0" y1="0" x2="38" y2="38" gradientUnits="userSpaceOnUse">
+                          <stop stopColor="#fff" stopOpacity="0.4" />
+                          <stop offset="1" stopColor="#fff" stopOpacity="0.1" />
+                        </linearGradient>
+                      </defs>
+                    </svg>
                   </div>
                 </div>
               </div>

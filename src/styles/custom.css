@@ -1,3 +1,16 @@
+/* Footer blend effect */
+.footer-blend {
+  background: linear-gradient(
+    to top,
+    #0a0a0a 0%,
+    #18181b 40%,
+    rgba(24, 24, 27, 0.7) 70%,
+    rgba(235, 13, 13, 0) 100%
+  );
+  /* Optional: add a subtle blur for extra blend */
+  -webkit-backdrop-filter: blur(8px);
+  backdrop-filter: blur(8px);
+}
 
 /* Modern Black Animated Scrollbar */
 ::-webkit-scrollbar {
@@ -8,7 +21,7 @@
 ::-webkit-scrollbar-track {
   background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
   border-radius: 8px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.2) inset;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) inset;
 }
 
 @keyframes scrollbar-thumb-animate {
@@ -52,12 +65,12 @@
 
 /* Hide scrollbar utilities */
 .scrollbar-hide {
-  -ms-overflow-style: none;  /* Internet Explorer 10+ */
-  scrollbar-width: none;  /* Firefox (not supported in Chrome <121, Safari, iOS, Samsung Internet) */
+  -ms-overflow-style: none; /* Internet Explorer 10+ */
+  scrollbar-width: none; /* Firefox (not supported in Chrome <121, Safari, iOS, Samsung Internet) */
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none;  /* Safari and Chrome */
+  display: none; /* Safari and Chrome */
 }
 
 /* Line clamp utilities */
@@ -76,7 +89,8 @@
 
 .trending-card:hover {
   transform: translateY(-4px) scale(1.02);
-  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.5),
+    0 10px 10px -5px rgba(0, 0, 0, 0.2);
 }
 
 .scrollbar-thumb-white\/20::-webkit-scrollbar-thumb {
@@ -103,11 +117,21 @@
 
 /* Fade transition utilities */
 .fade-top {
-  background: linear-gradient(to bottom, transparent 0%, rgba(0, 0, 0, 0.1) 25%, rgba(0, 0, 0, 0.8) 100%);
+  background: linear-gradient(
+    to bottom,
+    transparent 0%,
+    rgba(0, 0, 0, 0.1) 25%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
 }
 
 .fade-bottom {
-  background: linear-gradient(to top, transparent 0%, rgba(0, 0, 0, 0.1) 25%, rgba(0, 0, 0, 0.8) 100%);
+  background: linear-gradient(
+    to top,
+    transparent 0%,
+    rgba(0, 0, 0, 0.1) 25%,
+    rgba(0, 0, 0, 0.8) 100%
+  );
 }
 
 .section-fade {
@@ -116,7 +140,7 @@
 }
 
 .section-fade::before {
-  content: '';
+  content: "";
   position: absolute;
   top: -50px;
   left: 0;
@@ -192,7 +216,8 @@
 }
 
 @keyframes glow {
-  0%, 100% {
+  0%,
+  100% {
     box-shadow: 0 0 20px rgba(156, 163, 175, 0.3);
   }
   50% {
@@ -260,17 +285,20 @@
 
 /* Enhanced hover effects */
 .hover-glow:hover {
-  box-shadow: 0 0 25px rgba(156, 163, 175, 0.4), 0 0 50px rgba(209, 213, 219, 0.2);
+  box-shadow: 0 0 25px rgba(156, 163, 175, 0.4),
+    0 0 50px rgba(209, 213, 219, 0.2);
   transform: translateY(-2px);
 }
 
 /* Custom gradient backgrounds */
 .bg-gradient-anime {
-  background: linear-gradient(135deg, 
-    rgba(17, 24, 39, 0.9) 0%, 
-    rgba(0, 0, 0, 0.8) 25%, 
-    rgba(31, 41, 55, 0.7) 50%, 
-    rgba(17, 24, 39, 0.9) 100%);
+  background: linear-gradient(
+    135deg,
+    rgba(17, 24, 39, 0.9) 0%,
+    rgba(0, 0, 0, 0.8) 25%,
+    rgba(31, 41, 55, 0.7) 50%,
+    rgba(17, 24, 39, 0.9) 100%
+  );
 }
 
 /* Enhanced glass effects */
@@ -288,7 +316,8 @@
   backdrop-filter: blur(30px);
   border: 1px solid rgba(255, 255, 255, 0.2);
   border-radius: 24px;
-  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4), inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
 /* Glass Card */
@@ -298,8 +327,7 @@
   backdrop-filter: blur(20px);
   border: 1px solid rgba(75, 85, 99, 0.1);
   border-radius: 16px;
-  box-shadow: 
-    0 8px 32px rgba(0, 0, 0, 0.3),
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
   transition: all 0.3s ease;
 }
@@ -308,8 +336,7 @@
   background: rgba(15, 23, 42, 0.4);
   border-color: rgba(75, 85, 99, 0.2);
   transform: translateY(-2px);
-  box-shadow: 
-    0 12px 40px rgba(0, 0, 0, 0.4),
+  box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4),
     inset 0 1px 0 rgba(255, 255, 255, 0.15);
 }
 

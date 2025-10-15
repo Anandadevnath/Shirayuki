@@ -11,7 +11,7 @@ function App() {
   return (
     <ShirayukiAPIProvider>
       <BrowserRouter>
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-gray-800 text-white">
+  <div className="min-h-screen bg-gradient-to-br from-gray-900 via-black to-black text-white">
           <Navbar />
           <main className="max-w-7xl mx-auto px-4 py-8">
             <Routes>

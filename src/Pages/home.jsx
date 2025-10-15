@@ -355,8 +355,27 @@ function Home() {
                 <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
                   <div style={{ flex: 1 }}>
                     <div className="bg-black/10 backdrop-blur-xl rounded-xl border border-white/10 p-8 shadow-xl">
-                      <h2 className="text-3xl font-bold text-white mb-8">
-                        🔥 Recently Updated
+                      <h2 className="text-3xl font-bold text-white mb-8" style={{display:'flex',alignItems:'center',gap:'12px'}}>
+                        {/* Fire Icon SVG for better consistency */}
+                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{flexShrink:0}}>
+                          <path d="M16 2C16 2 13 7 13 10C13 13 16 15 16 15C16 15 19 13 19 10C19 7 16 2 16 2Z" fill="#FF9800"/>
+                          <path d="M16 15C16 15 10 17 10 22C10 26 16 30 16 30C16 30 22 26 22 22C22 17 16 15 16 15Z" fill="#FF5252"/>
+                        </svg>
+                        <span style={{position:'relative',display:'inline-block',width:'fit-content'}}>
+                          <span style={{fontWeight:'bold'}}>Recently Updated</span>
+                          <span style={{
+                            display:'inline-block',
+                            position:'absolute',
+                            left:'110%',
+                            top:'50%',
+                            width:'580px',
+                            height:'4px',
+                            background:'#ef4444',
+                            borderRadius:'2px',
+                            transform:'translateY(-50%)',
+                            marginLeft:'12px',
+                          }}></span>
+                        </span>
                       </h2>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
                         {homeData.filter(anime => anime.section === 'recently_updated').slice(0, 18).map((anime, index) => (

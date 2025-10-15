@@ -12,16 +12,16 @@ export default function Footer() {
   };
 
   return (
-    <footer className="mt-12 border-t border-white/5 bg-gradient-to-t from-black/30 to-transparent py-8">
+  <footer className="mt-12 border-t border-white/5 footer-blend py-8">
       <div className="max-w-7xl mx-auto px-4 flex flex-col gap-6">
         <div className="az-list-section mb-4">
-          <div className="font-bold text-white text-lg mb-2">A-Z LIST</div>
-          <div className="text-gray-400 mb-2">Searching anime order by alphabet name A to Z.</div>
+          <div className="font-bold text-white text-2xl mb-2 ml-2">A-Z LIST</div>
+          <div className="text-gray-400 mb-5 ml-2">Searching anime order by alphabet name A to Z.</div>
           <div className="flex flex-wrap gap-2">
             {azOptions.map((option) => (
               <button
                 key={option}
-                className="az-btn px-3 py-1 rounded bg-gray-700 text-white hover:bg-pink-500 transition"
+                className="az-btn px-3 py-1 rounded text-[17px]  text-white hover:bg-white hover:text-black transition"
                 onClick={() => handleAZClick(option)}
               >
                 {option}
