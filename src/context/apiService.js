@@ -45,12 +45,12 @@ class ShirayukiAPIService {
     return this.apiCall('/top10');
   }
 
-  getMonthlyTop10 = async () => {
-    return this.apiCall('/monthly10');
+  getWeekly10 = async () => {
+    return this.apiCall('/weekly10');
   }
 
-  getWeeklyTop10 = async () => {
-    return this.apiCall('/weekly10');
+  getMonthly10 = async () => {
+    return this.apiCall('/monthly10');
   }
 
   // Schedule
@@ -101,6 +101,10 @@ class ShirayukiAPIService {
 const apiService = new ShirayukiAPIService();
 
 export default apiService;
+// Leaderboard API exports for direct import
+export const getTop10 = apiService.getTop10;
+export const getWeekly10 = apiService.getWeekly10;
+export const getMonthly10 = apiService.getMonthly10;
 
 // Also export the class for custom instances if needed
 export { ShirayukiAPIService };

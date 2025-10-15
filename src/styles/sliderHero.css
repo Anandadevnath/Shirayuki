@@ -22,7 +22,7 @@
 }
 /* Ensure the home page background stretches full width */
 .home-full-bg {
-  width: 99.5vw;
+  width: 99vw;
   min-height: 100vh;
   margin: 0;
   padding: 0;

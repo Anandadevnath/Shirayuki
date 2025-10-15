@@ -1,22 +1,42 @@
-/* Custom scrollbar for webkit browsers */
+
+/* Modern Black Animated Scrollbar */
 ::-webkit-scrollbar {
-  width: 8px;
+  width: 10px;
+  background: transparent;
 }
 
 ::-webkit-scrollbar-track {
-  background: rgba(30, 41, 59, 0.3);
-  border-radius: 4px;
+  background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.2) inset;
+}
+
+@keyframes scrollbar-thumb-animate {
+  0% {
+    background: linear-gradient(135deg, #111 0%, #333 100%);
+    box-shadow: 0 0 8px #000, 0 0 0px #fff0;
+  }
+  50% {
+    background: linear-gradient(135deg, #222 0%, #444 100%);
+    box-shadow: 0 0 16px #6366f1, 0 0 8px #fff2;
+  }
+  100% {
+    background: linear-gradient(135deg, #111 0%, #333 100%);
+    box-shadow: 0 0 8px #000, 0 0 0px #fff0;
+  }
 }
 
 ::-webkit-scrollbar-thumb {
-  background: linear-gradient(135deg, rgba(75, 85, 99, 0.6), rgba(55, 65, 81, 0.6));
-  border-radius: 4px;
-  -webkit-backdrop-filter: blur(10px);
-  backdrop-filter: blur(10px);
+  border-radius: 8px;
+  background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
+  box-shadow: 0 0 8px #000, 0 0 0px #fff0;
+  animation: scrollbar-thumb-animate 2.5s ease-in-out infinite;
+  transition: background 0.3s, box-shadow 0.3s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, rgba(75, 85, 99, 0.8), rgba(55, 65, 81, 0.8));
+  background: linear-gradient(135deg, #6366f1 0%, #18181b 100%);
+  box-shadow: 0 0 24px #6366f1, 0 0 8px #fff2;
 }
 
 /* Thin scrollbar utilities */

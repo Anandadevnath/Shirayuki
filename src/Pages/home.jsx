@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import Leaderboard from '../components/Leaderboard.jsx';
+import LatestAnimeCard from '../components/LatestAnimeCard.jsx';
 import { FiClock, FiCalendar } from 'react-icons/fi';
 import { MdOutlineHd } from 'react-icons/md';
 import { BsFillVolumeUpFill, BsFillChatLeftTextFill } from 'react-icons/bs';
@@ -290,17 +292,16 @@ function Home() {
             {homeData &&
               Array.isArray(homeData) &&
               homeData.filter((anime) => anime.section === 'trending').length >
-                0 && (
+              0 && (
                 <section className="mb-20" style={{ marginTop: '-2rem' }}>
                   <div className="w-full overflow-hidden" id="trending-scroll-container">
                     <div
                       className="flex gap-3 pl-6 pr-6 pb-4 transition-transform duration-500 ease-in-out"
                       style={{
-                          width: `${
-                            homeData.filter((anime) => anime.section === 'trending').length * (220 + 12)
+                        width: `${homeData.filter((anime) => anime.section === 'trending').length * (220 + 12)
                           }px`,
-                          transform: `translateX(-${trendingSlideIndex * (220 + 12)}px)`
-                        }}
+                        transform: `translateX(-${trendingSlideIndex * (220 + 12)}px)`
+                      }}
                     >
                       {homeData
                         .filter((anime) => anime.section === 'trending')
@@ -348,84 +349,30 @@ function Home() {
               </section>
             )}
 
-            {/* --- LATEST --- */}
+            {/* --- LATEST + LEADERBOARD --- */}
             {homeData && Array.isArray(homeData) && homeData.length > 0 && (
               <section className="mb-16">
-                <div className="bg-black/10 backdrop-blur-xl rounded-3xl border border-white/10 p-8 shadow-xl">
-                  <h2 className="text-3xl font-bold text-white mb-8">
-                    🔥 Latest Anime
-                  </h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                    {homeData.slice(0, 18).map((anime, index) => (
-                      <div
-                        key={`${anime.href || 'anime'}-${index}`}
-                        className="group"
-                      >
-                        <div
-                          className="bg-black/40 rounded-2xl overflow-hidden border border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer hover:scale-105"
-                          onClick={() => handleAnimeClick(anime.href)}
-                        >
-                          <div className="aspect-[3/4] relative">
-                            <img
-                              src={anime.image || '/placeholder-anime.jpg'}
-                              alt={anime.title}
-                              className="w-full h-full object-cover"
-                            />
-                            <div className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg">
-                              #{index + 1}
-                            </div>
-                          </div>
-                          <div className="p-4">
-                            <h3 className="text-white font-bold text-sm line-clamp-2 mb-2">
-                              {anime.title}
-                            </h3>
-                            <div className="text-xs text-gray-400">
-                              Click to view details
-                            </div>
-                          </div>
-                        </div>
+                <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
+                  <div style={{ flex: 1 }}>
+                    <div className="bg-black/10 backdrop-blur-xl rounded-xl border border-white/10 p-8 shadow-xl">
+                      <h2 className="text-3xl font-bold text-white mb-8">
+                        🔥 Recently Updated
+                      </h2>
+                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+                        {homeData.filter(anime => anime.section === 'recently_updated').slice(0, 18).map((anime, index) => (
+                          <LatestAnimeCard
+                            key={`${anime.href || 'anime'}-${index}`}
+                            anime={anime}
+                            rank={index + 1}
+                            onClick={() => handleAnimeClick(anime.href)}
+                          />
+                        ))}
                       </div>
-                    ))}
+                    </div>
                   </div>
-                </div>
-              </section>
-            )}
-
-            {/* --- ALL ANIME --- */}
-            {homeData && Array.isArray(homeData) && homeData.length > 0 && (
-              <section className="mb-16">
-                <div className="bg-black/10 backdrop-blur-xl rounded-3xl border border-white/10 p-8 shadow-xl">
-                  <h2 className="text-3xl font-bold text-white mb-8">
-                    📚 All Anime ({homeData.length})
-                  </h2>
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-4">
-                    {homeData.map((anime, index) => (
-                      <div
-                        key={`${anime.href || 'anime'}-${index}`}
-                        className="group"
-                      >
-                        <div
-                          className="bg-black/40 rounded-xl overflow-hidden border border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer hover:scale-105"
-                          onClick={() => handleAnimeClick(anime.href)}
-                        >
-                          <div className="aspect-[3/4] relative">
-                            <img
-                              src={anime.image || '/placeholder-anime.jpg'}
-                              alt={anime.title}
-                              className="w-full h-full object-cover"
-                            />
-                          </div>
-                          <div className="p-3">
-                            <h3 className="text-white font-semibold text-sm line-clamp-2 mb-1 group-hover:text-pink-300 transition-colors">
-                              {anime.title}
-                            </h3>
-                            <div className="text-xs text-gray-400">
-                              Click to watch
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
+                  <div style={{ minWidth: 320, maxWidth: 360, width: '100%' }}>
+                    {/* Leaderboard Section */}
+                    <Leaderboard />
                   </div>
                 </div>
               </section>
