@@ -9,10 +9,10 @@ class ShirayukiAPIService {
     try {
       console.log('API Service - baseURL:', this.baseURL);
       console.log('API Service - endpoint:', endpoint);
-      
+
       const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
       console.log('API Service - final URL:', url);
-      
+
       const defaultOptions = {
         method: 'GET',
         headers: {
@@ -23,15 +23,28 @@ class ShirayukiAPIService {
       };
 
       const response = await fetch(url, defaultOptions);
-      
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
+
+      let responseBody = null;
+      try {
+        responseBody = await response.clone().json();
+      } catch (e) {
+        responseBody = await response.text();
       }
-      
-      return await response.json();
+
+      if (!response.ok) {
+        const errorInfo = {
+          message: `HTTP error! status: ${response.status}`,
+          status: response.status,
+          body: responseBody
+        };
+        console.error('API call failed:', errorInfo);
+        return { error: true, ...errorInfo };
+      }
+
+      return responseBody;
     } catch (error) {
       console.error('API call failed:', error);
-      throw error;
+      return { error: true, message: error.message };
     }
   }
 
@@ -60,7 +73,6 @@ class ShirayukiAPIService {
 
   // A-Z anime list
   getAZAnimeList = async (page = 1) => {
-    // We'll use direct endpoints for now since buildEndpoint has dependencies
     return this.apiCall(`/az-all-anime/all/?page=${page}`);
   }
 
@@ -83,11 +95,17 @@ class ShirayukiAPIService {
     return this.apiCall(`/episode-stream?id=${animeId}&ep=${episode}`);
   }
 
+  // Anime Details
   getAnimeDetails = async (animeTitle) => {
-    return this.apiCall(`/anime/${animeTitle}`);
+    let formattedTitle = animeTitle
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .replace(/--+/g, '-');
+    formattedTitle = encodeURIComponent(formattedTitle);
+    return this.apiCall(`/anime/${formattedTitle}`);
   }
 
-  // Utility methods
   setBaseURL = (newBaseURL) => {
     this.baseURL = newBaseURL;
   }
@@ -97,11 +115,9 @@ class ShirayukiAPIService {
   }
 }
 
-// Create and export a singleton instance
 const apiService = new ShirayukiAPIService();
 
 export default apiService;
-// Leaderboard API exports for direct import
 export const getTop10 = apiService.getTop10;
 export const getWeekly10 = apiService.getWeekly10;
 export const getMonthly10 = apiService.getMonthly10;

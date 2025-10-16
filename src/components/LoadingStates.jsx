@@ -18,7 +18,6 @@ const LoadingSpinner = ({ size = 'medium' }) => {
         className="animate-spin"
         style={{ display: 'block' }}
       >
-        {/* Anime eye style spinner */}
         <circle
           cx="32"
           cy="32"

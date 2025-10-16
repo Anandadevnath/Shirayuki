@@ -115,11 +115,10 @@ function Home() {
     if (typeof animeOrId === 'string') {
       resolvedId = animeOrId;
     } else if (typeof animeOrId === 'object') {
-      resolvedId =
-        animeOrId.id || animeOrId.slug || animeOrId.animeId || animeOrId._id;
+      resolvedId = animeOrId.japanese || animeOrId.title || animeOrId.id || animeOrId.slug || animeOrId.animeId || animeOrId._id;
     }
     if (!resolvedId) return;
-    navigate(`/anime/${resolvedId}`);
+    navigate(`/anime/${encodeURIComponent(resolvedId)}`);
   };
 
   useEffect(() => {
@@ -157,7 +156,7 @@ function Home() {
   return (
     <div
       className="home-full-bg relative overflow-x-hidden"
-      style={{ background: '#000000' }}
+      style={{ background: '#000', minHeight: '100vh', width: '100vw', position: 'relative', zIndex: 0 }}
     >
       <div className="absolute inset-0" style={{ background: 'transparent' }} />
 
@@ -311,7 +310,7 @@ function Home() {
                             className="flex-shrink-0 group relative"
                           >
                             <div
-                              onClick={() => handleAnimeClick(anime.href)}
+                              onClick={() => handleAnimeClick(anime)}
                               className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl w-[180px] h-[240px] md:w-[220px] md:h-[300px]"
                             >
                               <img
@@ -379,10 +378,10 @@ function Home() {
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
                         {homeData.filter(anime => anime.section === 'recently_updated').slice(0, 18).map((anime, index) => (
                           <LatestAnimeCard
-                            key={`${anime.href || 'anime'}-${index}`}
+                            key={`${anime.slug || anime.title || 'anime'}-${index}`}
                             anime={anime}
                             rank={index + 1}
-                            onClick={() => handleAnimeClick(anime.href)}
+                            onClick={() => handleAnimeClick(anime)}
                           />
                         ))}
                       </div>
