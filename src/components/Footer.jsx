@@ -33,7 +33,7 @@ export default function Footer() {
           <div className="flex items-center gap-3">
             <img src="../../public/shirayuki.png" alt="Shirayuki Logo" className="w-20 h-20 object-contain" />
             <div>
-              <div className="text-white text-2xl font-semibold">Shirayuki</div>
+              <div className="text-white text-2xl font-semibold">🇸🇭🇮🇷🇦🇾🇺🇰🇮</div>
               <div className="text-xs text-gray-400">Built with ❤️ for anime lovers</div>
             </div>
           </div>

@@ -55,7 +55,7 @@ class ShirayukiAPIService {
 
   // Schedule
   getSchedule = async () => {
-    return this.apiCall('/schedule');
+    return this.apiCall('/db-schedule');
   }
 
   // A-Z anime list

@@ -363,5 +363,5 @@ html, body {
 
 .equal-height > * {
   height: 100%;
-  min-height: 700px; /* Increased height to accommodate 10 items */
+  min-height: 700px; 
 }

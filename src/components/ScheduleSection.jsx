@@ -75,8 +75,15 @@ export default function ScheduleSection() {
                                 .sort((a, b) => a.time.localeCompare(b.time))
                                 .map((item, idx) => (
                                     <tr key={idx} className="border-b border-white/20 hover:bg-white/10 transition">
-                                        <td className="py-2 px-4 whitespace-nowrap text-gray-300 font-mono text-lg" style={{ width: '100px' }}>{item.time}</td>
-                                        <td className="py-2 px-4 font-semibold text-lg">{item.anime}</td>
+                                        {/* left: show index number instead of time */}
+                                        <td className="py-2 px-4 whitespace-nowrap text-gray-300 font-mono text-lg" style={{ width: '100px' }}>{idx + 1}</td>
+                                        {/* main cell: anime title with time shown as a small label pinned to the right */}
+                                        <td className="py-2 px-4 font-semibold text-lg relative pr-28">
+                                            <span>{item.anime}</span>
+                                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-sm text-gray-400 font-normal">
+                                                {item.time}
+                                            </span>
+                                        </td>
                                     </tr>
                                 ))}
                         </tbody>

@@ -58,12 +58,23 @@ function AnimeSections({ data }) {
     return acc;
   }, {});
   return (
-    <div className="flex gap-10 justify-center mt-8">
+    <div className="flex flex-col md:flex-row gap-8 md:gap-10 justify-center mt-8">
       {sectionOrder.map((section) => (
-        <div key={section} style={{ flex: 1, minWidth: 220, maxWidth: 700 }}>
-          <h2 className="text-pink-300 font-bold text-3xl mb-6 text-center">
-            {sectionTitles[section]}
-          </h2>
+  <div key={section} className="w-full md:flex-1 md:min-w-[220px] md:max-w-[700px]">
+          <div className="flex flex-col md:flex-row items-center justify-center gap-6 mb-6">
+            <img
+              src={
+                section === 'most_popular'
+                  ? 'https://i.imgur.com/vUPpEb4.gif'
+                  : section === 'most_favorite'
+                  ? 'https://media.tenor.com/LElrAxuxUBoAAAAM/one-piece.gif'
+                  : 'https://image.myanimelist.net/ui/BQM6jEZ-UJLgGUuvrNkYUE7zFolqaImvCFFp13Snu8CbnSZHME8OKeWtqSXUw3CPTpdHkFXphA4-zdId5WzXxQ'
+              }
+              alt="section-icon"
+              className="w-24 h-24 rounded-full object-cover opacity-90"
+            />
+            <h2 className="text-white font-bold text-3xl text-center md:text-left m-0">{sectionTitles[section]}</h2>
+          </div>
           <div>
             {grouped[section].map((anime) => (
               <AnimeCard key={anime.title} anime={anime} />

@@ -311,9 +311,8 @@ function Home() {
                             className="flex-shrink-0 group relative"
                           >
                             <div
-                              className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl"
                               onClick={() => handleAnimeClick(anime.href)}
-                              style={{ width: '220px', height: '300px' }}
+                              className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl w-[180px] h-[240px] md:w-[220px] md:h-[300px]"
                             >
                               <img
                                 src={anime.image || '/placeholder-anime.jpg'}
@@ -352,8 +351,8 @@ function Home() {
             {/* --- LATEST + LEADERBOARD --- */}
             {homeData && Array.isArray(homeData) && homeData.length > 0 && (
               <section className="mb-16">
-                <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
+                  <div className="flex-1 flex flex-col gap-8">
                     <div className="bg-black/10 backdrop-blur-xl rounded-xl border border-white/10 p-8 shadow-xl">
                       <h2 className="text-3xl font-bold text-white mb-8" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                         {/* Fire Icon SVG for better consistency */}
@@ -390,7 +389,7 @@ function Home() {
                     </div>
                     <ScheduleSection />
                   </div>
-                  <div style={{ minWidth: 320, maxWidth: 360, width: '100%' }}>
+                  <div className="w-full md:w-[360px] md:min-w-[320px]">
                     {/* Leaderboard Section */}
                     <Leaderboard />
                   </div>

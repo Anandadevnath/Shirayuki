@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useShirayukiAPI } from '../context';
-import { useLocation } from 'react-router-dom';
+import { useLocation, Link } from 'react-router-dom';
 
 export default function Navbar() {
   const loc = useLocation();
@@ -90,10 +90,10 @@ export default function Navbar() {
       <div className="max-w-7xl mx-16 px-4 py-2 flex items-cente ">
         {/* Logo, Title, and Search Bar in a row */}
         <div className="flex items-center w-full" style={{ gap: '2.5rem' }}>
-          <div className="flex items-center gap-3 flex-shrink-0" style={{ minWidth: '15rem' }}>
+          <Link to="/" className="flex items-center gap-3 flex-shrink-0" style={{ minWidth: '15rem' }}>
             <img src="../../public/shirayuki.png" alt="Shirayuki Logo" className="w-16 h-16 object-contain" />
-            <span className="text-white font-bold text-3xl tracking-wide">𝚂𝚑𝚒𝚛𝚊𝚢𝚞𝚔𝚒</span>
-          </div>
+            <span className="text-white font-bold text-4xl tracking-wide">🇸🇭🇮🇷🇦🇾🇺🇰🇮</span>
+          </Link>
           <form className="relative flex-1 max-w-2xl ml-8" onSubmit={e => e.preventDefault()} ref={inputRef}>
             <input
               type="text"

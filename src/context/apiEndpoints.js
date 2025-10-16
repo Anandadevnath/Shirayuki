@@ -12,7 +12,7 @@ export const API_ENDPOINTS = {
   TOP_10: "/top10",
   MONTHLY_TOP_10: "/monthly10",
   WEEKLY_TOP_10: "/weekly10",
-  SCHEDULE: "/schedule",
+  SCHEDULE: "/db-schedule",
   AZ_ALL_ANIME: "/az-all-anime/all/",
   GENRE: "/genere/",
   SEARCH: "/search",
