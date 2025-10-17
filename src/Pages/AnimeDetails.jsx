@@ -109,14 +109,14 @@ function AnimeDetails() {
       <main className="max-w-7xl mx-auto -px-4 py-0">
         <div className="grid grid-cols-1 gap-8">
           <section>
-            <div className="bg-black rounded-md border border-white/10 p-0 relative overflow-hidden shadow-2xl">
-              <div className="relative w-full h-[680px] rounded-md overflow-hidden">
+            <div className="bg-black rounded-2xl border border-white/10 p-0 relative overflow-hidden shadow-2xl">
+              <div className="relative w-full h-[680px] rounded-2xl overflow-hidden">
                 <div
                   aria-hidden
                   className="absolute inset-0 z-0 w-full h-full bg-center bg-cover"
                   style={{
                     backgroundImage: `url(${poster})`,
-                    filter: 'blur(150px) brightness(0.6) contrast(0.95)',
+                    filter: 'blur(200px) brightness(0.3) contrast(1)',
                     transform: 'scale(1.04)'
                   }}
                 />
