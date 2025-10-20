@@ -216,7 +216,32 @@ function AnimeDetails() {
                       </div>
                       <p className="text-gray-200 leading-relaxed mb-4 line-clamp-6">{info?.description || info?.info?.description || 'No description available.'}</p>
                       <div className="flex items-center gap-4">
-                        <button onClick={() => navigate(`/anime/${resolveId(info)}/episodes`)} className="bg-white text-black px-6 py-2 rounded-full font-semibold shadow-lg transform hover:-translate-y-0.5 transition">Play</button>
+                        <button
+                          onClick={() => {
+                            // prefer an id/slug from the fetched info (more specific like "one-piece-dub"),
+                            // fallback to the original resolvedId param
+                            const target = resolveId(info) || resolvedId;
+                            if (target) {
+                              // pass sub count (prefer numeric) to the streaming page so it can render episodes quickly
+                              const subCountNum = Number(subDisplay) && !Number.isNaN(Number(subDisplay)) ? Number(subDisplay) : null;
+
+                              // slugify the target similarly to getAnimeDetails formatting
+                              const slugify = (s) => encodeURIComponent(
+                                String(s)
+                                  .toLowerCase()
+                                  .replace(/[^a-z0-9]+/g, '-')
+                                  .replace(/^-+|-+$/g, '')
+                                  .replace(/--+/g, '-')
+                              );
+
+                              const slug = slugify(target);
+                              navigate(`/anime/${slug}/episodes`, { state: { subCount: subCountNum, originalId: target } });
+                            }
+                          }}
+                          className="bg-white text-black px-6 py-2 rounded-full font-semibold shadow-lg transform hover:-translate-y-0.5 transition"
+                        >
+                          Play
+                        </button>
                         <button className="bg-white/10 hover:bg-white/20 text-white px-5 py-3 rounded-full">+ Add to list</button>
                       </div>
 

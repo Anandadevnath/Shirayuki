@@ -92,7 +92,15 @@ class ShirayukiAPIService {
 
   // Streaming and details
   getEpisodeStream = async (animeId, episode) => {
-    return this.apiCall(`/episode-stream?id=${animeId}&ep=${episode}`);
+    if (!animeId) return { error: true, message: 'Missing animeId' };
+    // slugify similar to getAnimeDetails formatting
+    let formatted = String(animeId)
+      .toLowerCase()
+      .replace(/[^a-z0-9]+/g, '-')
+      .replace(/^-+|-+$/g, '')
+      .replace(/--+/g, '-');
+    formatted = encodeURIComponent(formatted);
+    return this.apiCall(`/episode-stream?id=${formatted}&ep=${episode}`);
   }
 
   // Anime Details
