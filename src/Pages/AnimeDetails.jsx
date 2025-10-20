@@ -5,7 +5,6 @@ import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
 
 function AnimeDetails() {
   const { animeId } = useParams();
-  // Support navigation by title/slug
   const resolvedId = animeId;
   const navigate = useNavigate();
   const { getAnimeDetails, getHomepage, loading, error, clearError } = useShirayukiAPI();
@@ -13,6 +12,25 @@ function AnimeDetails() {
   const [episodesData, setEpisodesData] = useState(null);
   const [recommended, setRecommended] = useState([]);
   const [videoSrc, setVideoSrc] = useState(null);
+  const [homeCounts, setHomeCounts] = useState(null);
+
+  const normalizeDubValue = (raw) => {
+    if (raw == null) return null;
+    if (typeof raw === 'object') {
+      raw = raw.dub ?? raw.dubbed ?? raw?.episodes?.dub ?? raw.dub_count ?? raw;
+    }
+    if (raw == null) return null;
+    if (typeof raw === 'boolean') return raw ? 1 : null;
+    if (typeof raw === 'number') return raw > 0 ? raw : null;
+    if (typeof raw === 'string') {
+      const s = raw.trim().toLowerCase();
+      if (s === '' || s === 'n/a' || s === 'na' || s === 'no' || s === 'none') return null;
+      const n = Number(s);
+      if (!Number.isNaN(n)) return n > 0 ? n : null;
+      return raw;
+    }
+    return null;
+  };
 
   useEffect(() => {
     if (resolvedId) fetchAnimeDetails();
@@ -26,8 +44,28 @@ function AnimeDetails() {
       try {
         const home = await getHomepage();
         setRecommended(home?.data?.trendingAnimes?.slice(0, 8) || []);
+        const homeList = home?.data || [];
+        const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+        const resolvedName = (details?.data?.anime?.info?.name || details?.data?.anime?.title || details?.data?.name || details?.name || details?.title || resolvedId || '').toString();
+        const normalizedResolved = normalize(resolvedName);
+        const trendingCandidates = (homeList || []).filter((h) => (h?.section || '').toString().toLowerCase() === 'trending');
+        const findMatchIn = (list) => list.find((h) => {
+          const titles = [h?.title, h?.japanese, h?.href, h?.name, h?.slug];
+          return titles.some((t) => normalize(t) === normalizedResolved) || (h?.href && normalize(h.href).includes(normalizedResolved));
+        });
+        let match = findMatchIn(trendingCandidates) || findMatchIn(homeList);
+        if (match) {
+          const extractSub = (m) => m?.sub ?? m?.subtitles ?? m?.episodes?.sub ?? m?.sub_count ?? null;
+          setHomeCounts({
+            sub: extractSub(match),
+            dub: normalizeDubValue(match)
+          });
+        } else {
+          setHomeCounts(null);
+        }
       } catch (e) {
         setRecommended([]);
+        setHomeCounts(null);
       }
     } catch (err) {
       console.error('Failed to fetch anime details:', err);
@@ -68,7 +106,6 @@ function AnimeDetails() {
   const relatedAnimes = raw?.relatedAnimes || raw?.related || raw?.related_animes || [];
   const recommendedAnimes = raw?.recommendedAnimes || raw?.recommended || raw?.recommended_animes || recommended || [];
 
-  // Extract additional info for sidebar display
   const type = info?.type || moreInfo?.type || 'Unknown';
   const country = info?.country || moreInfo?.country || 'Unknown';
   const genres = info?.genres || moreInfo?.genres || [];
@@ -81,7 +118,34 @@ function AnimeDetails() {
   const stats = info?.stats || info?.info?.stats || info;
   const epInfo = stats?.episodes || info?.episodes || { sub: 'N/A', dub: 'N/A' };
 
-  // episodes list may come from the episodes endpoint or be embedded in the details
+  const subDisplay = (() => {
+    if (homeCounts && homeCounts.sub != null) return homeCounts.sub;
+    if (info?.sub != null) return info.sub;
+    if (info?.subtitles != null) return info.subtitles;
+    if (epInfo?.sub != null) return epInfo.sub;
+    return 'N/A';
+  })();
+
+  const dubDisplay = (() => {
+    let val = homeCounts && homeCounts.dub != null ? homeCounts.dub : (info?.dub != null ? info.dub : (info?.dubbed != null ? info.dubbed : (epInfo?.dub != null ? epInfo.dub : null)));
+    if (val == null) return 'N/A';
+    if (typeof val === 'string') {
+      const s = val.trim().toLowerCase();
+      if (s === 'n/a' || s === 'na') return 'N/A';
+      if (s === 'no') return '1';
+      const n = Number(val);
+      if (!Number.isNaN(n)) return n;
+      return val;
+    }
+    if (typeof val === 'boolean') return '1';
+    if (typeof val === 'number') {
+      if (val === 0) return '1';
+      return val;
+    }
+
+    return 'N/A';
+  })();
+
   const episodesList = episodesData?.data?.episodes || episodesData?.episodes || info?.episodesList || [];
 
   const openVideo = (src) => setVideoSrc(src);
@@ -109,8 +173,8 @@ function AnimeDetails() {
       <main className="max-w-7xl mx-auto -px-4 py-0">
         <div className="grid grid-cols-1 gap-8">
           <section>
-            <div className="bg-black rounded-2xl border border-white/10 p-0 relative overflow-hidden shadow-2xl">
-              <div className="relative w-full h-[680px] rounded-2xl overflow-hidden">
+            <div className="bg-gradient-to-br from-black/80 via-black/60 to-transparent rounded-2xl p-0 relative overflow-hidden shadow-2xl">
+              <div className="relative w-full h-[720px] rounded-2xl overflow-hidden">
                 <div
                   aria-hidden
                   className="absolute inset-0 z-0 w-full h-full bg-center bg-cover"
@@ -128,20 +192,31 @@ function AnimeDetails() {
                   className="absolute inset-0 w-full h-full object-cover"
                   style={{ mixBlendMode: 'overlay', opacity: 0.35 }}
                 />
-                <div className="absolute inset-0 bg-black/20" />
+                <div className="absolute inset-0  backdrop-blur-sm" />
+                {((info?.japanese || info?.japanese_lang || raw?.japanese || raw?.japanese_lang)) && (
+                  <div className="absolute top-6 right-8 z-30">
+                    <div className="text-white text-4xl  tracking-wider px-4 py-2 rounded-md " title={info?.japanese || info?.japanese_lang || raw?.japanese || raw?.japanese_lang}>
+                      {info?.japanese || info?.japanese_lang || raw?.japanese || raw?.japanese_lang}
+                    </div>
+                  </div>
+                )}
                 <div className="absolute left-6 top-6 bottom-6 right-6 lg:right-6 flex flex-col gap-6 text-white">
                   <div>
-                    <h1 className="text-4xl font-extrabold mb-3 drop-shadow">{name}</h1>
+                    <h1 className="text-5xl font-bold mb-3 " style={{ lineHeight: 1 }}>{name}</h1>
                     <div className="flex items-center gap-3 mb-4">
-                      <span className="bg-white/10 text-white px-3 py-1 rounded-full text-xs">{stats?.quality || 'HD'}</span>
+                      <span className="bg-gradient-to-r from-white/80 to-white/60 text-black px-3 py-1 rounded-full text-sm font-semibold">{stats?.quality || 'HD'}</span>
                       <span className="text-gray-200">{stats?.type || info?.type || moreInfo?.type || 'TV'} • {stats?.duration || info?.duration || moreInfo?.duration || '24m'}</span>
                     </div>
                   </div>
                   <div className="flex items-start justify-between gap-6">
                     <div className="max-w-full md:max-w-[60%]">
+                      <div className="flex items-center gap-2 -mt-5 mb-3">
+                        <span className="bg-black/60 text-white px-3 py-1 rounded-full text-sm">SUB: {subDisplay}</span>
+                        <span className="bg-black/60 text-white px-3 py-1 rounded-full text-sm">DUB: {dubDisplay}</span>
+                      </div>
                       <p className="text-gray-200 leading-relaxed mb-4 line-clamp-6">{info?.description || info?.info?.description || 'No description available.'}</p>
                       <div className="flex items-center gap-4">
-                        <button onClick={() => navigate(`/anime/${resolveId(info)}/episodes`)} className="bg-white hover:bg-fuchsia-100 text-black px-6 py-2 rounded-xl font-semibold">Play</button>
+                        <button onClick={() => navigate(`/anime/${resolveId(info)}/episodes`)} className="bg-white text-black px-6 py-2 rounded-full font-semibold shadow-lg transform hover:-translate-y-0.5 transition">Play</button>
                         <button className="bg-white/10 hover:bg-white/20 text-white px-5 py-3 rounded-full">+ Add to list</button>
                       </div>
 
@@ -155,10 +230,10 @@ function AnimeDetails() {
                             <div className="flex justify-between"><span className="text-gray-100 text-lg">Quality:</span><span className="text-md bg-black/30 text-white px-3 py-1 rounded-full">{quality}</span></div>
                           </div>
                           <div className="mt-4">
-                            <div className="flex flex-wrap gap-2">
+                            <div className="flex flex-wrap gap-3 items-center">
                               <div className="text-gray-100 text-lg mb-2">Genres:</div>
                               {genres.map((g, i) => (
-                                <span key={`${g}-${i}`} className="bg-black/30 text-white px-3 py-1 rounded-full text-md">{g}</span>
+                                <span key={`${g}-${i}`} className="bg-gradient-to-r from-black/40 to-black/20 text-white px-3 py-1 rounded-full text-md border border-white/10">{g}</span>
                               ))}
                             </div>
                           </div>
@@ -166,15 +241,14 @@ function AnimeDetails() {
                       </div>
                     </div>
 
-                    <div className="flex-shrink-0 w-40 h-56 rounded-xl overflow-hidden shadow-2xl border border-white/10 hidden md:block">
-                      <img src={poster} alt={name} loading="lazy" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder-anime.svg'; }} className="w-full h-full object-cover" />
+                    <div className="flex-shrink-0 w-48 md:w-56 h-72 md:h-96 rounded-xl overflow-hidden shadow-2xl border border-white/10 hidden md:block">
+                      <img src={poster} alt={name} loading="lazy" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder-anime.svg'; }} className="w-full h-full object-cover transform hover:scale-105 transition-transform duration-300" />
                     </div>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Episodes */}
             <div className="mt-8 bg-black rounded-3xl border border-white/10 p-6 shadow-xl">
               <h2 className="text-2xl text-white font-bold mb-4">Episodes</h2>
 
@@ -196,62 +270,7 @@ function AnimeDetails() {
                 )}
               </div>
             </div>
-
           </section>
-
-          {/* Characters & Voice Actors (moved below main content) */}
-          {(info?.charactersVoiceActors || []).length > 0 && (
-            <div className="bg-black rounded-2xl border border-white/10 p-6 shadow-xl">
-              <h3 className="text-xl font-bold text-white mb-4">Characters & Voice Actors</h3>
-              <div className="space-y-3">
-                {info.charactersVoiceActors.map((cva, i) => (
-                  <div key={cva.character?.id || cva.voiceActor?.id || i} className="flex items-center gap-3">
-                    <img src={pickBestImage(cva.character || {}, {})} loading="lazy" onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder-anime.svg'; }} alt={cva.character?.name} className="w-10 h-10 rounded-full object-cover" />
-                    <div className="flex-1">
-                      <div className="text-white font-semibold text-sm">{cva.character?.name}</div>
-                      <div className="text-gray-400 text-xs">{cva.character?.cast}</div>
-                      <div className="text-gray-300 text-xs mt-1">VA: {cva.voiceActor?.name} <span className="text-gray-400 text-xs">({cva.voiceActor?.cast})</span></div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Related Animes (moved below main content) */}
-          {(relatedAnimes || []).length > 0 && (
-            <div className="bg-black rounded-2xl border border-white/10 p-6 shadow-xl w-full mx-auto" style={{ maxWidth: '100vw' }}>
-              <h3 className="text-2xl font-bold text-white mb-6">Related Anime</h3>
-              <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6 w-full">
-                {relatedAnimes.slice(0, 10).map((r, i) => (
-                  <button
-                    key={r.id || i}
-                    onClick={() => goToAnime(r)}
-                    className="group flex flex-col items-center bg-gray-900 hover:bg-gradient-to-br hover:from-pink-600 hover:to-purple-700 transition-all duration-300 rounded-xl border border-white/10 shadow-lg p-3 cursor-pointer"
-                    style={{ minHeight: '260px', height: '260px', maxWidth: '180px', width: '100%' }}
-                  >
-                    <img
-                      src={pickBestImage(r, r)}
-                      alt={r.name}
-                      loading="lazy"
-                      onError={(e) => { e.currentTarget.onerror = null; e.currentTarget.src = '/placeholder-anime.svg'; }}
-                      className="w-full h-32 object-cover rounded-lg mb-3 shadow"
-                      style={{ maxWidth: '120px', height: '128px' }}
-                    />
-                    <div className="text-sm text-white font-semibold text-center line-clamp-2 mb-1 group-hover:text-pink-200 transition-colors">
-                      {r.name}
-                    </div>
-                    {r.type && (
-                      <span className="bg-pink-600/80 text-white px-2 py-0.5 rounded-full text-xs font-semibold mb-1">{r.type}</span>
-                    )}
-                    {r.episodes?.sub && (
-                      <span className="bg-blue-600/80 text-white px-2 py-0.5 rounded-full text-xs font-semibold mb-1">{r.episodes.sub} eps</span>
-                    )}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
         </div>
       </main>
     </div>

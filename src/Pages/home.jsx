@@ -327,7 +327,17 @@ function Home() {
                                   )}
                                 </div>
                               </div>
+                              {/* previously top-right badges removed; badges will show above title */}
                               <div className="absolute bottom-3 left-3 right-3">
+                                {/* SUB/DUB badges placed above the title */}
+                                <div className="flex gap-2 mb-2">
+                                  {typeof anime.sub !== 'undefined' && anime.sub !== null && (
+                                    <span className="bg-black/60 text-white text-xs px-2 py-1 rounded-full border border-white/20">SUB: {anime.sub}</span>
+                                  )}
+                                  {typeof anime.dub !== 'undefined' && anime.dub !== null && (
+                                    <span className="bg-black/60 text-white text-xs px-2 py-1 rounded-full border border-white/20">DUB: {anime.dub}</span>
+                                  )}
+                                </div>
                                 <h3 className="text-white font-bold text-sm line-clamp-2 drop-shadow-lg">
                                   {anime.title}
                                 </h3>
