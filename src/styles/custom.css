@@ -364,3 +364,9 @@ body {
   height: 100%;
   min-height: 700px;
 }
+
+@layer utilities {
+  .text-glow {
+    text-shadow: 0 2px 8px rgba(255, 255, 255, 0.315);
+  }
+}

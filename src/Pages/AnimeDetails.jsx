@@ -193,39 +193,36 @@ function AnimeDetails() {
                   style={{ mixBlendMode: 'overlay', opacity: 0.35 }}
                 />
                 <div className="absolute inset-0  backdrop-blur-sm" />
-                {((info?.japanese || info?.japanese_lang || raw?.japanese || raw?.japanese_lang)) && (
-                  <div className="absolute top-6 right-8 z-30">
-                    <div className="text-white text-4xl  tracking-wider px-4 py-2 rounded-md " title={info?.japanese || info?.japanese_lang || raw?.japanese || raw?.japanese_lang}>
-                      {info?.japanese || info?.japanese_lang || raw?.japanese || raw?.japanese_lang}
-                    </div>
-                  </div>
-                )}
                 <div className="absolute left-6 top-6 bottom-6 right-6 lg:right-6 flex flex-col gap-6 text-white">
                   <div>
-                    <h1 className="text-5xl font-bold mb-3 " style={{ lineHeight: 1 }}>{name}</h1>
-                    <div className="flex items-center gap-3 mb-4">
-                      <span className="bg-gradient-to-r from-white/80 to-white/60 text-black px-3 py-1 rounded-full text-sm font-semibold">{stats?.quality || 'HD'}</span>
-                      <span className="text-gray-200">{stats?.type || info?.type || moreInfo?.type || 'TV'} • {stats?.duration || info?.duration || moreInfo?.duration || '24m'}</span>
+                    <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                      <div>
+                        <h1 className="text-3xl font-extrabold leading-tight" style={{ lineHeight: 1 }}>{name}</h1>
+                        {(info?.japanese || info?.japanese_lang || raw?.japanese || raw?.japanese_lang) && (
+                          <div className="mt-2 mb-2 text-gray-300 text-xl italic tracking-wide max-w-3xl" title={info?.japanese || info?.japanese_lang || raw?.japanese || raw?.japanese_lang}>
+                            {info?.japanese || info?.japanese_lang || raw?.japanese || raw?.japanese_lang}
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <div className="flex items-start justify-between gap-6">
                     <div className="max-w-full md:max-w-[60%]">
                       <div className="flex items-center gap-2 -mt-5 mb-3">
-                        <span className="bg-black/60 text-white px-3 py-1 rounded-full text-sm">SUB: {subDisplay}</span>
-                        <span className="bg-black/60 text-white px-3 py-1 rounded-full text-sm">DUB: {dubDisplay}</span>
+                        <div className="flex items-center gap-3">
+                          <span className="bg-gradient-to-r from-white/80 to-white/60 text-black px-3 py-1 rounded-full text-sm font-semibold shadow">{stats?.quality || 'HD'}</span>
+                          <span className="text-gray-200 hidden sm:inline">{stats?.type || info?.type || moreInfo?.type || 'TV'} • {stats?.duration || info?.duration || moreInfo?.duration || '24m'}</span>
+                        </div>
+                        <span className="text-white  px-2 py-1 rounded-full text-sm">SUB: {subDisplay}</span>
+                        <span className="text-white  py-1 rounded-full text-sm">DUB: {dubDisplay}</span>
                       </div>
                       <p className="text-gray-200 leading-relaxed mb-4 line-clamp-6">{info?.description || info?.info?.description || 'No description available.'}</p>
                       <div className="flex items-center gap-4">
                         <button
                           onClick={() => {
-                            // prefer an id/slug from the fetched info (more specific like "one-piece-dub"),
-                            // fallback to the original resolvedId param
                             const target = resolveId(info) || resolvedId;
                             if (target) {
-                              // pass sub count (prefer numeric) to the streaming page so it can render episodes quickly
                               const subCountNum = Number(subDisplay) && !Number.isNaN(Number(subDisplay)) ? Number(subDisplay) : null;
-
-                              // slugify the target similarly to getAnimeDetails formatting
                               const slugify = (s) => encodeURIComponent(
                                 String(s)
                                   .toLowerCase()
@@ -247,18 +244,18 @@ function AnimeDetails() {
 
                       <div className="hidden lg:block mt-6">
                         <div className="text-black">
-                          <div className="space-y-3">
-                            <div className="flex justify-between"><span className="text-gray-100 text-lg">Type:</span><span className="text-md bg-black/30 text-white px-3 py-1 rounded-full">{type}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-100 text-lg">Country:</span><span className=" text-md bg-black/30 text-white px-3 py-1 rounded-full">{country}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-100 text-lg">Status:</span><span className=" text-md bg-black/30 text-white px-3 py-1 rounded-full">{status}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-100 text-lg">Released:</span><span className=" text-md bg-black/30 text-white px-3 py-1 rounded-full">{released}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-100 text-lg">Quality:</span><span className="text-md bg-black/30 text-white px-3 py-1 rounded-full">{quality}</span></div>
+                          <div className="space-y-1">
+                            <div className="flex justify-between"><span className="text-gray-100 text-md">Type:</span><span className="text-sm  text-white px-3 py-1 rounded-full">{type}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-100 text-md">Country:</span><span className=" text-sm  text-white px-3 py-1 rounded-full">{country}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-100 text-md">Status:</span><span className=" text-sm  text-white px-3 py-1 rounded-full">{status}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-100 text-md">Released:</span><span className=" text-sm  text-white px-3 py-1 rounded-full">{released}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-100 text-md">Quality:</span><span className="text-sm  text-white px-3 py-1 rounded-full">{quality}</span></div>
                           </div>
                           <div className="mt-4">
                             <div className="flex flex-wrap gap-3 items-center">
-                              <div className="text-gray-100 text-lg mb-2">Genres:</div>
+                              <div className="text-gray-100 text-md mb-2">Genres:</div>
                               {genres.map((g, i) => (
-                                <span key={`${g}-${i}`} className="bg-gradient-to-r from-black/40 to-black/20 text-white px-3 py-1 rounded-full text-md border border-white/10">{g}</span>
+                                <span key={`${g}-${i}`} className="text-glow text-white px-1 py-1 rounded-full text-md -mt-1">{g}</span>
                               ))}
                             </div>
                           </div>
