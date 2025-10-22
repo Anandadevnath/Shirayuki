@@ -6,7 +6,7 @@ import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
 function StreamingPage() {
     const { animeId } = useParams();
     const navigate = useNavigate();
-    const { getEpisodeStream, getAnimeDetails, loading, error, clearError } = useShirayukiAPI();
+    const { getEpisodeStream, getAnimeDetails, getHomepage, loading, error, clearError } = useShirayukiAPI();
     const location = useLocation();
 
     const [episodeCount, setEpisodeCount] = useState(null);
@@ -79,6 +79,15 @@ function StreamingPage() {
         const base = animeId.replace(/-dub$/i, '');
         return isDub ? `${base}-dub` : base;
     }, [animeId, isDub]);
+
+    const slugify = (str) => {
+        if (!str) return '';
+        return String(str)
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .replace(/--+/g, '-');
+    };
 
     useEffect(() => {
         // auto-load selectedEp for the effective id
@@ -270,19 +279,34 @@ function StreamingPage() {
                                             // fetch the stream using id override immediately
                                             await fetchStream(1, idToUse);
 
-                                            // update episode counts for this id
+                                            // Prefer homepage data for counts (more accurate for sub/dub)
                                             try {
-                                                const details = await getAnimeDetails(idToUse);
-                                                if (details && !details.error) {
-                                                    const raw = details?.data || details || {};
-                                                    const info = raw?.anime?.info || raw?.anime || raw?.info || raw;
-                                                    const epInfo = info?.episodes || info?.stats || {};
-                                                    const sub = epInfo?.sub ?? epInfo?.sub_count ?? info?.sub ?? null;
-                                                    if (sub && !Number.isNaN(Number(sub))) {
-                                                        setEpisodeCount(Number(sub));
-                                                    } else {
-                                                        const fallback = epInfo?.total || info?.total_episodes || info?.episodesCount || null;
-                                                        if (fallback && !Number.isNaN(Number(fallback))) setEpisodeCount(Number(fallback));
+                                                const home = await getHomepage();
+                                                const list = home?.data || [];
+                                                const base = idToUse; // base id formatted
+                                                const match = list.find((a) => {
+                                                    const candidateSlugs = [a.slug, a.id, a.animeId, a.title, a.japanese, a._id].filter(Boolean);
+                                                    return candidateSlugs.some((v) => slugify(String(v)) === slugify(base));
+                                                });
+                                                if (match) {
+                                                    const count = match.sub ?? match.sub_count ?? match.subs ?? null;
+                                                    if (count && !Number.isNaN(Number(count))) {
+                                                        setEpisodeCount(Number(count));
+                                                    }
+                                                } else {
+                                                    // fallback to details API if homepage doesn't have it
+                                                    const details = await getAnimeDetails(idToUse);
+                                                    if (details && !details.error) {
+                                                        const raw = details?.data || details || {};
+                                                        const info = raw?.anime?.info || raw?.anime || raw?.info || raw;
+                                                        const epInfo = info?.episodes || info?.stats || {};
+                                                        const sub = epInfo?.sub ?? epInfo?.sub_count ?? info?.sub ?? null;
+                                                        if (sub && !Number.isNaN(Number(sub))) {
+                                                            setEpisodeCount(Number(sub));
+                                                        } else {
+                                                            const fallback = epInfo?.total || info?.total_episodes || info?.episodesCount || null;
+                                                            if (fallback && !Number.isNaN(Number(fallback))) setEpisodeCount(Number(fallback));
+                                                        }
                                                     }
                                                 }
                                             } catch (e) {
@@ -306,19 +330,33 @@ function StreamingPage() {
                                             // fetch the stream using id override immediately
                                             await fetchStream(1, idToUse);
 
-                                            // update episode counts for this dub id
                                             try {
-                                                const details = await getAnimeDetails(idToUse);
-                                                if (details && !details.error) {
-                                                    const raw = details?.data || details || {};
-                                                    const info = raw?.anime?.info || raw?.anime || raw?.info || raw;
-                                                    const epInfo = info?.episodes || info?.stats || {};
-                                                    const sub = epInfo?.sub ?? epInfo?.sub_count ?? info?.sub ?? null;
-                                                    if (sub && !Number.isNaN(Number(sub))) {
-                                                        setEpisodeCount(Number(sub));
-                                                    } else {
-                                                        const fallback = epInfo?.total || info?.total_episodes || info?.episodesCount || null;
-                                                        if (fallback && !Number.isNaN(Number(fallback))) setEpisodeCount(Number(fallback));
+                                                const home = await getHomepage();
+                                                const list = home?.data || [];
+                                                const base = idToUse.replace(/-dub$/i, '');
+                                                const match = list.find((a) => {
+                                                    const candidateSlugs = [a.slug, a.id, a.animeId, a.title, a.japanese, a._id].filter(Boolean);
+                                                    return candidateSlugs.some((v) => slugify(String(v)) === slugify(base));
+                                                });
+                                                if (match) {
+                                                    const count = match.dub ?? match.dubs ?? match.dub_count ?? null;
+                                                    if (count && !Number.isNaN(Number(count))) {
+                                                        setEpisodeCount(Number(count));
+                                                    }
+                                                } else {
+                                                    // fallback
+                                                    const details = await getAnimeDetails(idToUse);
+                                                    if (details && !details.error) {
+                                                        const raw = details?.data || details || {};
+                                                        const info = raw?.anime?.info || raw?.anime || raw?.info || raw;
+                                                        const epInfo = info?.episodes || info?.stats || {};
+                                                        const sub = epInfo?.sub ?? epInfo?.sub_count ?? info?.sub ?? null;
+                                                        if (sub && !Number.isNaN(Number(sub))) {
+                                                            setEpisodeCount(Number(sub));
+                                                        } else {
+                                                            const fallback = epInfo?.total || info?.total_episodes || info?.episodesCount || null;
+                                                            if (fallback && !Number.isNaN(Number(fallback))) setEpisodeCount(Number(fallback));
+                                                        }
                                                     }
                                                 }
                                             } catch (e) {
