@@ -86,6 +86,7 @@ class ShirayukiAPIService {
     return this.apiCall(`/search?keyword=${encodeURIComponent(keyword)}`);
   }
 
+  // suggestion
   getSearchSuggestions = async (query) => {
     return this.apiCall(`/search/suggestions?q=${encodeURIComponent(query)}`);
   }
@@ -93,7 +94,6 @@ class ShirayukiAPIService {
   // Streaming and details
   getEpisodeStream = async (animeId, episode) => {
     if (!animeId) return { error: true, message: 'Missing animeId' };
-    // slugify similar to getAnimeDetails formatting
     let formatted = String(animeId)
       .toLowerCase()
       .replace(/[^a-z0-9]+/g, '-')
@@ -129,6 +129,4 @@ export default apiService;
 export const getTop10 = apiService.getTop10;
 export const getWeekly10 = apiService.getWeekly10;
 export const getMonthly10 = apiService.getMonthly10;
-
-// Also export the class for custom instances if needed
 export { ShirayukiAPIService };

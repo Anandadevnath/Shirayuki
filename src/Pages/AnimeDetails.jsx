@@ -255,7 +255,7 @@ function AnimeDetails() {
                             <div className="flex flex-wrap gap-3 items-center">
                               <div className="text-gray-100 text-md mb-2">Genres:</div>
                               {genres.map((g, i) => (
-                                <span key={`${g}-${i}`} className="text-glow text-white px-1 py-1 rounded-full text-md -mt-1">{g}</span>
+                                <span key={`${g}-${i}`} className="text-glow bg-black/40 text-white px-4 py-1 rounded-full text-sm -mt-1">{g}</span>
                               ))}
                             </div>
                           </div>

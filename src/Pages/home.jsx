@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import Leaderboard from '../components/Leaderboard.jsx';
 import ScheduleSection from '../components/ScheduleSection.jsx';
 import LatestAnimeCard from '../components/LatestAnimeCard.jsx';
@@ -9,6 +9,7 @@ import '../styles/sliderHero.css';
 import { useShirayukiAPI } from '../context';
 import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
 import { useNavigate } from 'react-router-dom';
+import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import AnimeSections from '../components/AnimeSections';
 
 function Home() {
@@ -19,7 +20,37 @@ function Home() {
   const [dragging, setDragging] = useState(false);
   const [slideAnimClass, setSlideAnimClass] = useState('');
   const [trendingSlideIndex, setTrendingSlideIndex] = useState(0);
+  const [trendingPaused, setTrendingPaused] = useState(false);
+  const [trendingDragging, setTrendingDragging] = useState(false);
+  const [trendingDragStartX, setTrendingDragStartX] = useState(null);
+  const [trendingDragDelta, setTrendingDragDelta] = useState(0);
+  const trendingIntervalRef = useRef(null);
   const navigate = useNavigate();
+
+  const handleTrendingPrev = () => {
+    // stop auto-advance when user manually navigates
+    setTrendingPaused(true);
+    if (trendingIntervalRef.current) {
+      clearInterval(trendingIntervalRef.current);
+      trendingIntervalRef.current = null;
+    }
+    setTrendingSlideIndex((prev) => Math.max(0, prev - 1));
+  };
+
+  const handleTrendingNext = () => {
+    // stop auto-advance when user manually navigates
+    setTrendingPaused(true);
+    if (trendingIntervalRef.current) {
+      clearInterval(trendingIntervalRef.current);
+      trendingIntervalRef.current = null;
+    }
+    const trendingData = homeData?.filter((anime) => anime.section === 'trending') || [];
+    const CARD_WIDTH = 220 + 12;
+    const CONTAINER_WIDTH = window.innerWidth * 0.9;
+    const visibleCards = Math.floor(CONTAINER_WIDTH / CARD_WIDTH);
+    const maxIndex = Math.max(0, trendingData.length - visibleCards);
+    setTrendingSlideIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
+  };
 
   const handleDragStart = (e) => {
     setDragging(true);
@@ -47,12 +78,14 @@ function Home() {
     : [];
 
   useEffect(() => {
-    if (!sliderData || sliderData.length <= 1) return;
+    const slideCount = Array.isArray(sliderData) ? sliderData.length : 0;
+    if (slideCount <= 1) return;
     const interval = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % sliderData.length);
+      setSlideAnimClass('slide-in-right');
+      setCurrentSlide((prev) => (prev + 1) % slideCount);
     }, 5000);
     return () => clearInterval(interval);
-  }, [sliderData]);
+  }, [sliderData.length]);
 
   useEffect(() => {
     const trendingData = homeData?.filter((anime) => anime.section === 'trending') || [];
@@ -62,8 +95,9 @@ function Home() {
     const CONTAINER_WIDTH = window.innerWidth * 0.9;
     const visibleCards = Math.floor(CONTAINER_WIDTH / CARD_WIDTH);
     const maxIndex = Math.max(0, trendingData.length - visibleCards);
+    if (trendingPaused) return undefined;
 
-    const interval = setInterval(() => {
+    trendingIntervalRef.current = setInterval(() => {
       setTrendingSlideIndex((prev) => {
         const nextIndex = prev + 1;
         if (nextIndex > maxIndex) {
@@ -72,7 +106,12 @@ function Home() {
         return nextIndex;
       });
     }, 2000);
-    return () => clearInterval(interval);
+    return () => {
+      if (trendingIntervalRef.current) {
+        clearInterval(trendingIntervalRef.current);
+        trendingIntervalRef.current = null;
+      }
+    };
   }, [homeData]);
 
   useEffect(() => {
@@ -123,7 +162,7 @@ function Home() {
 
   useEffect(() => {
     if (!slideAnimClass) return;
-    const timeout = setTimeout(() => setSlideAnimClass(''), 500);
+    const timeout = setTimeout(() => setSlideAnimClass(''), 600);
     return () => clearTimeout(timeout);
   }, [slideAnimClass, currentSlide]);
 
@@ -173,18 +212,19 @@ function Home() {
           onTouchEnd={handleDragEnd}
           style={{ userSelect: dragging ? 'none' : undefined }}
         >
-          <div
-            className={`slider-hero-anim-wrapper ${slideAnimClass}`}
-            style={{ width: '100%', height: '100%' }}
-          >
-            <img
-              className="slider-hero-bg"
-              src={getCurrentSpotlight()?.image || '/placeholder-hero.jpg'}
-              alt={getCurrentSpotlight()?.title}
-            />
+          <div className={`slider-hero-anim-wrapper`} style={{ width: '100%', height: '100%' }}>
+            {/* Render background image layers for crossfade */}
+            {sliderData.map((s, idx) => (
+              <img
+                key={`bg-${idx}`}
+                className={`slider-hero-bg-layer ${idx === currentSlide ? 'active' : ''}`}
+                src={s.image || '/placeholder-hero.jpg'}
+                alt={s.title || `slide-${idx}`}
+              />
+            ))}
             <div className="slider-hero-overlay" />
             <div
-              className={`slider-hero-content ${slideAnimClass}`}
+              className={`slider-hero-content ${slideAnimClass} ${slideAnimClass ? 'animate' : ''}`}
               style={{ marginLeft: 'calc(4rem + 1.5rem)' }}
             >
               <div className="slider-hero-badge">
@@ -285,70 +325,73 @@ function Home() {
             }}
           ></div>
 
-          <div className="max-w-[90vw] mx-auto px-6 py-12 pt-32 relative z-10">
+          <div className="max-w-[92vw] mx-auto px-6 py-12 pt-32 relative z-10">
 
             {/* --- TRENDING FIRST --- */}
-            {homeData &&
-              Array.isArray(homeData) &&
-              homeData.filter((anime) => anime.section === 'trending').length >
-              0 && (
-                <section className="mb-20" style={{ marginTop: '-2rem' }}>
-                  <div className="w-full overflow-hidden" id="trending-scroll-container">
-                    <div
-                      className="flex gap-3 pl-6 pr-6 pb-4 transition-transform duration-500 ease-in-out"
-                      style={{
-                        width: `${homeData.filter((anime) => anime.section === 'trending').length * (220 + 12)
-                          }px`,
-                        transform: `translateX(-${trendingSlideIndex * (220 + 12)}px)`
-                      }}
-                    >
-                      {homeData
-                        .filter((anime) => anime.section === 'trending')
-                        .map((anime, index) => (
-                          <div
-                            key={`trending-${index}`}
-                            className="flex-shrink-0 group relative"
-                          >
-                            <div
-                              onClick={() => handleAnimeClick(anime)}
-                              className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl w-[180px] h-[240px] md:w-[220px] md:h-[300px]"
-                            >
-                              <img
-                                src={anime.image || '/placeholder-anime.jpg'}
-                                alt={anime.title}
-                                className="w-full h-full object-cover"
-                              />
-                              <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                              <div className="absolute top-3 left-3">
-                                <div className="text-white text-4xl font-black leading-none opacity-90">
-                                  {String(anime.number || index + 1).padStart(
-                                    2,
-                                    '0'
-                                  )}
-                                </div>
-                              </div>
-                              {/* previously top-right badges removed; badges will show above title */}
-                              <div className="absolute bottom-3 left-3 right-3">
-                                {/* SUB/DUB badges placed above the title */}
-                                <div className="flex gap-2 mb-2">
-                                  {typeof anime.sub !== 'undefined' && anime.sub !== null && (
-                                    <span className="bg-black/60 text-white text-xs px-2 py-1 rounded-full border border-white/20">SUB: {anime.sub}</span>
-                                  )}
-                                  {typeof anime.dub !== 'undefined' && anime.dub !== null && (
-                                    <span className="bg-black/60 text-white text-xs px-2 py-1 rounded-full border border-white/20">DUB: {anime.dub}</span>
-                                  )}
-                                </div>
-                                <h3 className="text-white font-bold text-sm line-clamp-2 drop-shadow-lg">
-                                  {anime.title}
-                                </h3>
-                              </div>
+            {homeData && Array.isArray(homeData) && homeData.filter((anime) => anime.section === 'trending').length > 0 && (
+              <section className="mb-20 relative" style={{ marginTop: '-2rem' }}>
+                {/* Prev/Next buttons */}
+                <button
+                  aria-label="previous"
+                  className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 text-white p-3 rounded-r-lg shadow-lg"
+                  onClick={handleTrendingPrev}
+                >
+                  <FiChevronLeft size={20} />
+                </button>
+                <button
+                  aria-label="next"
+                  className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 text-white p-3 rounded-l-lg shadow-lg"
+                  onClick={handleTrendingNext}
+                >
+                  <FiChevronRight size={20} />
+                </button>
+
+                <div className="w-full overflow-hidden" id="trending-scroll-container">
+                  <div
+                    className={`flex gap-3 pl-6 pr-6 pb-4 ${trendingDragging ? '' : 'transition-transform duration-500 ease-in-out'}`}
+                    style={{
+                      width: `${homeData.filter((anime) => anime.section === 'trending').length * (220 + 12)}px`,
+                      transform: `translateX(-${trendingSlideIndex * (220 + 12)}px)`
+                    }}
+                  >
+                    {homeData.filter((anime) => anime.section === 'trending').map((anime, index) => (
+                      <div key={`trending-${index}`} className="flex-shrink-0 group relative">
+                        <div
+                          onClick={() => handleAnimeClick(anime)}
+                          className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl w-[180px] h-[240px] md:w-[220px] md:h-[300px]"
+                        >
+                          {/* Vertical rotated title */}
+                          <div className="absolute left-[-48px] top-1/2 -translate-y-1/2 w-48 text-center pointer-events-none">
+                            <div className="text-pink-200 font-bold text-sm transform -rotate-90 origin-left whitespace-nowrap">
+                              {anime.title}
                             </div>
                           </div>
-                        ))}
-                    </div>
+
+                          <img src={anime.image || '/placeholder-anime.jpg'} alt={anime.title} className="w-full h-full object-cover" />
+                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+                          <div className="absolute top-3 left-3">
+                            <div className="text-white text-4xl font-black leading-none opacity-90">
+                              {String(anime.number || index + 1).padStart(2, '0')}
+                            </div>
+                          </div>
+                          <div className="absolute bottom-3 left-3 right-3">
+                            <div className="flex gap-2 mb-2">
+                              {typeof anime.sub !== 'undefined' && anime.sub !== null && (
+                                <span className="bg-black/60 text-white text-xs px-2 py-1 rounded-full border border-white/20">SUB: {anime.sub}</span>
+                              )}
+                              {typeof anime.dub !== 'undefined' && anime.dub !== null && (
+                                <span className="bg-black/60 text-white text-xs px-2 py-1 rounded-full border border-white/20">DUB: {anime.dub}</span>
+                              )}
+                            </div>
+                            <h3 className="text-white font-bold text-sm line-clamp-2 drop-shadow-lg">{anime.title}</h3>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
                   </div>
-                </section>
-              )}
+                </div>
+              </section>
+            )}
 
             {/* --- THEN TOP AIRING / POPULAR / FAVORITE --- */}
             {homeData && Array.isArray(homeData) && (

@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
 import apiService from './apiService.js';
 
-
 const ShirayukiAPIContext = createContext();
 
 export const useShirayukiAPI = () => {
