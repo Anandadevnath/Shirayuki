@@ -8,6 +8,7 @@ import { BsFillVolumeUpFill, BsFillChatLeftTextFill } from 'react-icons/bs';
 import '../styles/sliderHero.css';
 import { useShirayukiAPI } from '../context';
 import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
+import Backdrop from '../components/Backdrop';
 import { useNavigate } from 'react-router-dom';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import AnimeSections from '../components/AnimeSections';
@@ -21,14 +22,10 @@ function Home() {
   const [slideAnimClass, setSlideAnimClass] = useState('');
   const [trendingSlideIndex, setTrendingSlideIndex] = useState(0);
   const [trendingPaused, setTrendingPaused] = useState(false);
-  const [trendingDragging, setTrendingDragging] = useState(false);
-  const [trendingDragStartX, setTrendingDragStartX] = useState(null);
-  const [trendingDragDelta, setTrendingDragDelta] = useState(0);
   const trendingIntervalRef = useRef(null);
   const navigate = useNavigate();
 
   const handleTrendingPrev = () => {
-    // stop auto-advance when user manually navigates
     setTrendingPaused(true);
     if (trendingIntervalRef.current) {
       clearInterval(trendingIntervalRef.current);
@@ -38,7 +35,6 @@ function Home() {
   };
 
   const handleTrendingNext = () => {
-    // stop auto-advance when user manually navigates
     setTrendingPaused(true);
     if (trendingIntervalRef.current) {
       clearInterval(trendingIntervalRef.current);
@@ -168,36 +164,36 @@ function Home() {
 
   if (loading && !homeData) {
     return (
-      <div
-        className="home-full-bg relative overflow-x-hidden"
-        style={{ background: '#000000' }}
-      >
-        <div className="relative z-10 min-h-screen flex items-center justify-center">
-          <LoadingSpinner size="large" />
-        </div>
-      </div>
+      <Backdrop image={'/tanjiro.png'} blurPx={6} scale={1}>
+        <LoadingSpinner size="large" />
+      </Backdrop>
     );
   }
 
   if (error && !homeData) {
     return (
-      <div
-        className="home-full-bg relative overflow-x-hidden"
-        style={{ background: '#000000' }}
-      >
-        <div className="relative z-10 min-h-screen flex items-center justify-center p-4">
+      <Backdrop image={'/tanjiro.png'} blurPx={6} scale={1}>
+        <div className="p-4 w-full max-w-md">
           <ErrorMessage message={error} onRetry={fetchHomeData} />
         </div>
-      </div>
+      </Backdrop>
     );
   }
 
   return (
-    <div
-      className="home-full-bg relative overflow-x-hidden"
-      style={{ background: '#000', minHeight: '100vh', width: '100vw', position: 'relative', zIndex: 0 }}
-    >
-      <div className="absolute inset-0" style={{ background: 'transparent' }} />
+    <div className="home-full-bg relative overflow-x-hidden" style={{ minHeight: '100vh', width: '100vw', position: 'relative', zIndex: 0 }}>
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url('/sword.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          filter: 'blur(10px) brightness(0.45) saturate(0.9)',
+          transform: 'scale(1)'
+        }}
+      />
+      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} />
 
       {/* --- Slider Hero --- */}
       {sliderData.length > 0 && (
@@ -213,7 +209,6 @@ function Home() {
           style={{ userSelect: dragging ? 'none' : undefined }}
         >
           <div className={`slider-hero-anim-wrapper`} style={{ width: '100%', height: '100%' }}>
-            {/* Render background image layers for crossfade */}
             {sliderData.map((s, idx) => (
               <img
                 key={`bg-${idx}`}
@@ -348,7 +343,7 @@ function Home() {
 
                 <div className="w-full overflow-hidden" id="trending-scroll-container">
                   <div
-                    className={`flex gap-3 pl-6 pr-6 pb-4 ${trendingDragging ? '' : 'transition-transform duration-500 ease-in-out'}`}
+                    className={`flex gap-3 pl-6 pr-6 pb-4 transition-transform duration-500 ease-in-out`}
                     style={{
                       width: `${homeData.filter((anime) => anime.section === 'trending').length * (220 + 12)}px`,
                       transform: `translateX(-${trendingSlideIndex * (220 + 12)}px)`

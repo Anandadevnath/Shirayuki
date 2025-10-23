@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { useShirayukiAPI } from '../context';
 import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
+import Backdrop from '../components/Backdrop';
 
 function AnimeDetails() {
   const { animeId } = useParams();
@@ -74,21 +75,18 @@ function AnimeDetails() {
 
   if (loading && !animeData) {
     return (
-      <div
-        className="home-full-bg relative overflow-x-hidden"
-        style={{ background: '#000000' }}
-      >
-        <div className="relative z-10 min-h-screen flex items-center justify-center">
-          <LoadingSpinner size="large" />
-        </div>
-      </div>
+      <Backdrop image={'/tanjiro.png'} blurPx={5} scale={1}>
+        <LoadingSpinner size="large" />
+      </Backdrop>
     );
   }
   if (error && !animeData) {
     return (
-      <div className="min-h-screen bg-black p-4 flex items-center justify-center">
-        <ErrorMessage message={error} onRetry={fetchAnimeDetails} />
-      </div>
+      <Backdrop image={'/tanjiro.png'} blurPx={5} scale={1}>
+        <div className="p-4 w-full max-w-md">
+          <ErrorMessage message={error} onRetry={fetchAnimeDetails} />
+        </div>
+      </Backdrop>
     );
   }
 

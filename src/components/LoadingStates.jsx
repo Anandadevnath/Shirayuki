@@ -14,8 +14,9 @@ const LoadingSpinner = ({ size = "medium" }) => {
     <div
       className="flex items-center justify-center"
       style={{
-  minHeight: dimension + 24,
-        background: "black",
+        minHeight: dimension + 24,
+        background: 'transparent',
+        padding: 8,
       }}
     >
       <div
