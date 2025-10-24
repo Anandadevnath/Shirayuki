@@ -69,7 +69,7 @@ function AnimeDetails() {
         setHomeCounts(null);
       }
     } catch (err) {
-      console.error('Failed to fetch anime details:', err);
+  // console.error removed
     }
   };
 

@@ -26,7 +26,7 @@ export default function Navbar() {
       debounceTimeout.current = setTimeout(async () => {
         try {
           const data = await getSearchSuggestions(value);
-          console.log('Suggestion API response:', data);
+          // console.log removed
           let suggestionsArr = [];
           if (Array.isArray(data)) {
             suggestionsArr = data;
@@ -38,7 +38,7 @@ export default function Navbar() {
           setSuggestions(suggestionsArr);
           setError("");
         } catch (err) {
-          console.error('Suggestion API error:', err);
+          // console.error removed
           setError("Network or CORS error. See console for details.");
           setSuggestions([]);
         }

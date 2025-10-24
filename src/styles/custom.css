@@ -1,8 +1,32 @@
+.anime-card-img {
+  width: 60px;
+  height: 80px;
+  border-radius: 0.375rem;
+  object-fit: cover;
+  flex-shrink: 0;
+  transition: all 0.3s;
+  opacity: 0.9;
+  -webkit-backdrop-filter: blur(12px);
+  backdrop-filter: blur(12px);
+  background: rgba(255, 255, 255, 0.18);
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 2px 16px 0 rgba(120, 58, 180, 0.1),
+    0 1.5px 8px 0 rgba(255, 255, 255, 0.1) inset;
+  backdrop-filter: blur(16px) saturate(140%);
+  -webkit-backdrop-filter: blur(16px) saturate(140%);
+  opacity: 0.82;
+}
+.anime-card-img:hover {
+  opacity: 1;
+  transform: scale(1.05);
+  cursor: pointer;
+  box-shadow: 0 0 18px 6px rgba(253, 3, 3, 0.127),
+    0 0 32px 12px rgba(255, 255, 255, 0.097);
+}
 html,
 body {
   overflow-x: hidden;
 }
-/* Footer blend effect */
 .footer-blend {
   background: linear-gradient(
     to top,
@@ -11,12 +35,10 @@ body {
     rgba(24, 24, 27, 0.7) 70%,
     rgba(235, 13, 13, 0) 100%
   );
-  /* Optional: add a subtle blur for extra blend */
   -webkit-backdrop-filter: blur(8px);
   backdrop-filter: blur(8px);
 }
 
-/* Modern Black Animated Scrollbar */
 ::-webkit-scrollbar {
   width: 10px;
   background: transparent;
@@ -56,7 +78,6 @@ body {
   box-shadow: 0 0 24px #6366f1, 0 0 8px #fff2;
 }
 
-/* Thin scrollbar utilities */
 .scrollbar-thin {
   scrollbar-width: thin;
 }
@@ -66,17 +87,15 @@ body {
   height: 8px;
 }
 
-/* Hide scrollbar utilities */
 .scrollbar-hide {
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
 .scrollbar-hide::-webkit-scrollbar {
-  display: none; /* Safari and Chrome */
+  display: none;
 }
 
-/* Line clamp utilities */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -85,7 +104,6 @@ body {
   overflow: hidden;
 }
 
-/* Trending card hover effects */
 .trending-card {
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
@@ -104,7 +122,6 @@ body {
   background: transparent;
 }
 
-/* Grid auto-fit utilities */
 .grid-auto-fit {
   grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
 }
@@ -113,12 +130,10 @@ body {
   grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
 }
 
-/* Equal height columns */
 .equal-height > * {
   height: 100%;
 }
 
-/* Fade transition utilities */
 .fade-top {
   background: linear-gradient(
     to bottom,
@@ -154,7 +169,6 @@ body {
   z-index: 1;
 }
 
-/* Section blending effects */
 .section-blend {
   background: linear-gradient(
     135deg,
@@ -178,7 +192,6 @@ body {
   );
 }
 
-/* Line clamp utilities */
 .line-clamp-2 {
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -195,7 +208,6 @@ body {
   overflow: hidden;
 }
 
-/* Custom animations */
 @keyframes fadeInUp {
   from {
     opacity: 0;
@@ -240,7 +252,6 @@ body {
   animation: glow 2s ease-in-out infinite;
 }
 
-/* Backdrop blur support */
 .backdrop-blur-sm {
   -webkit-backdrop-filter: blur(4px);
   backdrop-filter: blur(4px);
@@ -261,7 +272,6 @@ body {
   backdrop-filter: blur(24px);
 }
 
-/* Gradient text */
 .gradient-text {
   background: linear-gradient(45deg, #ef4444, #f97316);
   -webkit-background-clip: text;
@@ -269,7 +279,6 @@ body {
   background-clip: text;
 }
 
-/* Glassmorphism utilities */
 .glass {
   background: rgba(255, 255, 255, 0.1);
   -webkit-backdrop-filter: blur(10px);
@@ -286,14 +295,12 @@ body {
   border-radius: 16px;
 }
 
-/* Enhanced hover effects */
 .hover-glow:hover {
   box-shadow: 0 0 25px rgba(156, 163, 175, 0.4),
     0 0 50px rgba(209, 213, 219, 0.2);
   transform: translateY(-2px);
 }
 
-/* Custom gradient backgrounds */
 .bg-gradient-anime {
   background: linear-gradient(
     135deg,
@@ -304,7 +311,6 @@ body {
   );
 }
 
-/* Enhanced glass effects */
 .glass-black {
   background: rgba(0, 0, 0, 0.3);
   -webkit-backdrop-filter: blur(20px);
@@ -323,7 +329,6 @@ body {
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-/* Glass Card */
 .glass-card {
   background: rgba(15, 23, 42, 0.3);
   -webkit-backdrop-filter: blur(20px);
@@ -353,7 +358,6 @@ body {
   backdrop-filter: blur(64px);
 }
 
-/* Grid utilities */
 .grid-auto-fit {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));

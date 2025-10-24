@@ -16,7 +16,6 @@ export default function Leaderboard() {
   useEffect(() => {
     setLoading(true);
     leaderboardTabs[activeTab].api().then((data) => {
-      console.log('Leaderboard API response:', data);
 
       let animeList = [];
       if (Array.isArray(data)) {

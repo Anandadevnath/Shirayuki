@@ -1,17 +1,23 @@
 import config from './config.js';
 
 class ShirayukiAPIService {
+  // Recently Updated (SUB)
+  getRecentUpdates = async () => {
+    return this.apiCall('/recent_updates');
+  }
+
+  // Recently Updated (DUB)
+  getRecentUpdatesDub = async () => {
+    return this.apiCall('/recent_updates_dub');
+  }
   constructor() {
     this.baseURL = import.meta.env.VITE_API_BASE_URL || config.API_BASE_URL;
   }
 
   async apiCall(endpoint, options = {}) {
     try {
-      console.log('API Service - baseURL:', this.baseURL);
-      console.log('API Service - endpoint:', endpoint);
 
       const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
-      console.log('API Service - final URL:', url);
 
       const defaultOptions = {
         method: 'GET',

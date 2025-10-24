@@ -14,8 +14,10 @@ import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import AnimeSections from '../components/AnimeSections';
 
 function Home() {
-  const { getHomepage, loading, error, clearError } = useShirayukiAPI();
+  const { getHomepage, getRecentUpdates, getRecentUpdatesDub, loading, error, clearError } = useShirayukiAPI();
   const [homeData, setHomeData] = useState(null);
+  const [recentSub, setRecentSub] = useState([]);
+  const [recentDub, setRecentDub] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [dragStartX, setDragStartX] = useState(null);
   const [dragging, setDragging] = useState(false);
@@ -110,8 +112,10 @@ function Home() {
     };
   }, [homeData]);
 
+
   useEffect(() => {
     fetchHomeData();
+    fetchRecentUpdates();
   }, []);
 
   const fetchHomeData = async () => {
@@ -119,9 +123,19 @@ function Home() {
       clearError();
       const data = await getHomepage();
       setHomeData(data?.data || []);
-      console.log('Home data fetched successfully:', data);
+  // console.log removed
     } catch (err) {
       console.error('Failed to fetch home data:', err);
+    }
+  };
+
+  const fetchRecentUpdates = async () => {
+    try {
+      const subRes = await getRecentUpdates();
+      setRecentSub(subRes?.data || []);
+      const dubRes = await getRecentUpdatesDub();
+      setRecentDub(dubRes?.data || []);
+    } catch (err) {
     }
   };
 
@@ -395,40 +409,27 @@ function Home() {
               </section>
             )}
 
+
             {/* --- LATEST + LEADERBOARD --- */}
-            {homeData && Array.isArray(homeData) && homeData.length > 0 && (
+            {(recentSub.length > 0 || recentDub.length > 0) && (
               <section className="mb-16">
                 <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
                   <div className="flex-1 flex flex-col gap-8">
                     <div className="bg-black/10 backdrop-blur-xl rounded-xl border border-white/10 p-8 shadow-xl">
-                      <h2 className="text-3xl font-bold text-white mb-8" style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        {/* Fire Icon SVG for better consistency */}
-                        <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" style={{ flexShrink: 0 }}>
-                          <path d="M16 2C16 2 13 7 13 10C13 13 16 15 16 15C16 15 19 13 19 10C19 7 16 2 16 2Z" fill="#FF9800" />
-                          <path d="M16 15C16 15 10 17 10 22C10 26 16 30 16 30C16 30 22 26 22 22C22 17 16 15 16 15Z" fill="#FF5252" />
-                        </svg>
-                        <span style={{ position: 'relative', display: 'inline-block', width: 'fit-content' }}>
-                          <span style={{ fontWeight: 'bold' }}>Recently Updated</span>
-                          <span style={{
-                            display: 'inline-block',
-                            position: 'absolute',
-                            left: '110%',
-                            top: '50%',
-                            width: '580px',
-                            height: '4px',
-                            background: '#ef4444',
-                            borderRadius: '2px',
-                            transform: 'translateY(-50%)',
-                            marginLeft: '12px',
-                          }}></span>
-                        </span>
-                      </h2>
                       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                        {homeData.filter(anime => anime.section === 'recently_updated').slice(0, 18).map((anime, index) => (
+                        {recentSub.map((anime, index) => (
                           <LatestAnimeCard
-                            key={`${anime.slug || anime.title || 'anime'}-${index}`}
+                            key={`recent-sub-${anime.slug || anime.title || index}`}
                             anime={anime}
                             rank={index + 1}
+                            onClick={() => handleAnimeClick(anime)}
+                          />
+                        ))}
+                        {recentDub.map((anime, index) => (
+                          <LatestAnimeCard
+                            key={`recent-dub-${anime.slug || anime.title || index}`}
+                            anime={anime}
+                            rank={recentSub.length + index + 1}
                             onClick={() => handleAnimeClick(anime)}
                           />
                         ))}
@@ -437,7 +438,6 @@ function Home() {
                     <ScheduleSection />
                   </div>
                   <div className="w-full md:w-[360px] md:min-w-[320px]">
-                    {/* Leaderboard Section */}
                     <Leaderboard />
                   </div>
                 </div>
