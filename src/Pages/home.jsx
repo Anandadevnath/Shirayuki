@@ -123,7 +123,7 @@ function Home() {
       clearError();
       const data = await getHomepage();
       setHomeData(data?.data || []);
-  // console.log removed
+      // console.log removed
     } catch (err) {
       console.error('Failed to fetch home data:', err);
     }
@@ -222,7 +222,7 @@ function Home() {
           onTouchEnd={handleDragEnd}
           style={{ userSelect: dragging ? 'none' : undefined }}
         >
-          <div className={`slider-hero-anim-wrapper`} style={{ width: '100%', height: '100%' }}>
+          <div className={`slider-hero-anim-wrapper`} style={{ height: '100%' }}>
             {sliderData.map((s, idx) => (
               <img
                 key={`bg-${idx}`}

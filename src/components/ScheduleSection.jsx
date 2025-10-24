@@ -37,7 +37,7 @@ export default function ScheduleSection() {
     });
 
     return (
-        <section className="schedule-section max-w-[62.5vw]  bg-black rounded-xl p-6 shadow-xl border border-white/20">
+        <section className="schedule-section max-w-[65vw]  bg-black rounded-xl p-6 shadow-xl border border-white/20">
             <div className="flex flex-wrap items-center justify-between mb-6">
                     <h2 className="text-3xl font-bold text-white flex items-center gap-4"><FiClock className="inline-block" size={30}/> Estimated Schedule</h2>
                 <span className="bg-white/90 text-black px-4 py-1 rounded-full font-mono text-sm">

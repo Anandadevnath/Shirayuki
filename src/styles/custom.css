@@ -41,41 +41,25 @@ body {
 
 ::-webkit-scrollbar {
   width: 10px;
-  background: transparent;
+  background: #000;
 }
 
 ::-webkit-scrollbar-track {
-  background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
+  background: #111;
   border-radius: 8px;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) inset;
 }
 
-@keyframes scrollbar-thumb-animate {
-  0% {
-    background: linear-gradient(135deg, #111 0%, #333 100%);
-    box-shadow: 0 0 8px #000, 0 0 0px #fff0;
-  }
-  50% {
-    background: linear-gradient(135deg, #222 0%, #444 100%);
-    box-shadow: 0 0 16px #6366f1, 0 0 8px #fff2;
-  }
-  100% {
-    background: linear-gradient(135deg, #111 0%, #333 100%);
-    box-shadow: 0 0 8px #000, 0 0 0px #fff0;
-  }
-}
-
 ::-webkit-scrollbar-thumb {
   border-radius: 8px;
-  background: linear-gradient(135deg, #18181b 0%, #27272a 100%);
+  background: #222;
   box-shadow: 0 0 8px #000, 0 0 0px #fff0;
-  animation: scrollbar-thumb-animate 2.5s ease-in-out infinite;
   transition: background 0.3s, box-shadow 0.3s;
 }
 
 ::-webkit-scrollbar-thumb:hover {
-  background: linear-gradient(135deg, #6366f1 0%, #18181b 100%);
-  box-shadow: 0 0 24px #6366f1, 0 0 8px #fff2;
+  background: #333;
+  box-shadow: 0 0 24px #000, 0 0 8px #222;
 }
 
 .scrollbar-thin {
