@@ -1,6 +1,6 @@
 export const config = {
 
-    API_BASE_URL: "https://npm-test-3.onrender.com",
+    API_BASE_URL: "https://shirayuki-scrapper-api.onrender.com",
 
     API_VERSION: "1.0.0",
 
