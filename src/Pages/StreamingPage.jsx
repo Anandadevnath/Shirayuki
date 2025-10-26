@@ -47,14 +47,12 @@ function StreamingPage() {
             return match.sub ?? match.sub_count ?? match.subs ?? null;
         };
 
-        // Try to resolve episode count (prefer SUB counts) by fetching details
         const loadCounts = async () => {
             if (!animeId) {
                 setEpisodeCount(0);
                 return;
             }
 
-            // Try homepage first and prefer 'trending' section counts when present
             try {
                 const home = await getHomepage();
                 const list = home?.data || [];
@@ -64,13 +62,11 @@ function StreamingPage() {
                     return;
                 }
             } catch (e) {
-                // continue to details fallback
                 console.warn('Failed to use homepage counts', e);
             }
 
             try {
                 const details = await getAnimeDetails(animeId);
-                // apiService returns an object with `error: true` when a non-OK response occurs
                 if (details && details.error) {
                     console.warn('getAnimeDetails returned error:', details);
                     setEpisodeCount(24);
@@ -106,7 +102,6 @@ function StreamingPage() {
         return Array.from({ length: count }, (_, i) => i + 1);
     }, [episodeCount]);
 
-    // compute effective anime id depending on sub/dub toggle
     const effectiveAnimeId = useMemo(() => {
         if (!animeId) return animeId;
         const base = animeId.replace(/-dub$/i, '');
@@ -123,21 +118,16 @@ function StreamingPage() {
     };
 
     useEffect(() => {
-        // auto-load selectedEp for the effective id
         if (effectiveAnimeId && selectedEp) {
             fetchStream(selectedEp);
         }
     }, [effectiveAnimeId, selectedEp]);
 
     const reloadStream = async () => {
-        // Prevent concurrent reloads
         if (reloading) return;
         setReloading(true);
         try {
-            // If there's an existing iframe, force a remount by changing key
             setIframeKey((k) => k + 1);
-
-            // Also attempt to re-fetch the stream (in case link expired/slow)
             if (effectiveAnimeId && selectedEp) {
                 await fetchStream(selectedEp);
             }
@@ -147,7 +137,6 @@ function StreamingPage() {
     };
 
     useEffect(() => {
-        // fetch anime details for the Details panel (use effective id)
         const loadDetails = async () => {
             if (!effectiveAnimeId) {
                 setDetailsData(null);
@@ -163,26 +152,20 @@ function StreamingPage() {
                     throw new Error(msg);
                 }
 
-                // Normalize response shape to an object we can use
                 const raw = res?.data || res || {};
-                // common shapes: raw.anime, raw.data.anime, raw
                 const info = raw?.anime || raw?.data?.anime || raw?.info || raw;
 
-                // Try to extract common fields
                 const title = info?.title || info?.name || info?.animeTitle || info?.anime_name || info?.name_en || null;
                 const synopsis = info?.synopsis || info?.description || info?.plot || info?.about || null;
                 const image = info?.image || info?.cover || info?.poster || info?.thumbnail || info?.images?.jpg?.image_url || info?.image_url || null;
 
-                // Additional fields requested by user
                 const type = info?.type || info?.media_type || info?.format || null;
                 const country = info?.country || info?.origin_country || info?.countryOfOrigin || null;
                 const status = info?.status || info?.airing_status || null;
                 const released = info?.released || info?.year || info?.aired || info?.release_date || null;
                 const quality = info?.quality || info?.video_quality || null;
 
-                // rating may be nested
                 const rating = info?.rating || info?.scores || info?.score || info?.rating_score || null;
-                // Normalize rating shape to { score, votes }
                 let ratingObj = null;
                 if (rating && typeof rating === 'object') {
                     ratingObj = {
