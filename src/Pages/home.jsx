@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
 import Leaderboard from '../components/Leaderboard.jsx';
 import ScheduleSection from '../components/ScheduleSection.jsx';
 import LatestAnimeCard from '../components/LatestAnimeCard.jsx';
@@ -12,6 +12,27 @@ import Backdrop from '../components/Backdrop';
 import { useNavigate } from 'react-router-dom';
 import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
 import AnimeSections from '../components/AnimeSections';
+
+
+function filterSection(data, section) {
+  return Array.isArray(data) ? data.filter((a) => a.section === section) : [];
+}
+
+function getAnimeId(animeOrId) {
+  if (!animeOrId) return null;
+  if (typeof animeOrId === 'string') return animeOrId;
+  if (typeof animeOrId === 'object') {
+    return (
+      animeOrId.japanese ||
+      animeOrId.title ||
+      animeOrId.id ||
+      animeOrId.slug ||
+      animeOrId.animeId ||
+      animeOrId._id
+    );
+  }
+  return null;
+}
 
 function Home() {
   const { getHomepage, getRecentUpdates, getRecentUpdatesDub, loading, error, clearError } = useShirayukiAPI();
@@ -27,35 +48,77 @@ function Home() {
   const trendingIntervalRef = useRef(null);
   const navigate = useNavigate();
 
-  const handleTrendingPrev = () => {
+
+  // Memoized filtered data for efficiency
+  const sliderData = useMemo(() => filterSection(homeData, 'slider'), [homeData]);
+  const trendingData = useMemo(() => filterSection(homeData, 'trending'), [homeData]);
+
+  // Normalize API items to a consistent shape used by components
+  const normalizeAnimeItem = (raw = {}) => {
+    // Clone to avoid mutating original
+    const item = { ...raw };
+
+    // Normalize Sub/Dub (API sometimes returns capitalized keys)
+    if (typeof item.Sub !== 'undefined' && typeof item.sub === 'undefined') item.sub = item.Sub;
+    if (typeof item.Dub !== 'undefined' && typeof item.dub === 'undefined') item.dub = item.Dub;
+
+    // Some payloads use nested episodes object
+    // Some payloads use nested episodes object. Normalize into both top-level and episodes object
+    item.episodes = item.episodes && typeof item.episodes === 'object' ? { ...item.episodes } : {};
+    // prefer explicit keys, but fall back to nested ones
+    const nestedSub = item.episodes.sub ?? item.episodes.Sub;
+    const nestedDub = item.episodes.dub ?? item.episodes.Dub;
+    if (typeof item.Sub !== 'undefined') item.sub = item.Sub;
+    if (typeof item.Dub !== 'undefined') item.dub = item.Dub;
+    if (typeof nestedSub !== 'undefined' && typeof item.sub === 'undefined') item.sub = nestedSub;
+    if (typeof nestedDub !== 'undefined' && typeof item.dub === 'undefined') item.dub = nestedDub;
+
+    // Mirror top-level into episodes for components that read anime.episodes.sub / dub
+    if (typeof item.sub !== 'undefined') item.episodes.sub = item.sub;
+    if (typeof item.dub !== 'undefined') item.episodes.dub = item.dub;
+
+    // Ensure poster/image keys exist for components
+    if (!item.poster && item.image) item.poster = item.image;
+    if (!item.image && item.poster) item.image = item.poster;
+
+    // Make sure title/name fields are accessible
+    if (!item.title && item.name) item.title = item.name;
+    if (!item.name && item.title) item.name = item.title;
+
+    return item;
+  };
+
+  // Trending carousel navigation handlers
+  const handleTrendingPrev = useCallback(() => {
     setTrendingPaused(true);
     if (trendingIntervalRef.current) {
       clearInterval(trendingIntervalRef.current);
       trendingIntervalRef.current = null;
     }
     setTrendingSlideIndex((prev) => Math.max(0, prev - 1));
-  };
+  }, []);
 
-  const handleTrendingNext = () => {
+  const handleTrendingNext = useCallback(() => {
     setTrendingPaused(true);
     if (trendingIntervalRef.current) {
       clearInterval(trendingIntervalRef.current);
       trendingIntervalRef.current = null;
     }
-    const trendingData = homeData?.filter((anime) => anime.section === 'trending') || [];
     const CARD_WIDTH = 220 + 12;
     const CONTAINER_WIDTH = window.innerWidth * 0.9;
     const visibleCards = Math.floor(CONTAINER_WIDTH / CARD_WIDTH);
     const maxIndex = Math.max(0, trendingData.length - visibleCards);
     setTrendingSlideIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
-  };
+  }, [trendingData.length]);
 
-  const handleDragStart = (e) => {
+
+  // Slider drag handlers
+  const handleDragStart = useCallback((e) => {
     setDragging(true);
     setDragStartX(e.type === 'touchstart' ? e.touches[0].clientX : e.clientX);
-  };
+  }, []);
 
-  const handleDragMove = (e) => {
+  const handleDragMove = useCallback((e) => {
     if (!dragging || dragStartX === null) return;
     const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
     const diff = clientX - dragStartX;
@@ -64,19 +127,17 @@ function Home() {
       setDragging(false);
       setDragStartX(null);
     }
-  };
+  }, [dragging, dragStartX]);
 
-  const handleDragEnd = () => {
+  const handleDragEnd = useCallback(() => {
     setDragging(false);
     setDragStartX(null);
-  };
+  }, []);
 
-  const sliderData = Array.isArray(homeData)
-    ? homeData.filter((a) => a.section === 'slider')
-    : [];
 
+  // Auto-advance slider
   useEffect(() => {
-    const slideCount = Array.isArray(sliderData) ? sliderData.length : 0;
+    const slideCount = sliderData.length;
     if (slideCount <= 1) return;
     const interval = setInterval(() => {
       setSlideAnimClass('slide-in-right');
@@ -86,15 +147,12 @@ function Home() {
   }, [sliderData.length]);
 
   useEffect(() => {
-    const trendingData = homeData?.filter((anime) => anime.section === 'trending') || [];
     if (trendingData.length <= 1) return;
-
     const CARD_WIDTH = 220 + 12;
     const CONTAINER_WIDTH = window.innerWidth * 0.9;
     const visibleCards = Math.floor(CONTAINER_WIDTH / CARD_WIDTH);
     const maxIndex = Math.max(0, trendingData.length - visibleCards);
     if (trendingPaused) return undefined;
-
     trendingIntervalRef.current = setInterval(() => {
       setTrendingSlideIndex((prev) => {
         const nextIndex = prev + 1;
@@ -110,7 +168,7 @@ function Home() {
         trendingIntervalRef.current = null;
       }
     };
-  }, [homeData]);
+  }, [trendingData.length, trendingPaused]);
 
 
   useEffect(() => {
@@ -118,28 +176,38 @@ function Home() {
     fetchRecentUpdates();
   }, []);
 
-  const fetchHomeData = async () => {
+
+  // Data fetching handlers
+  const fetchHomeData = useCallback(async () => {
     try {
       clearError();
       const data = await getHomepage();
-      setHomeData(data?.data || []);
-      // console.log removed
+      const raw = data?.data || [];
+      // Normalize each item so components can rely on lowercase keys like `sub` and `dub`
+      const normalized = Array.isArray(raw) ? raw.map(normalizeAnimeItem) : raw;
+      setHomeData(normalized);
     } catch (err) {
       console.error('Failed to fetch home data:', err);
     }
-  };
+  }, [getHomepage, clearError]);
 
-  const fetchRecentUpdates = async () => {
+  const fetchRecentUpdates = useCallback(async () => {
     try {
       const subRes = await getRecentUpdates();
-      setRecentSub(subRes?.data || []);
-      const dubRes = await getRecentUpdatesDub();
-      setRecentDub(dubRes?.data || []);
-    } catch (err) {
-    }
-  };
+      const rawSub = subRes?.data || [];
+      const normalizedSub = Array.isArray(rawSub) ? rawSub.map(normalizeAnimeItem) : rawSub;
+      setRecentSub(normalizedSub);
 
-  const handleSlideChange = (direction) => {
+      const dubRes = await getRecentUpdatesDub();
+      const rawDub = dubRes?.data || [];
+      const normalizedDub = Array.isArray(rawDub) ? rawDub.map(normalizeAnimeItem) : rawDub;
+      setRecentDub(normalizedDub);
+    } catch (err) {}
+  }, [getRecentUpdates, getRecentUpdatesDub]);
+
+
+  // Slide change handler
+  const handleSlideChange = useCallback((direction) => {
     if (!sliderData || sliderData.length === 0) return;
     const maxSlides = sliderData.length;
     let newSlide;
@@ -150,32 +218,32 @@ function Home() {
     }
     setSlideAnimClass(direction === 'next' ? 'slide-in-right' : 'slide-in-left');
     setCurrentSlide(newSlide);
-  };
+  }, [sliderData, currentSlide]);
 
-  const getCurrentSpotlight = () => {
-    return sliderData && sliderData.length > 0
-      ? sliderData[currentSlide]
-      : null;
-  };
 
-  const handleAnimeClick = (animeOrId) => {
-    let resolvedId = null;
-    if (!animeOrId) return;
-    if (typeof animeOrId === 'string') {
-      resolvedId = animeOrId;
-    } else if (typeof animeOrId === 'object') {
-      resolvedId = animeOrId.japanese || animeOrId.title || animeOrId.id || animeOrId.slug || animeOrId.animeId || animeOrId._id;
-    }
+  // Memoized current spotlight
+  const getCurrentSpotlight = useCallback(() => {
+    return sliderData && sliderData.length > 0 ? sliderData[currentSlide] : null;
+  }, [sliderData, currentSlide]);
+
+
+  // Anime click handler (reusable)
+  const handleAnimeClick = useCallback((animeOrId) => {
+    const resolvedId = getAnimeId(animeOrId);
     if (!resolvedId) return;
     navigate(`/anime/${encodeURIComponent(resolvedId)}`);
-  };
+  }, [navigate]);
 
+
+  // Reset animation class after animation
   useEffect(() => {
     if (!slideAnimClass) return;
     const timeout = setTimeout(() => setSlideAnimClass(''), 600);
     return () => clearTimeout(timeout);
   }, [slideAnimClass, currentSlide]);
 
+
+  // Loading and error states
   if (loading && !homeData) {
     return (
       <Backdrop image={'/tanjiro.png'} blurPx={6} scale={1}>
@@ -337,7 +405,7 @@ function Home() {
           <div className="max-w-[92vw] mx-auto px-6 py-12 pt-32 relative z-10">
 
             {/* --- TRENDING FIRST --- */}
-            {homeData && Array.isArray(homeData) && homeData.filter((anime) => anime.section === 'trending').length > 0 && (
+            {trendingData.length > 0 && (
               <section className="mb-20 relative" style={{ marginTop: '-2rem' }}>
                 {/* Prev/Next buttons */}
                 <button
@@ -359,11 +427,11 @@ function Home() {
                   <div
                     className={`flex gap-3 pl-6 pr-6 pb-4 transition-transform duration-500 ease-in-out`}
                     style={{
-                      width: `${homeData.filter((anime) => anime.section === 'trending').length * (220 + 12)}px`,
+                      width: `${trendingData.length * (220 + 12)}px`,
                       transform: `translateX(-${trendingSlideIndex * (220 + 12)}px)`
                     }}
                   >
-                    {homeData.filter((anime) => anime.section === 'trending').map((anime, index) => (
+                    {trendingData.map((anime, index) => (
                       <div key={`trending-${index}`} className="flex-shrink-0 group relative">
                         <div
                           onClick={() => handleAnimeClick(anime)}

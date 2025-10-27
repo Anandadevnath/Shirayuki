@@ -17,23 +17,45 @@ function StreamingPage() {
     const [iframeKey, setIframeKey] = useState(0);
     const [reloading, setReloading] = useState(false);
     const [isDub, setIsDub] = useState(false);
+    const [hasDub, setHasDub] = useState(false);
+    // Check if dub stream exists for selected episode
+    useEffect(() => {
+        let mounted = true;
+        const checkDub = async () => {
+            const base = (animeId || '').replace(/-dub$/i, '');
+            const idToUse = `${base}-dub`;
+            try {
+                const res = await getEpisodeStream(idToUse, selectedEp);
+                let link = null;
+                if (res && !res.error) {
+                    if (res.streaming_link) link = res.streaming_link;
+                    else if (res.data && res.data.streaming_link) link = res.data.streaming_link;
+                    else if (res.data && Array.isArray(res.data) && res.data[0] && res.data[0].streaming_link) link = res.data[0].streaming_link;
+                    else if (res.data && res.data.data && res.data.data.streaming_link) link = res.data.data.streaming_link;
+                }
+                if (mounted) setHasDub(!!link);
+            } catch {
+                if (mounted) setHasDub(false);
+            }
+        };
+        checkDub();
+        return () => { mounted = false; };
+    }, [animeId, selectedEp, getEpisodeStream]);
     const [detailsData, setDetailsData] = useState(null);
     const [detailsLoading, setDetailsLoading] = useState(false);
     const [detailsError, setDetailsError] = useState(null);
 
     useEffect(() => {
-        // If caller passed subCount in navigation state, use it immediately
+        // Always use sub episode count for episode list, regardless of sub/dub toggle
         const navSub = location?.state?.subCount;
         if (navSub && !Number.isNaN(Number(navSub))) {
             setEpisodeCount(Number(navSub));
             return;
         }
 
-        // helper to try homepage 'trending' or other sections first
-        const findCountInHomepage = (list, baseId, preferDub = false) => {
+        const findCountInHomepage = (list, baseId) => {
             if (!Array.isArray(list) || !baseId) return null;
             const slugBase = slugify(baseId.replace(/-dub$/i, ''));
-            // prefer matching items from 'trending' section first
             const trendingItems = list.filter((a) => a.section === 'trending');
             const candidates = trendingItems.length ? trendingItems : list;
             const match = candidates.find((a) => {
@@ -41,9 +63,6 @@ function StreamingPage() {
                 return candidateSlugs.some((v) => slugify(String(v)) === slugBase);
             });
             if (!match) return null;
-            if (preferDub) {
-                return match.dub ?? match.dubs ?? match.dub_count ?? null;
-            }
             return match.sub ?? match.sub_count ?? match.subs ?? null;
         };
 
@@ -56,7 +75,7 @@ function StreamingPage() {
             try {
                 const home = await getHomepage();
                 const list = home?.data || [];
-                const homeCount = findCountInHomepage(list, animeId, false);
+                const homeCount = findCountInHomepage(list, animeId);
                 if (homeCount && !Number.isNaN(Number(homeCount))) {
                     setEpisodeCount(Number(homeCount));
                     return;
@@ -301,48 +320,15 @@ function StreamingPage() {
                         {/* Sub/Dub toggle + Reload button placed under the player */}
                         <div className="w-full flex justify-end items-center gap-3 mt-3">
                             <div className="flex gap-2">
+                                {/* Sub button always shown if sub episodes exist */}
                                 <button
                                     onClick={async () => {
                                         if (isDub) {
-                                            // compute id for sub (remove -dub suffix)
                                             const base = (animeId || '').replace(/-dub$/i, '');
                                             const idToUse = base;
                                             setIsDub(false);
-                                            setSelectedEp(1);
-                                            // fetch the stream using id override immediately
-                                            await fetchStream(1, idToUse);
-
-                                            // Prefer homepage 'trending' counts first
-                                            try {
-                                                const home = await getHomepage();
-                                                const list = home?.data || [];
-                                                const count = findCountInHomepage(list, idToUse, false);
-                                                if (count && !Number.isNaN(Number(count))) {
-                                                    setEpisodeCount(Number(count));
-                                                    return;
-                                                }
-                                            } catch (e) {
-                                                console.warn('Failed to query homepage for sub counts', e);
-                                            }
-
-                                            // fallback to details API if homepage doesn't have it
-                                            try {
-                                                const details = await getAnimeDetails(idToUse);
-                                                if (details && !details.error) {
-                                                    const raw = details?.data || details || {};
-                                                    const info = raw?.anime?.info || raw?.anime || raw?.info || raw;
-                                                    const epInfo = info?.episodes || info?.stats || {};
-                                                    const sub = epInfo?.sub ?? epInfo?.sub_count ?? info?.sub ?? null;
-                                                    if (sub && !Number.isNaN(Number(sub))) {
-                                                        setEpisodeCount(Number(sub));
-                                                    } else {
-                                                        const fallback = epInfo?.total || info?.total_episodes || info?.episodesCount || null;
-                                                        if (fallback && !Number.isNaN(Number(fallback))) setEpisodeCount(Number(fallback));
-                                                    }
-                                                }
-                                            } catch (e) {
-                                                console.warn('Failed to update counts for sub id via details', e);
-                                            }
+                                            // Do NOT change episode count, only switch stream source
+                                            await fetchStream(selectedEp, idToUse);
                                         }
                                     }}
                                     className={`px-3 py-1 rounded text-sm ${!isDub ? 'bg-pink-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
@@ -350,54 +336,23 @@ function StreamingPage() {
                                     Sub
                                 </button>
 
-                                <button
-                                    onClick={async () => {
-                                        if (!isDub) {
-                                            // compute id for dub (append -dub)
-                                            const base = (animeId || '').replace(/-dub$/i, '');
-                                            const idToUse = `${base}-dub`;
-                                            setIsDub(true);
-                                            setSelectedEp(1);
-                                            // fetch the stream using id override immediately
-                                            await fetchStream(1, idToUse);
-
-                                            // Try homepage/trending counts first (prefer dub)
-                                            try {
-                                                const home = await getHomepage();
-                                                const list = home?.data || [];
-                                                const count = findCountInHomepage(list, idToUse, true);
-                                                if (count && !Number.isNaN(Number(count))) {
-                                                    setEpisodeCount(Number(count));
-                                                    return;
-                                                }
-                                            } catch (e) {
-                                                console.warn('Failed to query homepage for dub counts', e);
+                                {/* Dub button only shown if dub stream exists for selected episode */}
+                                {hasDub && (
+                                    <button
+                                        onClick={async () => {
+                                            if (!isDub) {
+                                                const base = (animeId || '').replace(/-dub$/i, '');
+                                                const idToUse = `${base}-dub`;
+                                                setIsDub(true);
+                                                // Do NOT change episode count, only switch stream source
+                                                await fetchStream(selectedEp, idToUse);
                                             }
-
-                                            // fallback to details API
-                                            try {
-                                                const details = await getAnimeDetails(idToUse);
-                                                if (details && !details.error) {
-                                                    const raw = details?.data || details || {};
-                                                    const info = raw?.anime?.info || raw?.anime || raw?.info || raw;
-                                                    const epInfo = info?.episodes || info?.stats || {};
-                                                    const sub = epInfo?.sub ?? epInfo?.sub_count ?? info?.sub ?? null;
-                                                    if (sub && !Number.isNaN(Number(sub))) {
-                                                        setEpisodeCount(Number(sub));
-                                                    } else {
-                                                        const fallback = epInfo?.total || info?.total_episodes || info?.episodesCount || null;
-                                                        if (fallback && !Number.isNaN(Number(fallback))) setEpisodeCount(Number(fallback));
-                                                    }
-                                                }
-                                            } catch (e) {
-                                                console.warn('Failed to update counts for dub id via details', e);
-                                            }
-                                        }
-                                    }}
-                                    className={`px-3 py-1 rounded text-sm ${isDub ? 'bg-pink-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
-                                >
-                                    Dub
-                                </button>
+                                        }}
+                                        className={`px-3 py-1 rounded text-sm ${isDub ? 'bg-pink-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
+                                    >
+                                        Dub
+                                    </button>
+                                )}
                             </div>
 
                             <button

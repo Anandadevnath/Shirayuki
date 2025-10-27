@@ -6,9 +6,6 @@ class ShirayukiAPIService {
     return this.apiCall('/recent_updates');
   }
 
-  getRecentUpdatesDub = async () => {
-    return this.apiCall('/recent_updates_dub');
-  }
   constructor() {
     this.baseURL = import.meta.env.VITE_API_BASE_URL || config.API_BASE_URL;
   }

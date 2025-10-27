@@ -1,8 +1,9 @@
 import React from 'react';
 
 const LatestAnimeCard = ({ anime, rank, onClick }) => {
-  // Extract episode info (if available)
-  const episode = anime?.episode || anime?.latestEpisode || anime?.episodes?.sub || anime?.episodes?.dub || null;
+  // Extract episode info for both sub and dub
+  const sub = typeof anime.sub !== 'undefined' ? anime.sub : anime.episodes?.sub;
+  const dub = typeof anime.dub !== 'undefined' ? anime.dub : anime.episodes?.dub;
   return (
     <div
       className="relative rounded-2xl overflow-hidden shadow-xl bg-black/40 border border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer hover:scale-105 group w-full h-full"
@@ -29,10 +30,14 @@ const LatestAnimeCard = ({ anime, rank, onClick }) => {
             </svg>
           </div>
         </div>
-        {/* Episode Badge */}
-        {episode && (
+        {/* Episode Badge: show both dub and sub if available */}
+        {(sub || dub) && (
           <div className="absolute top-2 left-2 bg-black/60 backdrop-blur-md rounded-full px-2 py-0.5 flex items-center z-30 shadow-md border border-white/20">
-            <span className="text-white text-xs font-extrabold leading-none tracking-wider drop-shadow-md" style={{letterSpacing: '0.05em'}}>{String(episode).padStart(2, '0')}</span>
+            <span className="text-white text-xs font-extrabold leading-none tracking-wider drop-shadow-md" style={{letterSpacing: '0.05em'}}>
+              {dub ? `dub: ${dub}` : ''}
+              {dub && sub ? ' ' : ''}
+              {sub ? `sub: ${sub}` : ''}
+            </span>
           </div>
         )}
         {/* Rank Badge */}
