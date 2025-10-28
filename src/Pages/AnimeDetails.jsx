@@ -8,12 +8,14 @@ function AnimeDetails() {
   const { animeId } = useParams();
   const resolvedId = animeId;
   const navigate = useNavigate();
-  const { getAnimeDetails, getHomepage, loading, error, clearError } = useShirayukiAPI();
+  const { getAnimeDetails, getHomepage, getRecentUpdates, getSearchSuggestions, loading, error, clearError } = useShirayukiAPI();
   const [animeData, setAnimeData] = useState(null);
   const [episodesData, setEpisodesData] = useState(null);
   const [recommended, setRecommended] = useState([]);
   const [videoSrc, setVideoSrc] = useState(null);
   const [homeCounts, setHomeCounts] = useState(null);
+  const [recentCounts, setRecentCounts] = useState(null);
+  const [suggestionCounts, setSuggestionCounts] = useState(null);
 
   const normalizeDubValue = (raw) => {
     if (raw == null) return null;
@@ -34,8 +36,102 @@ function AnimeDetails() {
   };
 
   useEffect(() => {
-    if (resolvedId) fetchAnimeDetails();
+    if (resolvedId) {
+      fetchAnimeDetails();
+      fetchRecentCounts();
+      // Fetch suggestions using resolvedId (title) on initial load
+      fetchSuggestionCounts(resolvedId);
+    }
   }, [resolvedId]);
+
+  // Refetch suggestion counts when animeData changes (for best title)
+  useEffect(() => {
+    if (animeData) {
+      // Try to get best title from animeData
+      const detailsName = animeData?.data?.anime?.info?.name || animeData?.data?.anime?.title || animeData?.data?.name || animeData?.name || animeData?.title || resolvedId || '';
+      fetchSuggestionCounts(detailsName);
+    }
+  }, [animeData]);
+  // Helper to clean title for suggestions endpoint
+  const getCleanTitle = (title) => {
+    if (!title) return '';
+    // Remove (Dub), Dub, [Dub], etc.
+    let cleaned = title.replace(/\s*\(?dub\)?/i, '').replace(/\s*dub$/i, '').replace(/\[dub\]/i, '').trim();
+    // Remove colons and trailing punctuation
+    cleaned = cleaned.replace(/:/g, '').replace(/[\s\-]+$/g, '').trim();
+    return cleaned;
+  };
+
+  // Fetch sub/dub counts from suggestions endpoint
+  const fetchSuggestionCounts = async (rawTitle) => {
+    try {
+      const cleanTitle = getCleanTitle(rawTitle);
+      if (!cleanTitle) return;
+      const suggestions = await getSearchSuggestions(cleanTitle);
+      if (suggestions && suggestions.success && Array.isArray(suggestions.data)) {
+        // Find exact matches for sub and dub
+        let sub = null, dub = null;
+        // Main title match (case-insensitive, ignore extra spaces)
+        const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+        const mainTitleNorm = normalize(cleanTitle);
+        const dubTitleNorm = normalize(cleanTitle + ' (Dub)');
+        // Find sub
+        const subMatch = suggestions.data.find(item => normalize(item.title) === mainTitleNorm && item.type === 'sub');
+        if (subMatch) sub = subMatch.episode;
+        // Find dub
+        const dubMatch = suggestions.data.find(item => normalize(item.title) === dubTitleNorm && item.type === 'dub');
+        if (dubMatch) dub = dubMatch.episode;
+        setSuggestionCounts({ sub, dub });
+      } else {
+        setSuggestionCounts(null);
+      }
+    } catch (e) {
+      setSuggestionCounts(null);
+    }
+  };
+
+  const fetchRecentCounts = async () => {
+    try {
+      const recent = await getRecentUpdates();
+      const recentList = recent?.data || [];
+      // Normalize function from home.jsx
+      const normalizeAnimeItem = (raw = {}) => {
+        const item = { ...raw };
+        if (typeof item.Sub !== 'undefined' && typeof item.sub === 'undefined') item.sub = item.Sub;
+        if (typeof item.Dub !== 'undefined' && typeof item.dub === 'undefined') item.dub = item.Dub;
+        item.episodes = item.episodes && typeof item.episodes === 'object' ? { ...item.episodes } : {};
+        const nestedSub = item.episodes.sub ?? item.episodes.Sub;
+        const nestedDub = item.episodes.dub ?? item.episodes.Dub;
+        if (typeof item.Sub !== 'undefined') item.sub = item.Sub;
+        if (typeof item.Dub !== 'undefined') item.dub = item.Dub;
+        if (typeof nestedSub !== 'undefined' && typeof item.sub === 'undefined') item.sub = nestedSub;
+        if (typeof nestedDub !== 'undefined' && typeof item.dub === 'undefined') item.dub = nestedDub;
+        if (typeof item.sub !== 'undefined') item.episodes.sub = item.sub;
+        if (typeof item.dub !== 'undefined') item.episodes.dub = item.dub;
+        if (!item.poster && item.image) item.poster = item.image;
+        if (!item.image && item.poster) item.image = item.poster;
+        if (!item.title && item.name) item.title = item.name;
+        if (!item.name && item.title) item.name = item.title;
+        return item;
+      };
+      const normalizedRecent = Array.isArray(recentList) ? recentList.map(normalizeAnimeItem) : recentList;
+      // Try to match by id, slug, title, or name
+      const detailsName = animeData?.data?.anime?.info?.name || animeData?.data?.anime?.title || animeData?.data?.name || animeData?.name || animeData?.title || resolvedId || '';
+      const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      const normalizedResolved = normalize(detailsName);
+      const match = normalizedRecent.find((item) => {
+        const titles = [item?.title, item?.japanese, item?.href, item?.name, item?.slug];
+        return titles.some((t) => normalize(t) === normalizedResolved) || (item?.href && normalize(item.href).includes(normalizedResolved));
+      });
+      if (match) {
+        setRecentCounts({ sub: match.sub, dub: match.dub });
+      } else {
+        setRecentCounts(null);
+      }
+    } catch (e) {
+      setRecentCounts(null);
+    }
+  };
 
   const fetchAnimeDetails = async () => {
     try {
@@ -117,6 +213,8 @@ function AnimeDetails() {
   const epInfo = stats?.episodes || info?.episodes || { sub: 'N/A', dub: 'N/A' };
 
   const subDisplay = (() => {
+    if (suggestionCounts && suggestionCounts.sub != null) return suggestionCounts.sub;
+    if (recentCounts && recentCounts.sub != null) return recentCounts.sub;
     if (homeCounts && homeCounts.sub != null) return homeCounts.sub;
     if (info?.sub != null) return info.sub;
     if (info?.subtitles != null) return info.subtitles;
@@ -125,7 +223,7 @@ function AnimeDetails() {
   })();
 
   const dubDisplay = (() => {
-    let val = homeCounts && homeCounts.dub != null ? homeCounts.dub : (info?.dub != null ? info.dub : (info?.dubbed != null ? info.dubbed : (epInfo?.dub != null ? epInfo.dub : null)));
+    let val = suggestionCounts && suggestionCounts.dub != null ? suggestionCounts.dub : (recentCounts && recentCounts.dub != null ? recentCounts.dub : (homeCounts && homeCounts.dub != null ? homeCounts.dub : (info?.dub != null ? info.dub : (info?.dubbed != null ? info.dubbed : (epInfo?.dub != null ? epInfo.dub : null)))));
     if (val == null) return 'N/A';
     if (typeof val === 'string') {
       const s = val.trim().toLowerCase();
@@ -140,7 +238,6 @@ function AnimeDetails() {
       if (val === 0) return '1';
       return val;
     }
-
     return 'N/A';
   })();
 

@@ -6,7 +6,7 @@ import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
 function StreamingPage() {
     const { animeId } = useParams();
     const navigate = useNavigate();
-    const { getEpisodeStream, getAnimeDetails, getHomepage, loading, error, clearError } = useShirayukiAPI();
+    const { getEpisodeStream, getAnimeDetails, getHomepage, getRecentUpdates, loading, error, clearError } = useShirayukiAPI();
     const location = useLocation();
 
     const [episodeCount, setEpisodeCount] = useState(null);
@@ -53,17 +53,33 @@ function StreamingPage() {
             return;
         }
 
-        const findCountInHomepage = (list, baseId) => {
-            if (!Array.isArray(list) || !baseId) return null;
-            const slugBase = slugify(baseId.replace(/-dub$/i, ''));
-            const trendingItems = list.filter((a) => a.section === 'trending');
-            const candidates = trendingItems.length ? trendingItems : list;
-            const match = candidates.find((a) => {
-                const candidateSlugs = [a.slug, a.id, a.animeId, a.title, a.japanese, a._id].filter(Boolean);
-                return candidateSlugs.some((v) => slugify(String(v)) === slugBase);
-            });
-            if (!match) return null;
-            return match.sub ?? match.sub_count ?? match.subs ?? null;
+        const slugify = (str) => {
+            if (!str) return '';
+            return String(str)
+                .toLowerCase()
+                .replace(/[^a-z0-9]+/g, '-')
+                .replace(/^-+|-+$/g, '')
+                .replace(/--+/g, '-');
+        };
+
+        const normalizeAnimeItem = (raw = {}) => {
+            const item = { ...raw };
+            if (typeof item.Sub !== 'undefined' && typeof item.sub === 'undefined') item.sub = item.Sub;
+            if (typeof item.Dub !== 'undefined' && typeof item.dub === 'undefined') item.dub = item.Dub;
+            item.episodes = item.episodes && typeof item.episodes === 'object' ? { ...item.episodes } : {};
+            const nestedSub = item.episodes.sub ?? item.episodes.Sub;
+            const nestedDub = item.episodes.dub ?? item.episodes.Dub;
+            if (typeof item.Sub !== 'undefined') item.sub = item.Sub;
+            if (typeof item.Dub !== 'undefined') item.dub = item.Dub;
+            if (typeof nestedSub !== 'undefined' && typeof item.sub === 'undefined') item.sub = nestedSub;
+            if (typeof nestedDub !== 'undefined' && typeof item.dub === 'undefined') item.dub = nestedDub;
+            if (typeof item.sub !== 'undefined') item.episodes.sub = item.sub;
+            if (typeof item.dub !== 'undefined') item.episodes.dub = item.dub;
+            if (!item.poster && item.image) item.poster = item.image;
+            if (!item.image && item.poster) item.image = item.poster;
+            if (!item.title && item.name) item.title = item.name;
+            if (!item.name && item.title) item.name = item.title;
+            return item;
         };
 
         const loadCounts = async () => {
@@ -72,18 +88,44 @@ function StreamingPage() {
                 return;
             }
 
+            // Try recent_updates first
+            try {
+                const recent = await getRecentUpdates();
+                const recentList = recent?.data || [];
+                const normalizedRecent = Array.isArray(recentList) ? recentList.map(normalizeAnimeItem) : recentList;
+                // Try to match by id, slug, title, or name
+                const normalizedResolved = slugify(animeId.replace(/-dub$/i, ''));
+                const match = normalizedRecent.find((item) => {
+                    const titles = [item?.slug, item?.id, item?.animeId, item?.title, item?.japanese, item?.name, item?._id];
+                    return titles.some((t) => slugify(String(t)) === normalizedResolved);
+                });
+                if (match && match.sub && !Number.isNaN(Number(match.sub))) {
+                    setEpisodeCount(Number(match.sub));
+                    return;
+                }
+            } catch (e) {
+                console.warn('Failed to use recent_updates counts', e);
+            }
+
+            // Fallback to homepage
             try {
                 const home = await getHomepage();
                 const list = home?.data || [];
-                const homeCount = findCountInHomepage(list, animeId);
-                if (homeCount && !Number.isNaN(Number(homeCount))) {
-                    setEpisodeCount(Number(homeCount));
+                const trendingItems = list.filter((a) => a.section === 'trending');
+                const candidates = trendingItems.length ? trendingItems : list;
+                const match = candidates.find((a) => {
+                    const candidateSlugs = [a.slug, a.id, a.animeId, a.title, a.japanese, a._id].filter(Boolean);
+                    return candidateSlugs.some((v) => slugify(String(v)) === normalizedResolved);
+                });
+                if (match && match.sub && !Number.isNaN(Number(match.sub))) {
+                    setEpisodeCount(Number(match.sub));
                     return;
                 }
             } catch (e) {
                 console.warn('Failed to use homepage counts', e);
             }
 
+            // Fallback to details
             try {
                 const details = await getAnimeDetails(animeId);
                 if (details && details.error) {
@@ -114,7 +156,7 @@ function StreamingPage() {
         };
 
         loadCounts();
-    }, [animeId, getAnimeDetails, getHomepage, location?.state]);
+    }, [animeId, getAnimeDetails, getHomepage, getRecentUpdates, location?.state]);
 
     const episodes = useMemo(() => {
         const count = Number(episodeCount) || 0;
