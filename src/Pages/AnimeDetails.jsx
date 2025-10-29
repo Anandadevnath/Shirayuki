@@ -39,46 +39,48 @@ function AnimeDetails() {
     if (resolvedId) {
       fetchAnimeDetails();
       fetchRecentCounts();
-      // Fetch suggestions using resolvedId (title) on initial load
+      
       fetchSuggestionCounts(resolvedId);
     }
   }, [resolvedId]);
 
-  // Refetch suggestion counts when animeData changes (for best title)
+  
   useEffect(() => {
     if (animeData) {
-      // Try to get best title from animeData
+      
       const detailsName = animeData?.data?.anime?.info?.name || animeData?.data?.anime?.title || animeData?.data?.name || animeData?.name || animeData?.title || resolvedId || '';
       fetchSuggestionCounts(detailsName);
     }
   }, [animeData]);
-  // Helper to clean title for suggestions endpoint
+  
   const getCleanTitle = (title) => {
     if (!title) return '';
-    // Remove (Dub), Dub, [Dub], etc.
+    
     let cleaned = title.replace(/\s*\(?dub\)?/i, '').replace(/\s*dub$/i, '').replace(/\[dub\]/i, '').trim();
-    // Remove colons and trailing punctuation
+    
     cleaned = cleaned.replace(/:/g, '').replace(/[\s\-]+$/g, '').trim();
     return cleaned;
   };
 
-  // Fetch sub/dub counts from suggestions endpoint
+  
   const fetchSuggestionCounts = async (rawTitle) => {
     try {
       const cleanTitle = getCleanTitle(rawTitle);
       if (!cleanTitle) return;
       const suggestions = await getSearchSuggestions(cleanTitle);
       if (suggestions && suggestions.success && Array.isArray(suggestions.data)) {
-        // Find exact matches for sub and dub
         let sub = null, dub = null;
-        // Main title match (case-insensitive, ignore extra spaces)
         const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
         const mainTitleNorm = normalize(cleanTitle);
         const dubTitleNorm = normalize(cleanTitle + ' (Dub)');
-        // Find sub
-        const subMatch = suggestions.data.find(item => normalize(item.title) === mainTitleNorm && item.type === 'sub');
+        
+        let subMatch = suggestions.data.find(item => normalize(item.title) === mainTitleNorm && item.type === 'sub');
+        
+        if (!subMatch) {
+          subMatch = suggestions.data.find(item => normalize(item.japanese_title) === mainTitleNorm && item.type === 'sub');
+        }
         if (subMatch) sub = subMatch.episode;
-        // Find dub
+        
         const dubMatch = suggestions.data.find(item => normalize(item.title) === dubTitleNorm && item.type === 'dub');
         if (dubMatch) dub = dubMatch.episode;
         setSuggestionCounts({ sub, dub });
@@ -94,7 +96,7 @@ function AnimeDetails() {
     try {
       const recent = await getRecentUpdates();
       const recentList = recent?.data || [];
-      // Normalize function from home.jsx
+  
       const normalizeAnimeItem = (raw = {}) => {
         const item = { ...raw };
         if (typeof item.Sub !== 'undefined' && typeof item.sub === 'undefined') item.sub = item.Sub;
@@ -115,7 +117,7 @@ function AnimeDetails() {
         return item;
       };
       const normalizedRecent = Array.isArray(recentList) ? recentList.map(normalizeAnimeItem) : recentList;
-      // Try to match by id, slug, title, or name
+      
       const detailsName = animeData?.data?.anime?.info?.name || animeData?.data?.anime?.title || animeData?.data?.name || animeData?.name || animeData?.title || resolvedId || '';
       const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
       const normalizedResolved = normalize(detailsName);
@@ -165,7 +167,7 @@ function AnimeDetails() {
         setHomeCounts(null);
       }
     } catch (err) {
-  // console.error removed
+      
     }
   };
 
