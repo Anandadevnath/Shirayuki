@@ -62,26 +62,33 @@ function AnimeDetails() {
     try {
       const cleanTitle = getCleanTitle(rawTitle);
       if (!cleanTitle) return;
-      const suggestions = await getSearchSuggestions(cleanTitle);
-      if (suggestions && suggestions.success && Array.isArray(suggestions.data)) {
-        let sub = null, dub = null;
-        const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
-        const mainTitleNorm = normalize(cleanTitle);
-        const dubTitleNorm = normalize(cleanTitle + ' (Dub)');
+      let suggestions = await getSearchSuggestions(cleanTitle);
+      let sub = null, dub = null;
+      const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
+      const mainTitleNorm = normalize(cleanTitle);
+      const dubTitleNorm = normalize(cleanTitle + ' (Dub)');
 
-        let subMatch = suggestions.data.find(item => normalize(item.title) === mainTitleNorm && item.type === 'sub');
+      // Always pick sub and dub directly from type
+      const subMatch = suggestions?.data?.find(item => item.type === 'sub');
+      if (subMatch) sub = subMatch.episode;
+      const dubMatch = suggestions?.data?.find(item => item.type === 'dub');
+      if (dubMatch) dub = dubMatch.episode;
 
-        if (!subMatch) {
-          subMatch = suggestions.data.find(item => normalize(item.japanese_title) === mainTitleNorm && item.type === 'sub');
+      if (!sub) {
+        const recent = await getRecentUpdates();
+        const recentList = recent?.data || [];
+        const recentMatch = recentList.find(item => {
+          const titles = [item?.title, item?.englishTitle, item?.name];
+          return titles.some(t => t && normalize(t.replace(/\(Dub\)/i, '').replace(/\s*Dub$/i, '').trim()) === mainTitleNorm);
+        });
+        if (recentMatch && recentMatch.englishTitle) {
+          const engTitle = getCleanTitle(recentMatch.englishTitle.replace(/\(Dub\)/i, '').replace(/\s*Dub$/i, '').trim());
+          suggestions = await getSearchSuggestions(engTitle);
+          const subMatchFallback = suggestions?.data?.find(item => item.type === 'sub');
+          if (subMatchFallback) sub = subMatchFallback.episode;
         }
-        if (subMatch) sub = subMatch.episode;
-
-        const dubMatch = suggestions.data.find(item => normalize(item.title) === dubTitleNorm && item.type === 'dub');
-        if (dubMatch) dub = dubMatch.episode;
-        setSuggestionCounts({ sub, dub });
-      } else {
-        setSuggestionCounts(null);
       }
+      setSuggestionCounts({ sub, dub });
     } catch (e) {
       setSuggestionCounts(null);
     }
