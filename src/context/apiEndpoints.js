@@ -18,7 +18,10 @@ export const API_ENDPOINTS = {
   SEARCH: "/search",
   SEARCH_SUGGESTIONS: "/search/suggestions",
   EPISODE_STREAM: "/episode-stream",
-  ANIME_DETAILS: "/anime/"
+  ANIME_DETAILS: "/anime/",
+  MOST_POPULAR: "/most_popular",
+  MOST_FAVORITE: "/most_favorite",
+  TOP_AIRING: "/top_airing"
 };
 
 export const buildEndpoint = {

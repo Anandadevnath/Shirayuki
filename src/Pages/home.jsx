@@ -1,17 +1,14 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import Leaderboard from '../components/Leaderboard.jsx';
-import ScheduleSection from '../components/ScheduleSection.jsx';
-import LatestAnimeCard from '../components/LatestAnimeCard.jsx';
-import { FiClock, FiCalendar } from 'react-icons/fi';
-import { MdOutlineHd } from 'react-icons/md';
-import { BsFillVolumeUpFill, BsFillChatLeftTextFill } from 'react-icons/bs';
+import apiService from '../context/apiService';
+import SliderHero from '../components/SliderHero.jsx';
+import TrendingSection from '../components/TrendingSection.jsx';
+import AnimeStatsSection from '../components/AnimeStatsSection.jsx';
+import LatestAndLeaderboardSection from '../components/LatestAndLeaderboardSection.jsx';
 import '../styles/sliderHero.css';
 import { useShirayukiAPI } from '../context';
 import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
 import Backdrop from '../components/Backdrop';
 import { useNavigate } from 'react-router-dom';
-import { FiChevronLeft, FiChevronRight } from 'react-icons/fi';
-import AnimeSections from '../components/AnimeSections';
 
 
 function filterSection(data, section) {
@@ -35,6 +32,20 @@ function getAnimeId(animeOrId) {
 }
 
 function Home() {
+  const [mostPopular, setMostPopular] = useState([]);
+  const [topAiring, setTopAiring] = useState([]);
+  const [mostFavorite, setMostFavorite] = useState([]);
+  useEffect(() => {
+    apiService.getMostPopular()
+      .then(res => setMostPopular(res.data || []))
+      .catch(() => setMostPopular([]));
+    apiService.getTopAiring()
+      .then(res => setTopAiring(res.data || []))
+      .catch(() => setTopAiring([]));
+    apiService.getMostFavorite()
+      .then(res => setMostFavorite(res.data || []))
+      .catch(() => setMostFavorite([]));
+  }, []);
   const { getHomepage, getRecentUpdates, getRecentUpdatesDub, loading, error, clearError } = useShirayukiAPI();
   const [homeData, setHomeData] = useState(null);
   const [recentSub, setRecentSub] = useState([]);
@@ -48,24 +59,17 @@ function Home() {
   const trendingIntervalRef = useRef(null);
   const navigate = useNavigate();
 
-
-  // Memoized filtered data for efficiency
   const sliderData = useMemo(() => filterSection(homeData, 'slider'), [homeData]);
   const trendingData = useMemo(() => filterSection(homeData, 'trending'), [homeData]);
 
-  // Normalize API items to a consistent shape used by components
   const normalizeAnimeItem = (raw = {}) => {
-    // Clone to avoid mutating original
     const item = { ...raw };
 
-    // Normalize Sub/Dub (API sometimes returns capitalized keys)
     if (typeof item.Sub !== 'undefined' && typeof item.sub === 'undefined') item.sub = item.Sub;
     if (typeof item.Dub !== 'undefined' && typeof item.dub === 'undefined') item.dub = item.Dub;
 
-    // Some payloads use nested episodes object
-    // Some payloads use nested episodes object. Normalize into both top-level and episodes object
     item.episodes = item.episodes && typeof item.episodes === 'object' ? { ...item.episodes } : {};
-    // prefer explicit keys, but fall back to nested ones
+
     const nestedSub = item.episodes.sub ?? item.episodes.Sub;
     const nestedDub = item.episodes.dub ?? item.episodes.Dub;
     if (typeof item.Sub !== 'undefined') item.sub = item.Sub;
@@ -73,22 +77,18 @@ function Home() {
     if (typeof nestedSub !== 'undefined' && typeof item.sub === 'undefined') item.sub = nestedSub;
     if (typeof nestedDub !== 'undefined' && typeof item.dub === 'undefined') item.dub = nestedDub;
 
-    // Mirror top-level into episodes for components that read anime.episodes.sub / dub
     if (typeof item.sub !== 'undefined') item.episodes.sub = item.sub;
     if (typeof item.dub !== 'undefined') item.episodes.dub = item.dub;
 
-    // Ensure poster/image keys exist for components
     if (!item.poster && item.image) item.poster = item.image;
     if (!item.image && item.poster) item.image = item.poster;
 
-    // Make sure title/name fields are accessible
     if (!item.title && item.name) item.title = item.name;
     if (!item.name && item.title) item.name = item.title;
 
     return item;
   };
 
-  // Trending carousel navigation handlers
   const handleTrendingPrev = useCallback(() => {
     setTrendingPaused(true);
     if (trendingIntervalRef.current) {
@@ -112,7 +112,6 @@ function Home() {
   }, [trendingData.length]);
 
 
-  // Slider drag handlers
   const handleDragStart = useCallback((e) => {
     setDragging(true);
     setDragStartX(e.type === 'touchstart' ? e.touches[0].clientX : e.clientX);
@@ -135,7 +134,6 @@ function Home() {
   }, []);
 
 
-  // Auto-advance slider
   useEffect(() => {
     const slideCount = sliderData.length;
     if (slideCount <= 1) return;
@@ -278,113 +276,17 @@ function Home() {
       <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} />
 
       {/* --- Slider Hero --- */}
-      {sliderData.length > 0 && (
-        <section
-          className="slider-hero-container"
-          onMouseDown={handleDragStart}
-          onMouseMove={handleDragMove}
-          onMouseUp={handleDragEnd}
-          onMouseLeave={handleDragEnd}
-          onTouchStart={handleDragStart}
-          onTouchMove={handleDragMove}
-          onTouchEnd={handleDragEnd}
-          style={{ userSelect: dragging ? 'none' : undefined }}
-        >
-          <div className={`slider-hero-anim-wrapper`} style={{ height: '100%' }}>
-            {sliderData.map((s, idx) => (
-              <img
-                key={`bg-${idx}`}
-                className={`slider-hero-bg-layer ${idx === currentSlide ? 'active' : ''}`}
-                src={s.image || '/placeholder-hero.jpg'}
-                alt={s.title || `slide-${idx}`}
-              />
-            ))}
-            <div className="slider-hero-overlay" />
-            <div
-              className={`slider-hero-content ${slideAnimClass} ${slideAnimClass ? 'animate' : ''}`}
-              style={{ marginLeft: 'calc(4rem + 1.5rem)' }}
-            >
-              <div className="slider-hero-badge">
-                <svg width="20" height="20" fill="none" viewBox="0 0 24 24">
-                  <rect width="24" height="24" rx="12" fill="#fff2" />
-                  <path
-                    d="M7 10v4a2 2 0 002 2h6"
-                    stroke="#fff"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M15 14V8a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2h6z"
-                    stroke="#fff"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                <span>#{currentSlide + 1} Spotlight</span>
-              </div>
-
-              <div className="slider-hero-title">
-                {getCurrentSpotlight()?.title || 'Anime Title'}
-              </div>
-
-              <div
-                style={{
-                  display: 'flex',
-                  gap: '0.5rem',
-                  marginBottom: '0.5rem',
-                  flexWrap: 'wrap',
-                }}
-              >
-                {getCurrentSpotlight()?.sub && (
-                  <span className="slider-hero-badge">
-                    <BsFillChatLeftTextFill /> SUB
-                  </span>
-                )}
-                {getCurrentSpotlight()?.dub && (
-                  <span className="slider-hero-badge">
-                    <BsFillVolumeUpFill /> DUB
-                  </span>
-                )}
-                {getCurrentSpotlight()?.duration && (
-                  <span className="slider-hero-badge">
-                    <FiClock /> {getCurrentSpotlight().duration}
-                  </span>
-                )}
-                {getCurrentSpotlight()?.quality && (
-                  <span className="slider-hero-badge">
-                    <MdOutlineHd /> {getCurrentSpotlight().quality}
-                  </span>
-                )}
-                {getCurrentSpotlight()?.releaseDate && (
-                  <span className="slider-hero-badge">
-                    <FiCalendar /> {getCurrentSpotlight().releaseDate}
-                  </span>
-                )}
-              </div>
-
-              <div className="slider-hero-desc">
-                {(() => {
-                  const desc = getCurrentSpotlight()?.description || '';
-                  if (desc.length < 10) return desc;
-                  const half = Math.ceil(desc.length / 2);
-                  return desc.slice(0, half) + (desc.length > half ? '...' : '');
-                })()}
-              </div>
-
-              <div style={{ display: 'flex', gap: '1rem' }}>
-                <button
-                  className="slider-hero-btn"
-                  onClick={() => handleAnimeClick(getCurrentSpotlight())}
-                >
-                  Watch Now
-                </button>
-              </div>
-            </div>
-          </div>
-        </section>
-      )}
+      <SliderHero
+        sliderData={sliderData}
+        currentSlide={currentSlide}
+        slideAnimClass={slideAnimClass}
+        dragging={dragging}
+        handleDragStart={handleDragStart}
+        handleDragMove={handleDragMove}
+        handleDragEnd={handleDragEnd}
+        getCurrentSpotlight={getCurrentSpotlight}
+        handleAnimeClick={handleAnimeClick}
+      />
 
       {/* --- MAIN CONTENT --- */}
       <div className="relative z-10" style={{ marginTop: '-20vh' }}>
@@ -403,118 +305,31 @@ function Home() {
           ></div>
 
           <div className="max-w-[92vw] mx-auto px-6 py-12 pt-32 relative z-10">
-
             {/* --- TRENDING FIRST --- */}
-            {trendingData.length > 0 && (
-              <section className="mb-20 relative" style={{ marginTop: '-2rem' }}>
-                {/* Prev/Next buttons */}
-                <button
-                  aria-label="previous"
-                  className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 text-white p-3 rounded-r-lg shadow-lg"
-                  onClick={handleTrendingPrev}
-                >
-                  <FiChevronLeft size={20} />
-                </button>
-                <button
-                  aria-label="next"
-                  className="absolute right-0 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 text-white p-3 rounded-l-lg shadow-lg"
-                  onClick={handleTrendingNext}
-                >
-                  <FiChevronRight size={20} />
-                </button>
-
-                <div className="w-full overflow-hidden" id="trending-scroll-container">
-                  <div
-                    className={`flex gap-3 pl-6 pr-6 pb-4 transition-transform duration-500 ease-in-out`}
-                    style={{
-                      width: `${trendingData.length * (220 + 12)}px`,
-                      transform: `translateX(-${trendingSlideIndex * (220 + 12)}px)`
-                    }}
-                  >
-                    {trendingData.map((anime, index) => (
-                      <div key={`trending-${index}`} className="flex-shrink-0 group relative">
-                        <div
-                          onClick={() => handleAnimeClick(anime)}
-                          className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 hover:scale-[1.02] hover:shadow-2xl w-[180px] h-[240px] md:w-[220px] md:h-[300px]"
-                        >
-                          {/* Vertical rotated title */}
-                          <div className="absolute left-[-48px] top-1/2 -translate-y-1/2 w-48 text-center pointer-events-none">
-                            <div className="text-pink-200 font-bold text-sm transform -rotate-90 origin-left whitespace-nowrap">
-                              {anime.title}
-                            </div>
-                          </div>
-
-                          <img src={anime.image || '/placeholder-anime.jpg'} alt={anime.title} className="w-full h-full object-cover" />
-                          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
-                          <div className="absolute top-3 left-3">
-                            <div className="text-white text-4xl font-black leading-none opacity-90">
-                              {String(anime.number || index + 1).padStart(2, '0')}
-                            </div>
-                          </div>
-                          <div className="absolute bottom-3 left-3 right-3">
-                            <div className="flex gap-2 mb-2">
-                              {typeof anime.sub !== 'undefined' && anime.sub !== null && (
-                                <span className="bg-black/60 text-white text-xs px-2 py-1 rounded-full border border-white/20">SUB: {anime.sub}</span>
-                              )}
-                              {typeof anime.dub !== 'undefined' && anime.dub !== null && (
-                                <span className="bg-black/60 text-white text-xs px-2 py-1 rounded-full border border-white/20">DUB: {anime.dub}</span>
-                              )}
-                            </div>
-                            <h3 className="text-white font-bold text-sm line-clamp-2 drop-shadow-lg">{anime.title}</h3>
-                          </div>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </section>
-            )}
+            <TrendingSection
+              trendingData={trendingData}
+              trendingSlideIndex={trendingSlideIndex}
+              handleTrendingPrev={handleTrendingPrev}
+              handleTrendingNext={handleTrendingNext}
+              handleAnimeClick={handleAnimeClick}
+            />
 
             {/* --- THEN TOP AIRING / POPULAR / FAVORITE --- */}
-            {homeData && Array.isArray(homeData) && (
-              <section className="mt-10">
-                <AnimeSections data={homeData} />
-              </section>
-            )}
-
+            <AnimeStatsSection
+              mostPopular={mostPopular}
+              topAiring={topAiring}
+              mostFavorite={mostFavorite}
+            />
 
             {/* --- LATEST + LEADERBOARD --- */}
-            {(recentSub.length > 0 || recentDub.length > 0) && (
-              <section className="mb-16">
-                <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
-                  <div className="flex-1 flex flex-col gap-8">
-                    <div className="bg-black/10 backdrop-blur-xl rounded-xl border border-white/10 p-8 shadow-xl">
-                      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
-                        {recentSub.map((anime, index) => (
-                          <LatestAnimeCard
-                            key={`recent-sub-${anime.slug || anime.title || index}`}
-                            anime={anime}
-                            rank={index + 1}
-                            onClick={() => handleAnimeClick(anime)}
-                          />
-                        ))}
-                        {recentDub.map((anime, index) => (
-                          <LatestAnimeCard
-                            key={`recent-dub-${anime.slug || anime.title || index}`}
-                            anime={anime}
-                            rank={recentSub.length + index + 1}
-                            onClick={() => handleAnimeClick(anime)}
-                          />
-                        ))}
-                      </div>
-                    </div>
-                    <ScheduleSection />
-                  </div>
-                  <div className="w-full md:w-[360px] md:min-w-[320px]">
-                    <Leaderboard />
-                  </div>
-                </div>
-              </section>
-            )}
+            <LatestAndLeaderboardSection
+              recentSub={recentSub}
+              recentDub={recentDub}
+              handleAnimeClick={handleAnimeClick}
+            />
           </div>
         </div>
       </div>
-
     </div>
   );
 }

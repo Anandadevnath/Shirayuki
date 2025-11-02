@@ -1,6 +1,20 @@
 import config from './config.js';
 
 class ShirayukiAPIService {
+  // Most Popular
+  getMostPopular = async () => {
+    return this.apiCall('/most_popular');
+  }
+
+  // Most Favorite
+  getMostFavorite = async () => {
+    return this.apiCall('/most_favorite');
+  }
+
+  // Top Airing
+  getTopAiring = async () => {
+    return this.apiCall('/top_airing');
+  }
 
   getRecentUpdates = async () => {
     return this.apiCall('/recent_updates');

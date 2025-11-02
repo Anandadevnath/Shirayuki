@@ -12,7 +12,6 @@ function AnimeDetails() {
   const [animeData, setAnimeData] = useState(null);
   const [episodesData, setEpisodesData] = useState(null);
   const [recommended, setRecommended] = useState([]);
-  const [videoSrc, setVideoSrc] = useState(null);
   const [homeCounts, setHomeCounts] = useState(null);
   const [recentCounts, setRecentCounts] = useState(null);
   const [suggestionCounts, setSuggestionCounts] = useState(null);
@@ -39,30 +38,26 @@ function AnimeDetails() {
     if (resolvedId) {
       fetchAnimeDetails();
       fetchRecentCounts();
-      
       fetchSuggestionCounts(resolvedId);
     }
   }, [resolvedId]);
 
-  
+
   useEffect(() => {
     if (animeData) {
-      
       const detailsName = animeData?.data?.anime?.info?.name || animeData?.data?.anime?.title || animeData?.data?.name || animeData?.name || animeData?.title || resolvedId || '';
       fetchSuggestionCounts(detailsName);
     }
   }, [animeData]);
-  
+
   const getCleanTitle = (title) => {
     if (!title) return '';
-    
     let cleaned = title.replace(/\s*\(?dub\)?/i, '').replace(/\s*dub$/i, '').replace(/\[dub\]/i, '').trim();
-    
     cleaned = cleaned.replace(/:/g, '').replace(/[\s\-]+$/g, '').trim();
     return cleaned;
   };
 
-  
+
   const fetchSuggestionCounts = async (rawTitle) => {
     try {
       const cleanTitle = getCleanTitle(rawTitle);
@@ -73,14 +68,14 @@ function AnimeDetails() {
         const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
         const mainTitleNorm = normalize(cleanTitle);
         const dubTitleNorm = normalize(cleanTitle + ' (Dub)');
-        
+
         let subMatch = suggestions.data.find(item => normalize(item.title) === mainTitleNorm && item.type === 'sub');
-        
+
         if (!subMatch) {
           subMatch = suggestions.data.find(item => normalize(item.japanese_title) === mainTitleNorm && item.type === 'sub');
         }
         if (subMatch) sub = subMatch.episode;
-        
+
         const dubMatch = suggestions.data.find(item => normalize(item.title) === dubTitleNorm && item.type === 'dub');
         if (dubMatch) dub = dubMatch.episode;
         setSuggestionCounts({ sub, dub });
@@ -96,7 +91,7 @@ function AnimeDetails() {
     try {
       const recent = await getRecentUpdates();
       const recentList = recent?.data || [];
-  
+
       const normalizeAnimeItem = (raw = {}) => {
         const item = { ...raw };
         if (typeof item.Sub !== 'undefined' && typeof item.sub === 'undefined') item.sub = item.Sub;
@@ -117,7 +112,7 @@ function AnimeDetails() {
         return item;
       };
       const normalizedRecent = Array.isArray(recentList) ? recentList.map(normalizeAnimeItem) : recentList;
-      
+
       const detailsName = animeData?.data?.anime?.info?.name || animeData?.data?.anime?.title || animeData?.data?.name || animeData?.name || animeData?.title || resolvedId || '';
       const normalize = (s) => (s || '').toString().toLowerCase().replace(/[^a-z0-9]+/g, ' ').trim();
       const normalizedResolved = normalize(detailsName);
@@ -167,7 +162,7 @@ function AnimeDetails() {
         setHomeCounts(null);
       }
     } catch (err) {
-      
+
     }
   };
 
@@ -214,14 +209,23 @@ function AnimeDetails() {
   const stats = info?.stats || info?.info?.stats || info;
   const epInfo = stats?.episodes || info?.episodes || { sub: 'N/A', dub: 'N/A' };
 
+  const removeLeadingZeros = (v) => {
+    if (typeof v === 'string' && /^\d+$/.test(v)) {
+      return String(Number(v));
+    }
+    return v;
+  };
+
   const subDisplay = (() => {
-    if (suggestionCounts && suggestionCounts.sub != null) return suggestionCounts.sub;
-    if (recentCounts && recentCounts.sub != null) return recentCounts.sub;
-    if (homeCounts && homeCounts.sub != null) return homeCounts.sub;
-    if (info?.sub != null) return info.sub;
-    if (info?.subtitles != null) return info.subtitles;
-    if (epInfo?.sub != null) return epInfo.sub;
-    return 'N/A';
+    let val = null;
+    if (suggestionCounts && suggestionCounts.sub != null) val = suggestionCounts.sub;
+    else if (recentCounts && recentCounts.sub != null) val = recentCounts.sub;
+    else if (homeCounts && homeCounts.sub != null) val = homeCounts.sub;
+    else if (info?.sub != null) val = info.sub;
+    else if (info?.subtitles != null) val = info.subtitles;
+    else if (epInfo?.sub != null) val = epInfo.sub;
+    else return 'N/A';
+    return removeLeadingZeros(val);
   })();
 
   const dubDisplay = (() => {
@@ -232,21 +236,19 @@ function AnimeDetails() {
       if (s === 'n/a' || s === 'na') return 'N/A';
       if (s === 'no') return '1';
       const n = Number(val);
-      if (!Number.isNaN(n)) return n;
+      if (!Number.isNaN(n)) return removeLeadingZeros(val);
       return val;
     }
     if (typeof val === 'boolean') return '1';
     if (typeof val === 'number') {
       if (val === 0) return '1';
-      return val;
+      return removeLeadingZeros(val);
     }
     return 'N/A';
   })();
 
   const episodesList = episodesData?.data?.episodes || episodesData?.episodes || info?.episodesList || [];
 
-  const openVideo = (src) => setVideoSrc(src);
-  const closeVideo = () => setVideoSrc(null);
 
   const resolveId = (animeOrId) => {
     if (!animeOrId) return null;
