@@ -1,7 +1,8 @@
-import React, { useEffect, useState, useMemo } from 'react';
+import React, { useEffect, useState, useMemo, useRef } from 'react';
 import { useParams, useLocation, useNavigate } from 'react-router-dom';
 import { useShirayukiAPI } from '../context';
 import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
+import Hls from 'hls.js';
 
 function StreamingPage() {
     const { animeId } = useParams();
@@ -12,13 +13,14 @@ function StreamingPage() {
     const [episodeCount, setEpisodeCount] = useState(null);
     const [selectedEp, setSelectedEp] = useState(1);
     const [iframeSrc, setIframeSrc] = useState(null);
+    const videoRef = useRef(null);
     const [fetchError, setFetchError] = useState(null);
     const [fetchingStream, setFetchingStream] = useState(false);
     const [iframeKey, setIframeKey] = useState(0);
     const [reloading, setReloading] = useState(false);
     const [isDub, setIsDub] = useState(false);
     const [hasDub, setHasDub] = useState(false);
-    // Check if dub stream exists for selected episode
+
     useEffect(() => {
         let mounted = true;
         const checkDub = async () => {
@@ -184,6 +186,23 @@ function StreamingPage() {
         }
     }, [effectiveAnimeId, selectedEp]);
 
+    // HLS.js player setup
+    useEffect(() => {
+        if (iframeSrc && videoRef.current && iframeSrc.endsWith('.m3u8')) {
+            let hls;
+            if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(iframeSrc);
+                hls.attachMedia(videoRef.current);
+            } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+                videoRef.current.src = iframeSrc;
+            }
+            return () => {
+                if (hls) hls.destroy();
+            };
+        }
+    }, [iframeSrc]);
+
     const reloadStream = async () => {
         if (reloading) return;
         setReloading(true);
@@ -346,13 +365,38 @@ function StreamingPage() {
                                 <div className="text-red-400">{fetchError}</div>
                             )}
                             {!fetchingStream && !fetchError && iframeSrc && (
-                                <iframe
-                                    key={`iframe-${iframeKey}-${iframeSrc}`}
-                                    title={`${animeId}-ep-${selectedEp}`}
-                                    src={iframeSrc}
-                                    className="w-full h-full border-0"
-                                    allowFullScreen
-                                />
+                                <>
+                                    {iframeSrc.endsWith('.m3u8') ? (
+                                        <video
+                                            ref={videoRef}
+                                            className="w-full h-full rounded bg-black"
+                                            controls
+                                            autoPlay
+                                        />
+                                    ) : (
+                                        <iframe
+                                            key={`iframe-${iframeKey}-${iframeSrc}`}
+                                            title={`${animeId}-ep-${selectedEp}`}
+                                            src={iframeSrc}
+                                            className="w-full h-full border-0"
+                                            allowFullScreen
+                                            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
+                                            referrerPolicy="no-referrer"
+                                            loading="eager"
+                                        />
+                                    )}
+                                    <div className="absolute top-3 right-3 flex gap-2">
+                                        <a
+                                            href={iframeSrc}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="bg-white/10 text-white px-3 py-1 rounded text-sm hover:bg-white/20"
+                                            title="Open stream in new tab"
+                                        >
+                                            Open in tab
+                                        </a>
+                                    </div>
+                                </>
                             )}
                             {!iframeSrc && !fetchingStream && !fetchError && (
                                 <div className="text-gray-400">Select an episode to play</div>

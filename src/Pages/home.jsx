@@ -181,7 +181,6 @@ function Home() {
       clearError();
       const data = await getHomepage();
       const raw = data?.data || [];
-      // Normalize each item so components can rely on lowercase keys like `sub` and `dub`
       const normalized = Array.isArray(raw) ? raw.map(normalizeAnimeItem) : raw;
       setHomeData(normalized);
     } catch (err) {

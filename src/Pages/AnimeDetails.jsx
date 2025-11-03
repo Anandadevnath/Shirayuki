@@ -225,13 +225,32 @@ function AnimeDetails() {
 
   const subDisplay = (() => {
     let val = null;
-    if (suggestionCounts && suggestionCounts.sub != null) val = suggestionCounts.sub;
-    else if (recentCounts && recentCounts.sub != null) val = recentCounts.sub;
-    else if (homeCounts && homeCounts.sub != null) val = homeCounts.sub;
-    else if (info?.sub != null) val = info.sub;
-    else if (info?.subtitles != null) val = info.subtitles;
-    else if (epInfo?.sub != null) val = epInfo.sub;
-    else return 'N/A';
+    // if (suggestionCounts && suggestionCounts.sub != null) val = suggestionCounts.sub;
+    // else if (recentCounts && recentCounts.sub != null) val = recentCounts.sub;
+    // else if (homeCounts && homeCounts.sub != null) val = homeCounts.sub;
+    // else if (info?.sub != null) val = info.sub;
+    // else if (info?.subtitles != null) val = info.subtitles;
+    // else if (epInfo?.sub != null) val = epInfo.sub;
+    // else return 'N/A';
+    if (recentCounts && recentCounts.sub != null && !isNaN(Number(recentCounts.sub))) {
+      if (suggestionCounts && suggestionCounts.sub != null && !isNaN(Number(suggestionCounts.sub))) {
+        val = Number(recentCounts.sub) >= Number(suggestionCounts.sub) ? recentCounts.sub : suggestionCounts.sub;
+      } else {
+        val = recentCounts.sub;
+      }
+    } else if (suggestionCounts && suggestionCounts.sub != null) {
+      val = suggestionCounts.sub;
+    } else if (homeCounts && homeCounts.sub != null) {
+      val = homeCounts.sub;
+    } else if (info?.sub != null) {
+      val = info.sub;
+    } else if (info?.subtitles != null) {
+      val = info.subtitles;
+    } else if (epInfo?.sub != null) {
+      val = epInfo.sub;
+    } else {
+      return 'N/A';
+    }
     return removeLeadingZeros(val);
   })();
 
