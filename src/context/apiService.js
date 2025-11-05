@@ -116,7 +116,11 @@ class ShirayukiAPIService {
       .replace(/^-+|-+$/g, '')
       .replace(/--+/g, '-');
     formatted = encodeURIComponent(formatted);
-    return this.apiCall(`/episode-stream?id=${formatted}&ep=${episode}`);
+    
+    const endpoint = `/episode-stream?id=${formatted}&ep=${episode}`;
+    console.log('  Endpoint:', endpoint);
+    
+    return this.apiCall(endpoint);
   }
 
   // Anime Details

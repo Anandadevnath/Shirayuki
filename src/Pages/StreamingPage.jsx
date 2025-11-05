@@ -1,15 +1,16 @@
 import React, { useEffect, useState, useMemo, useRef } from 'react';
-import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
 import { useShirayukiAPI } from '../context';
-import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
+import { LoadingSpinner } from '../components/LoadingStates';
+import EpisodeList from '../components/EpisodeList';
+import VideoPlayer from '../components/VideoPlayer';
+import AnimeInfo from '../components/AnimeInfo';
 import Hls from 'hls.js';
 
 function StreamingPage() {
     const { animeId } = useParams();
-    const navigate = useNavigate();
-    const { getEpisodeStream, getAnimeDetails, getHomepage, getRecentUpdates, loading, error, clearError } = useShirayukiAPI();
+    const { getEpisodeStream, getAnimeDetails, getHomepage, getRecentUpdates, loading } = useShirayukiAPI();
     const location = useLocation();
-
     const [episodeCount, setEpisodeCount] = useState(null);
     const [selectedEp, setSelectedEp] = useState(1);
     const [iframeSrc, setIframeSrc] = useState(null);
@@ -18,71 +19,152 @@ function StreamingPage() {
     const [fetchingStream, setFetchingStream] = useState(false);
     const [iframeKey, setIframeKey] = useState(0);
     const [reloading, setReloading] = useState(false);
-    const [isDub, setIsDub] = useState(false);
-    const [hasDub, setHasDub] = useState(false);
-
-    useEffect(() => {
-        let mounted = true;
-        const checkDub = async () => {
-            const base = (animeId || '').replace(/-dub$/i, '');
-            const idToUse = `${base}-dub`;
-            try {
-                const res = await getEpisodeStream(idToUse, selectedEp);
-                let link = null;
-                if (res && !res.error) {
-                    if (res.streaming_link) link = res.streaming_link;
-                    else if (res.data && res.data.streaming_link) link = res.data.streaming_link;
-                    else if (res.data && Array.isArray(res.data) && res.data[0] && res.data[0].streaming_link) link = res.data[0].streaming_link;
-                    else if (res.data && res.data.data && res.data.data.streaming_link) link = res.data.data.streaming_link;
-                }
-                if (mounted) setHasDub(!!link);
-            } catch {
-                if (mounted) setHasDub(false);
-            }
-        };
-        checkDub();
-        return () => { mounted = false; };
-    }, [animeId, selectedEp, getEpisodeStream]);
+    const [isDub, setIsDub] = useState(() => animeId?.toLowerCase().includes('dub') || false);
+    const [currentEpisodeHasDub, setCurrentEpisodeHasDub] = useState(false);
+    const [animeData, setAnimeData] = useState(null);
     const [detailsData, setDetailsData] = useState(null);
     const [detailsLoading, setDetailsLoading] = useState(false);
     const [detailsError, setDetailsError] = useState(null);
 
     useEffect(() => {
-        // Always use sub episode count for episode list, regardless of sub/dub toggle
+        let mounted = true;
+        const fetchAnimeData = async () => {
+            if (!animeId) return;
+            
+            try {
+                console.log('🔄 Fetching recent_updates data...');
+                const recent = await getRecentUpdates();
+                const recentList = recent?.data || [];
+                console.log('📋 Recent list length:', recentList.length);
+                
+                const slugify = (str) => {
+                    if (!str) return '';
+                    return String(str)
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-+|-+$/g, '')
+                        .replace(/--+/g, '-');
+                };
+                
+                const currentAnimeSlug = slugify(animeId);
+                console.log('🎯 Looking for currentAnimeSlug:', currentAnimeSlug);
+                
+                const match = recentList.find((item) => {
+                    const titleSlug = slugify(String(item?.title || ''));
+                    const isMatch = titleSlug === currentAnimeSlug;
+                    
+                    if (isMatch) {
+                        console.log('✅ Found match!', {
+                            item_title: item?.title,
+                            item_japanese_title: item?.japanese_title,
+                            titleSlug: titleSlug,
+                            currentAnimeSlug: currentAnimeSlug
+                        });
+                    }
+                    
+                    return isMatch;
+                });
+                
+                console.log('🎯 Match result:', match);
+                
+                if (mounted && match) {
+                    console.log('🎯 Found anime data:', {
+                        title: match.title,
+                        japanese: match.japanese,
+                        japanese_title: match.japanese_title,
+                        originalAnimeId: animeId
+                    });
+                    setAnimeData(match);
+                    
+                    const hasDubVersion = !!match.title;
+                    const hasSubVersion = !!(match.japanese_title || match.japanese);
+                    
+                    console.log('🎭 Version availability:', {
+                        hasDubVersion: hasDubVersion,
+                        hasSubVersion: hasSubVersion,
+                        currentIsDub: animeId?.toLowerCase().includes('dub')
+                    });
+                } else {
+                    console.log('❌ No match found');
+                }
+            } catch (error) {
+                console.error('Failed to fetch anime data from recent_updates:', error);
+            }
+        };
+        
+        fetchAnimeData();
+        return () => { mounted = false; };
+    }, [animeId, getRecentUpdates]);
+
+    // Check if current episode has dub version available
+    useEffect(() => {
+        const checkCurrentEpisodeDub = async () => {
+            if (!animeData || !animeData.title) {
+                setCurrentEpisodeHasDub(false);
+                return;
+            }
+
+            try {
+                console.log(`🔍 Checking if episode ${selectedEp} has dub version...`);
+                let dubTitle = animeData.title;
+                // Add "-dub" suffix if it doesn't already exist
+                if (!dubTitle.toLowerCase().includes('dub')) {
+                    dubTitle = `${dubTitle}-dub`;
+                }
+                const res = await getEpisodeStream(dubTitle, selectedEp);
+                
+                let hasLink = false;
+                if (res && !res.error) {
+                    let link = null;
+                    if (res.streaming_link) link = res.streaming_link;
+                    else if (res.data && res.data.streaming_link) link = res.data.streaming_link;
+                    else if (res.data && Array.isArray(res.data) && res.data[0] && res.data[0].streaming_link) link = res.data[0].streaming_link;
+                    else if (res.data && res.data.data && res.data.data.streaming_link) link = res.data.data.streaming_link;
+                    
+                    hasLink = !!link;
+                }
+                
+                console.log(`📺 Episode ${selectedEp} dub availability:`, hasLink);
+                setCurrentEpisodeHasDub(hasLink);
+                
+                // If current episode doesn't have dub but we're in dub mode, switch to sub
+                if (!hasLink && isDub) {
+                    console.log(`⚠️ Episode ${selectedEp} has no dub, switching to sub`);
+                    setIsDub(false);
+                }
+                
+            } catch (error) {
+                console.warn(`Failed to check dub for episode ${selectedEp}:`, error);
+                setCurrentEpisodeHasDub(false);
+                if (isDub) {
+                    setIsDub(false);
+                }
+            }
+        };
+
+        // Only check if we have anime data
+        if (animeData) {
+            checkCurrentEpisodeDub();
+        }
+    }, [selectedEp, animeData, getEpisodeStream, isDub]);
+
+    // Helper function for slugifying strings
+    const slugify = (str) => {
+        if (!str) return '';
+        return String(str)
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .replace(/--+/g, '-');
+    };
+
+    // Load episode count
+    useEffect(() => {
         const navSub = location?.state?.subCount;
         if (navSub && !Number.isNaN(Number(navSub))) {
             setEpisodeCount(Number(navSub));
             return;
         }
-
-        const slugify = (str) => {
-            if (!str) return '';
-            return String(str)
-                .toLowerCase()
-                .replace(/[^a-z0-9]+/g, '-')
-                .replace(/^-+|-+$/g, '')
-                .replace(/--+/g, '-');
-        };
-
-        const normalizeAnimeItem = (raw = {}) => {
-            const item = { ...raw };
-            if (typeof item.Sub !== 'undefined' && typeof item.sub === 'undefined') item.sub = item.Sub;
-            if (typeof item.Dub !== 'undefined' && typeof item.dub === 'undefined') item.dub = item.Dub;
-            item.episodes = item.episodes && typeof item.episodes === 'object' ? { ...item.episodes } : {};
-            const nestedSub = item.episodes.sub ?? item.episodes.Sub;
-            const nestedDub = item.episodes.dub ?? item.episodes.Dub;
-            if (typeof item.Sub !== 'undefined') item.sub = item.Sub;
-            if (typeof item.Dub !== 'undefined') item.dub = item.Dub;
-            if (typeof nestedSub !== 'undefined' && typeof item.sub === 'undefined') item.sub = nestedSub;
-            if (typeof nestedDub !== 'undefined' && typeof item.dub === 'undefined') item.dub = nestedDub;
-            if (typeof item.sub !== 'undefined') item.episodes.sub = item.sub;
-            if (typeof item.dub !== 'undefined') item.episodes.dub = item.dub;
-            if (!item.poster && item.image) item.poster = item.image;
-            if (!item.image && item.poster) item.image = item.poster;
-            if (!item.title && item.name) item.title = item.name;
-            if (!item.name && item.title) item.name = item.title;
-            return item;
-        };
 
         const loadCounts = async () => {
             if (!animeId) {
@@ -94,12 +176,10 @@ function StreamingPage() {
             try {
                 const recent = await getRecentUpdates();
                 const recentList = recent?.data || [];
-                const normalizedRecent = Array.isArray(recentList) ? recentList.map(normalizeAnimeItem) : recentList;
-                // Try to match by id, slug, title, or name
                 const normalizedResolved = slugify(animeId.replace(/-dub$/i, ''));
-                const match = normalizedRecent.find((item) => {
+                const match = recentList.find((item) => {
                     const titles = [item?.slug, item?.id, item?.animeId, item?.title, item?.japanese, item?.name, item?._id];
-                    return titles.some((t) => slugify(String(t)) === normalizedResolved);
+                    return titles.some((t) => slugify(String(t || '')) === normalizedResolved);
                 });
                 if (match && match.sub && !Number.isNaN(Number(match.sub))) {
                     setEpisodeCount(Number(match.sub));
@@ -115,9 +195,10 @@ function StreamingPage() {
                 const list = home?.data || [];
                 const trendingItems = list.filter((a) => a.section === 'trending');
                 const candidates = trendingItems.length ? trendingItems : list;
+                const normalizedResolved = slugify(animeId.replace(/-dub$/i, ''));
                 const match = candidates.find((a) => {
                     const candidateSlugs = [a.slug, a.id, a.animeId, a.title, a.japanese, a._id].filter(Boolean);
-                    return candidateSlugs.some((v) => slugify(String(v)) === normalizedResolved);
+                    return candidateSlugs.some((v) => slugify(String(v || '')) === normalizedResolved);
                 });
                 if (match && match.sub && !Number.isNaN(Number(match.sub))) {
                     setEpisodeCount(Number(match.sub));
@@ -158,7 +239,7 @@ function StreamingPage() {
         };
 
         loadCounts();
-    }, [animeId, getAnimeDetails, getHomepage, getRecentUpdates, location?.state]);
+    }, [animeId, getAnimeDetails, getHomepage, getRecentUpdates, location?.state, slugify]);
 
     const episodes = useMemo(() => {
         const count = Number(episodeCount) || 0;
@@ -166,19 +247,30 @@ function StreamingPage() {
     }, [episodeCount]);
 
     const effectiveAnimeId = useMemo(() => {
-        if (!animeId) return animeId;
-        const base = animeId.replace(/-dub$/i, '');
-        return isDub ? `${base}-dub` : base;
-    }, [animeId, isDub]);
-
-    const slugify = (str) => {
-        if (!str) return '';
-        return String(str)
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '-')
-            .replace(/^-+|-+$/g, '')
-            .replace(/--+/g, '-');
-    };
+        if (!animeData) {
+            console.log('⚠️ No animeData, falling back to animeId:', animeId);
+            return animeId; // Fallback to original if no data
+        }
+        
+        if (isDub) {
+            // Use regular title for dub and add "-dub" suffix if not present
+            let dubTitle = animeData.title || animeId;
+            if (!dubTitle.toLowerCase().includes('dub')) {
+                dubTitle = `${dubTitle}-dub`;
+            }
+            console.log('🎭 Using DUB title:', dubTitle);
+            return dubTitle;
+        } else {
+            // Use japanese title for sub, but remove any "dub" suffix
+            let subTitle = animeData.japanese_title || animeData.japanese || animeId;
+            
+            // Remove "dub" suffix from the title (case insensitive)
+            subTitle = subTitle.replace(/\s*-?dub\s*$/i, '').trim();
+            
+            console.log('🗾 Using SUB title (cleaned):', subTitle);
+            return subTitle;
+        }
+    }, [animeData, isDub, animeId]);
 
     useEffect(() => {
         if (effectiveAnimeId && selectedEp) {
@@ -269,23 +361,6 @@ function StreamingPage() {
         loadDetails();
     }, [effectiveAnimeId, getAnimeDetails]);
 
-    // helper reused by click handlers: find matching homepage item preferring trending
-    const findCountInHomepage = (list, baseId, preferDub = false) => {
-        if (!Array.isArray(list) || !baseId) return null;
-        const slugBase = slugify(baseId.replace(/-dub$/i, ''));
-        const trendingItems = list.filter((a) => a.section === 'trending');
-        const candidates = trendingItems.length ? trendingItems : list;
-        const match = candidates.find((a) => {
-            const candidateSlugs = [a.slug, a.id, a.animeId, a.title, a.japanese, a._id].filter(Boolean);
-            return candidateSlugs.some((v) => slugify(String(v)) === slugBase);
-        });
-        if (!match) return null;
-        if (preferDub) {
-            return match.dub ?? match.dubs ?? match.dub_count ?? null;
-        }
-        return match.sub ?? match.sub_count ?? match.subs ?? null;
-    };
-
     // fetchStream accepts optional idOverride so toggling mode can fetch immediately
     const fetchStream = async (ep, idOverride) => {
         setFetchError(null);
@@ -293,6 +368,15 @@ function StreamingPage() {
         try {
             const idToUse = idOverride || effectiveAnimeId || animeId;
             if (!idToUse) throw new Error('Missing anime id');
+            
+            console.log('🎬 fetchStream called with:', {
+                episode: ep,
+                idOverride: idOverride,
+                effectiveAnimeId: effectiveAnimeId,
+                finalIdToUse: idToUse,
+                isDub: isDub
+            });
+            
             const res = await getEpisodeStream(idToUse, ep);
             if (!res) throw new Error('No response from stream API');
             if (res.error) {
@@ -312,12 +396,38 @@ function StreamingPage() {
             if (!link) throw new Error('Streaming link not found in response');
             setIframeSrc(link);
             setFetchError(null);
+            console.log('✅ Successfully fetched stream link');
         } catch (err) {
             console.error('Failed to fetch stream', err);
             setFetchError(err.message || 'Failed to fetch stream');
             setIframeSrc(null);
         } finally {
             setFetchingStream(false);
+        }
+    };
+
+    // Handler functions for components
+    const handleEpisodeSelect = (episodeNumber) => {
+        setSelectedEp(episodeNumber);
+    };
+
+    const handleSubDubToggle = async (mode) => {
+        if (mode === 'sub' && isDub && animeData) {
+            let subTitle = animeData.japanese_title || animeData.japanese || animeId;
+            // Remove "dub" suffix from the title (case insensitive)
+            subTitle = subTitle.replace(/\s*-?dub\s*$/i, '').trim();
+            setIsDub(false);
+            console.log('🔄 Switching to SUB using title:', subTitle);
+            await fetchStream(selectedEp, subTitle);
+        } else if (mode === 'dub' && !isDub && animeData) {
+            let dubTitle = animeData.title || animeId;
+            // Add "-dub" suffix if it doesn't already exist
+            if (!dubTitle.toLowerCase().includes('dub')) {
+                dubTitle = `${dubTitle}-dub`;
+            }
+            setIsDub(true);
+            console.log('🔄 Switching to DUB using title:', dubTitle);
+            await fetchStream(selectedEp, dubTitle);
         }
     };
 
@@ -332,175 +442,33 @@ function StreamingPage() {
     return (
         <div className="w-[89vw] mt-16 -ml-22">
             <div className="grid grid-cols-12 gap-6">
-                <aside className="col-span-3 bg-black/60 rounded-lg p-4 max-h-[80vh] overflow-y-auto border border-white/20">
-                    <div className="mt-3 flex items-center gap-3">
-                        <div className="mb-4 font-semibold">List of episodes:</div>
-                        <button onClick={() => navigate(-1)} className="px-3 py-0 bg-white/10 rounded">Back</button>
-                    </div>
-                    <div>
-                        {episodes.length === 0 && <div className="text-gray-400">No episodes available</div>}
-                        {episodes.length > 0 && (
-                            <div className="grid grid-cols-5 gap-3">
-                                {episodes.map((num) => (
-                                    <button
-                                        key={num}
-                                        title={`Episode ${num}`}
-                                        onClick={() => { setSelectedEp(num); }}
-                                        className={`w-full h-10 flex items-center justify-center rounded-md text-sm font-medium border ${selectedEp === num ? 'bg-pink-600 text-white border-white' : 'bg-black/30 text-gray-200 border-white/10 hover:bg-black/20'}`}
-                                    >
-                                        {num}
-                                    </button>
-                                ))}
-                            </div>
-                        )}
-                    </div>
-                </aside>
+                <EpisodeList 
+                    episodes={episodes}
+                    selectedEp={selectedEp}
+                    onEpisodeSelect={handleEpisodeSelect}
+                />
 
-                <section className="col-span-6 bg-black/40 rounded-lg p-3 border border-white/20">
+                <VideoPlayer 
+                    animeId={animeId}
+                    selectedEp={selectedEp}
+                    iframeSrc={iframeSrc}
+                    fetchingStream={fetchingStream}
+                    fetchError={fetchError}
+                    iframeKey={iframeKey}
+                    videoRef={videoRef}
+                    isDub={isDub}
+                    currentEpisodeHasDub={currentEpisodeHasDub}
+                    reloading={reloading}
+                    onSubDubToggle={handleSubDubToggle}
+                    onReload={reloadStream}
+                />
 
-                    <div>
-                        <div className="w-full h-[60vh] bg-black rounded overflow-hidden flex items-center justify-center relative">
-                            {fetchingStream && <LoadingSpinner />}
-                            {fetchError && (
-                                <div className="text-red-400">{fetchError}</div>
-                            )}
-                            {!fetchingStream && !fetchError && iframeSrc && (
-                                <>
-                                    {iframeSrc.endsWith('.m3u8') ? (
-                                        <video
-                                            ref={videoRef}
-                                            className="w-full h-full rounded bg-black"
-                                            controls
-                                            autoPlay
-                                        />
-                                    ) : (
-                                        <iframe
-                                            key={`iframe-${iframeKey}-${iframeSrc}`}
-                                            title={`${animeId}-ep-${selectedEp}`}
-                                            src={iframeSrc}
-                                            className="w-full h-full border-0"
-                                            allowFullScreen
-                                            allow="autoplay; fullscreen; picture-in-picture; encrypted-media"
-                                            referrerPolicy="no-referrer"
-                                            loading="eager"
-                                        />
-                                    )}
-                                    <div className="absolute top-3 right-3 flex gap-2">
-                                        <a
-                                            href={iframeSrc}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="bg-white/10 text-white px-3 py-1 rounded text-sm hover:bg-white/20"
-                                            title="Open stream in new tab"
-                                        >
-                                            Open in tab
-                                        </a>
-                                    </div>
-                                </>
-                            )}
-                            {!iframeSrc && !fetchingStream && !fetchError && (
-                                <div className="text-gray-400">Select an episode to play</div>
-                            )}
-                        </div>
-
-                        {/* Sub/Dub toggle + Reload button placed under the player */}
-                        <div className="w-full flex justify-end items-center gap-3 mt-3">
-                            <div className="flex gap-2">
-                                {/* Sub button always shown if sub episodes exist */}
-                                <button
-                                    onClick={async () => {
-                                        if (isDub) {
-                                            const base = (animeId || '').replace(/-dub$/i, '');
-                                            const idToUse = base;
-                                            setIsDub(false);
-                                            // Do NOT change episode count, only switch stream source
-                                            await fetchStream(selectedEp, idToUse);
-                                        }
-                                    }}
-                                    className={`px-3 py-1 rounded text-sm ${!isDub ? 'bg-pink-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
-                                >
-                                    Sub
-                                </button>
-
-                                {/* Dub button only shown if dub stream exists for selected episode */}
-                                {hasDub && (
-                                    <button
-                                        onClick={async () => {
-                                            if (!isDub) {
-                                                const base = (animeId || '').replace(/-dub$/i, '');
-                                                const idToUse = `${base}-dub`;
-                                                setIsDub(true);
-                                                // Do NOT change episode count, only switch stream source
-                                                await fetchStream(selectedEp, idToUse);
-                                            }
-                                        }}
-                                        className={`px-3 py-1 rounded text-sm ${isDub ? 'bg-pink-600 text-white' : 'bg-white/10 text-white hover:bg-white/20'}`}
-                                    >
-                                        Dub
-                                    </button>
-                                )}
-                            </div>
-
-                            <button
-                                onClick={reloadStream}
-                                title="Reload stream"
-                                disabled={reloading}
-                                className={`bg-white/10 text-white px-3 py-1 rounded text-sm hover:bg-white/20 shadow-sm ${reloading ? 'opacity-60 cursor-not-allowed' : ''}`}
-                            >
-                                {reloading ? 'Reloading...' : 'Reload'}
-                            </button>
-                        </div>
-                    </div>
-                </section>
-
-                <aside className="col-span-3 bg-black/60 rounded-lg p-4 overflow-y-auto max-h-[80vh] border border-white/20">
-                    {detailsLoading && (
-                        <div className="mt-3"><LoadingSpinner /></div>
-                    )}
-
-                    {detailsError && (
-                        <div className="text-red-400 mt-3">{detailsError}</div>
-                    )}
-
-                    {!detailsLoading && !detailsError && detailsData && (
-                        <div className="mt-3">
-                            {detailsData.image && (
-                                <img src={detailsData.image} alt={detailsData.title || animeId} className="w-full rounded mb-3 object-cover" />
-                            )}
-                            <div className="text-gray-100 font-semibold text-lg">{detailsData.title || animeId}</div>
-
-                            {/* Compact info row */}
-                            <div className="text-gray-400 text-sm mt-2 grid grid-cols-2 gap-2">
-                                {detailsData.type && <div><span className="font-medium text-gray-200">Type:</span> {detailsData.type}</div>}
-                                {detailsData.country && <div><span className="font-medium text-gray-200">Country:</span> {detailsData.country}</div>}
-                                {detailsData.status && <div><span className="font-medium text-gray-200">Status:</span> {detailsData.status}</div>}
-                                {detailsData.released && <div><span className="font-medium text-gray-200">Released:</span> {detailsData.released}</div>}
-                                {detailsData.quality && <div><span className="font-medium text-gray-200">Quality:</span> {detailsData.quality}</div>}
-                                {detailsData.rating && (
-                                    <div>
-                                        <span className="font-medium text-gray-200">Rating:</span>
-                                        <span className="ml-1 text-yellow-400">{detailsData.rating.score ?? 'N/A'}</span>
-                                        {detailsData.rating.votes != null && (
-                                            <span className="text-gray-400 text-xs ml-2">({detailsData.rating.votes} votes)</span>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-
-                            {detailsData.synopsis ? (
-                                <div className="text-gray-400 text-sm mt-3" style={{ whiteSpace: 'pre-wrap' }}>
-                                    {detailsData.synopsis.length > 350 ? `${detailsData.synopsis.slice(0, 350)}...` : detailsData.synopsis}
-                                </div>
-                            ) : (
-                                <div className="text-gray-400 text-sm mt-2">No synopsis available.</div>
-                            )}
-                        </div>
-                    )}
-
-                    {!detailsLoading && !detailsError && !detailsData && (
-                        <div className="text-gray-300 mt-2">Anime: {animeId}</div>
-                    )}
-                </aside>
+                <AnimeInfo 
+                    animeId={animeId}
+                    detailsLoading={detailsLoading}
+                    detailsError={detailsError}
+                    detailsData={detailsData}
+                />
             </div>
         </div>
     );
