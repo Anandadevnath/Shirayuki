@@ -272,7 +272,7 @@ const TrendingCardSkeleton = () => (
 );
 
 const TrendingSectionSkeleton = () => (
-  <section className="mb-20 relative" style={{ marginTop: '-2rem' }}>
+  <section className="mb-20 relative w-full" style={{ marginTop: '-2rem' }}>
     <div className="w-full overflow-hidden">
       <div className="flex gap-3 pl-6 pr-6 pb-4">
         {Array.from({ length: 5 }).map((_, index) => (

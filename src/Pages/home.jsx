@@ -377,8 +377,8 @@ function Home() {
             }}
           ></div>
 
-          <div className="max-w-[92vw] mx-auto px-6 py-12 pt-32 relative z-10">
-            {/* --- TRENDING SECTION --- */}
+          {/* --- TRENDING SECTION --- Wider with side gaps */}
+          <div className="relative z-10 w-full pt-32 px-22">
             {trendingLoading ? (
               <TrendingSectionSkeleton />
             ) : (
@@ -390,7 +390,9 @@ function Home() {
                 handleAnimeClick={handleAnimeClick}
               />
             )}
+          </div>
 
+          <div className="w-full mx-auto px-22 py-2 relative z-10">
             {/* --- STATS SECTION --- */}
             {statsLoading ? (
               <AnimeStatsSectionSkeleton />

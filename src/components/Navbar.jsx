@@ -87,7 +87,7 @@ export default function Navbar() {
 
   return (
     <header className="fixed w-full z-30 backdrop-blur-lg bg-gradient-to-b from-black/60 to-transparent border-none">
-      <div className="max-w-7xl mx-16 px-4 py-2 flex items-cente ">
+      <div className="max-w-7xl mx-auto px-4 py-2 flex items-center">
         {/* Logo, Title, and Search Bar in a row */}
         <div className="flex items-center w-full" style={{ gap: '2.5rem' }}>
           <Link to="/" className="flex items-center gap-3 flex-shrink-0" style={{ minWidth: '15rem' }}>

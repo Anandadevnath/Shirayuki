@@ -14,7 +14,7 @@ function App() {
       <BrowserRouter>
   <div className="min-h-screen bg-black text-white">
           <Navbar />
-          <main className="max-w-7xl mx-auto px-4 py-8">
+          <main>
             <Routes>
               <Route path="/" element={<Home />} />
               <Route path="/anime/:animeId" element={<AnimeDetails />} />
