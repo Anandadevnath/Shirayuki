@@ -38,10 +38,13 @@ export const ShirayukiAPIProvider = ({ children }) => {
         getRecentUpdates: useCallback(() => makeAPICall(apiService.getRecentUpdates), [makeAPICall]),
         getRecentUpdatesDub: useCallback(() => makeAPICall(apiService.getRecentUpdatesDub), [makeAPICall]),
 
+        // Trending
+        getTrending: useCallback(() => makeAPICall(apiService.getTrending), [makeAPICall]),
+
         // Top rankings
         getTop10: useCallback(() => makeAPICall(apiService.getTop10), [makeAPICall]),
-        getMonthlyTop10: useCallback(() => makeAPICall(apiService.getMonthlyTop10), [makeAPICall]),
-        getWeeklyTop10: useCallback(() => makeAPICall(apiService.getWeeklyTop10), [makeAPICall]),
+        getMonthlyTop10: useCallback(() => makeAPICall(apiService.getMonthly10), [makeAPICall]),
+        getWeeklyTop10: useCallback(() => makeAPICall(apiService.getWeekly10), [makeAPICall]),
 
         // Schedule
         getSchedule: useCallback(() => makeAPICall(apiService.getSchedule), [makeAPICall]),

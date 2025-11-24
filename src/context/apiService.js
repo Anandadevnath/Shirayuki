@@ -20,6 +20,16 @@ class ShirayukiAPIService {
     return this.apiCall('/recent_updates');
   }
 
+  // Recent Updates for Dubbed content
+  getRecentUpdatesDub = async () => {
+    return this.apiCall('/recent_updates_dub');
+  }
+
+  // Trending anime
+  getTrending = async () => {
+    return this.apiCall('/trending');
+  }
+
   constructor() {
     this.baseURL = import.meta.env.VITE_API_BASE_URL || config.API_BASE_URL;
   }

@@ -28,11 +28,12 @@ const TrendingSection = ({
         <div
           className={`flex gap-3 pl-6 pr-6 pb-4 transition-transform duration-500 ease-in-out`}
           style={{
-            width: `${trendingData.length * (220 + 12)}px`,
-            transform: `translateX(-${trendingSlideIndex * (220 + 12)}px)`
+            width: `${(trendingData.length * 2) * (220 + 12)}px`,
+            transform: `translateX(-${(trendingSlideIndex % trendingData.length) * (220 + 12)}px)`
           }}
         >
-          {trendingData.map((anime, index) => (
+          {/* Duplicate the trending data for infinite scroll effect */}
+          {[...trendingData, ...trendingData].map((anime, index) => (
             <div key={`trending-${index}`} className="flex-shrink-0 group relative">
               <div
                 onClick={() => handleAnimeClick(anime)}

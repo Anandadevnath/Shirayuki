@@ -251,4 +251,106 @@ const ErrorMessage = ({ message, onRetry }) => {
   );
 };
 
-export { LoadingSpinner, ErrorMessage };
+// Skeleton Components
+const TrendingCardSkeleton = () => (
+  <div className="flex-shrink-0 w-[180px] h-[240px] md:w-[220px] md:h-[300px]">
+    <div className="relative rounded-lg overflow-hidden bg-gray-800/50 animate-pulse">
+      <div className="w-full h-full bg-gradient-to-b from-gray-700/50 to-gray-800/50"></div>
+      <div className="absolute top-3 left-3">
+        <div className="w-8 h-8 bg-gray-600/50 rounded"></div>
+      </div>
+      <div className="absolute bottom-3 left-3 right-3">
+        <div className="flex gap-2 mb-2">
+          <div className="w-12 h-5 bg-gray-600/50 rounded-full"></div>
+          <div className="w-12 h-5 bg-gray-600/50 rounded-full"></div>
+        </div>
+        <div className="w-full h-4 bg-gray-600/50 rounded mb-1"></div>
+        <div className="w-3/4 h-4 bg-gray-600/50 rounded"></div>
+      </div>
+    </div>
+  </div>
+);
+
+const TrendingSectionSkeleton = () => (
+  <section className="mb-20 relative" style={{ marginTop: '-2rem' }}>
+    <div className="w-full overflow-hidden">
+      <div className="flex gap-3 pl-6 pr-6 pb-4">
+        {Array.from({ length: 5 }).map((_, index) => (
+          <TrendingCardSkeleton key={`trending-skeleton-${index}`} />
+        ))}
+      </div>
+    </div>
+  </section>
+);
+
+const AnimeStatCardSkeleton = () => (
+  <div className="flex items-center gap-4 p-4 bg-gray-800/30 rounded-lg animate-pulse">
+    <div className="w-16 h-20 bg-gray-700/50 rounded"></div>
+    <div className="flex-1">
+      <div className="w-32 h-4 bg-gray-600/50 rounded mb-2"></div>
+      <div className="w-24 h-3 bg-gray-600/50 rounded"></div>
+    </div>
+  </div>
+);
+
+const AnimeStatsSectionSkeleton = () => (
+  <section className="mb-20">
+    <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+      {['Most Popular', 'Top Airing', 'Most Favorite'].map((title) => (
+        <div key={title} className="space-y-4">
+          <div className="w-32 h-6 bg-gray-600/50 rounded animate-pulse mb-4"></div>
+          {Array.from({ length: 3 }).map((_, index) => (
+            <AnimeStatCardSkeleton key={`${title}-skeleton-${index}`} />
+          ))}
+        </div>
+      ))}
+    </div>
+  </section>
+);
+
+const LatestAnimeCardSkeleton = () => (
+  <div className="flex-shrink-0 w-48 bg-gray-800/50 rounded-lg overflow-hidden animate-pulse">
+    <div className="w-full h-64 bg-gray-700/50"></div>
+    <div className="p-3">
+      <div className="w-full h-4 bg-gray-600/50 rounded mb-2"></div>
+      <div className="w-3/4 h-3 bg-gray-600/50 rounded"></div>
+    </div>
+  </div>
+);
+
+const LatestSectionSkeleton = () => (
+  <div className="mb-8">
+    <div className="w-40 h-6 bg-gray-600/50 rounded animate-pulse mb-4"></div>
+    <div className="flex gap-4 overflow-hidden">
+      {Array.from({ length: 6 }).map((_, index) => (
+        <LatestAnimeCardSkeleton key={`latest-skeleton-${index}`} />
+      ))}
+    </div>
+  </div>
+);
+
+const LeaderboardSkeleton = () => (
+  <div className="bg-gray-800/30 rounded-lg p-6 animate-pulse">
+    <div className="w-32 h-6 bg-gray-600/50 rounded mb-4"></div>
+    <div className="space-y-3">
+      {Array.from({ length: 5 }).map((_, index) => (
+        <div key={`leaderboard-skeleton-${index}`} className="flex items-center gap-3">
+          <div className="w-8 h-8 bg-gray-700/50 rounded"></div>
+          <div className="flex-1">
+            <div className="w-full h-4 bg-gray-600/50 rounded mb-1"></div>
+            <div className="w-2/3 h-3 bg-gray-600/50 rounded"></div>
+          </div>
+        </div>
+      ))}
+    </div>
+  </div>
+);
+
+export { 
+  LoadingSpinner, 
+  ErrorMessage, 
+  TrendingSectionSkeleton,
+  AnimeStatsSectionSkeleton,
+  LatestSectionSkeleton,
+  LeaderboardSkeleton
+};

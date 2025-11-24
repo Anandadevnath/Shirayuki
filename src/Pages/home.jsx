@@ -6,7 +6,14 @@ import AnimeStatsSection from '../components/AnimeStatsSection.jsx';
 import LatestAndLeaderboardSection from '../components/LatestAndLeaderboardSection.jsx';
 import '../styles/sliderHero.css';
 import { useShirayukiAPI } from '../context';
-import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
+import { 
+  LoadingSpinner, 
+  ErrorMessage, 
+  TrendingSectionSkeleton,
+  AnimeStatsSectionSkeleton,
+  LatestSectionSkeleton,
+  LeaderboardSkeleton
+} from '../components/LoadingStates';
 import Backdrop from '../components/Backdrop';
 import { useNavigate } from 'react-router-dom';
 
@@ -35,32 +42,58 @@ function Home() {
   const [mostPopular, setMostPopular] = useState([]);
   const [topAiring, setTopAiring] = useState([]);
   const [mostFavorite, setMostFavorite] = useState([]);
-  useEffect(() => {
-    apiService.getMostPopular()
-      .then(res => setMostPopular(res.data || []))
-      .catch(() => setMostPopular([]));
-    apiService.getTopAiring()
-      .then(res => setTopAiring(res.data || []))
-      .catch(() => setTopAiring([]));
-    apiService.getMostFavorite()
-      .then(res => setMostFavorite(res.data || []))
-      .catch(() => setMostFavorite([]));
-  }, []);
-  const { getHomepage, getRecentUpdates, getRecentUpdatesDub, loading, error, clearError } = useShirayukiAPI();
+  const fetchStats = async () => {
+    if (isFetching.current.stats) return;
+    isFetching.current.stats = true;
+    
+    setStatsLoading(true);
+    try {
+      const [popularRes, airingRes, favoriteRes] = await Promise.all([
+        apiService.getMostPopular(),
+        apiService.getTopAiring(), 
+        apiService.getMostFavorite()
+      ]);
+      setMostPopular(popularRes.data || []);
+      setTopAiring(airingRes.data || []);
+      setMostFavorite(favoriteRes.data || []);
+    } catch (error) {
+      setMostPopular([]);
+      setTopAiring([]);
+      setMostFavorite([]);
+    } finally {
+      setStatsLoading(false);
+      isFetching.current.stats = false;
+    }
+  };
+  const { getHomepage, getRecentUpdates, getRecentUpdatesDub, getTrending, loading, error, clearError } = useShirayukiAPI();
   const [homeData, setHomeData] = useState(null);
   const [recentSub, setRecentSub] = useState([]);
   const [recentDub, setRecentDub] = useState([]);
+  const [trendingData, setTrendingData] = useState([]);
   const [currentSlide, setCurrentSlide] = useState(0);
   const [dragStartX, setDragStartX] = useState(null);
   const [dragging, setDragging] = useState(false);
   const [slideAnimClass, setSlideAnimClass] = useState('');
   const [trendingSlideIndex, setTrendingSlideIndex] = useState(0);
   const [trendingPaused, setTrendingPaused] = useState(false);
+  
+  // Loading states for different sections
+  const [trendingLoading, setTrendingLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [recentLoading, setRecentLoading] = useState(true);
+  
+  // Refs to track loading state and prevent multiple calls
   const trendingIntervalRef = useRef(null);
+  const isInitialized = useRef(false);
+  const isFetching = useRef({
+    trending: false,
+    stats: false,
+    recent: false,
+    home: false
+  });
   const navigate = useNavigate();
 
   const sliderData = useMemo(() => filterSection(homeData, 'slider'), [homeData]);
-  const trendingData = useMemo(() => filterSection(homeData, 'trending'), [homeData]);
 
   const normalizeAnimeItem = (raw = {}) => {
     const item = { ...raw };
@@ -95,8 +128,8 @@ function Home() {
       clearInterval(trendingIntervalRef.current);
       trendingIntervalRef.current = null;
     }
-    setTrendingSlideIndex((prev) => Math.max(0, prev - 1));
-  }, []);
+    setTrendingSlideIndex((prev) => (prev - 1 + trendingData.length) % Math.max(1, trendingData.length));
+  }, [trendingData.length]);
 
   const handleTrendingNext = useCallback(() => {
     setTrendingPaused(true);
@@ -104,11 +137,7 @@ function Home() {
       clearInterval(trendingIntervalRef.current);
       trendingIntervalRef.current = null;
     }
-    const CARD_WIDTH = 220 + 12;
-    const CONTAINER_WIDTH = window.innerWidth * 0.9;
-    const visibleCards = Math.floor(CONTAINER_WIDTH / CARD_WIDTH);
-    const maxIndex = Math.max(0, trendingData.length - visibleCards);
-    setTrendingSlideIndex((prev) => (prev >= maxIndex ? 0 : prev + 1));
+    setTrendingSlideIndex((prev) => (prev + 1) % Math.max(1, trendingData.length));
   }, [trendingData.length]);
 
 
@@ -146,19 +175,9 @@ function Home() {
 
   useEffect(() => {
     if (trendingData.length <= 1) return;
-    const CARD_WIDTH = 220 + 12;
-    const CONTAINER_WIDTH = window.innerWidth * 0.9;
-    const visibleCards = Math.floor(CONTAINER_WIDTH / CARD_WIDTH);
-    const maxIndex = Math.max(0, trendingData.length - visibleCards);
     if (trendingPaused) return undefined;
     trendingIntervalRef.current = setInterval(() => {
-      setTrendingSlideIndex((prev) => {
-        const nextIndex = prev + 1;
-        if (nextIndex > maxIndex) {
-          return 0;
-        }
-        return nextIndex;
-      });
+      setTrendingSlideIndex((prev) => (prev + 1) % Math.max(1, trendingData.length));
     }, 2000);
     return () => {
       if (trendingIntervalRef.current) {
@@ -169,14 +188,43 @@ function Home() {
   }, [trendingData.length, trendingPaused]);
 
 
+  // Initialize data only once
   useEffect(() => {
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+    
     fetchHomeData();
     fetchRecentUpdates();
+    fetchTrendingData();
+    fetchStats();
   }, []);
+
+  // Fetch trending data
+  const fetchTrendingData = async () => {
+    if (isFetching.current.trending) return;
+    isFetching.current.trending = true;
+    
+    setTrendingLoading(true);
+    try {
+      const data = await getTrending();
+      const raw = data?.data || [];
+      const normalized = Array.isArray(raw) ? raw.map(normalizeAnimeItem) : [];
+      setTrendingData(normalized);
+    } catch (err) {
+      console.error('Failed to fetch trending data:', err);
+      setTrendingData([]);
+    } finally {
+      setTrendingLoading(false);
+      isFetching.current.trending = false;
+    }
+  };
 
 
   // Data fetching handlers
-  const fetchHomeData = useCallback(async () => {
+  const fetchHomeData = async () => {
+    if (isFetching.current.home) return;
+    isFetching.current.home = true;
+    
     try {
       clearError();
       const data = await getHomepage();
@@ -185,22 +233,37 @@ function Home() {
       setHomeData(normalized);
     } catch (err) {
       console.error('Failed to fetch home data:', err);
+    } finally {
+      isFetching.current.home = false;
     }
-  }, [getHomepage, clearError]);
+  };
 
-  const fetchRecentUpdates = useCallback(async () => {
+  const fetchRecentUpdates = async () => {
+    if (isFetching.current.recent) return;
+    isFetching.current.recent = true;
+    
+    setRecentLoading(true);
     try {
-      const subRes = await getRecentUpdates();
+      const [subRes, dubRes] = await Promise.all([
+        getRecentUpdates(),
+        getRecentUpdatesDub()
+      ]);
+      
       const rawSub = subRes?.data || [];
       const normalizedSub = Array.isArray(rawSub) ? rawSub.map(normalizeAnimeItem) : rawSub;
       setRecentSub(normalizedSub);
 
-      const dubRes = await getRecentUpdatesDub();
       const rawDub = dubRes?.data || [];
       const normalizedDub = Array.isArray(rawDub) ? rawDub.map(normalizeAnimeItem) : rawDub;
       setRecentDub(normalizedDub);
-    } catch (err) {}
-  }, [getRecentUpdates, getRecentUpdatesDub]);
+    } catch (err) {
+      setRecentSub([]);
+      setRecentDub([]);
+    } finally {
+      setRecentLoading(false);
+      isFetching.current.recent = false;
+    }
+  };
 
 
   // Slide change handler
@@ -228,7 +291,18 @@ function Home() {
   const handleAnimeClick = useCallback((animeOrId) => {
     const resolvedId = getAnimeId(animeOrId);
     if (!resolvedId) return;
-    navigate(`/anime/${encodeURIComponent(resolvedId)}`);
+    
+    // Pass trending data if available (contains accurate sub/dub counts)
+    const navigationState = {};
+    if (animeOrId && typeof animeOrId === 'object') {
+      if (animeOrId.sub !== undefined) navigationState.trendingSub = animeOrId.sub;
+      if (animeOrId.dub !== undefined) navigationState.trendingDub = animeOrId.dub;
+      if (animeOrId.section === 'trending') navigationState.fromTrending = true;
+    }
+    
+    navigate(`/anime/${encodeURIComponent(resolvedId)}`, { 
+      state: Object.keys(navigationState).length > 0 ? navigationState : undefined 
+    });
   }, [navigate]);
 
 
@@ -304,28 +378,48 @@ function Home() {
           ></div>
 
           <div className="max-w-[92vw] mx-auto px-6 py-12 pt-32 relative z-10">
-            {/* --- TRENDING FIRST --- */}
-            <TrendingSection
-              trendingData={trendingData}
-              trendingSlideIndex={trendingSlideIndex}
-              handleTrendingPrev={handleTrendingPrev}
-              handleTrendingNext={handleTrendingNext}
-              handleAnimeClick={handleAnimeClick}
-            />
+            {/* --- TRENDING SECTION --- */}
+            {trendingLoading ? (
+              <TrendingSectionSkeleton />
+            ) : (
+              <TrendingSection
+                trendingData={trendingData}
+                trendingSlideIndex={trendingSlideIndex}
+                handleTrendingPrev={handleTrendingPrev}
+                handleTrendingNext={handleTrendingNext}
+                handleAnimeClick={handleAnimeClick}
+              />
+            )}
 
-            {/* --- THEN TOP AIRING / POPULAR / FAVORITE --- */}
-            <AnimeStatsSection
-              mostPopular={mostPopular}
-              topAiring={topAiring}
-              mostFavorite={mostFavorite}
-            />
+            {/* --- STATS SECTION --- */}
+            {statsLoading ? (
+              <AnimeStatsSectionSkeleton />
+            ) : (
+              <AnimeStatsSection
+                mostPopular={mostPopular}
+                topAiring={topAiring}
+                mostFavorite={mostFavorite}
+              />
+            )}
 
             {/* --- LATEST + LEADERBOARD --- */}
-            <LatestAndLeaderboardSection
-              recentSub={recentSub}
-              recentDub={recentDub}
-              handleAnimeClick={handleAnimeClick}
-            />
+            {recentLoading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                  <LatestSectionSkeleton />
+                  <LatestSectionSkeleton />
+                </div>
+                <div className="lg:col-span-1">
+                  <LeaderboardSkeleton />
+                </div>
+              </div>
+            ) : (
+              <LatestAndLeaderboardSection
+                recentSub={recentSub}
+                recentDub={recentDub}
+                handleAnimeClick={handleAnimeClick}
+              />
+            )}
           </div>
         </div>
       </div>

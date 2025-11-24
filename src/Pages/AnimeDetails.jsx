@@ -1,13 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import { useParams, useNavigate, useLocation } from 'react-router-dom';
 import { useShirayukiAPI } from '../context';
 import { LoadingSpinner, ErrorMessage } from '../components/LoadingStates';
 import Backdrop from '../components/Backdrop';
 
 function AnimeDetails() {
   const { animeId } = useParams();
+  const location = useLocation();
   const resolvedId = animeId;
   const navigate = useNavigate();
+  
+  // Get trending data from navigation state if available
+  const trendingState = location.state || {};
+  const { trendingSub, trendingDub, fromTrending } = trendingState;
   const { getAnimeDetails, getHomepage, getRecentUpdates, getSearchSuggestions, loading, error, clearError } = useShirayukiAPI();
   const [animeData, setAnimeData] = useState(null);
   const [episodesData, setEpisodesData] = useState(null);
@@ -15,6 +20,8 @@ function AnimeDetails() {
   const [homeCounts, setHomeCounts] = useState(null);
   const [recentCounts, setRecentCounts] = useState(null);
   const [suggestionCounts, setSuggestionCounts] = useState(null);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+  const [hasError, setHasError] = useState(false);
 
   const normalizeDubValue = (raw) => {
     if (raw == null) return null;
@@ -139,6 +146,8 @@ function AnimeDetails() {
 
   const fetchAnimeDetails = async () => {
     try {
+      setIsInitialLoading(true);
+      setHasError(false);
       const details = await getAnimeDetails(resolvedId);
       setAnimeData(details);
       setEpisodesData(null);
@@ -169,17 +178,23 @@ function AnimeDetails() {
         setHomeCounts(null);
       }
     } catch (err) {
-
+      console.error('Failed to fetch anime details:', err);
+      setHasError(true);
+    } finally {
+      setIsInitialLoading(false);
     }
   };
 
-  if (loading && !animeData) {
+  // Show loading state while initially loading or when the main API context is loading
+  if (isInitialLoading || (loading && !animeData)) {
     return (
       <Backdrop image={'/tanjiro.png'} blurPx={5} scale={1}>
         <LoadingSpinner size="large" />
       </Backdrop>
     );
   }
+
+  // Show error state if there's an error from the main API context
   if (error && !animeData) {
     return (
       <Backdrop image={'/tanjiro.png'} blurPx={5} scale={1}>
@@ -190,7 +205,19 @@ function AnimeDetails() {
     );
   }
 
-  if (!animeData) {
+  // Show error state if fetch failed
+  if (hasError && !animeData) {
+    return (
+      <Backdrop image={'/tanjiro.png'} blurPx={5} scale={1}>
+        <div className="p-4 w-full max-w-md">
+          <ErrorMessage message="Failed to load anime details" onRetry={fetchAnimeDetails} />
+        </div>
+      </Backdrop>
+    );
+  }
+
+  // Show "not found" only after loading is complete and no data was found
+  if (!isInitialLoading && !animeData) {
     return (
       <div className="min-h-screen bg-black flex items-center justify-center">
         <div className="text-white text-xl">Anime not found</div>
@@ -225,14 +252,11 @@ function AnimeDetails() {
 
   const subDisplay = (() => {
     let val = null;
-    // if (suggestionCounts && suggestionCounts.sub != null) val = suggestionCounts.sub;
-    // else if (recentCounts && recentCounts.sub != null) val = recentCounts.sub;
-    // else if (homeCounts && homeCounts.sub != null) val = homeCounts.sub;
-    // else if (info?.sub != null) val = info.sub;
-    // else if (info?.subtitles != null) val = info.subtitles;
-    // else if (epInfo?.sub != null) val = epInfo.sub;
-    // else return 'N/A';
-    if (recentCounts && recentCounts.sub != null && !isNaN(Number(recentCounts.sub))) {
+    
+    // Prioritize trending data if available (most accurate)
+    if (fromTrending && trendingSub !== undefined && trendingSub !== null) {
+      val = trendingSub;
+    } else if (recentCounts && recentCounts.sub != null && !isNaN(Number(recentCounts.sub))) {
       if (suggestionCounts && suggestionCounts.sub != null && !isNaN(Number(suggestionCounts.sub))) {
         val = Number(recentCounts.sub) >= Number(suggestionCounts.sub) ? recentCounts.sub : suggestionCounts.sub;
       } else {
@@ -255,7 +279,15 @@ function AnimeDetails() {
   })();
 
   const dubDisplay = (() => {
-    let val = suggestionCounts && suggestionCounts.dub != null ? suggestionCounts.dub : (recentCounts && recentCounts.dub != null ? recentCounts.dub : (homeCounts && homeCounts.dub != null ? homeCounts.dub : (info?.dub != null ? info.dub : (info?.dubbed != null ? info.dubbed : (epInfo?.dub != null ? epInfo.dub : null)))));
+    let val = null;
+    
+    // Prioritize trending data if available (most accurate)  
+    if (fromTrending && trendingDub !== undefined && trendingDub !== null) {
+      val = trendingDub;
+    } else {
+      val = suggestionCounts && suggestionCounts.dub != null ? suggestionCounts.dub : (recentCounts && recentCounts.dub != null ? recentCounts.dub : (homeCounts && homeCounts.dub != null ? homeCounts.dub : (info?.dub != null ? info.dub : (info?.dubbed != null ? info.dubbed : (epInfo?.dub != null ? epInfo.dub : null)))));
+    }
+    
     if (val == null) return 'N/A';
     if (typeof val === 'string') {
       const s = val.trim().toLowerCase();
