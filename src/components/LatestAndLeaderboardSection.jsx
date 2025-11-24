@@ -8,8 +8,8 @@ const LatestAndLeaderboardSection = ({ recentSub, recentDub, handleAnimeClick })
     <section className="mb-16">
       <div className="flex flex-col md:flex-row gap-6 md:gap-8 items-start">
         <div className="flex-1 flex flex-col gap-8">
-          <div className="bg-black/10 backdrop-blur-xl rounded-xl border border-white/10 p-8 shadow-xl">
-            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-6">
+          <div className="bg-black/10 backdrop-blur-xl rounded-xl border border-white/10 p-6 shadow-xl">
+            <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
               {recentSub.map((anime, index) => (
                 <LatestAnimeCard
                   key={`recent-sub-${anime.slug || anime.title || index}`}

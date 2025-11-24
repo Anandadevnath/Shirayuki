@@ -8,8 +8,7 @@ const TrendingSection = ({
   handleTrendingNext,
   handleAnimeClick
 }) => (
-  trendingData.length > 0 && (
-    <section className="mb-20 relative w-full" style={{ marginTop: '-2rem' }}>
+  <section className="mb-20 relative w-full" style={{ marginTop: '-2rem' }}>
       <button
         aria-label="previous"
         className="absolute left-0 top-1/2 -translate-y-1/2 z-20 bg-black/40 hover:bg-black/60 text-white p-3 rounded-r-lg shadow-lg"
@@ -68,7 +67,6 @@ const TrendingSection = ({
         </div>
       </div>
     </section>
-  )
 );
 
 export default TrendingSection;

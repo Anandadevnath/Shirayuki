@@ -346,9 +346,52 @@ const LeaderboardSkeleton = () => (
   </div>
 );
 
+const SliderHeroSkeleton = () => (
+  <section className="slider-hero-container">
+    <div className="slider-hero-anim-wrapper" style={{ height: '100%' }}>
+      {/* Background skeleton */}
+      <div className="absolute inset-0 bg-gradient-to-r from-gray-800 to-gray-600 animate-pulse" />
+      <div className="slider-hero-overlay" />
+      
+      {/* Content skeleton */}
+      <div
+        className="slider-hero-content relative z-4"
+        style={{ marginLeft: 'calc(4rem + 1.5rem)' }}
+      >
+        {/* Badge skeleton */}
+        <div className="w-32 h-8 bg-gray-600/50 rounded-full mb-4 animate-pulse" />
+        
+        {/* Title skeleton */}
+        <div className="space-y-3 mb-6">
+          <div className="w-80 h-12 bg-gray-600/50 rounded animate-pulse" />
+          <div className="w-64 h-12 bg-gray-600/50 rounded animate-pulse" />
+        </div>
+        
+        {/* Badges skeleton */}
+        <div className="flex gap-2 mb-6">
+          <div className="w-16 h-6 bg-gray-600/50 rounded-full animate-pulse" />
+          <div className="w-16 h-6 bg-gray-600/50 rounded-full animate-pulse" />
+          <div className="w-20 h-6 bg-gray-600/50 rounded-full animate-pulse" />
+        </div>
+        
+        {/* Description skeleton */}
+        <div className="space-y-2 mb-8">
+          <div className="w-full max-w-2xl h-4 bg-gray-600/50 rounded animate-pulse" />
+          <div className="w-5/6 max-w-xl h-4 bg-gray-600/50 rounded animate-pulse" />
+          <div className="w-4/5 max-w-lg h-4 bg-gray-600/50 rounded animate-pulse" />
+        </div>
+        
+        {/* Button skeleton */}
+        <div className="w-36 h-12 bg-gradient-to-r from-gray-600 to-gray-500 rounded-3xl animate-pulse" />
+      </div>
+    </div>
+  </section>
+);
+
 export { 
   LoadingSpinner, 
   ErrorMessage, 
+  SliderHeroSkeleton,
   TrendingSectionSkeleton,
   AnimeStatsSectionSkeleton,
   LatestSectionSkeleton,

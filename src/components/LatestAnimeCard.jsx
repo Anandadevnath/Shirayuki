@@ -1,20 +1,18 @@
 import React from 'react';
 
 const LatestAnimeCard = ({ anime, rank, onClick }) => {
-  // Extract episode info for both sub and dub
   const sub = typeof anime.sub !== 'undefined' ? anime.sub : anime.episodes?.sub;
   const dub = typeof anime.dub !== 'undefined' ? anime.dub : anime.episodes?.dub;
   return (
     <div
-      className="relative rounded-2xl overflow-hidden shadow-xl bg-black/40 border border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer hover:scale-105 group w-full h-full"
-      style={{ minWidth: '150px', minHeight: '225px', maxWidth: '180px', maxHeight: '270px' }}
+      className="relative rounded-2xl overflow-hidden shadow-xl bg-black/40 border border-white/10 hover:border-white/30 transition-all duration-300 cursor-pointer hover:scale-105 group w-full aspect-[2/3]"
       onClick={onClick}
       tabIndex={0}
       role="button"
       onKeyDown={e => (e.key === 'Enter' || e.key === ' ') && onClick && onClick()}
     >
       {/* Anime Image */}
-      <div className="aspect-[3/4] relative w-full h-full">
+      <div className="relative w-full h-full">
         <img
           src={anime.image || '/placeholder-anime.jpg'}
           alt={anime.title}

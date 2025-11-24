@@ -6,9 +6,10 @@ import AnimeStatsSection from '../components/AnimeStatsSection.jsx';
 import LatestAndLeaderboardSection from '../components/LatestAndLeaderboardSection.jsx';
 import '../styles/sliderHero.css';
 import { useShirayukiAPI } from '../context';
-import { 
-  LoadingSpinner, 
-  ErrorMessage, 
+import {
+  LoadingSpinner,
+  ErrorMessage,
+  SliderHeroSkeleton,
   TrendingSectionSkeleton,
   AnimeStatsSectionSkeleton,
   LatestSectionSkeleton,
@@ -45,12 +46,12 @@ function Home() {
   const fetchStats = async () => {
     if (isFetching.current.stats) return;
     isFetching.current.stats = true;
-    
+
     setStatsLoading(true);
     try {
       const [popularRes, airingRes, favoriteRes] = await Promise.all([
         apiService.getMostPopular(),
-        apiService.getTopAiring(), 
+        apiService.getTopAiring(),
         apiService.getMostFavorite()
       ]);
       setMostPopular(popularRes.data || []);
@@ -76,12 +77,12 @@ function Home() {
   const [slideAnimClass, setSlideAnimClass] = useState('');
   const [trendingSlideIndex, setTrendingSlideIndex] = useState(0);
   const [trendingPaused, setTrendingPaused] = useState(false);
-  
+
   // Loading states for different sections
   const [trendingLoading, setTrendingLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
   const [recentLoading, setRecentLoading] = useState(true);
-  
+
   // Refs to track loading state and prevent multiple calls
   const trendingIntervalRef = useRef(null);
   const isInitialized = useRef(false);
@@ -192,7 +193,7 @@ function Home() {
   useEffect(() => {
     if (isInitialized.current) return;
     isInitialized.current = true;
-    
+
     fetchHomeData();
     fetchRecentUpdates();
     fetchTrendingData();
@@ -203,7 +204,7 @@ function Home() {
   const fetchTrendingData = async () => {
     if (isFetching.current.trending) return;
     isFetching.current.trending = true;
-    
+
     setTrendingLoading(true);
     try {
       const data = await getTrending();
@@ -224,7 +225,7 @@ function Home() {
   const fetchHomeData = async () => {
     if (isFetching.current.home) return;
     isFetching.current.home = true;
-    
+
     try {
       clearError();
       const data = await getHomepage();
@@ -241,14 +242,14 @@ function Home() {
   const fetchRecentUpdates = async () => {
     if (isFetching.current.recent) return;
     isFetching.current.recent = true;
-    
+
     setRecentLoading(true);
     try {
       const [subRes, dubRes] = await Promise.all([
         getRecentUpdates(),
         getRecentUpdatesDub()
       ]);
-      
+
       const rawSub = subRes?.data || [];
       const normalizedSub = Array.isArray(rawSub) ? rawSub.map(normalizeAnimeItem) : rawSub;
       setRecentSub(normalizedSub);
@@ -291,7 +292,7 @@ function Home() {
   const handleAnimeClick = useCallback((animeOrId) => {
     const resolvedId = getAnimeId(animeOrId);
     if (!resolvedId) return;
-    
+
     // Pass trending data if available (contains accurate sub/dub counts)
     const navigationState = {};
     if (animeOrId && typeof animeOrId === 'object') {
@@ -299,9 +300,9 @@ function Home() {
       if (animeOrId.dub !== undefined) navigationState.trendingDub = animeOrId.dub;
       if (animeOrId.section === 'trending') navigationState.fromTrending = true;
     }
-    
-    navigate(`/anime/${encodeURIComponent(resolvedId)}`, { 
-      state: Object.keys(navigationState).length > 0 ? navigationState : undefined 
+
+    navigate(`/anime/${encodeURIComponent(resolvedId)}`, {
+      state: Object.keys(navigationState).length > 0 ? navigationState : undefined
     });
   }, [navigate]);
 
@@ -317,9 +318,62 @@ function Home() {
   // Loading and error states
   if (loading && !homeData) {
     return (
-      <Backdrop image={'/tanjiro.png'} blurPx={6} scale={1}>
-        <LoadingSpinner size="large" />
-      </Backdrop>
+      <div className="home-full-bg relative overflow-x-hidden" style={{ minHeight: '100vh', width: '100vw', position: 'relative', zIndex: 0 }}>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url('/sword.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            filter: 'blur(10px) brightness(0.45) saturate(0.9)',
+            transform: 'scale(1)'
+          }}
+        />
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} />
+
+        {/* Slider Hero Skeleton */}
+        <SliderHeroSkeleton />
+
+        {/* Main Content Skeletons */}
+        <div className="relative z-10" style={{ marginTop: '-20vh' }}>
+          <div className="relative">
+            <div
+              className="absolute top-0 left-0 right-0 h-48 pointer-events-none"
+              style={{
+                background: `linear-gradient(180deg,
+                  rgba(0,0,0,0) 0%, 
+                  rgba(0,0,0,0.1) 10%, 
+                  rgba(0,0,0,0.3) 30%, 
+                  rgba(0,0,0,0.6) 60%, 
+                  rgba(0,0,0,0.9) 90%, 
+                  rgba(0,0,0,1) 100%)`,
+              }}
+            ></div>
+
+            {/* Trending Section Skeleton */}
+            <div className="relative z-10 w-full pt-32 px-8">
+              <TrendingSectionSkeleton />
+            </div>
+
+            <div className="max-w-7xl mx-auto px-4 py-12 relative z-10">
+              {/* Stats Section Skeleton */}
+              <AnimeStatsSectionSkeleton />
+
+              {/* Latest + Leaderboard Skeleton */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                  <LatestSectionSkeleton />
+                  <LatestSectionSkeleton />
+                </div>
+                <div className="lg:col-span-1">
+                  <LeaderboardSkeleton />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
     );
   }
 
@@ -349,17 +403,21 @@ function Home() {
       <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} />
 
       {/* --- Slider Hero --- */}
-      <SliderHero
-        sliderData={sliderData}
-        currentSlide={currentSlide}
-        slideAnimClass={slideAnimClass}
-        dragging={dragging}
-        handleDragStart={handleDragStart}
-        handleDragMove={handleDragMove}
-        handleDragEnd={handleDragEnd}
-        getCurrentSpotlight={getCurrentSpotlight}
-        handleAnimeClick={handleAnimeClick}
-      />
+      {!homeData || sliderData.length === 0 ? (
+        <SliderHeroSkeleton />
+      ) : (
+        <SliderHero
+          sliderData={sliderData}
+          currentSlide={currentSlide}
+          slideAnimClass={slideAnimClass}
+          dragging={dragging}
+          handleDragStart={handleDragStart}
+          handleDragMove={handleDragMove}
+          handleDragEnd={handleDragEnd}
+          getCurrentSpotlight={getCurrentSpotlight}
+          handleAnimeClick={handleAnimeClick}
+        />
+      )}
 
       {/* --- MAIN CONTENT --- */}
       <div className="relative z-10" style={{ marginTop: '-20vh' }}>
@@ -381,7 +439,7 @@ function Home() {
           <div className="relative z-10 w-full pt-32 px-22">
             {trendingLoading ? (
               <TrendingSectionSkeleton />
-            ) : (
+            ) : trendingData.length > 0 ? (
               <TrendingSection
                 trendingData={trendingData}
                 trendingSlideIndex={trendingSlideIndex}
@@ -389,7 +447,7 @@ function Home() {
                 handleTrendingNext={handleTrendingNext}
                 handleAnimeClick={handleAnimeClick}
               />
-            )}
+            ) : null}
           </div>
 
           <div className="w-full mx-auto px-22 py-2 relative z-10">

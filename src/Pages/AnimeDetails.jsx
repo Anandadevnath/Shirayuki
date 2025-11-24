@@ -10,7 +10,6 @@ function AnimeDetails() {
   const resolvedId = animeId;
   const navigate = useNavigate();
   
-  // Get trending data from navigation state if available
   const trendingState = location.state || {};
   const { trendingSub, trendingDub, fromTrending } = trendingState;
   const { getAnimeDetails, getHomepage, getRecentUpdates, getSearchSuggestions, loading, error, clearError } = useShirayukiAPI();
@@ -326,8 +325,8 @@ function AnimeDetails() {
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden mt-16">
-      <main className="max-w-7xl mx-auto -px-4 py-0">
+    <div className="min-h-screen bg-black text-white pt-20">
+      <main className="max-w-7xl mx-auto px-4 py-8">
         <div className="grid grid-cols-1 gap-8">
           <section>
             <div className="bg-gradient-to-br from-black/80 via-black/60 to-transparent rounded-2xl p-0 relative overflow-hidden shadow-2xl">
