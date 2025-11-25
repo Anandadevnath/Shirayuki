@@ -253,19 +253,30 @@ const ErrorMessage = ({ message, onRetry }) => {
 
 // Skeleton Components
 const TrendingCardSkeleton = () => (
-  <div className="flex-shrink-0 w-[180px] h-[240px] md:w-[220px] md:h-[300px]">
-    <div className="relative rounded-lg overflow-hidden bg-gray-800/50 animate-pulse">
-      <div className="w-full h-full bg-gradient-to-b from-gray-700/50 to-gray-800/50"></div>
+  <div className="flex-shrink-0 group relative">
+    <div className="relative rounded-lg overflow-hidden cursor-pointer transition-all duration-300 w-[180px] h-[240px] md:w-[220px] md:h-[300px] bg-gray-800/60 animate-pulse">
+      {/* Image skeleton */}
+      <div className="w-full h-full bg-gradient-to-br from-gray-700/60 to-gray-900/60"></div>
+      
+      {/* Gradient overlay */}
+      <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent"></div>
+      
+      {/* Rank number skeleton */}
       <div className="absolute top-3 left-3">
-        <div className="w-8 h-8 bg-gray-600/50 rounded"></div>
+        <div className="w-8 h-6 bg-gray-600/80 rounded opacity-90"></div>
       </div>
+      
+      {/* Bottom content skeleton */}
       <div className="absolute bottom-3 left-3 right-3">
+        {/* Episode badges skeleton */}
         <div className="flex gap-2 mb-2">
-          <div className="w-12 h-5 bg-gray-600/50 rounded-full"></div>
-          <div className="w-12 h-5 bg-gray-600/50 rounded-full"></div>
+          <div className="w-12 h-5 bg-gray-600/70 rounded-full"></div>
+          <div className="w-12 h-5 bg-gray-600/70 rounded-full"></div>
         </div>
-        <div className="w-full h-4 bg-gray-600/50 rounded mb-1"></div>
-        <div className="w-3/4 h-4 bg-gray-600/50 rounded"></div>
+        
+        {/* Title skeleton */}
+        <div className="w-full h-4 bg-gray-600/70 rounded mb-1"></div>
+        <div className="w-3/4 h-4 bg-gray-600/70 rounded"></div>
       </div>
     </div>
   </div>
@@ -275,7 +286,7 @@ const TrendingSectionSkeleton = () => (
   <section className="mb-20 relative w-full" style={{ marginTop: '-2rem' }}>
     <div className="w-full overflow-hidden">
       <div className="flex gap-3 pl-6 pr-6 pb-4">
-        {Array.from({ length: 5 }).map((_, index) => (
+        {Array.from({ length: 6 }).map((_, index) => (
           <TrendingCardSkeleton key={`trending-skeleton-${index}`} />
         ))}
       </div>

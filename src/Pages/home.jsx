@@ -352,11 +352,11 @@ function Home() {
             ></div>
 
             {/* Trending Section Skeleton */}
-            <div className="relative z-10 w-full pt-32 px-8">
+            <div className="relative z-10 w-full pt-38 px-22">
               <TrendingSectionSkeleton />
             </div>
 
-            <div className="max-w-7xl mx-auto px-4 py-12 relative z-10">
+            <div className="w-full mx-auto px-22 py-0 relative z-10">
               {/* Stats Section Skeleton */}
               <AnimeStatsSectionSkeleton />
 
@@ -450,7 +450,7 @@ function Home() {
             ) : null}
           </div>
 
-          <div className="w-full mx-auto px-22 py-2 relative z-10">
+          <div className="w-full mx-auto px-22 py-0 relative z-10">
             {/* --- STATS SECTION --- */}
             {statsLoading ? (
               <AnimeStatsSectionSkeleton />
