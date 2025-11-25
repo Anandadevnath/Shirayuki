@@ -434,13 +434,18 @@ function StreamingPage() {
     if (loading && episodeCount == null) {
         return (
             <div className="min-h-screen flex items-center justify-center">
-                <LoadingSpinner size="large" />
+                <div className="text-center space-y-4">
+                    <LoadingSpinner size="large" />
+                    <div className="text-white text-lg">Loading anime data...</div>
+                    <div className="text-gray-400 text-sm">Please wait while we prepare your content</div>
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="w-[89vw] mt-16 -ml-22">
+        <div className="min-h-screen pt-28 px-6">
+            <div className="max-w-7xl mx-auto">
             <div className="grid grid-cols-12 gap-6">
                 <EpisodeList 
                     episodes={episodes}
@@ -469,6 +474,7 @@ function StreamingPage() {
                     detailsError={detailsError}
                     detailsData={detailsData}
                 />
+            </div>
             </div>
         </div>
     );

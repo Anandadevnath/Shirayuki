@@ -436,7 +436,7 @@ function Home() {
           ></div>
 
           {/* --- TRENDING SECTION --- Wider with side gaps */}
-          <div className="relative z-10 w-full pt-32 px-22">
+          <div className="relative z-10 w-full pt-38 px-22">
             {trendingLoading ? (
               <TrendingSectionSkeleton />
             ) : trendingData.length > 0 ? (
