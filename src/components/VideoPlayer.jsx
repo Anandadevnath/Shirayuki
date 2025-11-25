@@ -18,7 +18,7 @@ function VideoPlayer({
     return (
         <section className="col-span-6 bg-black/40 rounded-lg p-4 border border-white/20">
             <div className="space-y-4">
-                <div className="w-full h-[60vh] bg-black rounded overflow-hidden flex items-center justify-center relative">
+                <div className="w-full h-[70vh] bg-black rounded overflow-hidden flex items-center justify-center relative">
                     {fetchingStream && (
                         <div className="flex flex-col items-center gap-3">
                             <LoadingSpinner />

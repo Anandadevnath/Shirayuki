@@ -7,7 +7,6 @@ import LatestAndLeaderboardSection from '../components/LatestAndLeaderboardSecti
 import '../styles/sliderHero.css';
 import { useShirayukiAPI } from '../context';
 import {
-  LoadingSpinner,
   ErrorMessage,
   SliderHeroSkeleton,
   TrendingSectionSkeleton,
@@ -40,10 +39,13 @@ function getAnimeId(animeOrId) {
 }
 
 function Home() {
-  const [mostPopular, setMostPopular] = useState([]);
-  const [topAiring, setTopAiring] = useState([]);
-  const [mostFavorite, setMostFavorite] = useState([]);
-  const fetchStats = async () => {
+  const [statsData, setStatsData] = useState({
+    mostPopular: [],
+    topAiring: [],
+    mostFavorite: []
+  });
+  
+  const fetchStats = useCallback(async () => {
     if (isFetching.current.stats) return;
     isFetching.current.stats = true;
 
@@ -54,18 +56,22 @@ function Home() {
         apiService.getTopAiring(),
         apiService.getMostFavorite()
       ]);
-      setMostPopular(popularRes.data || []);
-      setTopAiring(airingRes.data || []);
-      setMostFavorite(favoriteRes.data || []);
+      setStatsData({
+        mostPopular: popularRes.data || [],
+        topAiring: airingRes.data || [],
+        mostFavorite: favoriteRes.data || []
+      });
     } catch (error) {
-      setMostPopular([]);
-      setTopAiring([]);
-      setMostFavorite([]);
+      setStatsData({
+        mostPopular: [],
+        topAiring: [],
+        mostFavorite: []
+      });
     } finally {
       setStatsLoading(false);
       isFetching.current.stats = false;
     }
-  };
+  }, []);
   const { getHomepage, getRecentUpdates, getRecentUpdatesDub, getTrending, loading, error, clearError } = useShirayukiAPI();
   const [homeData, setHomeData] = useState(null);
   const [recentSub, setRecentSub] = useState([]);
@@ -78,12 +84,10 @@ function Home() {
   const [trendingSlideIndex, setTrendingSlideIndex] = useState(0);
   const [trendingPaused, setTrendingPaused] = useState(false);
 
-  // Loading states for different sections
   const [trendingLoading, setTrendingLoading] = useState(true);
   const [statsLoading, setStatsLoading] = useState(true);
   const [recentLoading, setRecentLoading] = useState(true);
 
-  // Refs to track loading state and prevent multiple calls
   const trendingIntervalRef = useRef(null);
   const isInitialized = useRef(false);
   const isFetching = useRef({
@@ -96,7 +100,7 @@ function Home() {
 
   const sliderData = useMemo(() => filterSection(homeData, 'slider'), [homeData]);
 
-  const normalizeAnimeItem = (raw = {}) => {
+  const normalizeAnimeItem = useCallback((raw = {}) => {
     const item = { ...raw };
 
     if (typeof item.Sub !== 'undefined' && typeof item.sub === 'undefined') item.sub = item.Sub;
@@ -121,7 +125,7 @@ function Home() {
     if (!item.name && item.title) item.name = item.title;
 
     return item;
-  };
+  }, []);
 
   const handleTrendingPrev = useCallback(() => {
     setTrendingPaused(true);
@@ -189,7 +193,6 @@ function Home() {
   }, [trendingData.length, trendingPaused]);
 
 
-  // Initialize data only once
   useEffect(() => {
     if (isInitialized.current) return;
     isInitialized.current = true;
@@ -201,7 +204,7 @@ function Home() {
   }, []);
 
   // Fetch trending data
-  const fetchTrendingData = async () => {
+  const fetchTrendingData = useCallback(async () => {
     if (isFetching.current.trending) return;
     isFetching.current.trending = true;
 
@@ -218,11 +221,11 @@ function Home() {
       setTrendingLoading(false);
       isFetching.current.trending = false;
     }
-  };
+  }, [getTrending, normalizeAnimeItem]);
 
 
   // Data fetching handlers
-  const fetchHomeData = async () => {
+  const fetchHomeData = useCallback(async () => {
     if (isFetching.current.home) return;
     isFetching.current.home = true;
 
@@ -237,9 +240,9 @@ function Home() {
     } finally {
       isFetching.current.home = false;
     }
-  };
+  }, [getHomepage, clearError, normalizeAnimeItem]);
 
-  const fetchRecentUpdates = async () => {
+  const fetchRecentUpdates = useCallback(async () => {
     if (isFetching.current.recent) return;
     isFetching.current.recent = true;
 
@@ -264,7 +267,7 @@ function Home() {
       setRecentLoading(false);
       isFetching.current.recent = false;
     }
-  };
+  }, [getRecentUpdates, getRecentUpdatesDub, normalizeAnimeItem]);
 
 
   // Slide change handler
@@ -307,7 +310,6 @@ function Home() {
   }, [navigate]);
 
 
-  // Reset animation class after animation
   useEffect(() => {
     if (!slideAnimClass) return;
     const timeout = setTimeout(() => setSlideAnimClass(''), 600);
@@ -315,7 +317,6 @@ function Home() {
   }, [slideAnimClass, currentSlide]);
 
 
-  // Loading and error states
   if (loading && !homeData) {
     return (
       <div className="home-full-bg relative overflow-x-hidden" style={{ minHeight: '100vh', width: '100vw', position: 'relative', zIndex: 0 }}>
@@ -456,9 +457,9 @@ function Home() {
               <AnimeStatsSectionSkeleton />
             ) : (
               <AnimeStatsSection
-                mostPopular={mostPopular}
-                topAiring={topAiring}
-                mostFavorite={mostFavorite}
+                mostPopular={statsData.mostPopular}
+                topAiring={statsData.topAiring}
+                mostFavorite={statsData.mostFavorite}
               />
             )}
 

@@ -1,6 +1,7 @@
 import config from './config.js';
 
 class ShirayukiAPIService {
+  
   // Most Popular
   getMostPopular = async () => {
     return this.apiCall('/most_popular');
@@ -36,7 +37,6 @@ class ShirayukiAPIService {
 
   async apiCall(endpoint, options = {}) {
     try {
-
       const url = endpoint.startsWith('http') ? endpoint : `${this.baseURL}${endpoint}`;
 
       const defaultOptions = {
@@ -45,6 +45,7 @@ class ShirayukiAPIService {
           'Content-Type': 'application/json',
           ...options.headers
         },
+        mode: 'cors', // Explicitly set CORS mode
         ...options
       };
 
@@ -69,8 +70,17 @@ class ShirayukiAPIService {
 
       return responseBody;
     } catch (error) {
+      // Handle CORS and network errors more gracefully
+      const errorMessage = error.name === 'TypeError' && error.message.includes('Failed to fetch')
+        ? 'Network error: Unable to connect to API server. Please check your connection or try again later.'
+        : error.message;
+
       console.error('API call failed:', error);
-      return { error: true, message: error.message };
+      return {
+        error: true,
+        message: errorMessage,
+        type: error.name || 'NetworkError'
+      };
     }
   }
 
@@ -126,10 +136,10 @@ class ShirayukiAPIService {
       .replace(/^-+|-+$/g, '')
       .replace(/--+/g, '-');
     formatted = encodeURIComponent(formatted);
-    
+
     const endpoint = `/episode-stream?id=${formatted}&ep=${episode}`;
     console.log('  Endpoint:', endpoint);
-    
+
     return this.apiCall(endpoint);
   }
 

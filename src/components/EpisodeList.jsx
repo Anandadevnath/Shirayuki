@@ -5,7 +5,7 @@ function EpisodeList({ episodes, selectedEp, onEpisodeSelect }) {
     const navigate = useNavigate();
 
     return (
-        <aside className="col-span-3 bg-black/60 rounded-lg p-4 max-h-[80vh] overflow-y-auto border border-white/20">
+        <aside className="col-span-3 bg-black/60 rounded-lg p-4 h-[81vh] overflow-y-auto border border-white/20">
             <div className="flex items-center justify-between mb-4">
                 <h3 className="font-semibold text-white">Episodes</h3>
                 <button 

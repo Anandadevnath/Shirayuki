@@ -4,7 +4,6 @@ import { useShirayukiAPI } from '../context';
 import { LoadingSpinner } from '../components/LoadingStates';
 import EpisodeList from '../components/EpisodeList';
 import VideoPlayer from '../components/VideoPlayer';
-import AnimeInfo from '../components/AnimeInfo';
 import Hls from 'hls.js';
 
 function StreamingPage() {
@@ -22,9 +21,6 @@ function StreamingPage() {
     const [isDub, setIsDub] = useState(() => animeId?.toLowerCase().includes('dub') || false);
     const [currentEpisodeHasDub, setCurrentEpisodeHasDub] = useState(false);
     const [animeData, setAnimeData] = useState(null);
-    const [detailsData, setDetailsData] = useState(null);
-    const [detailsLoading, setDetailsLoading] = useState(false);
-    const [detailsError, setDetailsError] = useState(null);
 
     useEffect(() => {
         let mounted = true;
@@ -308,58 +304,7 @@ function StreamingPage() {
         }
     };
 
-    useEffect(() => {
-        const loadDetails = async () => {
-            if (!effectiveAnimeId) {
-                setDetailsData(null);
-                return;
-            }
-            setDetailsLoading(true);
-            setDetailsError(null);
-            try {
-                const res = await getAnimeDetails(effectiveAnimeId);
-                if (!res) throw new Error('No response from details API');
-                if (res.error) {
-                    const msg = res.message || 'Failed to load details';
-                    throw new Error(msg);
-                }
 
-                const raw = res?.data || res || {};
-                const info = raw?.anime || raw?.data?.anime || raw?.info || raw;
-
-                const title = info?.title || info?.name || info?.animeTitle || info?.anime_name || info?.name_en || null;
-                const synopsis = info?.synopsis || info?.description || info?.plot || info?.about || null;
-                const image = info?.image || info?.cover || info?.poster || info?.thumbnail || info?.images?.jpg?.image_url || info?.image_url || null;
-
-                const type = info?.type || info?.media_type || info?.format || null;
-                const country = info?.country || info?.origin_country || info?.countryOfOrigin || null;
-                const status = info?.status || info?.airing_status || null;
-                const released = info?.released || info?.year || info?.aired || info?.release_date || null;
-                const quality = info?.quality || info?.video_quality || null;
-
-                const rating = info?.rating || info?.scores || info?.score || info?.rating_score || null;
-                let ratingObj = null;
-                if (rating && typeof rating === 'object') {
-                    ratingObj = {
-                        score: rating.score ?? rating.score_value ?? rating.value ?? rating.rating ?? rating.score_float ?? null,
-                        votes: rating.votes ?? rating.vote_count ?? rating.votes_count ?? rating.voters ?? null,
-                    };
-                } else if (typeof rating === 'number' || typeof rating === 'string') {
-                    ratingObj = { score: Number(rating), votes: null };
-                }
-
-                setDetailsData({ title, synopsis, image, type, country, status, released, quality, rating: ratingObj, raw: info });
-            } catch (err) {
-                console.error('Error loading anime details', err);
-                setDetailsError(err.message || 'Failed to load details');
-                setDetailsData(null);
-            } finally {
-                setDetailsLoading(false);
-            }
-        };
-
-        loadDetails();
-    }, [effectiveAnimeId, getAnimeDetails]);
 
     // fetchStream accepts optional idOverride so toggling mode can fetch immediately
     const fetchStream = async (ep, idOverride) => {
@@ -380,17 +325,13 @@ function StreamingPage() {
             const res = await getEpisodeStream(idToUse, ep);
             if (!res) throw new Error('No response from stream API');
             if (res.error) {
-                // apiService.apiCall may return an object like { error: true, message: 'HTTP error!...', body: {...} }
                 const msg = res.message || (res.body && typeof res.body === 'string' ? res.body : JSON.stringify(res.body || res));
                 throw new Error(msg || 'API call failed');
             }
-            // API shapes may vary: either { data: { streaming_link: '...' } } or { streaming_link: '...' } or nested deeper
             let link = null;
             if (res.streaming_link) link = res.streaming_link;
             else if (res.data && res.data.streaming_link) link = res.data.streaming_link;
             else if (res.data && Array.isArray(res.data) && res.data[0] && res.data[0].streaming_link) link = res.data[0].streaming_link;
-
-            // also check deeper common shapes: res.data.data.streaming_link
             else if (res.data && res.data.data && res.data.data.streaming_link) link = res.data.data.streaming_link;
 
             if (!link) throw new Error('Streaming link not found in response');
@@ -406,7 +347,6 @@ function StreamingPage() {
         }
     };
 
-    // Handler functions for components
     const handleEpisodeSelect = (episodeNumber) => {
         setSelectedEp(episodeNumber);
     };
@@ -414,14 +354,12 @@ function StreamingPage() {
     const handleSubDubToggle = async (mode) => {
         if (mode === 'sub' && isDub && animeData) {
             let subTitle = animeData.japanese_title || animeData.japanese || animeId;
-            // Remove "dub" suffix from the title (case insensitive)
             subTitle = subTitle.replace(/\s*-?dub\s*$/i, '').trim();
             setIsDub(false);
             console.log('🔄 Switching to SUB using title:', subTitle);
             await fetchStream(selectedEp, subTitle);
         } else if (mode === 'dub' && !isDub && animeData) {
             let dubTitle = animeData.title || animeId;
-            // Add "-dub" suffix if it doesn't already exist
             if (!dubTitle.toLowerCase().includes('dub')) {
                 dubTitle = `${dubTitle}-dub`;
             }
@@ -453,7 +391,8 @@ function StreamingPage() {
                     onEpisodeSelect={handleEpisodeSelect}
                 />
 
-                <VideoPlayer 
+                <div className="col-span-9">
+                    <VideoPlayer
                     animeId={animeId}
                     selectedEp={selectedEp}
                     iframeSrc={iframeSrc}
@@ -466,14 +405,8 @@ function StreamingPage() {
                     reloading={reloading}
                     onSubDubToggle={handleSubDubToggle}
                     onReload={reloadStream}
-                />
-
-                <AnimeInfo 
-                    animeId={animeId}
-                    detailsLoading={detailsLoading}
-                    detailsError={detailsError}
-                    detailsData={detailsData}
-                />
+                    />
+                </div>
             </div>
             </div>
         </div>
