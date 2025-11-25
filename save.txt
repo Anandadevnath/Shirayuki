@@ -1,0 +1,915 @@
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import apiService from '../context/apiService';
+import SliderHero from '../components/SliderHero.jsx';
+import TrendingSection from '../components/TrendingSection.jsx';
+import AnimeStatsSection from '../components/AnimeStatsSection.jsx';
+import LatestAndLeaderboardSection from '../components/LatestAndLeaderboardSection.jsx';
+import '../styles/sliderHero.css';
+import { useShirayukiAPI } from '../context';
+import {
+  ErrorMessage,
+  SliderHeroSkeleton,
+  TrendingSectionSkeleton,
+  AnimeStatsSectionSkeleton,
+  LatestSectionSkeleton,
+  LeaderboardSkeleton
+} from '../components/LoadingStates';
+import Backdrop from '../components/Backdrop';
+import { useNavigate } from 'react-router-dom';
+
+
+function filterSection(data, section) {
+  return Array.isArray(data) ? data.filter((a) => a.section === section) : [];
+}
+
+function getAnimeId(animeOrId) {
+  if (!animeOrId) return null;
+  if (typeof animeOrId === 'string') return animeOrId;
+  if (typeof animeOrId === 'object') {
+    return (
+      animeOrId.japanese ||
+      animeOrId.title ||
+      animeOrId.id ||
+      animeOrId.slug ||
+      animeOrId.animeId ||
+      animeOrId._id
+    );
+  }
+  return null;
+}
+
+function Home() {
+  const [statsData, setStatsData] = useState({
+    mostPopular: [],
+    topAiring: [],
+    mostFavorite: []
+  });
+  
+  const fetchStats = useCallback(async () => {
+    if (isFetching.current.stats) return;
+    isFetching.current.stats = true;
+
+    setStatsLoading(true);
+    try {
+      const [popularRes, airingRes, favoriteRes] = await Promise.all([
+        apiService.getMostPopular(),
+        apiService.getTopAiring(),
+        apiService.getMostFavorite()
+      ]);
+      setStatsData({
+        mostPopular: popularRes.data || [],
+        topAiring: airingRes.data || [],
+        mostFavorite: favoriteRes.data || []
+      });
+    } catch (error) {
+      setStatsData({
+        mostPopular: [],
+        topAiring: [],
+        mostFavorite: []
+      });
+    } finally {
+      setStatsLoading(false);
+      isFetching.current.stats = false;
+    }
+  }, []);
+  const { getHomepage, getRecentUpdates, getRecentUpdatesDub, getTrending, loading, error, clearError } = useShirayukiAPI();
+  const [homeData, setHomeData] = useState(null);
+  const [recentSub, setRecentSub] = useState([]);
+  const [recentDub, setRecentDub] = useState([]);
+  const [trendingData, setTrendingData] = useState([]);
+  const [currentSlide, setCurrentSlide] = useState(0);
+  const [dragStartX, setDragStartX] = useState(null);
+  const [dragging, setDragging] = useState(false);
+  const [slideAnimClass, setSlideAnimClass] = useState('');
+  const [trendingSlideIndex, setTrendingSlideIndex] = useState(0);
+  const [trendingPaused, setTrendingPaused] = useState(false);
+
+  const [trendingLoading, setTrendingLoading] = useState(true);
+  const [statsLoading, setStatsLoading] = useState(true);
+  const [recentLoading, setRecentLoading] = useState(true);
+
+  const trendingIntervalRef = useRef(null);
+  const isInitialized = useRef(false);
+  const isFetching = useRef({
+    trending: false,
+    stats: false,
+    recent: false,
+    home: false
+  });
+  const navigate = useNavigate();
+
+  const sliderData = useMemo(() => filterSection(homeData, 'slider'), [homeData]);
+
+  const normalizeAnimeItem = useCallback((raw = {}) => {
+    const item = { ...raw };
+
+    if (typeof item.Sub !== 'undefined' && typeof item.sub === 'undefined') item.sub = item.Sub;
+    if (typeof item.Dub !== 'undefined' && typeof item.dub === 'undefined') item.dub = item.Dub;
+
+    item.episodes = item.episodes && typeof item.episodes === 'object' ? { ...item.episodes } : {};
+
+    const nestedSub = item.episodes.sub ?? item.episodes.Sub;
+    const nestedDub = item.episodes.dub ?? item.episodes.Dub;
+    if (typeof item.Sub !== 'undefined') item.sub = item.Sub;
+    if (typeof item.Dub !== 'undefined') item.dub = item.Dub;
+    if (typeof nestedSub !== 'undefined' && typeof item.sub === 'undefined') item.sub = nestedSub;
+    if (typeof nestedDub !== 'undefined' && typeof item.dub === 'undefined') item.dub = nestedDub;
+
+    if (typeof item.sub !== 'undefined') item.episodes.sub = item.sub;
+    if (typeof item.dub !== 'undefined') item.episodes.dub = item.dub;
+
+    if (!item.poster && item.image) item.poster = item.image;
+    if (!item.image && item.poster) item.image = item.poster;
+
+    if (!item.title && item.name) item.title = item.name;
+    if (!item.name && item.title) item.name = item.title;
+
+    return item;
+  }, []);
+
+  const handleTrendingPrev = useCallback(() => {
+    setTrendingPaused(true);
+    if (trendingIntervalRef.current) {
+      clearInterval(trendingIntervalRef.current);
+      trendingIntervalRef.current = null;
+    }
+    setTrendingSlideIndex((prev) => (prev - 1 + trendingData.length) % Math.max(1, trendingData.length));
+  }, [trendingData.length]);
+
+  const handleTrendingNext = useCallback(() => {
+    setTrendingPaused(true);
+    if (trendingIntervalRef.current) {
+      clearInterval(trendingIntervalRef.current);
+      trendingIntervalRef.current = null;
+    }
+    setTrendingSlideIndex((prev) => (prev + 1) % Math.max(1, trendingData.length));
+  }, [trendingData.length]);
+
+
+  const handleDragStart = useCallback((e) => {
+    setDragging(true);
+    setDragStartX(e.type === 'touchstart' ? e.touches[0].clientX : e.clientX);
+  }, []);
+
+  const handleDragMove = useCallback((e) => {
+    if (!dragging || dragStartX === null) return;
+    const clientX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+    const diff = clientX - dragStartX;
+    if (Math.abs(diff) > 50) {
+      handleSlideChange(diff > 0 ? 'prev' : 'next');
+      setDragging(false);
+      setDragStartX(null);
+    }
+  }, [dragging, dragStartX]);
+
+  const handleDragEnd = useCallback(() => {
+    setDragging(false);
+    setDragStartX(null);
+  }, []);
+
+
+  useEffect(() => {
+    const slideCount = sliderData.length;
+    if (slideCount <= 1) return;
+    const interval = setInterval(() => {
+      setSlideAnimClass('slide-in-right');
+      setCurrentSlide((prev) => (prev + 1) % slideCount);
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [sliderData.length]);
+
+  useEffect(() => {
+    if (trendingData.length <= 1) return;
+    if (trendingPaused) return undefined;
+    trendingIntervalRef.current = setInterval(() => {
+      setTrendingSlideIndex((prev) => (prev + 1) % Math.max(1, trendingData.length));
+    }, 2000);
+    return () => {
+      if (trendingIntervalRef.current) {
+        clearInterval(trendingIntervalRef.current);
+        trendingIntervalRef.current = null;
+      }
+    };
+  }, [trendingData.length, trendingPaused]);
+
+
+  useEffect(() => {
+    if (isInitialized.current) return;
+    isInitialized.current = true;
+
+    fetchHomeData();
+    fetchRecentUpdates();
+    fetchTrendingData();
+    fetchStats();
+  }, []);
+
+  // Fetch trending data
+  const fetchTrendingData = useCallback(async () => {
+    if (isFetching.current.trending) return;
+    isFetching.current.trending = true;
+
+    setTrendingLoading(true);
+    try {
+      const data = await getTrending();
+      const raw = data?.data || [];
+      const normalized = Array.isArray(raw) ? raw.map(normalizeAnimeItem) : [];
+      setTrendingData(normalized);
+    } catch (err) {
+      console.error('Failed to fetch trending data:', err);
+      setTrendingData([]);
+    } finally {
+      setTrendingLoading(false);
+      isFetching.current.trending = false;
+    }
+  }, [getTrending, normalizeAnimeItem]);
+
+
+  // Data fetching handlers
+  const fetchHomeData = useCallback(async () => {
+    if (isFetching.current.home) return;
+    isFetching.current.home = true;
+
+    try {
+      clearError();
+      const data = await getHomepage();
+      const raw = data?.data || [];
+      const normalized = Array.isArray(raw) ? raw.map(normalizeAnimeItem) : raw;
+      setHomeData(normalized);
+    } catch (err) {
+      console.error('Failed to fetch home data:', err);
+    } finally {
+      isFetching.current.home = false;
+    }
+  }, [getHomepage, clearError, normalizeAnimeItem]);
+
+  const fetchRecentUpdates = useCallback(async () => {
+    if (isFetching.current.recent) return;
+    isFetching.current.recent = true;
+
+    setRecentLoading(true);
+    try {
+      const [subRes, dubRes] = await Promise.all([
+        getRecentUpdates(),
+        getRecentUpdatesDub()
+      ]);
+
+      const rawSub = subRes?.data || [];
+      const normalizedSub = Array.isArray(rawSub) ? rawSub.map(normalizeAnimeItem) : rawSub;
+      setRecentSub(normalizedSub);
+
+      const rawDub = dubRes?.data || [];
+      const normalizedDub = Array.isArray(rawDub) ? rawDub.map(normalizeAnimeItem) : rawDub;
+      setRecentDub(normalizedDub);
+    } catch (err) {
+      setRecentSub([]);
+      setRecentDub([]);
+    } finally {
+      setRecentLoading(false);
+      isFetching.current.recent = false;
+    }
+  }, [getRecentUpdates, getRecentUpdatesDub, normalizeAnimeItem]);
+
+
+  // Slide change handler
+  const handleSlideChange = useCallback((direction) => {
+    if (!sliderData || sliderData.length === 0) return;
+    const maxSlides = sliderData.length;
+    let newSlide;
+    if (direction === 'next') {
+      newSlide = (currentSlide + 1) % maxSlides;
+    } else {
+      newSlide = (currentSlide - 1 + maxSlides) % maxSlides;
+    }
+    setSlideAnimClass(direction === 'next' ? 'slide-in-right' : 'slide-in-left');
+    setCurrentSlide(newSlide);
+  }, [sliderData, currentSlide]);
+
+
+  // Memoized current spotlight
+  const getCurrentSpotlight = useCallback(() => {
+    return sliderData && sliderData.length > 0 ? sliderData[currentSlide] : null;
+  }, [sliderData, currentSlide]);
+
+
+  // Anime click handler (reusable)
+  const handleAnimeClick = useCallback((animeOrId) => {
+    const resolvedId = getAnimeId(animeOrId);
+    if (!resolvedId) return;
+
+    // Pass trending data if available (contains accurate sub/dub counts)
+    const navigationState = {};
+    if (animeOrId && typeof animeOrId === 'object') {
+      if (animeOrId.sub !== undefined) navigationState.trendingSub = animeOrId.sub;
+      if (animeOrId.dub !== undefined) navigationState.trendingDub = animeOrId.dub;
+      if (animeOrId.section === 'trending') navigationState.fromTrending = true;
+    }
+
+    navigate(`/anime/${encodeURIComponent(resolvedId)}`, {
+      state: Object.keys(navigationState).length > 0 ? navigationState : undefined
+    });
+  }, [navigate]);
+
+
+  useEffect(() => {
+    if (!slideAnimClass) return;
+    const timeout = setTimeout(() => setSlideAnimClass(''), 600);
+    return () => clearTimeout(timeout);
+  }, [slideAnimClass, currentSlide]);
+
+
+  if (loading && !homeData) {
+    return (
+      <div className="home-full-bg relative overflow-x-hidden" style={{ minHeight: '100vh', width: '100vw', position: 'relative', zIndex: 0 }}>
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `url('/sword.png')`,
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            filter: 'blur(10px) brightness(0.45) saturate(0.9)',
+            transform: 'scale(1)'
+          }}
+        />
+        <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} />
+
+        {/* Slider Hero Skeleton */}
+        <SliderHeroSkeleton />
+
+        {/* Main Content Skeletons */}
+        <div className="relative z-10" style={{ marginTop: '-20vh' }}>
+          <div className="relative">
+            <div
+              className="absolute top-0 left-0 right-0 h-48 pointer-events-none"
+              style={{
+                background: `linear-gradient(180deg,
+                  rgba(0,0,0,0) 0%, 
+                  rgba(0,0,0,0.1) 10%, 
+                  rgba(0,0,0,0.3) 30%, 
+                  rgba(0,0,0,0.6) 60%, 
+                  rgba(0,0,0,0.9) 90%, 
+                  rgba(0,0,0,1) 100%)`,
+              }}
+            ></div>
+
+            {/* Trending Section Skeleton */}
+            <div className="relative z-10 w-full pt-38 px-22">
+              <TrendingSectionSkeleton />
+            </div>
+
+            <div className="w-full mx-auto px-22 py-0 relative z-10">
+              {/* Stats Section Skeleton */}
+              <AnimeStatsSectionSkeleton />
+
+              {/* Latest + Leaderboard Skeleton */}
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                  <LatestSectionSkeleton />
+                  <LatestSectionSkeleton />
+                </div>
+                <div className="lg:col-span-1">
+                  <LeaderboardSkeleton />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error && !homeData) {
+    return (
+      <Backdrop image={'/tanjiro.png'} blurPx={6} scale={1}>
+        <div className="p-4 w-full max-w-md">
+          <ErrorMessage message={error} onRetry={fetchHomeData} />
+        </div>
+      </Backdrop>
+    );
+  }
+
+  return (
+    <div className="home-full-bg relative overflow-x-hidden" style={{ minHeight: '100vh', width: '100vw', position: 'relative', zIndex: 0 }}>
+      <div
+        className="absolute inset-0"
+        style={{
+          backgroundImage: `url('/sword.png')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+          filter: 'blur(10px) brightness(0.45) saturate(0.9)',
+          transform: 'scale(1)'
+        }}
+      />
+      <div className="absolute inset-0" style={{ backgroundColor: 'rgba(0,0,0,0.45)' }} />
+
+      {/* --- Slider Hero --- */}
+      {!homeData || sliderData.length === 0 ? (
+        <SliderHeroSkeleton />
+      ) : (
+        <SliderHero
+          sliderData={sliderData}
+          currentSlide={currentSlide}
+          slideAnimClass={slideAnimClass}
+          dragging={dragging}
+          handleDragStart={handleDragStart}
+          handleDragMove={handleDragMove}
+          handleDragEnd={handleDragEnd}
+          getCurrentSpotlight={getCurrentSpotlight}
+          handleAnimeClick={handleAnimeClick}
+        />
+      )}
+
+      {/* --- MAIN CONTENT --- */}
+      <div className="relative z-10" style={{ marginTop: '-20vh' }}>
+        <div className="relative">
+          <div
+            className="absolute top-0 left-0 right-0 h-48 pointer-events-none"
+            style={{
+              background: `linear-gradient(180deg,
+                rgba(0,0,0,0) 0%, 
+                rgba(0,0,0,0.1) 10%, 
+                rgba(0,0,0,0.3) 30%, 
+                rgba(0,0,0,0.6) 60%, 
+                rgba(0,0,0,0.9) 90%, 
+                rgba(0,0,0,1) 100%)`,
+            }}
+          ></div>
+
+          {/* --- TRENDING SECTION --- Wider with side gaps */}
+          <div className="relative z-10 w-full pt-38 px-22">
+            {trendingLoading ? (
+              <TrendingSectionSkeleton />
+            ) : trendingData.length > 0 ? (
+              <TrendingSection
+                trendingData={trendingData}
+                trendingSlideIndex={trendingSlideIndex}
+                handleTrendingPrev={handleTrendingPrev}
+                handleTrendingNext={handleTrendingNext}
+                handleAnimeClick={handleAnimeClick}
+              />
+            ) : null}
+          </div>
+
+          <div className="w-full mx-auto px-22 py-0 relative z-10">
+            {/* --- STATS SECTION --- */}
+            {statsLoading ? (
+              <AnimeStatsSectionSkeleton />
+            ) : (
+              <AnimeStatsSection
+                mostPopular={statsData.mostPopular}
+                topAiring={statsData.topAiring}
+                mostFavorite={statsData.mostFavorite}
+              />
+            )}
+
+            {/* --- LATEST + LEADERBOARD --- */}
+            {recentLoading ? (
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <div className="lg:col-span-2 space-y-8">
+                  <LatestSectionSkeleton />
+                  <LatestSectionSkeleton />
+                </div>
+                <div className="lg:col-span-1">
+                  <LeaderboardSkeleton />
+                </div>
+              </div>
+            ) : (
+              <LatestAndLeaderboardSection
+                recentSub={recentSub}
+                recentDub={recentDub}
+                handleAnimeClick={handleAnimeClick}
+              />
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default Home;
+
+
+
+
+
+
+
+
+import React, { useEffect, useState, useMemo, useRef } from 'react';
+import { useParams, useLocation } from 'react-router-dom';
+import { useShirayukiAPI } from '../context';
+import { LoadingSpinner } from '../components/LoadingStates';
+import EpisodeList from '../components/EpisodeList';
+import VideoPlayer from '../components/VideoPlayer';
+import Hls from 'hls.js';
+
+function StreamingPage() {
+    const { animeId } = useParams();
+    const { getEpisodeStream, getAnimeDetails, getHomepage, getRecentUpdates, loading } = useShirayukiAPI();
+    const location = useLocation();
+    const [episodeCount, setEpisodeCount] = useState(null);
+    const [selectedEp, setSelectedEp] = useState(1);
+    const [iframeSrc, setIframeSrc] = useState(null);
+    const videoRef = useRef(null);
+    const [fetchError, setFetchError] = useState(null);
+    const [fetchingStream, setFetchingStream] = useState(false);
+    const [iframeKey, setIframeKey] = useState(0);
+    const [reloading, setReloading] = useState(false);
+    const [isDub, setIsDub] = useState(() => animeId?.toLowerCase().includes('dub') || false);
+    const [currentEpisodeHasDub, setCurrentEpisodeHasDub] = useState(false);
+    const [animeData, setAnimeData] = useState(null);
+
+    useEffect(() => {
+        let mounted = true;
+        const fetchAnimeData = async () => {
+            if (!animeId) return;
+            
+            try {
+                console.log('🔄 Fetching recent_updates data...');
+                const recent = await getRecentUpdates();
+                const recentList = recent?.data || [];
+                console.log('📋 Recent list length:', recentList.length);
+                
+                const slugify = (str) => {
+                    if (!str) return '';
+                    return String(str)
+                        .toLowerCase()
+                        .replace(/[^a-z0-9]+/g, '-')
+                        .replace(/^-+|-+$/g, '')
+                        .replace(/--+/g, '-');
+                };
+                
+                const currentAnimeSlug = slugify(animeId);
+                console.log('🎯 Looking for currentAnimeSlug:', currentAnimeSlug);
+                
+                const match = recentList.find((item) => {
+                    const titleSlug = slugify(String(item?.title || ''));
+                    const isMatch = titleSlug === currentAnimeSlug;
+                    
+                    if (isMatch) {
+                        console.log('✅ Found match!', {
+                            item_title: item?.title,
+                            item_japanese_title: item?.japanese_title,
+                            titleSlug: titleSlug,
+                            currentAnimeSlug: currentAnimeSlug
+                        });
+                    }
+                    
+                    return isMatch;
+                });
+                
+                console.log('🎯 Match result:', match);
+                
+                if (mounted && match) {
+                    console.log('🎯 Found anime data:', {
+                        title: match.title,
+                        japanese: match.japanese,
+                        japanese_title: match.japanese_title,
+                        originalAnimeId: animeId
+                    });
+                    setAnimeData(match);
+                    
+                    const hasDubVersion = !!match.title;
+                    const hasSubVersion = !!(match.japanese_title || match.japanese);
+                    
+                    console.log('🎭 Version availability:', {
+                        hasDubVersion: hasDubVersion,
+                        hasSubVersion: hasSubVersion,
+                        currentIsDub: animeId?.toLowerCase().includes('dub')
+                    });
+                } else {
+                    console.log('❌ No match found');
+                }
+            } catch (error) {
+                console.error('Failed to fetch anime data from recent_updates:', error);
+            }
+        };
+        
+        fetchAnimeData();
+        return () => { mounted = false; };
+    }, [animeId, getRecentUpdates]);
+
+    // Check if current episode has dub version available
+    useEffect(() => {
+        const checkCurrentEpisodeDub = async () => {
+            if (!animeData || !animeData.title) {
+                setCurrentEpisodeHasDub(false);
+                return;
+            }
+
+            try {
+                console.log(`🔍 Checking if episode ${selectedEp} has dub version...`);
+                let dubTitle = animeData.title;
+                // Add "-dub" suffix if it doesn't already exist
+                if (!dubTitle.toLowerCase().includes('dub')) {
+                    dubTitle = `${dubTitle}-dub`;
+                }
+                const res = await getEpisodeStream(dubTitle, selectedEp);
+                
+                let hasLink = false;
+                if (res && !res.error) {
+                    let link = null;
+                    if (res.streaming_link) link = res.streaming_link;
+                    else if (res.data && res.data.streaming_link) link = res.data.streaming_link;
+                    else if (res.data && Array.isArray(res.data) && res.data[0] && res.data[0].streaming_link) link = res.data[0].streaming_link;
+                    else if (res.data && res.data.data && res.data.data.streaming_link) link = res.data.data.streaming_link;
+                    
+                    hasLink = !!link;
+                }
+                
+                console.log(`📺 Episode ${selectedEp} dub availability:`, hasLink);
+                setCurrentEpisodeHasDub(hasLink);
+                
+                // If current episode doesn't have dub but we're in dub mode, switch to sub
+                if (!hasLink && isDub) {
+                    console.log(`⚠️ Episode ${selectedEp} has no dub, switching to sub`);
+                    setIsDub(false);
+                }
+                
+            } catch (error) {
+                console.warn(`Failed to check dub for episode ${selectedEp}:`, error);
+                setCurrentEpisodeHasDub(false);
+                if (isDub) {
+                    setIsDub(false);
+                }
+            }
+        };
+
+        // Only check if we have anime data
+        if (animeData) {
+            checkCurrentEpisodeDub();
+        }
+    }, [selectedEp, animeData, getEpisodeStream, isDub]);
+
+    // Helper function for slugifying strings
+    const slugify = (str) => {
+        if (!str) return '';
+        return String(str)
+            .toLowerCase()
+            .replace(/[^a-z0-9]+/g, '-')
+            .replace(/^-+|-+$/g, '')
+            .replace(/--+/g, '-');
+    };
+
+    // Load episode count
+    useEffect(() => {
+        const navSub = location?.state?.subCount;
+        if (navSub && !Number.isNaN(Number(navSub))) {
+            setEpisodeCount(Number(navSub));
+            return;
+        }
+
+        const loadCounts = async () => {
+            if (!animeId) {
+                setEpisodeCount(0);
+                return;
+            }
+
+            // Try recent_updates first
+            try {
+                const recent = await getRecentUpdates();
+                const recentList = recent?.data || [];
+                const normalizedResolved = slugify(animeId.replace(/-dub$/i, ''));
+                const match = recentList.find((item) => {
+                    const titles = [item?.slug, item?.id, item?.animeId, item?.title, item?.japanese, item?.name, item?._id];
+                    return titles.some((t) => slugify(String(t || '')) === normalizedResolved);
+                });
+                if (match && match.sub && !Number.isNaN(Number(match.sub))) {
+                    setEpisodeCount(Number(match.sub));
+                    return;
+                }
+            } catch (e) {
+                console.warn('Failed to use recent_updates counts', e);
+            }
+
+            // Fallback to homepage
+            try {
+                const home = await getHomepage();
+                const list = home?.data || [];
+                const trendingItems = list.filter((a) => a.section === 'trending');
+                const candidates = trendingItems.length ? trendingItems : list;
+                const normalizedResolved = slugify(animeId.replace(/-dub$/i, ''));
+                const match = candidates.find((a) => {
+                    const candidateSlugs = [a.slug, a.id, a.animeId, a.title, a.japanese, a._id].filter(Boolean);
+                    return candidateSlugs.some((v) => slugify(String(v || '')) === normalizedResolved);
+                });
+                if (match && match.sub && !Number.isNaN(Number(match.sub))) {
+                    setEpisodeCount(Number(match.sub));
+                    return;
+                }
+            } catch (e) {
+                console.warn('Failed to use homepage counts', e);
+            }
+
+            // Fallback to details
+            try {
+                const details = await getAnimeDetails(animeId);
+                if (details && details.error) {
+                    console.warn('getAnimeDetails returned error:', details);
+                    setEpisodeCount(24);
+                    return;
+                }
+                const raw = details?.data || details || {};
+                const info = raw?.anime?.info || raw?.anime || raw?.info || raw;
+                const epInfo = info?.episodes || info?.stats || {};
+                const sub = epInfo?.sub ?? epInfo?.sub_count ?? info?.sub ?? null;
+                if (sub && !Number.isNaN(Number(sub))) {
+                    setEpisodeCount(Number(sub));
+                    return;
+                }
+
+                const fallback = epInfo?.total || info?.total_episodes || info?.episodesCount || null;
+                if (fallback && !Number.isNaN(Number(fallback))) {
+                    setEpisodeCount(Number(fallback));
+                    return;
+                }
+
+                setEpisodeCount(24);
+            } catch (e) {
+                console.error('Error fetching anime details for counts', e);
+                setEpisodeCount(24);
+            }
+        };
+
+        loadCounts();
+    }, [animeId, getAnimeDetails, getHomepage, getRecentUpdates, location?.state, slugify]);
+
+    const episodes = useMemo(() => {
+        const count = Number(episodeCount) || 0;
+        return Array.from({ length: count }, (_, i) => i + 1);
+    }, [episodeCount]);
+
+    const effectiveAnimeId = useMemo(() => {
+        if (!animeData) {
+            console.log('⚠️ No animeData, falling back to animeId:', animeId);
+            return animeId; // Fallback to original if no data
+        }
+        
+        if (isDub) {
+            // Use regular title for dub and add "-dub" suffix if not present
+            let dubTitle = animeData.title || animeId;
+            if (!dubTitle.toLowerCase().includes('dub')) {
+                dubTitle = `${dubTitle}-dub`;
+            }
+            console.log('🎭 Using DUB title:', dubTitle);
+            return dubTitle;
+        } else {
+            // Use japanese title for sub, but remove any "dub" suffix
+            let subTitle = animeData.japanese_title || animeData.japanese || animeId;
+            
+            // Remove "dub" suffix from the title (case insensitive)
+            subTitle = subTitle.replace(/\s*-?dub\s*$/i, '').trim();
+            
+            console.log('🗾 Using SUB title (cleaned):', subTitle);
+            return subTitle;
+        }
+    }, [animeData, isDub, animeId]);
+
+    useEffect(() => {
+        if (effectiveAnimeId && selectedEp) {
+            fetchStream(selectedEp);
+        }
+    }, [effectiveAnimeId, selectedEp]);
+
+    // HLS.js player setup
+    useEffect(() => {
+        if (iframeSrc && videoRef.current && iframeSrc.endsWith('.m3u8')) {
+            let hls;
+            if (Hls.isSupported()) {
+                hls = new Hls();
+                hls.loadSource(iframeSrc);
+                hls.attachMedia(videoRef.current);
+            } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
+                videoRef.current.src = iframeSrc;
+            }
+            return () => {
+                if (hls) hls.destroy();
+            };
+        }
+    }, [iframeSrc]);
+
+    const reloadStream = async () => {
+        if (reloading) return;
+        setReloading(true);
+        try {
+            setIframeKey((k) => k + 1);
+            if (effectiveAnimeId && selectedEp) {
+                await fetchStream(selectedEp);
+            }
+        } finally {
+            setReloading(false);
+        }
+    };
+
+
+
+    // fetchStream accepts optional idOverride so toggling mode can fetch immediately
+    const fetchStream = async (ep, idOverride) => {
+        setFetchError(null);
+        setFetchingStream(true);
+        try {
+            const idToUse = idOverride || effectiveAnimeId || animeId;
+            if (!idToUse) throw new Error('Missing anime id');
+            
+            console.log('🎬 fetchStream called with:', {
+                episode: ep,
+                idOverride: idOverride,
+                effectiveAnimeId: effectiveAnimeId,
+                finalIdToUse: idToUse,
+                isDub: isDub
+            });
+            
+            const res = await getEpisodeStream(idToUse, ep);
+            if (!res) throw new Error('No response from stream API');
+            if (res.error) {
+                const msg = res.message || (res.body && typeof res.body === 'string' ? res.body : JSON.stringify(res.body || res));
+                throw new Error(msg || 'API call failed');
+            }
+            let link = null;
+            if (res.streaming_link) link = res.streaming_link;
+            else if (res.data && res.data.streaming_link) link = res.data.streaming_link;
+            else if (res.data && Array.isArray(res.data) && res.data[0] && res.data[0].streaming_link) link = res.data[0].streaming_link;
+            else if (res.data && res.data.data && res.data.data.streaming_link) link = res.data.data.streaming_link;
+
+            if (!link) throw new Error('Streaming link not found in response');
+            setIframeSrc(link);
+            setFetchError(null);
+            console.log('✅ Successfully fetched stream link');
+        } catch (err) {
+            console.error('Failed to fetch stream', err);
+            setFetchError(err.message || 'Failed to fetch stream');
+            setIframeSrc(null);
+        } finally {
+            setFetchingStream(false);
+        }
+    };
+
+    const handleEpisodeSelect = (episodeNumber) => {
+        setSelectedEp(episodeNumber);
+    };
+
+    const handleSubDubToggle = async (mode) => {
+        if (mode === 'sub' && isDub && animeData) {
+            let subTitle = animeData.japanese_title || animeData.japanese || animeId;
+            subTitle = subTitle.replace(/\s*-?dub\s*$/i, '').trim();
+            setIsDub(false);
+            console.log('🔄 Switching to SUB using title:', subTitle);
+            await fetchStream(selectedEp, subTitle);
+        } else if (mode === 'dub' && !isDub && animeData) {
+            let dubTitle = animeData.title || animeId;
+            if (!dubTitle.toLowerCase().includes('dub')) {
+                dubTitle = `${dubTitle}-dub`;
+            }
+            setIsDub(true);
+            console.log('🔄 Switching to DUB using title:', dubTitle);
+            await fetchStream(selectedEp, dubTitle);
+        }
+    };
+
+    if (loading && episodeCount == null) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center space-y-4">
+                    <LoadingSpinner size="large" />
+                    <div className="text-white text-lg">Loading anime data...</div>
+                    <div className="text-gray-400 text-sm">Please wait while we prepare your content</div>
+                </div>
+            </div>
+        );
+    }
+
+    return (
+        <div className="min-h-screen pt-28 px-6">
+            <div className="max-w-7xl mx-auto">
+            <div className="grid grid-cols-12 gap-6">
+                <EpisodeList 
+                    episodes={episodes}
+                    selectedEp={selectedEp}
+                    onEpisodeSelect={handleEpisodeSelect}
+                />
+
+                <div className="col-span-9">
+                    <VideoPlayer
+                    animeId={animeId}
+                    selectedEp={selectedEp}
+                    iframeSrc={iframeSrc}
+                    fetchingStream={fetchingStream}
+                    fetchError={fetchError}
+                    iframeKey={iframeKey}
+                    videoRef={videoRef}
+                    isDub={isDub}
+                    currentEpisodeHasDub={currentEpisodeHasDub}
+                    reloading={reloading}
+                    onSubDubToggle={handleSubDubToggle}
+                    onReload={reloadStream}
+                    />
+                </div>
+            </div>
+            </div>
+        </div>
+    );
+}
+
+export default StreamingPage;
