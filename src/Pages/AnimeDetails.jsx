@@ -12,7 +12,7 @@ function AnimeDetails() {
   
   const trendingState = location.state || {};
   const { trendingSub, trendingDub, fromTrending } = trendingState;
-  const { getAnimeDetails, getHomepage, getRecentUpdates, getSearchSuggestions, loading, error, clearError } = useShirayukiAPI();
+  const { getAnimeDetails, getHomepage, getRecentUpdates, getSearchSuggestions, loading, error } = useShirayukiAPI();
   const [animeData, setAnimeData] = useState(null);
   const [episodesData, setEpisodesData] = useState(null);
   const [recommended, setRecommended] = useState([]);
@@ -227,15 +227,8 @@ function AnimeDetails() {
   const raw = animeData?.data || animeData || {};
   const info = raw?.anime?.info || raw?.anime || raw?.info || raw;
   const moreInfo = raw?.anime?.moreInfo || raw?.moreInfo || info?.moreInfo || {};
-  const relatedAnimes = raw?.relatedAnimes || raw?.related || raw?.related_animes || [];
-  const recommendedAnimes = raw?.recommendedAnimes || raw?.recommended || raw?.recommended_animes || recommended || [];
 
-  const type = info?.type || moreInfo?.type || 'Unknown';
-  const country = info?.country || moreInfo?.country || 'Unknown';
-  const genres = info?.genres || moreInfo?.genres || [];
-  const status = info?.status || moreInfo?.status || 'Unknown';
-  const released = info?.released || moreInfo?.released || 'Unknown';
-  const quality = info?.quality || moreInfo?.quality || 'Unknown';
+
 
   const name = info?.name || info?.info?.name || info?.title || raw?.name || 'Unknown';
   const poster = info?.poster || info?.image || info?.thumbnail || '/placeholder-anime.svg';
@@ -401,16 +394,16 @@ function AnimeDetails() {
                       <div className="hidden lg:block mt-6">
                         <div className="text-black">
                           <div className="space-y-1">
-                            <div className="flex justify-between"><span className="text-gray-100 text-md">Type:</span><span className="text-sm  text-white px-3 py-1 rounded-full">{type}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-100 text-md">Country:</span><span className=" text-sm  text-white px-3 py-1 rounded-full">{country}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-100 text-md">Status:</span><span className=" text-sm  text-white px-3 py-1 rounded-full">{status}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-100 text-md">Released:</span><span className=" text-sm  text-white px-3 py-1 rounded-full">{released}</span></div>
-                            <div className="flex justify-between"><span className="text-gray-100 text-md">Quality:</span><span className="text-sm  text-white px-3 py-1 rounded-full">{quality}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-100 text-md">Type:</span><span className="text-sm  text-white px-3 py-1 rounded-full">{info?.type || moreInfo?.type || 'Unknown'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-100 text-md">Country:</span><span className=" text-sm  text-white px-3 py-1 rounded-full">{info?.country || moreInfo?.country || 'Unknown'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-100 text-md">Status:</span><span className=" text-sm  text-white px-3 py-1 rounded-full">{info?.status || moreInfo?.status || 'Unknown'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-100 text-md">Released:</span><span className=" text-sm  text-white px-3 py-1 rounded-full">{info?.released || moreInfo?.released || 'Unknown'}</span></div>
+                            <div className="flex justify-between"><span className="text-gray-100 text-md">Quality:</span><span className="text-sm  text-white px-3 py-1 rounded-full">{info?.quality || moreInfo?.quality || 'Unknown'}</span></div>
                           </div>
                           <div className="mt-4">
                             <div className="flex flex-wrap gap-3 items-center">
                               <div className="text-gray-100 text-md mb-2">Genres:</div>
-                              {genres.map((g, i) => (
+                              {(info?.genres || moreInfo?.genres || []).map((g, i) => (
                                 <span key={`${g}-${i}`} className="text-glow bg-black/40 text-white px-4 py-1 rounded-full text-sm -mt-1">{g}</span>
                               ))}
                             </div>

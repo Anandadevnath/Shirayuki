@@ -4,7 +4,6 @@ import { useShirayukiAPI } from '../context';
 import { LoadingSpinner } from '../components/LoadingStates';
 import EpisodeList from '../components/EpisodeList';
 import VideoPlayer from '../components/VideoPlayer';
-import Hls from 'hls.js';
 
 function StreamingPage() {
     const { animeId } = useParams();
@@ -13,7 +12,7 @@ function StreamingPage() {
     const [episodeCount, setEpisodeCount] = useState(null);
     const [selectedEp, setSelectedEp] = useState(1);
     const [iframeSrc, setIframeSrc] = useState(null);
-    const videoRef = useRef(null);
+
     const [fetchError, setFetchError] = useState(null);
     const [fetchingStream, setFetchingStream] = useState(false);
     const [iframeKey, setIframeKey] = useState(0);
@@ -33,14 +32,7 @@ function StreamingPage() {
                 const recentList = recent?.data || [];
                 console.log('📋 Recent list length:', recentList.length);
                 
-                const slugify = (str) => {
-                    if (!str) return '';
-                    return String(str)
-                        .toLowerCase()
-                        .replace(/[^a-z0-9]+/g, '-')
-                        .replace(/^-+|-+$/g, '')
-                        .replace(/--+/g, '-');
-                };
+
                 
                 const currentAnimeSlug = slugify(animeId);
                 console.log('🎯 Looking for currentAnimeSlug:', currentAnimeSlug);
@@ -103,7 +95,6 @@ function StreamingPage() {
             try {
                 console.log(`🔍 Checking if episode ${selectedEp} has dub version...`);
                 let dubTitle = animeData.title;
-                // Add "-dub" suffix if it doesn't already exist
                 if (!dubTitle.toLowerCase().includes('dub')) {
                     dubTitle = `${dubTitle}-dub`;
                 }
@@ -235,7 +226,7 @@ function StreamingPage() {
         };
 
         loadCounts();
-    }, [animeId, getAnimeDetails, getHomepage, getRecentUpdates, location?.state, slugify]);
+    }, [animeId, getAnimeDetails, getHomepage, getRecentUpdates, location?.state]);
 
     const episodes = useMemo(() => {
         const count = Number(episodeCount) || 0;
@@ -274,22 +265,7 @@ function StreamingPage() {
         }
     }, [effectiveAnimeId, selectedEp]);
 
-    // HLS.js player setup
-    useEffect(() => {
-        if (iframeSrc && videoRef.current && iframeSrc.endsWith('.m3u8')) {
-            let hls;
-            if (Hls.isSupported()) {
-                hls = new Hls();
-                hls.loadSource(iframeSrc);
-                hls.attachMedia(videoRef.current);
-            } else if (videoRef.current.canPlayType('application/vnd.apple.mpegurl')) {
-                videoRef.current.src = iframeSrc;
-            }
-            return () => {
-                if (hls) hls.destroy();
-            };
-        }
-    }, [iframeSrc]);
+
 
     const reloadStream = async () => {
         if (reloading) return;
@@ -304,9 +280,6 @@ function StreamingPage() {
         }
     };
 
-
-
-    // fetchStream accepts optional idOverride so toggling mode can fetch immediately
     const fetchStream = async (ep, idOverride) => {
         setFetchError(null);
         setFetchingStream(true);
@@ -399,7 +372,6 @@ function StreamingPage() {
                     fetchingStream={fetchingStream}
                     fetchError={fetchError}
                     iframeKey={iframeKey}
-                    videoRef={videoRef}
                     isDub={isDub}
                     currentEpisodeHasDub={currentEpisodeHasDub}
                     reloading={reloading}

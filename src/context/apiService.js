@@ -2,17 +2,14 @@ import config from './config.js';
 
 class ShirayukiAPIService {
   
-  // Most Popular
   getMostPopular = async () => {
     return this.apiCall('/most_popular');
   }
 
-  // Most Favorite
   getMostFavorite = async () => {
     return this.apiCall('/most_favorite');
   }
 
-  // Top Airing
   getTopAiring = async () => {
     return this.apiCall('/top_airing');
   }
@@ -21,12 +18,10 @@ class ShirayukiAPIService {
     return this.apiCall('/recent_updates');
   }
 
-  // Recent Updates for Dubbed content
   getRecentUpdatesDub = async () => {
     return this.apiCall('/recent_updates_dub');
   }
 
-  // Trending anime
   getTrending = async () => {
     return this.apiCall('/trending');
   }
@@ -45,7 +40,7 @@ class ShirayukiAPIService {
           'Content-Type': 'application/json',
           ...options.headers
         },
-        mode: 'cors', // Explicitly set CORS mode
+        mode: 'cors', 
         ...options
       };
 
@@ -70,7 +65,6 @@ class ShirayukiAPIService {
 
       return responseBody;
     } catch (error) {
-      // Handle CORS and network errors more gracefully
       const errorMessage = error.name === 'TypeError' && error.message.includes('Failed to fetch')
         ? 'Network error: Unable to connect to API server. Please check your connection or try again later.'
         : error.message;
@@ -84,12 +78,10 @@ class ShirayukiAPIService {
     }
   }
 
-  // Homepage data
   getHomepage = async () => {
     return this.apiCall('/home');
   }
 
-  // Top rankings
   getTop10 = async () => {
     return this.apiCall('/top10');
   }
@@ -102,32 +94,26 @@ class ShirayukiAPIService {
     return this.apiCall('/monthly10');
   }
 
-  // Schedule
   getSchedule = async () => {
     return this.apiCall('/db-schedule');
   }
 
-  // A-Z anime list
   getAZAnimeList = async (page = 1) => {
     return this.apiCall(`/az-all-anime/all/?page=${page}`);
   }
 
-  // Genre-based anime
   getAnimeByGenre = async (genre, page = 1) => {
     return this.apiCall(`/genere/${genre}?page=${page}`);
   }
 
-  // Search functionality
   searchAnime = async (keyword) => {
     return this.apiCall(`/search?keyword=${encodeURIComponent(keyword)}`);
   }
 
-  // suggestion
   getSearchSuggestions = async (query) => {
     return this.apiCall(`/search/suggestions?q=${encodeURIComponent(query)}`);
   }
 
-  // Streaming and details
   getEpisodeStream = async (animeId, episode) => {
     if (!animeId) return { error: true, message: 'Missing animeId' };
     let formatted = String(animeId)
@@ -143,7 +129,6 @@ class ShirayukiAPIService {
     return this.apiCall(endpoint);
   }
 
-  // Anime Details
   getAnimeDetails = async (animeTitle) => {
     let formattedTitle = animeTitle
       .toLowerCase()
