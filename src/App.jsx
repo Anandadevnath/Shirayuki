@@ -1,10 +1,7 @@
+import Home from "@/pages/home";
 
 function App() {
-  return (
-    <>
- hello
-    </>
-  )
+  return <Home />;
 }
 
 export default App
