@@ -1,7 +1,8 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -17,6 +18,7 @@ import {
   SheetTitle,
   SheetTrigger,
 } from "@/components/ui/sheet";
+import { getSearchSuggestions } from "@/context/api";
 
 // Icons as simple SVG components
 const MenuIcon = () => (
@@ -41,31 +43,75 @@ const UserIcon = () => (
   </svg>
 );
 
+const XIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <path d="M18 6 6 18" />
+    <path d="m6 6 12 12" />
+  </svg>
+);
+
 const navLinks = [
   { name: "Genres", href: "/genre" },
-  { name: "Types", href: "/types" },
-  { name: "New Releases", href: "/new-releases" },
-  { name: "Updates", href: "/updates" },
-  { name: "Ongoing", href: "/ongoing" },
-  { name: "Recent", href: "/recent" },
-];
-
-const genres = [
-  "Action", "Adventure", "Comedy", "Drama", "Fantasy",
-  "Horror", "Isekai", "Romance", "Sci-Fi", "Slice of Life",
+  { name: "Types", href: "/category" },
+  { name: "Schedule", href: "/schedule" },
+  { name: "A-Z List", href: "/az-list" },
+  { name: "Studios", href: "/producer" },
 ];
 
 export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [suggestions, setSuggestions] = useState([]);
+  const [showSuggestions, setShowSuggestions] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const searchRef = useRef(null);
   const navigate = useNavigate();
+
+  // Debounced search suggestions
+  useEffect(() => {
+    const timer = setTimeout(async () => {
+      if (searchQuery.trim().length >= 2) {
+        const { data, error } = await getSearchSuggestions(searchQuery.trim());
+        if (!error && data?.data?.suggestions) {
+          setSuggestions(data.data.suggestions);
+        }
+      } else {
+        setSuggestions([]);
+      }
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
+
+  // Close suggestions when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (searchRef.current && !searchRef.current.contains(event.target)) {
+        setShowSuggestions(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
       setSearchQuery("");
+      setShowSuggestions(false);
     }
+  };
+
+  const handleSuggestionClick = (suggestion) => {
+    navigate(`/anime/${suggestion.id}`);
+    setSearchQuery("");
+    setShowSuggestions(false);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
+    setSuggestions([]);
   };
 
   return (
@@ -92,23 +138,85 @@ export default function Navbar() {
           </div>
 
           {/* Search Bar - Desktop */}
-          <form onSubmit={handleSearch} className="hidden md:flex items-center">
-            <div className="relative">
-              <Input
-                type="text"
-                placeholder="Search anime..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-64 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-purple-500 pr-10"
-              />
-              <button
-                type="submit"
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
-              >
-                <SearchIcon />
-              </button>
-            </div>
-          </form>
+          <div ref={searchRef} className="hidden md:block relative">
+            <form onSubmit={handleSearch} className="flex items-center">
+              <div className="relative">
+                <Input
+                  type="text"
+                  placeholder="Search anime..."
+                  value={searchQuery}
+                  onChange={(e) => {
+                    setSearchQuery(e.target.value);
+                    setShowSuggestions(true);
+                  }}
+                  onFocus={() => setShowSuggestions(true)}
+                  className="w-72 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-purple-500 pr-16"
+                />
+                {searchQuery && (
+                  <button
+                    type="button"
+                    onClick={clearSearch}
+                    className="absolute right-10 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
+                  >
+                    <XIcon />
+                  </button>
+                )}
+                <button
+                  type="submit"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
+                >
+                  <SearchIcon />
+                </button>
+              </div>
+            </form>
+
+            {/* Search Suggestions Dropdown */}
+            {showSuggestions && suggestions.length > 0 && (
+              <div className="absolute top-full left-0 right-0 mt-2 bg-zinc-900 border border-zinc-700 rounded-lg shadow-xl z-50 max-h-96 overflow-y-auto">
+                {suggestions.map((suggestion) => (
+                  <button
+                    key={suggestion.id}
+                    onClick={() => handleSuggestionClick(suggestion)}
+                    className="w-full flex items-center gap-3 p-3 hover:bg-zinc-800 transition-colors text-left"
+                  >
+                    <img
+                      src={suggestion.poster}
+                      alt={suggestion.name}
+                      className="w-10 h-14 object-cover rounded"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-white font-medium text-sm line-clamp-1">
+                        {suggestion.name}
+                      </p>
+                      <p className="text-zinc-500 text-xs line-clamp-1">
+                        {suggestion.jname}
+                      </p>
+                      <div className="flex items-center gap-2 mt-1">
+                        <Badge
+                          variant="outline"
+                          className="text-[10px] px-1 py-0 border-zinc-600 text-zinc-400"
+                        >
+                          {suggestion.type}
+                        </Badge>
+                        {suggestion.moreInfo?.[0] && (
+                          <span className="text-zinc-500 text-xs">
+                            {suggestion.moreInfo[0]}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                  </button>
+                ))}
+                <Link
+                  to={`/search?q=${encodeURIComponent(searchQuery)}`}
+                  onClick={() => setShowSuggestions(false)}
+                  className="block w-full p-3 text-center text-purple-400 hover:bg-zinc-800 transition-colors text-sm font-medium border-t border-zinc-800"
+                >
+                  View all results →
+                </Link>
+              </div>
+            )}
+          </div>
 
           {/* Right Section */}
           <div className="flex items-center gap-2">
