@@ -187,7 +187,7 @@ function GenresSection({ genres }) {
 // Loading Skeleton
 function HomePageSkeleton() {
   return (
-    <div className="min-h-screen bg-zinc-950 p-6">
+    <div className="container mx-auto px-4 py-6">
       <Skeleton className="h-[500px] w-full rounded-xl bg-zinc-800" />
       <div className="mt-8">
         <Skeleton className="h-8 w-48 mb-4 bg-zinc-800" />
@@ -241,15 +241,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-6">
-      {/* Header */}
-      <header className="mb-8">
-        <h1 className="text-3xl font-bold text-white flex items-center gap-3">
-          <span className="text-4xl">❄️</span> Shirayuki
-        </h1>
-        <p className="text-zinc-400">Your anime streaming destination</p>
-      </header>
-
+    <div className="container mx-auto px-4 py-6">
       {/* Spotlight */}
       {data?.spotlightAnimes && (
         <SpotlightSection spotlightAnimes={data.spotlightAnimes} />
@@ -310,11 +302,6 @@ export default function Home() {
 
       {/* Genres */}
       {data?.genres && <GenresSection genres={data.genres} />}
-
-      {/* Footer */}
-      <footer className="mt-12 pt-8 border-t border-zinc-800 text-center text-zinc-500">
-        <p>© 2025 Shirayuki. All rights reserved.</p>
-      </footer>
     </div>
   );
 }
