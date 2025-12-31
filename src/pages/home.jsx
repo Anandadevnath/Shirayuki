@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { getHome } from "@/context/api";
 import {
   Card,
@@ -16,44 +17,46 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Anime Card Component
 function AnimeCard({ anime, variant = "default" }) {
   return (
-    <Card className="group overflow-hidden bg-zinc-900 border-zinc-800 hover:border-zinc-600 transition-all duration-300 cursor-pointer">
-      <div className="relative overflow-hidden">
-        <img
-          src={anime.poster}
-          alt={anime.name}
-          className="w-full h-[280px] object-cover group-hover:scale-105 transition-transform duration-300"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-        {anime.rank && (
-          <Badge className="absolute top-2 left-2 bg-purple-600 hover:bg-purple-700">
-            #{anime.rank}
-          </Badge>
-        )}
-        {anime.episodes && (
-          <div className="absolute bottom-2 left-2 flex gap-2">
-            {anime.episodes.sub && (
-              <Badge variant="secondary" className="bg-yellow-600/90 text-white">
-                SUB: {anime.episodes.sub}
-              </Badge>
-            )}
-            {anime.episodes.dub && (
-              <Badge variant="secondary" className="bg-blue-600/90 text-white">
-                DUB: {anime.episodes.dub}
-              </Badge>
-            )}
-          </div>
-        )}
-        {anime.type && (
-          <Badge className="absolute top-2 right-2 bg-zinc-800/90">
-            {anime.type}
-          </Badge>
-        )}
-      </div>
-      <CardContent className="p-3">
-        <h3 className="font-semibold text-white truncate">{anime.name}</h3>
-        <p className="text-sm text-zinc-400 truncate">{anime.jname}</p>
-      </CardContent>
-    </Card>
+    <Link to={`/anime/${anime.id}`}>
+      <Card className="group overflow-hidden bg-zinc-900 border-zinc-800 hover:border-purple-500 transition-all duration-300 cursor-pointer">
+        <div className="relative overflow-hidden">
+          <img
+            src={anime.poster}
+            alt={anime.name}
+            className="w-full h-[280px] object-cover group-hover:scale-105 transition-transform duration-300"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
+          {anime.rank && (
+            <Badge className="absolute top-2 left-2 bg-purple-600 hover:bg-purple-700">
+              #{anime.rank}
+            </Badge>
+          )}
+          {anime.episodes && (
+            <div className="absolute bottom-2 left-2 flex gap-2">
+              {anime.episodes.sub && (
+                <Badge variant="secondary" className="bg-yellow-600/90 text-white">
+                  SUB: {anime.episodes.sub}
+                </Badge>
+              )}
+              {anime.episodes.dub && (
+                <Badge variant="secondary" className="bg-blue-600/90 text-white">
+                  DUB: {anime.episodes.dub}
+                </Badge>
+              )}
+            </div>
+          )}
+          {anime.type && (
+            <Badge className="absolute top-2 right-2 bg-zinc-800/90">
+              {anime.type}
+            </Badge>
+          )}
+        </div>
+        <CardContent className="p-3">
+          <h3 className="font-semibold text-white truncate">{anime.name}</h3>
+          <p className="text-sm text-zinc-400 truncate">{anime.jname}</p>
+        </CardContent>
+      </Card>
+    </Link>
   );
 }
 
@@ -71,47 +74,52 @@ function SpotlightSection({ spotlightAnimes }) {
   const anime = spotlightAnimes[currentIndex];
 
   return (
-    <section className="relative h-[500px] overflow-hidden rounded-xl">
-      <img
-        src={anime.poster}
-        alt={anime.name}
-        className="w-full h-full object-cover"
-      />
-      <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
-      <div className="absolute inset-0 flex flex-col justify-end p-8">
-        <Badge className="w-fit mb-3 bg-purple-600">#{anime.rank} Spotlight</Badge>
-        <h1 className="text-4xl font-bold text-white mb-2">{anime.name}</h1>
-        <p className="text-zinc-300 mb-2">{anime.jname}</p>
-        <div className="flex gap-2 mb-4">
-          {anime.otherInfo?.map((info, i) => (
-            <Badge key={i} variant="outline" className="border-zinc-600 text-zinc-300">
-              {info}
-            </Badge>
+    <Link to={`/anime/${anime.id}`}>
+      <section className="relative h-[500px] overflow-hidden rounded-xl cursor-pointer group">
+        <img
+          src={anime.poster}
+          alt={anime.name}
+          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
+        <div className="absolute inset-0 flex flex-col justify-end p-8">
+          <Badge className="w-fit mb-3 bg-purple-600">#{anime.rank} Spotlight</Badge>
+          <h1 className="text-4xl font-bold text-white mb-2">{anime.name}</h1>
+          <p className="text-zinc-300 mb-2">{anime.jname}</p>
+          <div className="flex gap-2 mb-4">
+            {anime.otherInfo?.map((info, i) => (
+              <Badge key={i} variant="outline" className="border-zinc-600 text-zinc-300">
+                {info}
+              </Badge>
+            ))}
+          </div>
+          <p className="text-zinc-400 max-w-2xl line-clamp-3">{anime.description}</p>
+          <div className="flex gap-2 mt-4">
+            {anime.episodes?.sub && (
+              <Badge className="bg-yellow-600">SUB: {anime.episodes.sub}</Badge>
+            )}
+            {anime.episodes?.dub && (
+              <Badge className="bg-blue-600">DUB: {anime.episodes.dub}</Badge>
+            )}
+          </div>
+        </div>
+        {/* Dots Navigation */}
+        <div className="absolute bottom-4 right-8 flex gap-2" onClick={(e) => e.preventDefault()}>
+          {spotlightAnimes.map((_, i) => (
+            <button
+              key={i}
+              onClick={(e) => {
+                e.preventDefault();
+                setCurrentIndex(i);
+              }}
+              className={`w-2 h-2 rounded-full transition-all ${
+                i === currentIndex ? "bg-purple-500 w-6" : "bg-zinc-600"
+              }`}
+            />
           ))}
         </div>
-        <p className="text-zinc-400 max-w-2xl line-clamp-3">{anime.description}</p>
-        <div className="flex gap-2 mt-4">
-          {anime.episodes?.sub && (
-            <Badge className="bg-yellow-600">SUB: {anime.episodes.sub}</Badge>
-          )}
-          {anime.episodes?.dub && (
-            <Badge className="bg-blue-600">DUB: {anime.episodes.dub}</Badge>
-          )}
-        </div>
-      </div>
-      {/* Dots Navigation */}
-      <div className="absolute bottom-4 right-8 flex gap-2">
-        {spotlightAnimes.map((_, i) => (
-          <button
-            key={i}
-            onClick={() => setCurrentIndex(i)}
-            className={`w-2 h-2 rounded-full transition-all ${
-              i === currentIndex ? "bg-purple-500 w-6" : "bg-zinc-600"
-            }`}
-          />
-        ))}
-      </div>
-    </section>
+      </section>
+    </Link>
   );
 }
 

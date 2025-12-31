@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -41,11 +42,12 @@ const UserIcon = () => (
 );
 
 const navLinks = [
-  { name: "Home", href: "/" },
-  { name: "Movies", href: "/movies" },
-  { name: "TV Series", href: "/tv-series" },
-  { name: "Most Popular", href: "/most-popular" },
-  { name: "Top Airing", href: "/top-airing" },
+  { name: "Genres", href: "/genre" },
+  { name: "Types", href: "/types" },
+  { name: "New Releases", href: "/new-releases" },
+  { name: "Updates", href: "/updates" },
+  { name: "Ongoing", href: "/ongoing" },
+  { name: "Recent", href: "/recent" },
 ];
 
 const genres = [
@@ -56,12 +58,13 @@ const genres = [
 export default function Navbar() {
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
 
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
-      // Handle search - will implement with routing later
-      console.log("Searching for:", searchQuery);
+      navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
+      setSearchQuery("");
     }
   };
 
@@ -70,46 +73,22 @@ export default function Navbar() {
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <a href="/" className="flex items-center gap-2">
+          <Link to="/" className="flex items-center gap-2">
             <span className="text-2xl">❄️</span>
             <span className="text-xl font-bold text-white">Shirayuki</span>
-          </a>
+          </Link>
 
           {/* Desktop Navigation */}
           <div className="hidden lg:flex items-center gap-6">
             {navLinks.map((link) => (
-              <a
+              <Link
                 key={link.name}
-                href={link.href}
-                className="text-sm font-medium text-zinc-400 hover:text-white transition-colors"
+                to={link.href}
+                className="text-sm font-medium text-zinc-400 hover:text-white transition-colors uppercase tracking-wide"
               >
                 {link.name}
-              </a>
+              </Link>
             ))}
-
-            {/* Genres Dropdown */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" className="text-sm font-medium text-zinc-400 hover:text-white">
-                  Genres
-                  <svg className="ml-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-                  </svg>
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent className="w-48 bg-zinc-900 border-zinc-800">
-                <DropdownMenuLabel className="text-zinc-400">Browse by Genre</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-zinc-800" />
-                {genres.map((genre) => (
-                  <DropdownMenuItem
-                    key={genre}
-                    className="text-zinc-300 hover:text-white focus:bg-zinc-800 cursor-pointer"
-                  >
-                    {genre}
-                  </DropdownMenuItem>
-                ))}
-              </DropdownMenuContent>
-            </DropdownMenu>
           </div>
 
           {/* Search Bar - Desktop */}
@@ -195,34 +174,15 @@ export default function Navbar() {
                 {/* Mobile Nav Links */}
                 <div className="mt-6 flex flex-col gap-2">
                   {navLinks.map((link) => (
-                    <a
+                    <Link
                       key={link.name}
-                      href={link.href}
+                      to={link.href}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="px-3 py-2 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md transition-colors"
+                      className="px-3 py-2 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md transition-colors uppercase tracking-wide font-medium"
                     >
                       {link.name}
-                    </a>
+                    </Link>
                   ))}
-                </div>
-
-                {/* Mobile Genres */}
-                <div className="mt-6">
-                  <h3 className="px-3 text-sm font-semibold text-zinc-500 uppercase tracking-wider">
-                    Genres
-                  </h3>
-                  <div className="mt-2 flex flex-wrap gap-2 px-3">
-                    {genres.map((genre) => (
-                      <a
-                        key={genre}
-                        href={`/genre/${genre.toLowerCase()}`}
-                        onClick={() => setIsMobileMenuOpen(false)}
-                        className="px-3 py-1 text-sm text-zinc-400 hover:text-white bg-zinc-900 hover:bg-zinc-800 rounded-full transition-colors"
-                      >
-                        {genre}
-                      </a>
-                    ))}
-                  </div>
                 </div>
               </SheetContent>
             </Sheet>
