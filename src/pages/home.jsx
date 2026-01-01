@@ -57,7 +57,7 @@ export default function Home() {
       )}
 
       {/* Main Content */}
-      <div className="relative -mt-56 z-30 max-w-[1480px] mx-auto px-8 lg:px-12 py-6">
+      <div className="relative -mt-32 sm:-mt-44 lg:-mt-56 z-30 max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-12 py-6">
         {/* Trending */}
         {data?.trendingAnimes && (
           <AnimeScrollSection title="Trending Now" animes={data.trendingAnimes} autoSlide />
@@ -70,18 +70,18 @@ export default function Home() {
 
         {/* Latest Episodes with Sidebar */}
         <div className="mt-8">
-          <div className="flex gap-6 items-center mb-4">
-            <h2 className="text-2xl font-bold text-white flex-1">📺 Latest Episodes</h2>
+          <div className="flex gap-4 lg:gap-6 items-center mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-white flex-1">📺 Latest Episodes</h2>
             <div className="w-[380px] flex-shrink-0 hidden lg:flex items-center gap-2">
               <span className="text-xl">🏆</span>
               <h2 className="text-2xl font-bold text-white">Top Trending</h2>
             </div>
           </div>
           
-          <div className="flex gap-6 items-start">
+          <div className="flex gap-4 lg:gap-6 items-start">
             <div className="flex-1 min-w-0">
               {data?.latestEpisodeAnimes && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                   {data.latestEpisodeAnimes.map((anime) => (
                     <AnimeGridCard key={anime.id} anime={anime} />
                   ))}
@@ -103,18 +103,18 @@ export default function Home() {
 
         {/* Top Upcoming with Top 10 Sidebar */}
         <div className="mt-8">
-          <div className="flex gap-6 items-center mb-4">
-            <h2 className="text-2xl font-bold text-white flex-1">🗓️ Top Upcoming</h2>
+          <div className="flex gap-4 lg:gap-6 items-center mb-4">
+            <h2 className="text-xl sm:text-2xl font-bold text-white flex-1">🗓️ Top Upcoming</h2>
             <div className="w-[380px] flex-shrink-0 hidden lg:flex items-center gap-2">
               <span className="text-xl">🏆</span>
               <h2 className="text-2xl font-bold text-white">Top 10 Anime</h2>
             </div>
           </div>
           
-          <div className="flex gap-6 items-start">
+          <div className="flex gap-4 lg:gap-6 items-start">
             <div className="flex-1 min-w-0">
               {data?.topUpcomingAnimes && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-3 sm:gap-4">
                   {data.topUpcomingAnimes.map((anime) => (
                     <AnimeGridCard key={anime.id} anime={anime} />
                   ))}

@@ -130,12 +130,12 @@ export default function Navbar() {
         ? "bg-black/80 backdrop-blur-xl border-white/10" 
         : "bg-transparent border-transparent"
     }`}>
-      <div className="max-w-[1480px] mx-auto px-8 lg:px-12">
-        <div className="flex h-20 items-center">
+      <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12">
+        <div className="flex h-14 sm:h-16 lg:h-20 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center">
-            <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-22 w-auto object-contain" />
-            <img src="/text.png" alt="Shirayuki" className="h-20 w-auto object-contain" />
+          <Link to="/" className="flex items-center flex-shrink-0">
+            <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-10 sm:h-14 lg:h-22 w-auto object-contain" />
+            <img src="/text.png" alt="Shirayuki" className="h-8 sm:h-12 lg:h-20 w-auto object-contain" />
           </Link>
 
           {/* Desktop Navigation - Centered */}
@@ -221,19 +221,19 @@ export default function Navbar() {
           </div>
 
           {/* Right Section */}
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 ml-auto lg:ml-0">
             {/* Mobile Menu */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
-                <Button variant="ghost" size="icon" className="lg:hidden text-zinc-400 hover:text-white">
+                <Button variant="ghost" size="icon" className="lg:hidden text-zinc-400 hover:text-white h-9 w-9">
                   <MenuIcon />
                 </Button>
               </SheetTrigger>
-              <SheetContent side="right" className="w-80 bg-zinc-950 border-zinc-800">
+              <SheetContent side="right" className="w-[280px] sm:w-80 bg-zinc-950 border-zinc-800">
                 <SheetHeader>
                   <SheetTitle className="text-white flex items-center gap-2">
-                    <img src="/shirayuki.png" alt="Shirayuki Logo" className="h-6 w-6" />
-                    <img src="/text.png" alt="Shirayuki" className="h-5" />
+                    <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-8 w-auto" />
+                    <img src="/text.png" alt="Shirayuki" className="h-6" />
                   </SheetTitle>
                 </SheetHeader>
 

@@ -29,20 +29,20 @@ const BOTTOM_LINKS = [
 
 // Reusable Components
 const SectionTitle = memo(({ children }) => (
-  <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
-    <span className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500" />
+  <h3 className="text-white font-semibold mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+    <span className="w-1.5 h-1.5 sm:w-2 sm:h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500" />
     {children}
   </h3>
 ));
 
 const SocialIcon = memo(({ path }) => (
-  <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+  <svg className="h-4 w-4 sm:h-5 sm:w-5" fill="currentColor" viewBox="0 0 24 24">
     <path d={path} />
   </svg>
 ));
 
 const GlassButton = memo(({ children, className = "" }) => (
-  <span className={`px-3 py-1.5 text-xs text-zinc-400 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-300 transition-all duration-300 ${className}`}>
+  <span className={`px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs text-zinc-400 bg-white/5 backdrop-blur-sm border border-white/10 rounded-md sm:rounded-lg hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-300 transition-all duration-300 ${className}`}>
     {children}
   </span>
 ));
@@ -71,35 +71,35 @@ export default function Footer() {
   const remainingCount = genres.length - MAX_VISIBLE_GENRES;
 
   return (
-    <footer className="relative mt-16">
+    <footer className="relative mt-10 sm:mt-16">
       {/* Background Effects */}
       <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-900/50 to-black" />
-      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-0 left-1/4 w-48 h-48 sm:w-96 sm:h-96 bg-purple-600/10 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-0 right-1/4 w-48 h-48 sm:w-96 sm:h-96 bg-pink-600/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="relative z-10">
-        <div className="max-w-[1450px] mx-auto px-6 lg:px-8 pt-16 pb-8">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+        <div className="max-w-[1450px] mx-auto px-4 sm:px-6 lg:px-8 pt-12 sm:pt-16 pb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
 
             {/* Brand Section */}
             <div className="lg:col-span-4 space-y-4">
-              <Link to="/" className="flex -mt-10 items-center">
-                <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-28 w-auto object-contain" />
-                <img src="/text.png" alt="Shirayuki" className="h-24 w-auto object-contain" />
+              <Link to="/" className="flex -mt-6 sm:-mt-10 items-center">
+                <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-20 sm:h-28 w-auto object-contain" />
+                <img src="/text.png" alt="Shirayuki" className="h-16 sm:h-24 w-auto object-contain" />
               </Link>
-              <p className="text-zinc-400 text-sm leading-relaxed max-w-sm">
+              <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed max-w-sm">
                 Your ultimate destination for streaming anime. Watch thousands of episodes in HD quality with no ads.
               </p>
 
               {/* Social Links */}
-              <div className="flex gap-3">
+              <div className="flex gap-2 sm:gap-3">
                 {SOCIAL_LINKS.map(({ name, href, path }) => (
                   <a
                     key={name}
                     href={href}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 text-zinc-400 hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-400 transition-all duration-300"
+                    className="w-8 h-8 sm:w-10 sm:h-10 flex items-center justify-center rounded-lg sm:rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 text-zinc-400 hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-400 transition-all duration-300"
                     title={name}
                   >
                     <SocialIcon path={path} />
@@ -111,12 +111,12 @@ export default function Footer() {
             {/* Quick Links */}
             <div className="lg:col-span-2">
               <SectionTitle>Quick Links</SectionTitle>
-              <ul className="space-y-3">
+              <ul className="space-y-2 sm:space-y-3">
                 {QUICK_LINKS.map(({ name, href }) => (
                   <li key={name}>
                     <Link
                       to={href}
-                      className="text-zinc-400 hover:text-white text-sm transition-colors hover:translate-x-1 inline-block"
+                      className="text-zinc-400 hover:text-white text-xs sm:text-sm transition-colors hover:translate-x-1 inline-block"
                     >
                       {name}
                     </Link>
@@ -129,14 +129,14 @@ export default function Footer() {
             <div className="lg:col-span-6">
               <SectionTitle>Genres</SectionTitle>
               {visibleGenres.length > 0 && (
-                <div className="flex flex-wrap gap-3">
+                <div className="flex flex-wrap gap-1.5 sm:gap-3">
                   {visibleGenres.map((genre) => (
                     <Link key={genre} to={getGenreUrl(genre)}>
                       <GlassButton>{genre}</GlassButton>
                     </Link>
                   ))}
                   {remainingCount > 0 && (
-                    <Link to="/genre" className="px-3 py-1.5 text-xs text-zinc-400 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-300 transition-all duration-300">
+                    <Link to="/genre" className="px-2 sm:px-3 py-1 sm:py-1.5 text-[10px] sm:text-xs text-zinc-400 bg-white/5 backdrop-blur-sm border border-white/10 rounded-md sm:rounded-lg hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-300 transition-all duration-300">
                       +{remainingCount} more
                     </Link>
                   )}
@@ -146,32 +146,32 @@ export default function Footer() {
           </div>
 
           {/* A-Z List Section */}
-          <div className="mt-12 p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+          <div className="mt-8 sm:mt-12 p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4 mb-4">
               <div className="flex items-center gap-3">
-                <h3 className="text-white font-semibold flex items-center gap-2">
+                <h3 className="text-white font-semibold flex items-center gap-2 text-sm sm:text-base">
                   <span className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500" />
                   A-Z List
                 </h3>
-                <span className="text-zinc-500 text-sm hidden sm:inline">
+                <span className="text-zinc-500 text-xs sm:text-sm hidden sm:inline">
                   Browse anime alphabetically
                 </span>
               </div>
-              <div className="flex gap-4">
-                <Link to="/request" className="text-sm text-zinc-400 hover:text-purple-400 transition-colors">
+              <div className="flex gap-3 sm:gap-4">
+                <Link to="/request" className="text-xs sm:text-sm text-zinc-400 hover:text-purple-400 transition-colors">
                   Request Anime
                 </Link>
-                <Link to="/contact" className="text-sm text-zinc-400 hover:text-purple-400 transition-colors">
+                <Link to="/contact" className="text-xs sm:text-sm text-zinc-400 hover:text-purple-400 transition-colors">
                   Contact Us
                 </Link>
               </div>
             </div>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-1 sm:gap-1.5">
               {ALPHABET.map((letter) => (
                 <Link
                   key={letter}
                   to={`/az-list/${letter.toLowerCase()}`}
-                  className="w-9 h-9 flex items-center justify-center text-sm font-medium text-zinc-400 bg-white/5 border border-white/10 rounded-lg hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-300 transition-all duration-300"
+                  className="w-7 h-7 sm:w-9 sm:h-9 flex items-center justify-center text-xs sm:text-sm font-medium text-zinc-400 bg-white/5 border border-white/10 rounded-md sm:rounded-lg hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-300 transition-all duration-300"
                 >
                   {letter}
                 </Link>
@@ -182,20 +182,20 @@ export default function Footer() {
 
         {/* Bottom Bar */}
         <div className="border-t border-white/10">
-          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
-            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-3 sm:gap-4">
               <div className="space-y-1">
-                <p className="text-sm">
+                <p className="text-xs sm:text-sm">
                   <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent font-medium">
                     © 2026 Shirayuki.
                   </span>
                   <span className="text-zinc-500"> All Rights Reserved.</span>
                 </p>
-                <p className="text-zinc-600 text-xs">
+                <p className="text-zinc-600 text-[10px] sm:text-xs">
                   This site does not store any files on its server. All contents are provided by non-affiliated third parties.
                 </p>
               </div>
-              <div className="flex items-center gap-6 text-sm">
+              <div className="flex items-center gap-4 sm:gap-6 text-xs sm:text-sm">
                 {BOTTOM_LINKS.map(({ name, href }) => (
                   <Link
                     key={name}

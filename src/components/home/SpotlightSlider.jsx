@@ -104,25 +104,25 @@ export const SpotlightSlider = memo(function SpotlightSlider({ spotlightAnimes }
         className="w-full h-full object-cover pointer-events-none"
         draggable={false}
       />
-      <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent pointer-events-none" />
-      <div className="absolute inset-0 flex flex-col justify-center pb-24 max-w-[1480px] mx-auto px-8 lg:px-12 pointer-events-none">
-        <h1 className="text-5xl font-bold text-white mb-4 max-w-2xl">{anime.name}</h1>
-        <div className="flex gap-3 mb-4">
+      <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/70 to-transparent sm:from-black/90 sm:via-black/60 pointer-events-none" />
+      <div className="absolute inset-0 flex flex-col justify-center pb-16 sm:pb-24 max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-12 pointer-events-none">
+        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 sm:mb-4 max-w-2xl line-clamp-2">{anime.name}</h1>
+        <div className="flex gap-2 sm:gap-3 mb-2 sm:mb-4">
           {anime.episodes?.sub && (
-            <Badge className="bg-zinc-800/80 text-white border border-zinc-600 px-3 py-1">
+            <Badge className="bg-zinc-800/80 text-white border border-zinc-600 px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm">
               <span className="mr-1">📺</span> {anime.episodes.sub}
             </Badge>
           )}
           {anime.episodes?.dub && (
-            <Badge className="bg-zinc-800/80 text-white border border-zinc-600 px-3 py-1">
+            <Badge className="bg-zinc-800/80 text-white border border-zinc-600 px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm">
               <span className="mr-1">🎙️</span> {anime.episodes.dub}
             </Badge>
           )}
         </div>
-        <p className="text-zinc-300 max-w-2xl line-clamp-4 text-base leading-relaxed mb-6">{anime.description}</p>
+        <p className="text-zinc-300 max-w-2xl line-clamp-2 sm:line-clamp-4 text-sm sm:text-base leading-relaxed mb-4 sm:mb-6">{anime.description}</p>
         <Link 
           to={`/anime/${anime.id}`}
-          className="w-fit px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-semibold rounded-lg transition-colors pointer-events-auto"
+          className="w-fit px-4 sm:px-6 py-2 sm:py-3 bg-pink-500 hover:bg-pink-600 text-white font-semibold rounded-lg transition-colors pointer-events-auto text-sm sm:text-base"
         >
           Learn More
         </Link>
@@ -132,7 +132,7 @@ export const SpotlightSlider = memo(function SpotlightSlider({ spotlightAnimes }
 
   return (
     <section 
-      className="relative w-full h-[730px] -mt-20 overflow-hidden cursor-grab active:cursor-grabbing group select-none"
+      className="relative w-full h-[450px] sm:h-[550px] lg:h-[730px] -mt-16 sm:-mt-20 overflow-hidden cursor-grab active:cursor-grabbing group select-none"
       onMouseDown={handleMouseDown}
       onMouseMove={handleMouseMove}
       onMouseUp={handleMouseUp}
