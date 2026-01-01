@@ -144,7 +144,7 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 to={link.href}
-                className="text-sm font-medium text-zinc-400 hover:text-white transition-colors uppercase tracking-wide"
+                className="text-sm font-medium text-white hover:text-white transition-colors uppercase tracking-wide"
               >
                 {link.name}
               </Link>
@@ -155,7 +155,7 @@ export default function Navbar() {
           <div ref={searchRef} className="hidden md:flex items-center relative ml-auto">
             <form onSubmit={handleSearch} className="flex items-center">
               <div className="relative flex items-center">
-                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white">
                   <SearchIcon />
                 </span>
                 <Input
@@ -167,7 +167,7 @@ export default function Navbar() {
                     setShowSuggestions(true);
                   }}
                   onFocus={() => setShowSuggestions(true)}
-                  className="w-90 h-10 bg-transparent border-zinc-600 text-white placeholder:text-zinc-500 focus:border-zinc-500 pl-10 pr-4 rounded-ml"
+                  className="w-90 h-10 bg-transparent border-white text-white placeholder:text-white focus:border-zinc-500 pl-10 pr-4 rounded-ml"
                 />
               </div>
             </form>

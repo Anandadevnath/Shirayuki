@@ -17,45 +17,36 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 // Anime Card Component
 function AnimeCard({ anime, variant = "default" }) {
   return (
-    <Link to={`/anime/${anime.id}`}>
-      <Card className="group overflow-hidden bg-zinc-900 border-zinc-800 hover:border-purple-500 transition-all duration-300 cursor-pointer">
-        <div className="relative overflow-hidden">
-          <img
-            src={anime.poster}
-            alt={anime.name}
-            className="w-full h-[280px] object-cover group-hover:scale-105 transition-transform duration-300"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
-          {anime.rank && (
-            <Badge className="absolute top-2 left-2 bg-purple-600 hover:bg-purple-700">
-              #{anime.rank}
-            </Badge>
-          )}
-          {anime.episodes && (
-            <div className="absolute bottom-2 left-2 flex gap-2">
-              {anime.episodes.sub && (
-                <Badge variant="secondary" className="bg-yellow-600/90 text-white">
-                  SUB: {anime.episodes.sub}
-                </Badge>
-              )}
-              {anime.episodes.dub && (
-                <Badge variant="secondary" className="bg-blue-600/90 text-white">
-                  DUB: {anime.episodes.dub}
-                </Badge>
-              )}
-            </div>
-          )}
-          {anime.type && (
-            <Badge className="absolute top-2 right-2 bg-zinc-800/90">
-              {anime.type}
-            </Badge>
-          )}
-        </div>
-        <CardContent className="p-3">
-          <h3 className="font-semibold text-white truncate">{anime.name}</h3>
-          <p className="text-sm text-zinc-400 truncate">{anime.jname}</p>
-        </CardContent>
-      </Card>
+    <Link to={`/anime/${anime.id}`} className="block group">
+      <div className="relative overflow-hidden rounded-2xl mb-3">
+        <img
+          src={anime.poster}
+          alt={anime.name}
+          className="w-full h-[300px] object-cover group-hover:scale-105 transition-transform duration-300"
+        />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        {anime.rank && (
+          <Badge className="absolute top-2 left-2 bg-purple-600 hover:bg-purple-700">
+            #{anime.rank}
+          </Badge>
+        )}
+      </div>
+      {/* Info below image */}
+      <h3 className="font-semibold text-white truncate text-sm mb-2">{anime.name}</h3>
+      <div className="flex items-center gap-2">
+        {anime.episodes?.sub && (
+          <Badge className="bg-pink-500/90 hover:bg-pink-500 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
+            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect width="20" height="15" x="2" y="7" rx="2" ry="2"/>
+              <polyline points="17 2 12 7 7 2"/>
+            </svg>
+            {anime.episodes.sub}
+          </Badge>
+        )}
+        {anime.type && (
+          <span className="text-zinc-400 text-xs">{anime.type}</span>
+        )}
+      </div>
     </Link>
   );
 }
@@ -74,37 +65,35 @@ function SpotlightSection({ spotlightAnimes }) {
   const anime = spotlightAnimes[currentIndex];
 
   return (
-    <Link to={`/anime/${anime.id}`}>
-      <section className="relative h-[500px] overflow-hidden rounded-xl cursor-pointer group">
+    <section className="relative w-full h-[730px] -mt-20 overflow-hidden cursor-pointer group">
+      <Link to={`/anime/${anime.id}`} className="block w-full h-full">
         <img
           src={anime.poster}
           alt={anime.name}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
-        <div className="absolute inset-0 bg-gradient-to-r from-black via-black/70 to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-end p-8">
-          <Badge className="w-fit mb-3 bg-purple-600">#{anime.rank} Spotlight</Badge>
-          <h1 className="text-4xl font-bold text-white mb-2">{anime.name}</h1>
-          <p className="text-zinc-300 mb-2">{anime.jname}</p>
-          <div className="flex gap-2 mb-4">
-            {anime.otherInfo?.map((info, i) => (
-              <Badge key={i} variant="outline" className="border-zinc-600 text-zinc-300">
-                {info}
-              </Badge>
-            ))}
-          </div>
-          <p className="text-zinc-400 max-w-2xl line-clamp-3">{anime.description}</p>
-          <div className="flex gap-2 mt-4">
+        <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
+        <div className="absolute inset-0 flex flex-col justify-center pb-24 max-w-[1420px] mx-auto px-8 lg:px-12">
+          <h1 className="text-5xl font-bold text-white mb-4 max-w-2xl">{anime.name}</h1>
+          <div className="flex gap-3 mb-4">
             {anime.episodes?.sub && (
-              <Badge className="bg-yellow-600">SUB: {anime.episodes.sub}</Badge>
+              <Badge className="bg-zinc-800/80 text-white border border-zinc-600 px-3 py-1">
+                <span className="mr-1">📺</span> {anime.episodes.sub}
+              </Badge>
             )}
             {anime.episodes?.dub && (
-              <Badge className="bg-blue-600">DUB: {anime.episodes.dub}</Badge>
+              <Badge className="bg-zinc-800/80 text-white border border-zinc-600 px-3 py-1">
+                <span className="mr-1">🎙️</span> {anime.episodes.dub}
+              </Badge>
             )}
           </div>
+          <p className="text-zinc-300 max-w-2xl line-clamp-4 text-base leading-relaxed mb-6">{anime.description}</p>
+          <button className="w-fit px-6 py-3 bg-pink-500 hover:bg-pink-600 text-white font-semibold rounded-lg transition-colors">
+            Learn More
+          </button>
         </div>
         {/* Dots Navigation */}
-        <div className="absolute bottom-4 right-8 flex gap-2" onClick={(e) => e.preventDefault()}>
+        <div className="absolute bottom-6 right-8 flex gap-2" onClick={(e) => e.preventDefault()}>
           {spotlightAnimes.map((_, i) => (
             <button
               key={i}
@@ -118,8 +107,8 @@ function SpotlightSection({ spotlightAnimes }) {
             />
           ))}
         </div>
-      </section>
-    </Link>
+      </Link>
+    </section>
   );
 }
 
@@ -249,16 +238,18 @@ export default function Home() {
   }
 
   return (
-    <div className="max-w-[1420px] mx-auto px-8 lg:px-12 py-6">
-      {/* Spotlight */}
+    <>
+      {/* Spotlight - Full Width */}
       {data?.spotlightAnimes && (
         <SpotlightSection spotlightAnimes={data.spotlightAnimes} />
       )}
 
-      {/* Trending */}
-      {data?.trendingAnimes && (
-        <AnimeScrollSection title="🔥 Trending Now" animes={data.trendingAnimes} />
-      )}
+      {/* Rest of content in container - overlapping slider */}
+      <div className="relative -mt-42 z-10 max-w-[1420px] mx-auto px-8 lg:px-12 py-6">
+        {/* Trending */}
+        {data?.trendingAnimes && (
+          <AnimeScrollSection title="🔥 Trending Now" animes={data.trendingAnimes} />
+        )}
 
       {/* Latest Episodes */}
       {data?.latestEpisodeAnimes && (
@@ -310,6 +301,7 @@ export default function Home() {
 
       {/* Genres */}
       {data?.genres && <GenresSection genres={data.genres} />}
-    </div>
+      </div>
+    </>
   );
 }
