@@ -1,22 +1,22 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getAnimeDetails } from "@/context/api";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   SmallAnimeCard,
   CharacterCard,
-  SeasonCard,
   DetailsSkeleton,
   InfoRow,
   PlayIcon,
   PlusIcon,
   ChevronRightIcon,
-  ShareIcon,
-  Watch2getherIcon,
 } from "@/components/details";
+import { AnimeCard } from "@/components/home/AnimeCard";
+
 
 export default function AnimeDetails() {
   const { animeId } = useParams();
@@ -24,6 +24,19 @@ export default function AnimeDetails() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showFullDescription, setShowFullDescription] = useState(false);
+
+  const seasonsScrollRef = useRef(null);
+  const SCROLL_AMOUNT = 440;
+  const scrollSeasons = useCallback((direction) => {
+    if (seasonsScrollRef.current) {
+      seasonsScrollRef.current.scrollBy({
+        left: direction === 'left' ? -SCROLL_AMOUNT : SCROLL_AMOUNT,
+        behavior: 'smooth',
+      });
+    }
+  }, []);
+  const scrollSeasonsLeft = useCallback(() => scrollSeasons('left'), [scrollSeasons]);
+  const scrollSeasonsRight = useCallback(() => scrollSeasons('right'), [scrollSeasons]);
 
   useEffect(() => {
     async function fetchDetails() {
@@ -281,14 +294,44 @@ export default function AnimeDetails() {
         {seasons && seasons.length > 1 && (
           <section className="mt-12">
             <h2 className="text-xl font-bold text-white mb-4">Seasons</h2>
-            <ScrollArea className="w-full">
-              <div className="flex gap-4 pb-4">
+            <div className="relative group w-full">
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-10 sm:w-10 rounded-full border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white opacity-0 group-hover:opacity-100 transition-opacity -ml-3 sm:-ml-5 hidden sm:flex"
+                onClick={scrollSeasonsLeft}
+                aria-label="Scroll left"
+              >
+                <ChevronLeft className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-8 w-8 sm:h-10 sm:w-10 rounded-full border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white opacity-0 group-hover:opacity-100 transition-opacity -mr-3 sm:-mr-5 hidden sm:flex"
+                onClick={scrollSeasonsRight}
+                aria-label="Scroll right"
+              >
+                <ChevronRight className="h-4 w-4 sm:h-5 sm:w-5" />
+              </Button>
+              <div
+                ref={seasonsScrollRef}
+                className="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
                 {seasons.map((season) => (
-                  <SeasonCard key={season.id} season={season} />
+                  <div key={season.id} className="w-30 sm:w-34 flex-shrink-0">
+                    <AnimeCard anime={{
+                      id: season.id,
+                      poster: season.poster,
+                      name: season.title,
+                      episodes: season.episodes,
+                      type: season.type,
+                      rank: season.rank,
+                    }} />
+                  </div>
                 ))}
               </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+            </div>
           </section>
         )}
 

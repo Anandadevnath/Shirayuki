@@ -2,15 +2,11 @@ import { memo } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
-// Constants
-const CARD_HEIGHT = 300;
-const GRID_CARD_HEIGHT = 280;
-
 // Anime Card Component (overlay style for trending/scroll sections)
 export const AnimeCard = memo(function AnimeCard({ anime }) {
   return (
     <Link to={`/anime/${anime.id}`} className="block group">
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[2/3]">
+      <div className="relative overflow-hidden rounded-md sm:rounded-md aspect-[2/3]">
         <img
           src={anime.poster}
           alt={anime.name}
