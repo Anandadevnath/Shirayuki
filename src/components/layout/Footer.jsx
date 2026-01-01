@@ -1,6 +1,8 @@
-const alphabet = ["All", "0-9", ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
-
+import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { getHome } from "@/context/api";
+
+const alphabet = ["All", "0-9", ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
 
 const socialLinks = [
   {
@@ -30,87 +32,187 @@ const socialLinks = [
       </svg>
     ),
   },
+  {
+    name: "GitHub",
+    href: "#",
+    icon: (
+      <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24">
+        <path d="M12 0C5.374 0 0 5.373 0 12c0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23A11.509 11.509 0 0112 5.803c1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576C20.566 21.797 24 17.3 24 12c0-6.627-5.373-12-12-12z" />
+      </svg>
+    ),
+  },
+];
+
+const quickLinks = [
+  { name: "Home", href: "/" },
+  { name: "Types", href: "/category" },
+  { name: "Schedule", href: "/schedule" },
+  { name: "A-Z List", href: "/az-list" },
+  { name: "Studios", href: "/producer" },
 ];
 
 export default function Footer() {
+  const [genres, setGenres] = useState([]);
+
+  useEffect(() => {
+    async function fetchGenres() {
+      const { data: result } = await getHome();
+      if (result?.data?.genres) {
+        setGenres(result.data.genres);
+      }
+    }
+    fetchGenres();
+  }, []);
+
   return (
-    <footer className="bg-zinc-950 border-t border-zinc-800">
-      {/* A-Z List Section */}
-      <div className="container mx-auto px-4 py-6">
-        <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-          <div>
-            <div className="flex items-center gap-3 mb-3">
-              <h2 className="text-xl font-bold text-white">A-Z List</h2>
-              <span className="text-zinc-500 text-sm">
-                Searching anime order by alphabet name A to Z.
-              </span>
+    <footer className="relative mt-16">
+      {/* Gradient Background */}
+      <div className="absolute inset-0 bg-gradient-to-b from-zinc-950 via-zinc-900/50 to-black" />
+      
+      {/* Glowing Orbs for effect */}
+      <div className="absolute top-0 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl" />
+      <div className="absolute bottom-0 right-1/4 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl" />
+
+      <div className="relative z-10">
+        {/* Main Footer Content */}
+        <div className="max-w-7xl mx-auto px-6 lg:px-8 pt-16 pb-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            
+            {/* Brand Section */}
+            <div className="lg:col-span-4 space-y-4">
+              <Link to="/" className="flex -mt-10 items-center group">
+                <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-28 w-auto object-contain" />
+                <img src="/text.png" alt="Shirayuki" className="h-24 w-auto object-contain" />
+              </Link>
+              <p className="text-zinc-400 text-sm leading-relaxed max-w-sm">
+                Your ultimate destination for streaming anime. Watch thousands of episodes in HD quality with no ads.
+              </p>
+              
+              {/* Social Links */}
+              <div className="flex gap-3">
+                {socialLinks.map((social) => (
+                  <a
+                    key={social.name}
+                    href={social.href}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-10 h-10 flex items-center justify-center rounded-xl bg-white/5 backdrop-blur-sm border border-white/10 text-zinc-400 hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-400 transition-all duration-300"
+                    title={social.name}
+                  >
+                    {social.icon}
+                  </a>
+                ))}
+              </div>
             </div>
-            <div className="flex flex-wrap gap-1">
+
+            {/* Quick Links */}
+            <div className="lg:col-span-2">
+              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500" />
+                Quick Links
+              </h3>
+              <ul className="space-y-3">
+                {quickLinks.map((link) => (
+                  <li key={link.name}>
+                    <Link 
+                      to={link.href}
+                      className="text-zinc-400 hover:text-white text-sm transition-colors hover:translate-x-1 inline-block"
+                    >
+                      {link.name}
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Genres */}
+            <div className="lg:col-span-6">
+              <h3 className="text-white font-semibold mb-4 flex items-center gap-2">
+                <span className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500" />
+                Genres
+              </h3>
+              {genres.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {genres.slice(0, 20).map((genre) => (
+                    <Link
+                      key={genre}
+                      to={`/genre/${genre.toLowerCase().replace(/\s+/g, "-")}`}
+                      className="px-3 py-1.5 text-xs text-zinc-400 bg-white/5 backdrop-blur-sm border border-white/10 rounded-lg hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-300 transition-all duration-300"
+                    >
+                      {genre}
+                    </Link>
+                  ))}
+                  {genres.length > 20 && (
+                    <span className="px-3 py-1.5 text-xs text-zinc-500">
+                      +{genres.length - 20} more
+                    </span>
+                  )}
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* A-Z List Section */}
+          <div className="mt-12 p-6 rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-4">
+              <div className="flex items-center gap-3">
+                <h3 className="text-white font-semibold flex items-center gap-2">
+                  <span className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500" />
+                  A-Z List
+                </h3>
+                <span className="text-zinc-500 text-sm hidden sm:inline">
+                  Browse anime alphabetically
+                </span>
+              </div>
+              <div className="flex gap-4">
+                <Link to="/request" className="text-sm text-zinc-400 hover:text-purple-400 transition-colors">
+                  Request Anime
+                </Link>
+                <Link to="/contact" className="text-sm text-zinc-400 hover:text-purple-400 transition-colors">
+                  Contact Us
+                </Link>
+              </div>
+            </div>
+            <div className="flex flex-wrap gap-1.5">
               {alphabet.map((letter) => (
                 <Link
                   key={letter}
                   to={`/az-list/${letter.toLowerCase()}`}
-                  className="w-9 h-9 flex items-center justify-center text-sm font-medium text-zinc-300 bg-zinc-800 hover:bg-purple-600 hover:text-white rounded transition-colors"
+                  className="w-9 h-9 flex items-center justify-center text-sm font-medium text-zinc-400 bg-white/5 border border-white/10 rounded-lg hover:bg-purple-500/20 hover:border-purple-500/50 hover:text-purple-300 transition-all duration-300"
                 >
                   {letter}
                 </Link>
               ))}
             </div>
           </div>
-          <div className="flex gap-6 text-sm font-medium">
-            <Link to="/request" className="text-zinc-400 hover:text-white transition-colors">
-              REQUEST
-            </Link>
-            <Link to="/contact" className="text-zinc-400 hover:text-white transition-colors">
-              CONTACT US
-            </Link>
-          </div>
         </div>
-      </div>
 
-      {/* Bottom Section */}
-      <div className="border-t border-zinc-800">
-        <div className="container mx-auto px-4 py-6">
-          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-            <div className="space-y-2">
-              <p className="text-orange-500 font-medium">
-                Copyright ©Shirayuki. All Rights Reserved
-              </p>
-              <p className="text-zinc-500 text-sm">
-                This site does not store any files on its server. All contents are provided by non-affiliated third parties.
-              </p>
-              <div className="flex items-center gap-2 text-zinc-400">
-                <span className="text-sm">Socials:</span>
-                <div className="flex gap-2">
-                  {socialLinks.map((social) => (
-                    <a
-                      key={social.name}
-                      href={social.href}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-zinc-400 hover:text-purple-500 transition-colors"
-                      title={social.name}
-                    >
-                      {social.icon}
-                    </a>
-                  ))}
-                </div>
+        {/* Bottom Bar */}
+        <div className="border-t border-white/10">
+          <div className="max-w-7xl mx-auto px-6 lg:px-8 py-6">
+            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+              <div className="space-y-1">
+                <p className="text-sm">
+                  <span className="bg-gradient-to-r from-purple-400 to-pink-500 bg-clip-text text-transparent font-medium">
+                    © 2026 Shirayuki.
+                  </span>
+                  <span className="text-zinc-500"> All Rights Reserved.</span>
+                </p>
+                <p className="text-zinc-600 text-xs">
+                  This site does not store any files on its server. All contents are provided by non-affiliated third parties.
+                </p>
               </div>
-              <p className="text-orange-500 text-sm">
-                Links:{" "}
-                <a href="#" className="hover:underline">shirayuki</a>,{" "}
-                <a href="#" className="hover:underline">aniwatch</a>,{" "}
-                <a href="#" className="hover:underline">watch anime</a>
-              </p>
-            </div>
-            
-            {/* Logo */}
-            <div className="flex items-center gap-2">
-              <span className="text-4xl">❄️</span>
-              <span className="text-3xl font-bold">
-                <span className="text-white">Shira</span>
-                <span className="text-purple-500">yuki</span>
-              </span>
+              <div className="flex items-center gap-6 text-sm">
+                <Link to="/terms" className="text-zinc-500 hover:text-zinc-300 transition-colors">
+                  Terms
+                </Link>
+                <Link to="/privacy" className="text-zinc-500 hover:text-zinc-300 transition-colors">
+                  Privacy
+                </Link>
+                <Link to="/dmca" className="text-zinc-500 hover:text-zinc-300 transition-colors">
+                  DMCA
+                </Link>
+              </div>
             </div>
           </div>
         </div>

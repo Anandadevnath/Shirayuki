@@ -12,7 +12,6 @@ import {
   AnimeScrollSection,
   Top10Sidebar,
   TopAnimesSidebar,
-  GenresSection,
   HomePageSkeleton,
 } from "@/components/home";
 
@@ -130,9 +129,6 @@ export default function Home() {
             )}
           </div>
         </div>
-
-        {/* Genres */}
-        {data?.genres && <GenresSection genres={data.genres} />}
       </div>
     </>
   );
