@@ -37,8 +37,8 @@ function AnimeCard({ anime, variant = "default" }) {
         {anime.episodes?.sub && (
           <Badge className="bg-pink-500/90 hover:bg-pink-500 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
             <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="20" height="15" x="2" y="7" rx="2" ry="2"/>
-              <polyline points="17 2 12 7 7 2"/>
+              <rect width="20" height="15" x="2" y="7" rx="2" ry="2" />
+              <polyline points="17 2 12 7 7 2" />
             </svg>
             {anime.episodes.sub}
           </Badge>
@@ -101,9 +101,8 @@ function SpotlightSection({ spotlightAnimes }) {
                 e.preventDefault();
                 setCurrentIndex(i);
               }}
-              className={`w-2 h-2 rounded-full transition-all ${
-                i === currentIndex ? "bg-purple-500 w-6" : "bg-zinc-600"
-              }`}
+              className={`w-2 h-2 rounded-full transition-all ${i === currentIndex ? "bg-purple-500 w-6" : "bg-zinc-600"
+                }`}
             />
           ))}
         </div>
@@ -245,62 +244,62 @@ export default function Home() {
       )}
 
       {/* Rest of content in container - overlapping slider */}
-      <div className="relative -mt-42 z-10 max-w-[1420px] mx-auto px-8 lg:px-12 py-6">
+      <div className="relative -mt-56 z-10 max-w-[1420px] mx-auto px-8 lg:px-12 py-6">
         {/* Trending */}
         {data?.trendingAnimes && (
-          <AnimeScrollSection title="🔥 Trending Now" animes={data.trendingAnimes} />
+          <AnimeScrollSection title="Trending Now" animes={data.trendingAnimes} />
         )}
 
-      {/* Latest Episodes */}
-      {data?.latestEpisodeAnimes && (
-        <AnimeScrollSection
-          title="📺 Latest Episodes"
-          animes={data.latestEpisodeAnimes}
-        />
-      )}
+        {/* Latest Episodes */}
+        {data?.latestEpisodeAnimes && (
+          <AnimeScrollSection
+            title="📺 Latest Episodes"
+            animes={data.latestEpisodeAnimes}
+          />
+        )}
 
-      {/* Top 10 */}
-      {data?.top10Animes && <Top10Section top10Animes={data.top10Animes} />}
+        {/* Top 10 */}
+        {data?.top10Animes && <Top10Section top10Animes={data.top10Animes} />}
 
-      {/* Top Upcoming */}
-      {data?.topUpcomingAnimes && (
-        <AnimeScrollSection
-          title="🗓️ Top Upcoming"
-          animes={data.topUpcomingAnimes}
-        />
-      )}
+        {/* Top Upcoming */}
+        {data?.topUpcomingAnimes && (
+          <AnimeScrollSection
+            title="🗓️ Top Upcoming"
+            animes={data.topUpcomingAnimes}
+          />
+        )}
 
-      {/* Top Airing */}
-      {data?.topAiringAnimes && (
-        <AnimeScrollSection title="📡 Top Airing" animes={data.topAiringAnimes} />
-      )}
+        {/* Top Airing */}
+        {data?.topAiringAnimes && (
+          <AnimeScrollSection title="📡 Top Airing" animes={data.topAiringAnimes} />
+        )}
 
-      {/* Most Popular */}
-      {data?.mostPopularAnimes && (
-        <AnimeScrollSection
-          title="⭐ Most Popular"
-          animes={data.mostPopularAnimes}
-        />
-      )}
+        {/* Most Popular */}
+        {data?.mostPopularAnimes && (
+          <AnimeScrollSection
+            title="⭐ Most Popular"
+            animes={data.mostPopularAnimes}
+          />
+        )}
 
-      {/* Most Favorite */}
-      {data?.mostFavoriteAnimes && (
-        <AnimeScrollSection
-          title="❤️ Most Favorite"
-          animes={data.mostFavoriteAnimes}
-        />
-      )}
+        {/* Most Favorite */}
+        {data?.mostFavoriteAnimes && (
+          <AnimeScrollSection
+            title="❤️ Most Favorite"
+            animes={data.mostFavoriteAnimes}
+          />
+        )}
 
-      {/* Latest Completed */}
-      {data?.latestCompletedAnimes && (
-        <AnimeScrollSection
-          title="✅ Recently Completed"
-          animes={data.latestCompletedAnimes}
-        />
-      )}
+        {/* Latest Completed */}
+        {data?.latestCompletedAnimes && (
+          <AnimeScrollSection
+            title="✅ Recently Completed"
+            animes={data.latestCompletedAnimes}
+          />
+        )}
 
-      {/* Genres */}
-      {data?.genres && <GenresSection genres={data.genres} />}
+        {/* Genres */}
+        {data?.genres && <GenresSection genres={data.genres} />}
       </div>
     </>
   );
