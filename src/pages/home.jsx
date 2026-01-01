@@ -239,70 +239,95 @@ function AnimeScrollSection({ title, animes, autoSlide = false }) {
   );
 }
 
-// Top 10 Section with Tabs
-function Top10Section({ top10Animes }) {
-  const scrollRefs = {
-    today: useRef(null),
-    week: useRef(null),
-    month: useRef(null)
-  };
+// Top 10 Sidebar (Today, Week, Month)
+function Top10Sidebar({ top10Animes }) {
+  const [activeTab, setActiveTab] = useState('today');
 
-  const scroll = (period, direction) => {
-    if (scrollRefs[period].current) {
-      const scrollAmount = 440;
-      scrollRefs[period].current.scrollBy({
-        left: direction === 'left' ? -scrollAmount : scrollAmount,
-        behavior: 'smooth'
-      });
-    }
-  };
+  const tabs = [
+    { id: 'today', label: 'Today', data: top10Animes?.today },
+    { id: 'week', label: 'Week', data: top10Animes?.week },
+    { id: 'month', label: 'Month', data: top10Animes?.month },
+  ];
+
+  const currentData = tabs.find(tab => tab.id === activeTab)?.data || [];
 
   return (
-    <section className="mt-8">
-      <h2 className="text-2xl font-bold text-white mb-4">Top 10 Anime</h2>
-      <Tabs defaultValue="today" className="w-full">
-        <TabsList className="bg-zinc-900 border border-zinc-800">
-          <TabsTrigger value="today">Today</TabsTrigger>
-          <TabsTrigger value="week">This Week</TabsTrigger>
-          <TabsTrigger value="month">This Month</TabsTrigger>
-        </TabsList>
-        {["today", "week", "month"].map((period) => (
-          <TabsContent key={period} value={period}>
-            <div className="relative group">
-              {/* Left Button */}
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white opacity-0 group-hover:opacity-100 transition-opacity -ml-5"
-                onClick={() => scroll(period, 'left')}
-              >
-                <ChevronLeft className="h-5 w-5" />
-              </Button>
-              {/* Right Button */}
-              <Button
-                variant="outline"
-                size="icon"
-                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white opacity-0 group-hover:opacity-100 transition-opacity -mr-5"
-                onClick={() => scroll(period, 'right')}
-              >
-                <ChevronRight className="h-5 w-5" />
-              </Button>
-              <div
-                ref={scrollRefs[period]}
-                className="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"
-                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-              >
-                {top10Animes[period]?.map((anime) => (
-                  <div key={anime.id + anime.rank} className="w-[200px] flex-shrink-0">
-                    <AnimeCard anime={anime} />
+    <div className="bg-zinc-900/80 rounded-2xl p-4 border border-zinc-800 h-fit sticky top-24">
+      {/* Tab buttons */}
+      <div className="flex bg-zinc-800/80 rounded-lg p-1 mb-4">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            className={`flex-1 px-3 py-1.5 text-xs font-medium rounded-md transition-all ${
+              activeTab === tab.id
+                ? 'bg-pink-500 text-white'
+                : 'text-zinc-400 hover:text-white'
+            }`}
+          >
+            {tab.label}
+          </button>
+        ))}
+      </div>
+
+      {/* List of animes - Card style with background image */}
+      <div className="space-y-3">
+        {currentData.slice(0, 10).map((anime, index) => (
+          <Link
+            key={anime.id}
+            to={`/anime/${anime.id}`}
+            className="relative flex items-center h-[100px] rounded-xl overflow-hidden group"
+          >
+            {/* Background Image */}
+            <div className="absolute inset-0">
+              <img
+                src={anime.poster}
+                alt={anime.name}
+                className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
+              />
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/95 via-zinc-900/60 to-zinc-900/30" />
+            </div>
+
+            {/* Content */}
+            <div className="relative flex items-center gap-4 p-4 w-full">
+              {/* Rank number with decorative lines */}
+              <div className="flex items-center gap-2 flex-shrink-0">
+                <div className="flex flex-col items-center">
+                  <div className="w-[2px] h-5 bg-gradient-to-b from-transparent to-pink-500/60" />
+                  <div className="w-11 h-11 flex items-center justify-center rounded-full border-2 border-pink-500/60 text-white font-bold text-lg">
+                    {anime.rank || index + 1}
                   </div>
-                ))}
+                  <div className="w-[2px] h-5 bg-gradient-to-t from-transparent to-pink-500/60" />
+                </div>
+              </div>
+
+              {/* Info */}
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-white text-base truncate mb-2 group-hover:text-orange-400 transition-colors">
+                  {anime.name}
+                </h3>
+                <div className="flex items-center gap-2 flex-wrap">
+                  {anime.episodes?.sub && (
+                    <Badge className="bg-purple-600 hover:bg-purple-600 text-white text-[11px] px-2 py-0.5 rounded">
+                      CC {anime.episodes.sub}
+                    </Badge>
+                  )}
+                  {anime.episodes?.dub && (
+                    <Badge className="bg-green-600 hover:bg-green-600 text-white text-[11px] px-2 py-0.5 rounded flex items-center gap-0.5">
+                      🎙️ {anime.episodes.dub}
+                    </Badge>
+                  )}
+                  {anime.type && (
+                    <span className="text-zinc-300 text-xs uppercase font-medium">{anime.type}</span>
+                  )}
+                </div>
               </div>
             </div>
-          </TabsContent>
+          </Link>
         ))}
-      </Tabs>
-    </section>
+      </div>
+    </div>
   );
 }
 
@@ -534,16 +559,39 @@ export default function Home() {
           </div>
         </div>
 
-        {/* Top 10 */}
-        {data?.top10Animes && <Top10Section top10Animes={data.top10Animes} />}
+        {/* Top Upcoming with Top 10 Sidebar */}
+        <div className="mt-8">
+          {/* Section Headers - aligned on same line */}
+          <div className="flex gap-6 items-center mb-4">
+            <h2 className="text-2xl font-bold text-white flex-1">🗓️ Top Upcoming</h2>
+            <div className="w-[380px] flex-shrink-0 hidden lg:flex items-center gap-2">
+              <span className="text-xl">🏆</span>
+              <h2 className="text-2xl font-bold text-white">Top 10 Anime</h2>
+            </div>
+          </div>
+          
+          <div className="flex gap-6 items-start">
+            {/* Top Upcoming - Left side */}
+            <div className="flex-1 min-w-0">
+              {data?.topUpcomingAnimes && (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+                  {data.topUpcomingAnimes.map((anime) => (
+                    <div key={anime.id}>
+                      <AnimeGridCard anime={anime} />
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
 
-        {/* Top Upcoming */}
-        {data?.topUpcomingAnimes && (
-          <AnimeScrollSection
-            title="🗓️ Top Upcoming"
-            animes={data.topUpcomingAnimes}
-          />
-        )}
+            {/* Top 10 Sidebar - Right side */}
+            {data?.top10Animes && (
+              <div className="w-[380px] flex-shrink-0 hidden lg:block">
+                <Top10Sidebar top10Animes={data.top10Animes} />
+              </div>
+            )}
+          </div>
+        </div>
 
         {/* Genres */}
         {data?.genres && <GenresSection genres={data.genres} />}
