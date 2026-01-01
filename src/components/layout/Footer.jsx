@@ -146,27 +146,8 @@ export default function Footer() {
           </div>
 
           {/* A-Z List Section */}
-          <div className="mt-8 sm:mt-12 p-4 sm:p-6 rounded-xl sm:rounded-2xl bg-white/5 backdrop-blur-sm border border-white/10">
-            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 sm:gap-4 mb-4">
-              <div className="flex items-center gap-3">
-                <h3 className="text-white font-semibold flex items-center gap-2 text-sm sm:text-base">
-                  <span className="w-2 h-2 rounded-full bg-gradient-to-r from-purple-500 to-pink-500" />
-                  A-Z List
-                </h3>
-                <span className="text-zinc-500 text-xs sm:text-sm hidden sm:inline">
-                  Browse anime alphabetically
-                </span>
-              </div>
-              <div className="flex gap-3 sm:gap-4">
-                <Link to="/request" className="text-xs sm:text-sm text-zinc-400 hover:text-purple-400 transition-colors">
-                  Request Anime
-                </Link>
-                <Link to="/contact" className="text-xs sm:text-sm text-zinc-400 hover:text-purple-400 transition-colors">
-                  Contact Us
-                </Link>
-              </div>
-            </div>
-            <div className="flex flex-wrap gap-1 sm:gap-1.5">
+          <div className="mt-8 sm:mt-12">
+            <div className="flex flex-wrap gap-1 sm:gap-1.5 justify-center">
               {ALPHABET.map((letter) => (
                 <Link
                   key={letter}
