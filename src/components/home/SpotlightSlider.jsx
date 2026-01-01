@@ -155,6 +155,9 @@ export const SpotlightSlider = memo(function SpotlightSlider({ spotlightAnimes }
           {renderSlide(nextAnime)}
         </div>
       )}
+
+      {/* Bottom gradient to blend with dark background */}
+      <div className="absolute bottom-0 left-0 right-0 h-64 bg-gradient-to-t from-zinc-950 via-zinc-950/80 to-transparent z-20 pointer-events-none" />
       
       <style>{`
         @keyframes spotlightFadeIn {

@@ -58,7 +58,7 @@ export default function Home() {
       )}
 
       {/* Main Content */}
-      <div className="relative -mt-56 z-10 max-w-[1480px] mx-auto px-8 lg:px-12 py-6">
+      <div className="relative -mt-56 z-30 max-w-[1480px] mx-auto px-8 lg:px-12 py-6">
         {/* Trending */}
         {data?.trendingAnimes && (
           <AnimeScrollSection title="Trending Now" animes={data.trendingAnimes} autoSlide />
