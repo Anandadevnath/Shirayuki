@@ -62,8 +62,19 @@ export default function Navbar() {
   const [suggestions, setSuggestions] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isScrolled, setIsScrolled] = useState(false);
   const searchRef = useRef(null);
   const navigate = useNavigate();
+
+  // Track scroll position
+  useEffect(() => {
+    const handleScroll = () => {
+      setIsScrolled(window.scrollY > 10);
+    };
+    
+    window.addEventListener("scroll", handleScroll);
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
 
   // Debounced search suggestions
   useEffect(() => {
@@ -114,13 +125,17 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/30 backdrop-blur-xl">
+    <nav className={`sticky top-0 z-50 w-full transition-all duration-300 border-b ${
+      isScrolled 
+        ? "bg-black/80 backdrop-blur-xl border-white/10" 
+        : "bg-transparent border-transparent"
+    }`}>
       <div className="container mx-auto px-4">
-        <div className="flex h-16 items-center justify-between">
+        <div className="flex h-20 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center">
-            <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-18 w-auto object-contain" />
-            <img src="/text.png" alt="Shirayuki" className="h-18 w-auto object-contain" />
+            <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-22 w-auto object-contain" />
+            <img src="/text.png" alt="Shirayuki" className="h-20 w-auto object-contain" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -152,7 +167,7 @@ export default function Navbar() {
                     setShowSuggestions(true);
                   }}
                   onFocus={() => setShowSuggestions(true)}
-                  className="w-80 bg-transparent border-zinc-600 text-white placeholder:text-zinc-500 focus:border-zinc-500 pl-10 pr-4 rounded-lg"
+                  className="w-90 h-10 bg-transparent border-zinc-600 text-white placeholder:text-zinc-500 focus:border-zinc-500 pl-10 pr-4 rounded-ml"
                 />
               </div>
             </form>
