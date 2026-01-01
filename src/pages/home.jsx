@@ -54,7 +54,7 @@ function AnimeCard({ anime, variant = "default" }) {
   );
 }
 
-// Anime Card Component (grid style with info below image)
+// Anime Card Component (grid style with info inside card)
 function AnimeGridCard({ anime }) {
   return (
     <Link to={`/anime/${anime.id}`} className="block group">
@@ -62,31 +62,30 @@ function AnimeGridCard({ anime }) {
         <img
           src={anime.poster}
           alt={anime.name}
-          className="w-full h-[260px] object-cover group-hover:scale-105 transition-transform duration-300"
+          className="w-full h-[280px] object-cover group-hover:scale-105 transition-transform duration-300"
         />
-      </div>
-      {/* Info below image */}
-      <div className="mt-2">
-        <h3 className="font-medium text-white text-sm line-clamp-2 group-hover:text-orange-400 transition-colors">
-          {anime.name}
-        </h3>
-        <div className="flex items-center gap-2 mt-2 flex-wrap">
-          {anime.episodes?.sub && (
-            <Badge className="bg-purple-600/90 hover:bg-purple-600 text-white text-[10px] px-1.5 py-0.5 rounded">
-              CC {anime.episodes.sub}
-            </Badge>
-          )}
-          {anime.episodes?.dub && (
-            <Badge className="bg-green-600/90 hover:bg-green-600 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5">
-              🎙️ {anime.episodes.dub}
-            </Badge>
-          )}
-          {anime.episodes?.dub && (
-            <span className="text-zinc-400 text-xs">{anime.episodes.dub}</span>
-          )}
-          {anime.type && (
-            <span className="text-zinc-500 text-xs ml-auto">{anime.type}</span>
-          )}
+        {/* Gradient overlay */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
+        {/* Info inside card */}
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          <h3 className="font-semibold text-white text-sm line-clamp-2 mb-2 group-hover:text-orange-400 transition-colors">
+            {anime.name}
+          </h3>
+          <div className="flex items-center gap-2 flex-wrap">
+            {anime.episodes?.sub && (
+              <Badge className="bg-purple-600 hover:bg-purple-600 text-white text-[10px] px-1.5 py-0.5 rounded">
+                CC {anime.episodes.sub}
+              </Badge>
+            )}
+            {anime.episodes?.dub && (
+              <Badge className="bg-green-600 hover:bg-green-600 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                🎙️ {anime.episodes.dub}
+              </Badge>
+            )}
+            {anime.type && (
+              <span className="text-zinc-300 text-xs ml-auto">{anime.type}</span>
+            )}
+          </div>
         </div>
       </div>
     </Link>
@@ -131,7 +130,7 @@ function SpotlightSection({ spotlightAnimes }) {
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
         />
         <div className="absolute inset-0 bg-gradient-to-r from-black/90 via-black/60 to-transparent" />
-        <div className="absolute inset-0 flex flex-col justify-center pb-24 max-w-[1420px] mx-auto px-8 lg:px-12">
+        <div className="absolute inset-0 flex flex-col justify-center pb-24 max-w-[1480px] mx-auto px-8 lg:px-12">
           <h1 className="text-5xl font-bold text-white mb-4 max-w-2xl">{anime.name}</h1>
           <div className="flex gap-3 mb-4">
             {anime.episodes?.sub && (
@@ -341,12 +340,6 @@ function TopAnimesSidebar({ latestCompleted, mostPopular, mostFavorite }) {
 
   return (
     <div className="bg-zinc-900/80 rounded-2xl p-4 border border-zinc-800 h-fit sticky top-24">
-      {/* Header */}
-      <div className="flex items-center gap-2 mb-4">
-        <span className="text-xl">🏆</span>
-        <h2 className="text-lg font-bold text-white">Top Trending</h2>
-      </div>
-
       {/* Tab buttons - like Top 10 style */}
       <div className="flex bg-zinc-800/80 rounded-lg p-1 mb-4">
         {tabs.map((tab) => (
@@ -365,12 +358,12 @@ function TopAnimesSidebar({ latestCompleted, mostPopular, mostFavorite }) {
       </div>
 
       {/* List of animes - Card style with background image */}
-      <div className="space-y-2">
+      <div className="space-y-3">
         {currentData.slice(0, 10).map((anime, index) => (
           <Link
             key={anime.id}
             to={`/anime/${anime.id}`}
-            className="relative flex items-center h-[85px] rounded-lg overflow-hidden group"
+            className="relative flex items-center h-[100px] rounded-xl overflow-hidden group"
           >
             {/* Background Image */}
             <div className="absolute inset-0">
@@ -380,40 +373,40 @@ function TopAnimesSidebar({ latestCompleted, mostPopular, mostFavorite }) {
                 className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
               />
               {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/95 via-zinc-900/70 to-zinc-900/40" />
+              <div className="absolute inset-0 bg-gradient-to-r from-zinc-900/95 via-zinc-900/60 to-zinc-900/30" />
             </div>
 
             {/* Content */}
-            <div className="relative flex items-center gap-3 p-3 w-full">
+            <div className="relative flex items-center gap-4 p-4 w-full">
               {/* Rank number with decorative lines */}
               <div className="flex items-center gap-2 flex-shrink-0">
                 <div className="flex flex-col items-center">
-                  <div className="w-[2px] h-4 bg-gradient-to-b from-transparent to-teal-500/50" />
-                  <div className="w-9 h-9 flex items-center justify-center rounded-full border-2 border-teal-500/50 text-white font-bold text-base">
+                  <div className="w-[2px] h-5 bg-gradient-to-b from-transparent to-teal-500/60" />
+                  <div className="w-11 h-11 flex items-center justify-center rounded-full border-2 border-teal-500/60 text-white font-bold text-lg">
                     {index + 1}
                   </div>
-                  <div className="w-[2px] h-4 bg-gradient-to-t from-transparent to-teal-500/50" />
+                  <div className="w-[2px] h-5 bg-gradient-to-t from-transparent to-teal-500/60" />
                 </div>
               </div>
 
               {/* Info */}
               <div className="flex-1 min-w-0">
-                <h3 className="font-semibold text-white text-sm truncate mb-2 group-hover:text-orange-400 transition-colors">
+                <h3 className="font-semibold text-white text-base truncate mb-2 group-hover:text-orange-400 transition-colors">
                   {anime.name}
                 </h3>
                 <div className="flex items-center gap-2 flex-wrap">
                   {anime.episodes?.sub && (
-                    <Badge className="bg-purple-600 hover:bg-purple-600 text-white text-[10px] px-1.5 py-0.5 rounded">
+                    <Badge className="bg-purple-600 hover:bg-purple-600 text-white text-[11px] px-2 py-0.5 rounded">
                       CC {anime.episodes.sub}
                     </Badge>
                   )}
                   {anime.episodes?.dub && (
-                    <Badge className="bg-green-600 hover:bg-green-600 text-white text-[10px] px-1.5 py-0.5 rounded flex items-center gap-0.5">
+                    <Badge className="bg-green-600 hover:bg-green-600 text-white text-[11px] px-2 py-0.5 rounded flex items-center gap-0.5">
                       🎙️ {anime.episodes.dub}
                     </Badge>
                   )}
                   {anime.type && (
-                    <span className="text-zinc-300 text-[11px] uppercase font-medium">{anime.type}</span>
+                    <span className="text-zinc-300 text-xs uppercase font-medium">{anime.type}</span>
                   )}
                 </div>
               </div>
@@ -428,7 +421,7 @@ function TopAnimesSidebar({ latestCompleted, mostPopular, mostFavorite }) {
 // Loading Skeleton
 function HomePageSkeleton() {
   return (
-    <div className="max-w-[1420px] mx-auto px-8 lg:px-12 py-6">
+    <div className="max-w-[1480px] mx-auto px-8 lg:px-12 py-6">
       <Skeleton className="h-[500px] w-full rounded-xl bg-zinc-800" />
       <div className="mt-8">
         <Skeleton className="h-8 w-48 mb-4 bg-zinc-800" />
@@ -489,7 +482,7 @@ export default function Home() {
       )}
 
       {/* Rest of content in container - overlapping slider */}
-      <div className="relative -mt-56 z-10 max-w-[1420px] mx-auto px-8 lg:px-12 py-6">
+      <div className="relative -mt-56 z-10 max-w-[1480px] mx-auto px-8 lg:px-12 py-6">
         {/* Trending */}
         {data?.trendingAnimes && (
           <AnimeScrollSection title="Trending Now" animes={data.trendingAnimes} autoSlide />
@@ -508,7 +501,10 @@ export default function Home() {
           {/* Section Headers - aligned on same line */}
           <div className="flex gap-6 items-center mb-4">
             <h2 className="text-2xl font-bold text-white flex-1">📺 Latest Episodes</h2>
-            <div className="w-[320px] flex-shrink-0 hidden lg:block" />
+            <div className="w-[380px] flex-shrink-0 hidden lg:flex items-center gap-2">
+              <span className="text-xl">🏆</span>
+              <h2 className="text-2xl font-bold text-white">Top Trending</h2>
+            </div>
           </div>
           
           <div className="flex gap-6 items-start">
@@ -527,7 +523,7 @@ export default function Home() {
 
             {/* Top Animes Sidebar - Right side */}
             {(data?.latestCompletedAnimes || data?.mostPopularAnimes || data?.mostFavoriteAnimes) && (
-              <div className="w-[320px] flex-shrink-0 hidden lg:block">
+              <div className="w-[380px] flex-shrink-0 hidden lg:block">
                 <TopAnimesSidebar
                   latestCompleted={data.latestCompletedAnimes}
                   mostPopular={data.mostPopularAnimes}
