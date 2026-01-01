@@ -131,15 +131,15 @@ export default function Navbar() {
         : "bg-transparent border-transparent"
     }`}>
       <div className="container mx-auto px-4">
-        <div className="flex h-20 items-center justify-between">
+        <div className="flex h-20 items-center">
           {/* Logo */}
           <Link to="/" className="flex items-center">
             <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-22 w-auto object-contain" />
             <img src="/text.png" alt="Shirayuki" className="h-20 w-auto object-contain" />
           </Link>
 
-          {/* Desktop Navigation */}
-          <div className="hidden lg:flex items-center gap-6">
+          {/* Desktop Navigation - Centered */}
+          <div className="hidden lg:flex items-center gap-6 flex-1 justify-center">
             {navLinks.map((link) => (
               <Link
                 key={link.name}
@@ -151,8 +151,8 @@ export default function Navbar() {
             ))}
           </div>
 
-          {/* Search Bar - Desktop */}
-          <div ref={searchRef} className="hidden md:flex items-center gap-3 relative">
+          {/* Search Bar - Desktop - Right aligned */}
+          <div ref={searchRef} className="hidden md:flex items-center relative ml-auto">
             <form onSubmit={handleSearch} className="flex items-center">
               <div className="relative flex items-center">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
