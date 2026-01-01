@@ -4,14 +4,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import {
   Sheet,
   SheetContent,
   SheetHeader,
@@ -36,17 +28,24 @@ const SearchIcon = () => (
   </svg>
 );
 
-const UserIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="8" r="5" />
-    <path d="M20 21a8 8 0 0 0-16 0" />
-  </svg>
-);
-
 const XIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
     <path d="M18 6 6 18" />
     <path d="m6 6 12 12" />
+  </svg>
+);
+
+const FilterIcon = () => (
+  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+    <line x1="4" x2="4" y1="21" y2="14" />
+    <line x1="4" x2="4" y1="10" y2="3" />
+    <line x1="12" x2="12" y1="21" y2="12" />
+    <line x1="12" x2="12" y1="8" y2="3" />
+    <line x1="20" x2="20" y1="21" y2="16" />
+    <line x1="20" x2="20" y1="12" y2="3" />
+    <line x1="2" x2="6" y1="14" y2="14" />
+    <line x1="10" x2="14" y1="8" y2="8" />
+    <line x1="18" x2="22" y1="16" y2="16" />
   </svg>
 );
 
@@ -115,13 +114,13 @@ export default function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full border-b border-zinc-800 bg-zinc-950/95 backdrop-blur supports-[backdrop-filter]:bg-zinc-950/80">
+    <nav className="sticky top-0 z-50 w-full border-b border-white/10 bg-black/30 backdrop-blur-xl">
       <div className="container mx-auto px-4">
         <div className="flex h-16 items-center justify-between">
           {/* Logo */}
-          <Link to="/" className="flex items-center gap-2">
-            <span className="text-2xl">❄️</span>
-            <span className="text-xl font-bold text-white">Shirayuki</span>
+          <Link to="/" className="flex items-center">
+            <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-18 w-auto object-contain" />
+            <img src="/text.png" alt="Shirayuki" className="h-18 w-auto object-contain" />
           </Link>
 
           {/* Desktop Navigation */}
@@ -138,35 +137,23 @@ export default function Navbar() {
           </div>
 
           {/* Search Bar - Desktop */}
-          <div ref={searchRef} className="hidden md:block relative">
+          <div ref={searchRef} className="hidden md:flex items-center gap-3 relative">
             <form onSubmit={handleSearch} className="flex items-center">
-              <div className="relative">
+              <div className="relative flex items-center">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400">
+                  <SearchIcon />
+                </span>
                 <Input
                   type="text"
-                  placeholder="Search anime..."
+                  placeholder="Enter your keywords to search..."
                   value={searchQuery}
                   onChange={(e) => {
                     setSearchQuery(e.target.value);
                     setShowSuggestions(true);
                   }}
                   onFocus={() => setShowSuggestions(true)}
-                  className="w-72 bg-zinc-900 border-zinc-700 text-white placeholder:text-zinc-500 focus:border-purple-500 pr-16"
+                  className="w-80 bg-transparent border-zinc-600 text-white placeholder:text-zinc-500 focus:border-zinc-500 pl-10 pr-4 rounded-lg"
                 />
-                {searchQuery && (
-                  <button
-                    type="button"
-                    onClick={clearSearch}
-                    className="absolute right-10 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-white"
-                  >
-                    <XIcon />
-                  </button>
-                )}
-                <button
-                  type="submit"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
-                >
-                  <SearchIcon />
-                </button>
               </div>
             </form>
 
@@ -220,32 +207,6 @@ export default function Navbar() {
 
           {/* Right Section */}
           <div className="flex items-center gap-2">
-            {/* User Menu */}
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="icon" className="text-zinc-400 hover:text-white">
-                  <UserIcon />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end" className="w-48 bg-zinc-900 border-zinc-800">
-                <DropdownMenuLabel className="text-zinc-400">My Account</DropdownMenuLabel>
-                <DropdownMenuSeparator className="bg-zinc-800" />
-                <DropdownMenuItem className="text-zinc-300 hover:text-white focus:bg-zinc-800 cursor-pointer">
-                  Profile
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-zinc-300 hover:text-white focus:bg-zinc-800 cursor-pointer">
-                  Watchlist
-                </DropdownMenuItem>
-                <DropdownMenuItem className="text-zinc-300 hover:text-white focus:bg-zinc-800 cursor-pointer">
-                  History
-                </DropdownMenuItem>
-                <DropdownMenuSeparator className="bg-zinc-800" />
-                <DropdownMenuItem className="text-zinc-300 hover:text-white focus:bg-zinc-800 cursor-pointer">
-                  Settings
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-
             {/* Mobile Menu */}
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
@@ -256,10 +217,11 @@ export default function Navbar() {
               <SheetContent side="right" className="w-80 bg-zinc-950 border-zinc-800">
                 <SheetHeader>
                   <SheetTitle className="text-white flex items-center gap-2">
-                    <span className="text-xl">❄️</span> Shirayuki
+                    <img src="/shirayuki.png" alt="Shirayuki Logo" className="h-6 w-6" />
+                    <img src="/text.png" alt="Shirayuki" className="h-5" />
                   </SheetTitle>
                 </SheetHeader>
-                
+
                 {/* Mobile Search */}
                 <form onSubmit={handleSearch} className="mt-6">
                   <div className="relative">
