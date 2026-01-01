@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { Link } from "react-router-dom";
 import { getHome } from "@/context/api";
 import {
@@ -11,41 +11,44 @@ import {
 } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight, Pause, Play } from "lucide-react";
 
 // Anime Card Component
 function AnimeCard({ anime, variant = "default" }) {
   return (
     <Link to={`/anime/${anime.id}`} className="block group">
-      <div className="relative overflow-hidden rounded-2xl mb-3">
+      <div className="relative overflow-hidden rounded-2xl">
         <img
           src={anime.poster}
           alt={anime.name}
           className="w-full h-[300px] object-cover group-hover:scale-105 transition-transform duration-300"
         />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
         {anime.rank && (
           <Badge className="absolute top-2 left-2 bg-purple-600 hover:bg-purple-700">
             #{anime.rank}
           </Badge>
         )}
-      </div>
-      {/* Info below image */}
-      <h3 className="font-semibold text-white truncate text-sm mb-2">{anime.name}</h3>
-      <div className="flex items-center gap-2">
-        {anime.episodes?.sub && (
-          <Badge className="bg-pink-500/90 hover:bg-pink-500 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
-            <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect width="20" height="15" x="2" y="7" rx="2" ry="2" />
-              <polyline points="17 2 12 7 7 2" />
-            </svg>
-            {anime.episodes.sub}
-          </Badge>
-        )}
-        {anime.type && (
-          <span className="text-zinc-400 text-xs">{anime.type}</span>
-        )}
+        {/* Info inside card */}
+        <div className="absolute bottom-0 left-0 right-0 p-3">
+          <h3 className="font-semibold text-white truncate text-sm mb-2">{anime.name}</h3>
+          <div className="flex items-center gap-2">
+            {anime.episodes?.sub && (
+              <Badge className="bg-pink-500/90 hover:bg-pink-500 text-white text-xs px-2 py-1 rounded-md flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect width="20" height="15" x="2" y="7" rx="2" ry="2" />
+                  <polyline points="17 2 12 7 7 2" />
+                </svg>
+                {anime.episodes.sub}
+              </Badge>
+            )}
+            {anime.type && (
+              <span className="text-zinc-400 text-xs">{anime.type}</span>
+            )}
+          </div>
+        </div>
       </div>
     </Link>
   );
@@ -111,27 +114,95 @@ function SpotlightSection({ spotlightAnimes }) {
   );
 }
 
-// Horizontal Scroll Section
-function AnimeScrollSection({ title, animes }) {
+// Horizontal Scroll Section with Navigation Buttons
+function AnimeScrollSection({ title, animes, autoSlide = false }) {
+  const scrollRef = useRef(null);
+
+  const scroll = (direction) => {
+    if (scrollRef.current) {
+      const scrollAmount = 440; // ~2 cards width
+      scrollRef.current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
+  // Auto slide effect
+  useEffect(() => {
+    if (!autoSlide) return;
+
+    const interval = setInterval(() => {
+      if (scrollRef.current) {
+        const { scrollLeft, scrollWidth, clientWidth } = scrollRef.current;
+        // If reached the end, scroll back to start
+        if (scrollLeft + clientWidth >= scrollWidth - 10) {
+          scrollRef.current.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          scroll('right');
+        }
+      }
+    }, 4000);
+
+    return () => clearInterval(interval);
+  }, [autoSlide]);
+
   return (
     <section className="mt-8">
       <h2 className="text-2xl font-bold text-white mb-4">{title}</h2>
-      <ScrollArea className="w-full whitespace-nowrap">
-        <div className="flex gap-4 pb-4">
+      <div className="relative group">
+        {/* Left Button */}
+        <Button
+          variant="outline"
+          size="icon"
+          className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white opacity-0 group-hover:opacity-100 transition-opacity -ml-5"
+          onClick={() => scroll('left')}
+        >
+          <ChevronLeft className="h-5 w-5" />
+        </Button>
+        {/* Right Button */}
+        <Button
+          variant="outline"
+          size="icon"
+          className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white opacity-0 group-hover:opacity-100 transition-opacity -mr-5"
+          onClick={() => scroll('right')}
+        >
+          <ChevronRight className="h-5 w-5" />
+        </Button>
+        <div
+          ref={scrollRef}
+          className="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
           {animes.map((anime) => (
             <div key={anime.id} className="w-[200px] flex-shrink-0">
               <AnimeCard anime={anime} />
             </div>
           ))}
         </div>
-        <ScrollBar orientation="horizontal" />
-      </ScrollArea>
+      </div>
     </section>
   );
 }
 
 // Top 10 Section with Tabs
 function Top10Section({ top10Animes }) {
+  const scrollRefs = {
+    today: useRef(null),
+    week: useRef(null),
+    month: useRef(null)
+  };
+
+  const scroll = (period, direction) => {
+    if (scrollRefs[period].current) {
+      const scrollAmount = 440;
+      scrollRefs[period].current.scrollBy({
+        left: direction === 'left' ? -scrollAmount : scrollAmount,
+        behavior: 'smooth'
+      });
+    }
+  };
+
   return (
     <section className="mt-8">
       <h2 className="text-2xl font-bold text-white mb-4">Top 10 Anime</h2>
@@ -143,16 +214,37 @@ function Top10Section({ top10Animes }) {
         </TabsList>
         {["today", "week", "month"].map((period) => (
           <TabsContent key={period} value={period}>
-            <ScrollArea className="w-full whitespace-nowrap">
-              <div className="flex gap-4 pb-4">
+            <div className="relative group">
+              {/* Left Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute left-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white opacity-0 group-hover:opacity-100 transition-opacity -ml-5"
+                onClick={() => scroll(period, 'left')}
+              >
+                <ChevronLeft className="h-5 w-5" />
+              </Button>
+              {/* Right Button */}
+              <Button
+                variant="outline"
+                size="icon"
+                className="absolute right-0 top-1/2 -translate-y-1/2 z-10 h-10 w-10 rounded-full border-white/20 bg-white/10 backdrop-blur-md hover:bg-white/20 text-white opacity-0 group-hover:opacity-100 transition-opacity -mr-5"
+                onClick={() => scroll(period, 'right')}
+              >
+                <ChevronRight className="h-5 w-5" />
+              </Button>
+              <div
+                ref={scrollRefs[period]}
+                className="flex gap-4 pb-4 overflow-x-auto scrollbar-hide"
+                style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+              >
                 {top10Animes[period]?.map((anime) => (
                   <div key={anime.id + anime.rank} className="w-[200px] flex-shrink-0">
                     <AnimeCard anime={anime} />
                   </div>
                 ))}
               </div>
-              <ScrollBar orientation="horizontal" />
-            </ScrollArea>
+            </div>
           </TabsContent>
         ))}
       </Tabs>
@@ -247,7 +339,7 @@ export default function Home() {
       <div className="relative -mt-56 z-10 max-w-[1420px] mx-auto px-8 lg:px-12 py-6">
         {/* Trending */}
         {data?.trendingAnimes && (
-          <AnimeScrollSection title="Trending Now" animes={data.trendingAnimes} />
+          <AnimeScrollSection title="Trending Now" animes={data.trendingAnimes} autoSlide />
         )}
 
         {/* Latest Episodes */}

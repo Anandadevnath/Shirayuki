@@ -121,3 +121,8 @@
     @apply bg-background text-foreground;
   }
 }
+
+/* Hide scrollbar for carousel sections */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
