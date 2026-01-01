@@ -130,7 +130,7 @@ export default function Navbar() {
         ? "bg-black/80 backdrop-blur-xl border-white/10" 
         : "bg-transparent border-transparent"
     }`}>
-      <div className="container mx-auto px-4">
+      <div className="max-w-[1420px] mx-auto px-8 lg:px-12">
         <div className="flex h-20 items-center">
           {/* Logo */}
           <Link to="/" className="flex items-center">

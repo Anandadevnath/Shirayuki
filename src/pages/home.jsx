@@ -195,7 +195,7 @@ function GenresSection({ genres }) {
 // Loading Skeleton
 function HomePageSkeleton() {
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="max-w-[1420px] mx-auto px-8 lg:px-12 py-6">
       <Skeleton className="h-[500px] w-full rounded-xl bg-zinc-800" />
       <div className="mt-8">
         <Skeleton className="h-8 w-48 mb-4 bg-zinc-800" />
@@ -249,7 +249,7 @@ export default function Home() {
   }
 
   return (
-    <div className="container mx-auto px-4 py-6">
+    <div className="max-w-[1420px] mx-auto px-8 lg:px-12 py-6">
       {/* Spotlight */}
       {data?.spotlightAnimes && (
         <SpotlightSection spotlightAnimes={data.spotlightAnimes} />
