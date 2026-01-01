@@ -99,6 +99,21 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          {/* Mobile: Top Trending Section */}
+          {(data?.latestCompletedAnimes || data?.mostPopularAnimes || data?.mostFavoriteAnimes) && (
+            <div className="mt-8 lg:hidden">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xl">🏆</span>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">Top Trending</h2>
+              </div>
+              <TopAnimesSidebar
+                latestCompleted={data.latestCompletedAnimes}
+                mostPopular={data.mostPopularAnimes}
+                mostFavorite={data.mostFavoriteAnimes}
+              />
+            </div>
+          )}
         </div>
 
         {/* Top Upcoming with Top 10 Sidebar */}
@@ -128,6 +143,17 @@ export default function Home() {
               </div>
             )}
           </div>
+
+          {/* Mobile: Top 10 Anime Section */}
+          {data?.top10Animes && (
+            <div className="mt-8 lg:hidden">
+              <div className="flex items-center gap-2 mb-4">
+                <span className="text-xl">🏆</span>
+                <h2 className="text-xl sm:text-2xl font-bold text-white">Top 10 Anime</h2>
+              </div>
+              <Top10Sidebar top10Animes={data.top10Animes} />
+            </div>
+          )}
         </div>
       </div>
     </>
