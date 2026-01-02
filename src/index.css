@@ -1,3 +1,20 @@
+/* Custom scrollbar for episode sidebar */
+.custom-scrollbar::-webkit-scrollbar {
+  width: 8px;
+  background: #18171c;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 8px;
+  border: 2px solid #18171c;
+}
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #666;
+}
+.custom-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: #444 #18171c;
+}
 @keyframes poster-glow {
   0% {
     box-shadow: 0 0 12px 2px rgba(80, 180, 255, 0.13), 0 0 0 0 rgba(255, 255, 255, 0.08);

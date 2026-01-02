@@ -170,7 +170,14 @@ export default function AnimeDetails() {
 
               {/* Action Buttons */}
               <div className="flex flex-wrap gap-3 mb-6">
-                <Link to={`/watch/${animeId}`}>
+                {/* Watch Now button navigates to encoded URL with first episode */}
+                <Link
+                  to={(() => {
+                    const firstEpId = info.episodes && info.episodes.length > 0 ? info.episodes[0].episodeId : '';
+                    const encoded = encodeURIComponent(`${animeId}?ep=${firstEpId}`);
+                    return `/watch/${animeId}/${encoded}`;
+                  })()}
+                >
                   <Button className="bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700 text-white rounded-full px-8 py-3 text-base font-semibold flex items-center gap-2 shadow-lg shadow-pink-500/40 hover:shadow-pink-500/60 transition-all border border-pink-400/30 backdrop-blur-sm">
                     <PlayIcon />
                     Watch now
