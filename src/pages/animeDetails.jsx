@@ -338,9 +338,9 @@ export default function AnimeDetails() {
           {/* Tabs for Related Content */}
           <Tabs defaultValue="related" className="mt-12">
             <TabsList className="bg-zinc-900/50 border border-zinc-800">
-              <TabsTrigger value="related" className="data-[state=active]:bg-pink-500">Related</TabsTrigger>
-              <TabsTrigger value="characters" className="data-[state=active]:bg-pink-500">Characters</TabsTrigger>
-              <TabsTrigger value="recommended" className="data-[state=active]:bg-pink-500">Recommended</TabsTrigger>
+              <TabsTrigger value="related" className="data-[state=active]:bg-pink-500 text-white">Related</TabsTrigger>
+              <TabsTrigger value="characters" className="data-[state=active]:bg-pink-500 text-white">Characters</TabsTrigger>
+              <TabsTrigger value="recommended" className="data-[state=active]:bg-pink-500 text-white">Recommended</TabsTrigger>
             </TabsList>
 
             {/* Related Anime */}

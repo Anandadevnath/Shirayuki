@@ -1,3 +1,4 @@
+import { Home, Menu, Search } from "lucide-react";
 import { useState, useEffect, useRef } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
@@ -12,44 +13,8 @@ import {
 } from "@/components/ui/sheet";
 import { getSearchSuggestions } from "@/context/api";
 
-// Icons as simple SVG components
-const MenuIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="4" x2="20" y1="12" y2="12" />
-    <line x1="4" x2="20" y1="6" y2="6" />
-    <line x1="4" x2="20" y1="18" y2="18" />
-  </svg>
-);
-
-const SearchIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="11" cy="11" r="8" />
-    <path d="m21 21-4.3-4.3" />
-  </svg>
-);
-
-const XIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <path d="M18 6 6 18" />
-    <path d="m6 6 12 12" />
-  </svg>
-);
-
-const FilterIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-    <line x1="4" x2="4" y1="21" y2="14" />
-    <line x1="4" x2="4" y1="10" y2="3" />
-    <line x1="12" x2="12" y1="21" y2="12" />
-    <line x1="12" x2="12" y1="8" y2="3" />
-    <line x1="20" x2="20" y1="21" y2="16" />
-    <line x1="20" x2="20" y1="12" y2="3" />
-    <line x1="2" x2="6" y1="14" y2="14" />
-    <line x1="10" x2="14" y1="8" y2="8" />
-    <line x1="18" x2="22" y1="16" y2="16" />
-  </svg>
-);
-
 const navLinks = [
+  { name: "Home", href: "/", icon: <Home size={22} /> },
   { name: "Genres", href: "/genre" },
   { name: "Types", href: "/category" },
   { name: "Schedule", href: "/schedule" },
@@ -71,7 +36,7 @@ export default function Navbar() {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
     };
-    
+
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
@@ -125,11 +90,10 @@ export default function Navbar() {
   };
 
   return (
-    <nav className={`sticky top-0 z-50 w-full transition-all duration-300 border-b ${
-      isScrolled 
-        ? "bg-black/80 backdrop-blur-xl border-white/10" 
+    <nav className={`sticky top-0 z-50 w-full transition-all duration-300 border-b ${isScrolled
+        ? "bg-black/80 backdrop-blur-xl border-white/10"
         : "bg-transparent border-transparent"
-    }`}>
+      }`}>
       <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12">
         <div className="flex h-16 sm:h-16 lg:h-20 items-center justify-between">
           {/* Logo */}
@@ -144,9 +108,13 @@ export default function Navbar() {
               <Link
                 key={link.name}
                 to={link.href}
-                className="text-sm font-medium text-white hover:text-white transition-colors uppercase tracking-wide"
+                className="group text-sm font-medium text-white hover:text-white transition-colors uppercase tracking-wide"
               >
-                {link.name}
+                <span className="relative inline-flex items-center gap-2">
+                  {link.icon ? link.icon : null}
+                  <span>{link.name}</span>
+                  <span className="absolute left-0 -bottom-1 h-0.5 w-full bg-blue-200 transform scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100" />
+                </span>
               </Link>
             ))}
           </div>
@@ -156,7 +124,7 @@ export default function Navbar() {
             <form onSubmit={handleSearch} className="flex items-center">
               <div className="relative flex items-center">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white">
-                  <SearchIcon />
+                  <Search size={18} />
                 </span>
                 <Input
                   type="text"
@@ -174,8 +142,8 @@ export default function Navbar() {
 
             {/* Search Suggestions Dropdown */}
             {showSuggestions && suggestions.length > 0 && (
-              <div 
-                className="absolute top-full left-0 right-0 mt-3 bg-black/40 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 z-50 max-h-96 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-2 duration-200"
+              <div
+                className="absolute top-full left-0 right-0 mt-3 bg-black/40 backdrop-blur-2xl border border-white/10 rounded-sm shadow-2xl shadow-black/50 z-50 max-h-96 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-2 duration-200"
                 style={{
                   scrollbarWidth: 'thin',
                   scrollbarColor: 'rgba(139, 92, 246, 0.5) transparent'
@@ -282,7 +250,7 @@ export default function Navbar() {
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
               <SheetTrigger asChild>
                 <Button variant="ghost" size="icon" className="text-white hover:text-white hover:bg-white/10 h-10 w-10">
-                  <MenuIcon />
+                  <Menu size={24} />
                 </Button>
               </SheetTrigger>
               <SheetContent side="right" className="w-[280px] sm:w-80 bg-zinc-950 border-zinc-800 px-4">
@@ -312,14 +280,14 @@ export default function Navbar() {
                         type="submit"
                         className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 hover:text-white"
                       >
-                        <SearchIcon />
+                        <Search size={18} />
                       </button>
                     </div>
                   </form>
 
                   {/* Mobile Search Suggestions */}
                   {showSuggestions && suggestions.length > 0 && (
-                    <div 
+                    <div
                       className="mt-3 bg-zinc-900/80 backdrop-blur-xl border border-white/5 rounded-xl shadow-xl max-h-[50vh] overflow-y-auto"
                       style={{
                         scrollbarWidth: 'thin',
@@ -383,9 +351,12 @@ export default function Navbar() {
                       key={link.name}
                       to={link.href}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="px-3 py-2 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md transition-colors uppercase tracking-wide font-medium"
+                      className="px-3 py-2 text-zinc-400 hover:text-white hover:bg-zinc-900 rounded-md transition-colors uppercase tracking-wide font-medium group"
                     >
-                      {link.name}
+                      <span className="relative inline-block">
+                        {link.name}
+                        <span className="absolute left-0 -bottom-1 h-0.5 w-full bg-pink-400 transform scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100" />
+                      </span>
                     </Link>
                   ))}
                 </div>
