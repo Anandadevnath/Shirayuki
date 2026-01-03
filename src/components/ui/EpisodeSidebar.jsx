@@ -20,8 +20,8 @@ export default function EpisodeSidebar({
   });
 
   return (
-    <div className="w-full lg:w-80 bg-zinc-900 border-l border-zinc-800 flex flex-col max-h-screen overflow-y-auto scrollbar-thin scrollbar-thumb-zinc-700 scrollbar-track-zinc-900" style={{scrollbarColor:'#444 #18171c', scrollbarWidth:'thin'}}>
-      <div className="p-4 border-b border-zinc-800 flex items-center justify-between">
+    <div className="w-full lg:w-80 flex flex-col max-h-screen overflow-y-auto custom-scrollbar">
+      <div className="p-4 flex items-center justify-between">
         <span className="text-white font-semibold text-lg">Episodes</span>
         <div className="flex items-center gap-2">
           <div className="relative w-32">
@@ -61,7 +61,7 @@ export default function EpisodeSidebar({
                   key={ep.episodeId}
                   onClick={() => onEpisodeSelect(ep)}
                   className={`rounded-md py-2 text-sm font-semibold transition-colors
-                    ${isCurrent ? 'bg-orange-500 text-white' : 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'}
+                    ${isCurrent ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'}
                   `}
                   style={{minWidth: 0}}
                 >
@@ -78,7 +78,7 @@ export default function EpisodeSidebar({
                 key={ep.episodeId}
                 onClick={() => onEpisodeSelect(ep)}
                 className={`w-full flex items-center gap-3 px-4 py-2 rounded-md text-left mb-1 transition-colors
-                  ${isCurrent ? 'bg-orange-500 text-white' : 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'}
+                  ${isCurrent ? 'bg-purple-600 text-white' : 'bg-zinc-800 text-zinc-200 hover:bg-zinc-700'}
                 `}
                 style={{ fontWeight: isCurrent ? 600 : 400 }}
               >

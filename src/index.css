@@ -1,4 +1,6 @@
-/* Sleek black custom scrollbar styles */
+@import "tailwindcss";
+@import "tw-animate-css";
+
 ::-webkit-scrollbar {
   width: 12px;
   background: #18181b;
@@ -21,31 +23,32 @@
   background: #18181b;
 }
 
-/* For Firefox */
 * {
   scrollbar-width: thin;
-  scrollbar-color: #564f9d #09090b;
-}
-
-/* Custom scrollbar for episode sidebar */
-.custom-scrollbar::-webkit-scrollbar {
-  width: 8px;
-  background: #18171c;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb {
-  background: #444;
-  border-radius: 8px;
-  border: 2px solid #18171c;
-}
-
-.custom-scrollbar::-webkit-scrollbar-thumb:hover {
-  background: #666;
+  scrollbar-color: #806dfc #09090b;
 }
 
 .custom-scrollbar {
   scrollbar-width: thin;
-  scrollbar-color: #444 #18171c;
+  scrollbar-color: #7218e8 #18171c;
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  width: 10px;
+  background: #18171c;
+  border-radius: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: linear-gradient(135deg, #a259ff 0%, #232136 100%);
+  border-radius: 8px;
+  border: 2px solid #18171c;
+  box-shadow: 0 2px 8px rgba(162, 89, 255, 0.15);
+  transition: background 0.2s;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(135deg, #c084fc 0%, #a259ff 100%);
 }
 
 @keyframes poster-glow {
@@ -65,9 +68,6 @@
 .animate-glow {
   animation: poster-glow 2.5s ease-in-out infinite;
 }
-
-@import "tailwindcss";
-@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 

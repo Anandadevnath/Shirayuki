@@ -25,9 +25,9 @@ function WatchSkeleton() {
     <div className="min-h-screen bg-gradient-to-br from-zinc-900 via-black to-zinc-900 p-6">
       <div className="max-w-7xl mx-auto grid grid-cols-1 lg:grid-cols-[1fr_340px] gap-6">
         <Skeleton className="aspect-video rounded-2xl bg-white/5" />
-        <div className="space-y-3">
+        <div className="space-y-3 max-h-[520px] overflow-hidden">
           {[...Array(10)].map((_, i) => (
-            <Skeleton key={i} className="h-12 rounded-lg bg-white/5" />
+            <Skeleton key={i} className="h-12 rounded-lg bg-white/5 w-full" />
           ))}
         </div>
       </div>
@@ -161,6 +161,9 @@ export default function Watch() {
   /* -------------------- UI -------------------- */
   return (
     <div className="min-h-screen bg-gradient-to-br from-[#0f0f14] via-black to-[#0f0f14] text-white">
+
+
+
       {/* Player + Sidebar */}
       <div className="max-w-[1500px] mx-auto px-4 pt-6 grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
         {/* Player */}
@@ -181,23 +184,33 @@ export default function Watch() {
           </div>
 
           {/* Controls */}
-          <div className="flex items-center justify-between px-4 py-3 bg-black/50 backdrop-blur-md border-t border-white/10">
-            <div className="flex gap-3">
-              <IconBtn onClick={goPrev} icon={<SkipBack />} />
-              <IconBtn onClick={goNext} icon={<SkipForward />} />
+          <div className="flex flex-col gap-2 px-4 py-3 bg-black/50 backdrop-blur-md border-t border-white/10">
+            <div className="flex items-center justify-between">
+              <div className="flex gap-3">
+                <IconBtn onClick={goPrev} icon={<SkipBack />} />
+                <IconBtn onClick={goNext} icon={<SkipForward />} />
+              </div>
+              <div className="flex gap-3">
+                <ToggleBtn
+                  label="Light"
+                  active={lightOn}
+                  onClick={() => setLightOn(!lightOn)}
+                  icon={<Lightbulb />}
+                />
+                <IconBtn icon={<Expand />} />
+                <IconBtn icon={<Plus />} />
+                <IconBtn icon={<Radio />} />
+              </div>
             </div>
-
-            <div className="flex gap-3">
-              <ToggleBtn
-                label="Light"
-                active={lightOn}
-                onClick={() => setLightOn(!lightOn)}
-                icon={<Lightbulb />}
-              />
-              <IconBtn icon={<Expand />} />
-              <IconBtn icon={<Plus />} />
-              <IconBtn icon={<Radio />} />
-            </div>
+            {/* Episode title below controls */}
+            {currentEpisode && (
+              <div className="pt-2 px-1 text-left">
+                <span className="text-white text-base font-semibold">
+                  Episode {currentEpisode.number}
+                  {currentEpisode.title ? ` • ${currentEpisode.title}` : ''}
+                </span>
+              </div>
+            )}
           </div>
 
           {/* You are watching & Server Selection Section */}
@@ -298,6 +311,13 @@ export default function Watch() {
         </div>
       </div>
 
+      {/* Details Section (moved to bottom) */}
+      <div className="max-w-[1500px] mx-auto px-4 pt-8 pb-12">
+        <div className="mb-8">
+          <AnimeDetailsCard anime={animeInfo} />
+        </div>
+      </div>
+
       {/* Info */}
       <div className="max-w-[1500px] mx-auto px-4 py-6">
         <Link
@@ -338,3 +358,4 @@ function ToggleBtn({ icon, label, active, onClick }) {
     </button>
   );
 }
+import AnimeDetailsCard from "@/components/details/AnimeDetailsCard";
