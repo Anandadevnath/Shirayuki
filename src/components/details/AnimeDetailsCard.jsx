@@ -3,7 +3,40 @@ import React from "react";
 export default function AnimeDetailsCard({ anime }) {
   if (!anime) return null;
   const { info, moreInfo } = anime;
-  
+
+  // Merge genres from both info and moreInfo, deduplicate
+  const genres = Array.from(new Set([
+    ...(moreInfo?.genres || []),
+    ...(info?.genres || [])
+  ]));
+
+  // Use malscore as fallback for score
+  const score = info.stats?.score || moreInfo?.malscore || '?';
+  const scoreCount = info.stats?.scoreCount || '?';
+
+  // Show both sub/dub episode counts if available
+  let episodes = '?';
+  if (info.stats?.episodes) {
+    const sub = info.stats.episodes.sub;
+    const dub = info.stats.episodes.dub;
+    if (sub && dub) {
+      episodes = `${sub} sub, ${dub} dub`;
+    } else if (sub) {
+      episodes = `${sub} sub`;
+    } else if (dub) {
+      episodes = `${dub} dub`;
+    }
+  }
+
+  // Studios: support string or array
+  let studios = moreInfo?.studios;
+  if (Array.isArray(studios)) {
+    studios = studios.join(', ');
+  }
+
+  // Producers: always array
+  let producers = moreInfo?.producers?.join(', ') || '?';
+
   return (
     <div className="glass-container rounded-3xl overflow-hidden shadow-2xl border border-white/20">
       <div className="flex flex-col md:flex-row gap-6 md:gap-8 p-6 md:p-8">
@@ -37,9 +70,6 @@ export default function AnimeDetailsCard({ anime }) {
                 CC {info.stats.is_cc}
               </span>
             )}
-            <span className="glass-button-subtle text-white text-xs px-3 py-1 rounded-full font-semibold">
-              {info.stats?.type || 'TV'}
-            </span>
           </div>
 
           {/* Description */}
@@ -49,19 +79,18 @@ export default function AnimeDetailsCard({ anime }) {
 
           {/* Info Grid */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
-            <InfoRow label="Country" value={moreInfo?.country || '?'} />
             <InfoRow label="Status" value={moreInfo?.status || '?'} />
-            <InfoRow label="Genres" value={moreInfo?.genres?.join(', ') || '?'} />
+            <InfoRow label="Genres" value={genres.length > 0 ? genres.join(', ') : '?'} />
             <InfoRow 
               label="Scores" 
-              value={`${info.stats?.score || '?'} by ${info.stats?.scoreCount || '?'} reviews`} 
+              value={`${score}`} 
             />
+            <InfoRow label="Type" value={info.stats?.type || info.type || '?'} />
             <InfoRow label="Premiered" value={moreInfo?.premiered || '?'} />
-            <InfoRow label="Studios" value={moreInfo?.studios || '?'} />
+            <InfoRow label="Studios" value={studios || '?'} />
             <InfoRow label="Date aired" value={moreInfo?.aired || '?'} />
-            <InfoRow label="Producers" value={moreInfo?.producers?.join(', ') || '?'} />
-            <InfoRow label="Broadcast" value={moreInfo?.broadcast || '?'} />
-            <InfoRow label="Episodes" value={info.stats?.episodes?.eps || '?'} />
+            <InfoRow label="Producers" value={producers} />
+            <InfoRow label="Episodes" value={episodes} />
             <InfoRow label="Duration" value={moreInfo?.duration || '?'} />
           </div>
         </div>
@@ -72,10 +101,10 @@ export default function AnimeDetailsCard({ anime }) {
             How'd you rate this anime?
           </div>
           <div className="text-4xl font-bold text-white mb-1">
-            {info.stats?.score || '?'}
+            {score}
           </div>
           <div className="text-zinc-400 text-xs mb-4">
-            by {info.stats?.scoreCount || '?'} reviews
+            by {scoreCount} reviews
           </div>
           <div className="flex gap-1">
             {[1, 2, 3, 4, 5].map((i) => (
