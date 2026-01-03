@@ -245,7 +245,7 @@ export default function Watch() {
           </div>
 
           {/* Server Selection Section */}
-          <div className="w-full flex flex-col md:flex-row gap-6 px-6 py-5 bg-gradient-to-br from-purple-900/30 to-pink-900/30 backdrop-blur-xl border-t border-white/10">
+          <div className="w-full flex flex-col md:flex-row gap-6 px-6 py-5 backdrop-blur-xl border-t border-white/10">
             {/* Info Box */}
             <div className="glass-container-dark rounded-xl px-6 py-4 min-w-[240px] border border-purple-500/30 shadow-lg">
               <div className="flex items-center gap-2 mb-2">

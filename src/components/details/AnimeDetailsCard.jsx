@@ -45,7 +45,7 @@ export default function AnimeDetailsCard({ anime }) {
           <img
             src={info.poster}
             alt={info.name}
-            className="w-48 h-72 md:w-56 md:h-80 rounded-2xl object-cover shadow-xl ring-2 ring-white/10"
+            className="w-48 h-72 md:w-60 md:h-86 rounded-2xl object-cover shadow-xl ring-2 ring-white/10"
           />
         </div>
 
