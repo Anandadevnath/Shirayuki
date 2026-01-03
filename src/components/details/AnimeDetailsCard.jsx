@@ -7,11 +7,11 @@ export default function AnimeDetailsCard({ anime }) {
     <div className="flex flex-col md:flex-row bg-zinc-900/90 rounded-3xl p-6 md:p-10 gap-6 md:gap-10 shadow-lg border border-zinc-800">
       {/* Poster */}
       <div className="flex-shrink-0 flex items-center justify-center">
-        <img
-          src={info.poster}
-          alt={info.name}
-          className="w-40 h-56 md:w-48 md:h-72 rounded-2xl object-cover shadow-md"
-        />
+          <img
+            src={info.poster}
+            alt={info.name}
+            className="w-48 h-72 md:w-64 md:h-96 rounded-2xl object-cover shadow-md"
+          />
       </div>
       {/* Details */}
       <div className="flex-1 flex flex-col gap-2 min-w-0">
