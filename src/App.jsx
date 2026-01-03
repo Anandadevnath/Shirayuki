@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "@/pages/home";
 import AnimeDetails from "@/pages/animeDetails";
 import EpisodeList from "@/pages/episode";
@@ -30,7 +30,7 @@ function App() {
           <Route path="/az-list" element={<AZList />} />
           <Route path="/az-list/:letter" element={<AZList />} />
           <Route path="/search" element={<SearchPage />} />
-          <Route path="/genre" element={<GenrePage />} />
+          <Route path="/genre" element={<Navigate to="/genre/action" replace />} />
           <Route path="/genre/:genreId" element={<GenrePage />} />
           <Route path="/category" element={<CategoryPage />} />
           <Route path="/category/:categoryId" element={<CategoryPage />} />
