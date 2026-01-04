@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getProducer } from "@/context/api";
 import { AnimeCard, AnimeCardSkeleton } from "@/components/producer";
+import StudioLogo from "@/components/producer/StudioLogo";
 import {
   Pagination,
   PaginationContent,
@@ -151,27 +152,7 @@ export default function ProducerPage() {
                   <div className="group backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:bg-white/10 hover:border-purple-400/30 transition-all duration-300 hover:scale-105 cursor-pointer">
                     <div className="flex items-center gap-3 sm:gap-4">
                       <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center flex-shrink-0 overflow-hidden">
-                        <img
-                          src={`/studio-logo/${producer.id}.webp`}
-                          alt={producer.name + ' logo'}
-                          className="object-contain w-10 h-10 sm:w-12 sm:h-12 bg-white/0 rounded transition-all duration-200 mx-auto"
-                          style={{maxWidth: '100%', maxHeight: '100%', display: 'block'}}
-                          onError={function handleImgError(e) {
-                            const fallbackOrder = [
-                              `/studio-logo/${producer.id}.png`,
-                              `/studio-logo/${producer.id}.jpg`,
-                              `/studio-logo/${producer.id}.avif`
-                            ];
-                            const current = e.target.getAttribute('data-fallback') || 0;
-                            if (current < fallbackOrder.length) {
-                              e.target.src = fallbackOrder[current];
-                              e.target.setAttribute('data-fallback', Number(current) + 1);
-                            } else {
-                              e.target.style.display = 'none';
-                            }
-                          }}
-                          data-fallback="0"
-                        />
+                        <StudioLogo id={producer.id} name={producer.name} size="w-10 h-10 sm:w-12 sm:h-12" />
                       </div>
                       <div className="flex-1 min-w-0">
                         <span className="text-white font-semibold text-sm sm:text-base group-hover:text-purple-300 transition-colors block truncate">
@@ -212,28 +193,7 @@ export default function ProducerPage() {
             {/* Studio Header */}
             <div className="flex flex-col items-center justify-center gap-4 sm:gap-6 text-center">
               <div className="w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center flex-shrink-0 mx-auto overflow-hidden">
-                <img
-                  key={producerId}
-                  src={`/studio-logo/${producerId}.webp`}
-                  alt={(producerName || formatProducerName(producerId)) + ' logo'}
-                  className="object-contain w-24 h-24 sm:w-32 sm:h-32 bg-white/0 rounded transition-all duration-200 mx-auto"
-                  style={{maxWidth: '100%', maxHeight: '100%', display: 'block'}}
-                  onError={function handleImgError(e) {
-                    const fallbackOrder = [
-                      `/studio-logo/${producerId}.png`,
-                      `/studio-logo/${producerId}.jpg`,
-                      `/studio-logo/${producerId}.avif`
-                    ];
-                    const current = e.target.getAttribute('data-fallback') || 0;
-                    if (current < fallbackOrder.length) {
-                      e.target.src = fallbackOrder[current];
-                      e.target.setAttribute('data-fallback', Number(current) + 1);
-                    } else {
-                      e.target.style.display = 'none';
-                    }
-                  }}
-                  data-fallback="0"
-                />
+                <StudioLogo id={producerId} name={producerName || formatProducerName(producerId)} size="w-24 h-24 sm:w-32 sm:h-32" />
               </div>
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
