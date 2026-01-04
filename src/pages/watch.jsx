@@ -244,27 +244,13 @@ export default function Watch() {
             )}
           </div>
 
-          {/* Server Selection Section */}
-          <div className="w-full flex flex-col md:flex-row gap-6 px-6 py-5 backdrop-blur-xl border-t border-white/10">
-            {/* Info Box */}
-            <div className="glass-container-dark rounded-xl px-6 py-4 min-w-[240px] border border-purple-500/30 shadow-lg">
-              <div className="flex items-center gap-2 mb-2">
-                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-                <p className="font-bold text-base text-purple-200">Now Watching</p>
-              </div>
-              <p className="text-white font-semibold text-lg mb-2">
-                Episode {currentEpisode?.number}
-              </p>
-              <p className="text-purple-200 text-xs leading-relaxed">
-                If current server doesn't work, try another server from the options beside.
-              </p>
-            </div>
-
-            {/* Server Buttons */}
-            <div className="flex-1 flex flex-col gap-4 justify-center">
+          {/* Server Selection Section - Mobile: Column Layout, Desktop: Row Layout */}
+          <div className="w-full flex flex-col md:flex-row gap-4 md:gap-6 px-4 md:px-6 py-4 md:py-5 backdrop-blur-xl border-t border-white/10">
+            {/* Server Buttons - Shows FIRST on mobile, SECOND on desktop */}
+            <div className="flex-1 flex flex-col gap-3 md:gap-4 justify-center order-1 md:order-2">
               {/* SUB Servers */}
-              <div className="flex items-start gap-4 flex-wrap">
-                <div className="flex items-center gap-2 min-w-[70px] pt-1">
+              <div className="flex items-start gap-3 md:gap-4 flex-wrap">
+                <div className="flex items-center gap-2 min-w-[65px] pt-1">
                   <div className="p-1.5 rounded-lg bg-purple-500/20 backdrop-blur-sm">
                     <Captions className="h-4 w-4 text-purple-300" />
                   </div>
@@ -276,7 +262,7 @@ export default function Watch() {
                       <Button
                         key={server.serverId}
                         onClick={() => handleServerSelect(server, "sub")}
-                        className={`rounded-xl px-6 py-2 text-sm font-bold transition-all duration-300 ${
+                        className={`rounded-xl px-4 md:px-6 py-2 text-sm font-bold transition-all duration-300 ${
                           selectedServer?.serverId === server.serverId &&
                           selectedCategory === "sub"
                             ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg shadow-purple-500/50 scale-105"
@@ -293,8 +279,8 @@ export default function Watch() {
               </div>
 
               {/* DUB Servers */}
-              <div className="flex items-start gap-4 flex-wrap">
-                <div className="flex items-center gap-2 min-w-[70px] pt-1">
+              <div className="flex items-start gap-3 md:gap-4 flex-wrap">
+                <div className="flex items-center gap-2 min-w-[65px] pt-1">
                   <div className="p-1.5 rounded-lg bg-pink-500/20 backdrop-blur-sm">
                     <Mic className="h-4 w-4 text-pink-300" />
                   </div>
@@ -306,7 +292,7 @@ export default function Watch() {
                       <Button
                         key={server.serverId}
                         onClick={() => handleServerSelect(server, "dub")}
-                        className={`rounded-xl px-6 py-2 text-sm font-bold transition-all duration-300 ${
+                        className={`rounded-xl px-4 md:px-6 py-2 text-sm font-bold transition-all duration-300 ${
                           selectedServer?.serverId === server.serverId &&
                           selectedCategory === "dub"
                             ? "bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400 text-white shadow-lg shadow-pink-500/50 scale-105"
@@ -321,6 +307,20 @@ export default function Watch() {
                   )}
                 </div>
               </div>
+            </div>
+
+            {/* Info Box - Shows SECOND on mobile, FIRST on desktop */}
+            <div className="glass-container-dark rounded-xl px-5 md:px-6 py-4 md:min-w-[240px] border border-purple-500/30 shadow-lg order-2 md:order-1">
+              <div className="flex items-center gap-2 mb-2">
+                <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                <p className="font-bold text-sm md:text-base text-purple-200">Now Watching</p>
+              </div>
+              <p className="text-white font-semibold text-base md:text-lg mb-2">
+                Episode {currentEpisode?.number}
+              </p>
+              <p className="text-purple-200 text-xs leading-relaxed">
+                If current server doesn't work, try another server from the options beside.
+              </p>
             </div>
           </div>
         </div>

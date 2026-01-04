@@ -42,7 +42,7 @@ export default function EpisodeSidebar({
             {/* View Toggle Button */}
             <button
               onClick={() => setEpisodeViewMode(episodeViewMode === 'list' ? 'grid' : 'list')}
-              className="p-2 rounded-lg bg-white/10 backdrop-blur-xl border border-white/20 text-purple-200 hover:text-white hover:bg-white/15 transition-all duration-300"
+              className="p-2 rounded-lg bg-white/10 backdrop-blur-xl border border-white/20 text-purple-200 hover:text-white hover:bg-white/15 hover:scale-105 transition-all duration-300"
               title={episodeViewMode === 'list' ? 'Switch to grid view' : 'Switch to list view'}
             >
               {episodeViewMode === 'list' ? (
@@ -71,8 +71,8 @@ export default function EpisodeSidebar({
                   onClick={() => onEpisodeSelect(ep)}
                   className={`rounded-xl py-3 text-sm font-bold transition-all duration-300 backdrop-blur-xl ${
                     isCurrent
-                      ? 'bg-gradient-to-br from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/50 scale-105 ring-2 ring-purple-400/50'
-                      : 'glass-button-subtle hover:scale-105 hover:shadow-lg'
+                      ? 'bg-gradient-to-br from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/50 ring-2 ring-purple-400/50'
+                      : 'glass-button-subtle hover:bg-white/20 hover:shadow-md hover:shadow-purple-500/20 hover:-translate-y-0.5'
                   }`}
                   title={ep.title || `Episode ${ep.number}`}
                 >
@@ -91,8 +91,8 @@ export default function EpisodeSidebar({
                   onClick={() => onEpisodeSelect(ep)}
                   className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-left transition-all duration-300 backdrop-blur-xl group ${
                     isCurrent
-                      ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/30 scale-[1.02] ring-2 ring-purple-400/50'
-                      : 'glass-button-subtle hover:scale-[1.02] hover:shadow-lg'
+                      ? 'bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/30 ring-2 ring-purple-400/50'
+                      : 'glass-button-subtle hover:bg-white/20 hover:shadow-md hover:shadow-purple-500/20 hover:-translate-y-0.5'
                   }`}
                 >
                   {/* Episode Number Badge */}
@@ -122,7 +122,7 @@ export default function EpisodeSidebar({
 
                   {/* Play Icon for Current Episode */}
                   {isCurrent && (
-                    <div className="flex-shrink-0 p-2 rounded-lg bg-white/20 animate-pulse">
+                    <div className="flex-shrink-0 p-2 rounded-lg bg-white/20">
                       <Play className="h-4 w-4 text-white fill-white" />
                     </div>
                   )}
