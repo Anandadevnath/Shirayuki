@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 
 export const NAV_LINKS = [
   { name: "Genres", href: "/genre/action" },
-  { name: "Types", href: "/category" },
+  { name: "Types", href: "/category/tv" },
   { name: "Schedule", href: "/schedule" },
   { name: "A-Z List", href: "/az-list" },
   { name: "Studios", href: "/producer" },
