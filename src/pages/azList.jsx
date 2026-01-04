@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { getAZList } from "@/context/api";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AnimeCard, AnimeCardSkeleton } from "@/components/az";
 import {
   Pagination,
   PaginationContent,
@@ -16,68 +15,6 @@ import {
 
 const alphabet = ["All", "0-9", ...Array.from({ length: 26 }, (_, i) => String.fromCharCode(65 + i))];
 
-function AnimeCardSkeleton() {
-  return (
-    <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[2/3]">
-      <Skeleton className="w-full h-full bg-zinc-800" />
-    </div>
-  );
-}
-
-function AnimeCard({ anime }) {
-  return (
-    <Link to={`/anime/${anime.id}`} className="block group">
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[2/3]">
-        <img
-          src={anime.poster}
-          alt={anime.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-        
-        {/* Type Badge */}
-        {anime.type && (
-          <Badge className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-purple-600 hover:bg-purple-700 text-[10px] sm:text-xs">
-            {anime.type}
-          </Badge>
-        )}
-        
-        {/* Rating Badge */}
-        {anime.rating && (
-          <Badge className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 bg-red-600 hover:bg-red-700 text-[10px] sm:text-xs">
-            {anime.rating}
-          </Badge>
-        )}
-        
-        <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
-          <h3 className="font-semibold text-white text-xs sm:text-sm line-clamp-2 mb-1 sm:mb-2 group-hover:text-purple-400 transition-colors">
-            {anime.name}
-          </h3>
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            {anime.episodes?.sub && (
-              <Badge className="bg-pink-500/90 hover:bg-pink-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-3 sm:h-3">
-                  <rect width="20" height="15" x="2" y="7" rx="2" ry="2" />
-                  <polyline points="17 2 12 7 7 2" />
-                </svg>
-                {anime.episodes.sub}
-              </Badge>
-            )}
-            {anime.episodes?.dub && (
-              <Badge className="bg-green-600/90 hover:bg-green-600 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md flex items-center gap-1">
-                🎙️ {anime.episodes.dub}
-              </Badge>
-            )}
-            {anime.duration && (
-              <span className="text-zinc-400 text-[10px] sm:text-xs ml-auto">{anime.duration}</span>
-            )}
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
 
 export default function AZList() {
   const { letter = "all" } = useParams();
@@ -93,10 +30,10 @@ export default function AZList() {
     async function fetchAnimes() {
       setLoading(true);
       setError(null);
-      
+
       const letterParam = letter === "all" ? "all" : letter;
       const { data, error: err } = await getAZList(letterParam, currentPage);
-      
+
       if (err) {
         setError(err);
       } else if (data?.data) {
@@ -104,10 +41,10 @@ export default function AZList() {
         setTotalPages(data.data.totalPages || 1);
         setHasNextPage(data.data.hasNextPage || false);
       }
-      
+
       setLoading(false);
     }
-    
+
     fetchAnimes();
   }, [letter, currentPage]);
 
@@ -129,7 +66,7 @@ export default function AZList() {
   const getPaginationItems = () => {
     const items = [];
     const maxVisible = 5;
-    
+
     if (totalPages <= maxVisible) {
       for (let i = 1; i <= totalPages; i++) {
         items.push(i);
@@ -151,149 +88,158 @@ export default function AZList() {
         items.push(totalPages);
       }
     }
-    
+
     return items;
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950">
-      {/* Header */}
-      <div className="bg-gradient-to-b from-purple-900/20 to-zinc-950 border-b border-zinc-800">
+    <div className="min-h-screen bg-[#0a0a0f] text-white relative">
+      {/* Background Effects - Fixed layers like Schedule/Genre page */}
+      <div className="fixed inset-0 bg-gradient-to-br from-purple-950/30 via-[#0a0a0f] to-pink-950/20 pointer-events-none"></div>
+      <div className="fixed inset-0 overflow-hidden pointer-events-none">
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-pulse"></div>
+        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+      </div>
+
+      {/* Main Content - Relative positioning for layering */}
+      <div className="relative z-10">
+        {/* Header Section */}
+        <div className="border-b border-white/10 backdrop-blur-sm bg-black/20">
+          <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-8 text-center">
+            <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+              A-Z List
+            </h1>
+            <p className="text-zinc-400">Browse anime alphabetically from A to Z</p>
+          </div>
+        </div>
+
+        {/* Alphabet Filter Section */}
+        <div className="border-b border-white/10 backdrop-blur-sm bg-black/10">
+          <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-4">
+              <div className="flex flex-wrap gap-1 justify-center">
+                {alphabet.map((char) => (
+                  <Button
+                    key={char}
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleLetterClick(char)}
+                    className={`h-9 min-w-11 px-2 py-0.5 text-[12px] font-medium rounded-md border-zinc-800 bg-black/70 text-white hover:bg-black/90 transition-colors
+                      ${letter.toLowerCase() === char.toLowerCase() ? '!bg-black !text-white !border-purple-600 !ring-2 !ring-purple-700' : ''}
+                      hover:text-purple-400 hover:shadow-[0_0_8px_2px_rgba(192,132,252,0.7)]
+                      whitespace-nowrap
+                    `}
+                  >
+                    {char}
+                  </Button>
+                ))}
+              </div>
+          </div>
+        </div>
+
+        {/* Content Section */}
         <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-8">
-          <h1 className="text-3xl font-bold text-white mb-2">A-Z List</h1>
-          <p className="text-zinc-400">Browse anime alphabetically from A to Z</p>
-        </div>
-      </div>
-
-      {/* Alphabet Filter */}
-      <div className="bg-zinc-950/95 backdrop-blur border-b border-zinc-800">
-        <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-4">
-          <div className="flex flex-wrap gap-1.5 justify-center">
-            {alphabet.map((char) => (
-              <Button
-                key={char}
-                variant={letter.toLowerCase() === char.toLowerCase() ? "default" : "outline"}
-                size="sm"
-                onClick={() => handleLetterClick(char)}
-                className={`w-10 h-10 p-0 font-medium ${
-                  letter.toLowerCase() === char.toLowerCase()
-                    ? "bg-purple-600 hover:bg-purple-700 text-white"
-                    : "bg-zinc-900 border-zinc-700 text-zinc-300 hover:bg-zinc-800 hover:text-white"
-                }`}
-              >
-                {char}
-              </Button>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* Content */}
-      <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-8">
-        {/* Results info */}
-        <div className="flex items-center justify-between mb-6">
-          <p className="text-zinc-400">
-            Showing anime starting with{" "}
-            <span className="text-purple-400 font-semibold">
-              "{letter.toUpperCase()}"
-            </span>
-            {totalPages > 1 && (
-              <span className="ml-2">
-                - Page {currentPage} of {totalPages}
+          {/* Results info */}
+          <div className="flex items-center justify-between mb-6">
+            <p className="text-zinc-400">
+              Showing anime starting with{" "}
+              <span className="text-purple-400 font-semibold">
+                "{letter.toUpperCase()}"
               </span>
-            )}
-          </p>
-        </div>
-
-        {/* Loading State */}
-        {loading && (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-            {[...Array(18)].map((_, i) => (
-              <AnimeCardSkeleton key={i} />
-            ))}
-          </div>
-        )}
-
-        {/* Error State */}
-        {error && !loading && (
-          <div className="text-center py-20">
-            <h2 className="text-2xl font-bold text-red-500 mb-4">Error Loading Anime</h2>
-            <p className="text-zinc-400 mb-6">{error}</p>
-            <Button onClick={() => window.location.reload()}>Try Again</Button>
-          </div>
-        )}
-
-        {/* Empty State */}
-        {!loading && !error && animes.length === 0 && (
-          <div className="text-center py-20">
-            <h2 className="text-2xl font-bold text-zinc-400 mb-4">No Anime Found</h2>
-            <p className="text-zinc-500">
-              No anime found starting with "{letter.toUpperCase()}"
+              {totalPages > 1 && (
+                <span className="ml-2">
+                  - Page {currentPage} of {totalPages}
+                </span>
+              )}
             </p>
           </div>
-        )}
 
-        {/* Anime Grid */}
-        {!loading && !error && animes.length > 0 && (
-          <>
+          {/* Loading State */}
+          {loading && (
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
-              {animes.map((anime) => (
-                <AnimeCard key={anime.id} anime={anime} />
+              {[...Array(18)].map((_, i) => (
+                <AnimeCardSkeleton key={i} />
               ))}
             </div>
+          )}
 
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-8 flex justify-center">
-                <Pagination>
-                  <PaginationContent>
-                    <PaginationItem>
-                      <PaginationPrevious
-                        onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
-                        className={`cursor-pointer text-white ${
-                          currentPage === 1
-                            ? "pointer-events-none opacity-50"
-                            : "hover:bg-white"
-                        }`}
-                      />
-                    </PaginationItem>
-                    
-                    {getPaginationItems().map((item, index) => (
-                      <PaginationItem key={index}>
-                        {item === "ellipsis" ? (
-                          <PaginationEllipsis className="text-white" />
-                        ) : (
-                          <PaginationLink
-                            onClick={() => handlePageChange(item)}
-                            isActive={currentPage === item}
-                            className={`cursor-pointer ${
-                              currentPage === item
-                                ? "bg-purple-600 text-white hover:bg-purple-700"
-                                : "text-white hover:bg-white"
-                            }`}
-                          >
-                            {item}
-                          </PaginationLink>
-                        )}
-                      </PaginationItem>
-                    ))}
-                    
-                    <PaginationItem>
-                      <PaginationNext
-                        onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
-                        className={`cursor-pointer text-white ${
-                          !hasNextPage
-                            ? "pointer-events-none opacity-50"
-                            : "hover:bg-white"
-                        }`}
-                      />
-                    </PaginationItem>
-                  </PaginationContent>
-                </Pagination>
+          {/* Error State */}
+          {error && !loading && (
+            <div className="text-center py-20">
+              <h2 className="text-2xl font-bold text-red-500 mb-4">Error Loading Anime</h2>
+              <p className="text-zinc-400 mb-6">{error}</p>
+              <Button onClick={() => window.location.reload()}>Try Again</Button>
+            </div>
+          )}
+
+          {/* Empty State */}
+          {!loading && !error && animes.length === 0 && (
+            <div className="text-center py-20">
+              <h2 className="text-2xl font-bold text-zinc-400 mb-4">No Anime Found</h2>
+              <p className="text-zinc-500">
+                No anime found starting with "{letter.toUpperCase()}"
+              </p>
+            </div>
+          )}
+
+          {/* Anime Grid */}
+          {!loading && !error && animes.length > 0 && (
+            <>
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-4">
+                {animes.map((anime) => (
+                  <AnimeCard key={anime.id} anime={anime} />
+                ))}
               </div>
-            )}
-          </>
-        )}
+
+              {/* Pagination */}
+              {totalPages > 1 && (
+                <div className="mt-8 flex justify-center">
+                  <Pagination>
+                    <PaginationContent>
+                      <PaginationItem>
+                        <PaginationPrevious
+                          onClick={() => handlePageChange(Math.max(1, currentPage - 1))}
+                          className={`cursor-pointer text-white ${currentPage === 1
+                              ? "pointer-events-none opacity-50"
+                              : "hover:bg-white"
+                            }`}
+                        />
+                      </PaginationItem>
+
+                      {getPaginationItems().map((item, index) => (
+                        <PaginationItem key={index}>
+                          {item === "ellipsis" ? (
+                            <PaginationEllipsis className="text-white" />
+                          ) : (
+                            <PaginationLink
+                              onClick={() => handlePageChange(item)}
+                              isActive={currentPage === item}
+                              className={`cursor-pointer ${currentPage === item
+                                  ? "bg-purple-600 text-white hover:bg-purple-700"
+                                  : "text-white hover:bg-white"
+                                }`}
+                            >
+                              {item}
+                            </PaginationLink>
+                          )}
+                        </PaginationItem>
+                      ))}
+
+                      <PaginationItem>
+                        <PaginationNext
+                          onClick={() => handlePageChange(Math.min(totalPages, currentPage + 1))}
+                          className={`cursor-pointer text-white ${!hasNextPage
+                              ? "pointer-events-none opacity-50"
+                              : "hover:bg-white"
+                            }`}
+                        />
+                      </PaginationItem>
+                    </PaginationContent>
+                  </Pagination>
+                </div>
+              )}
+            </>
+          )}
+        </div>
       </div>
     </div>
   );
