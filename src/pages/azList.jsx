@@ -94,11 +94,15 @@ export default function AZList() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white relative">
-      {/* Background Effects - Fixed layers like Schedule/Genre page */}
-      <div className="fixed inset-0 bg-gradient-to-br from-purple-950/30 via-[#0a0a0f] to-pink-950/20 pointer-events-none"></div>
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
+      {/* Background Effects - Homepage style */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {/* Radial gradient from center */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.15) 0%, rgba(88, 28, 135, 0.1) 25%, rgba(0, 0, 0, 0.95) 50%, rgb(9, 9, 11) 100%)'
+          }}
+        ></div>
       </div>
 
       {/* Main Content - Relative positioning for layering */}

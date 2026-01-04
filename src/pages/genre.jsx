@@ -99,18 +99,22 @@ export default function GenrePage() {
 
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white relative">
-      {/* Background Effects - Fixed layers like Schedule page */}
-      <div className="fixed inset-0 bg-gradient-to-br from-purple-950/30 via-[#0a0a0f] to-pink-950/20 pointer-events-none"></div>
-      <div className="fixed inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+      {/* Background Effects - Homepage style */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden">
+        {/* Radial gradient from center */}
+        <div 
+          className="absolute inset-0"
+          style={{
+            background: 'radial-gradient(ellipse at center, rgba(139, 92, 246, 0.15) 0%, rgba(88, 28, 135, 0.1) 25%, rgba(0, 0, 0, 0.95) 50%, rgb(9, 9, 11) 100%)'
+          }}
+        ></div>
       </div>
 
       {/* Main Content - Relative positioning for layering */}
       <div className="relative z-10">
         {/* Header Section */}
-        <div className="border-b border-white/10 backdrop-blur-sm bg-black/20">
-          <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-8 text-center">
+        <div className="border-b border-white/5 backdrop-blur-md bg-gradient-to-b from-black/30 via-black/20 to-transparent">
+          <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-8">
             <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
               {formatGenreName(genreId)} Anime
             </h1>
@@ -119,7 +123,7 @@ export default function GenrePage() {
         </div>
 
         {/* Genre Filter Section */}
-        <div className="border-b border-white/10 backdrop-blur-sm bg-black/10">
+        <div className="border-b border-white/5 backdrop-blur-md bg-black/15">
           <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-4">
             <GenreFilter genreId={genreId} />
           </div>
