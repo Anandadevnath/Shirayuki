@@ -39,9 +39,9 @@ export default function AnimeDetailsCard({ anime }) {
 
   return (
     <div className="glass-container rounded-3xl overflow-hidden shadow-2xl border border-white/20">
-      <div className="flex flex-col md:flex-row gap-6 md:gap-8 p-6 md:p-8">
+      <div className="flex flex-col md:flex-row gap-6 md:gap-8 p-4 md:p-8">
         {/* Poster */}
-        <div className="flex-shrink-0 flex items-center justify-center">
+        <div className="flex-shrink-0 flex items-center justify-center md:justify-start">
           <img
             src={info.poster}
             alt={info.name}
@@ -52,13 +52,13 @@ export default function AnimeDetailsCard({ anime }) {
         {/* Details */}
         <div className="flex-1 flex flex-col gap-3 min-w-0">
           {/* Title */}
-          <h1 className="text-3xl md:text-4xl font-bold text-white mb-1">
+          <h1 className="text-2xl md:text-4xl font-bold text-white mb-1">
             {info.name}
           </h1>
 
           {/* Synonyms */}
           {info.synonyms && info.synonyms.length > 0 && (
-            <div className="text-purple-300 text-sm mb-2 line-clamp-2">
+            <div className="text-purple-300 text-xs md:text-sm mb-2 line-clamp-2">
               {info.synonyms.join(' • ')}
             </div>
           )}
@@ -73,12 +73,12 @@ export default function AnimeDetailsCard({ anime }) {
           </div>
 
           {/* Description */}
-          <div className="text-zinc-200 text-base leading-relaxed mb-4 line-clamp-4">
+          <div className="text-zinc-200 text-sm md:text-base leading-relaxed mb-4 line-clamp-4">
             {info.description}
           </div>
 
           {/* Info Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-3 text-sm">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-2.5 md:gap-y-3 text-sm">
             <InfoRow label="Status" value={moreInfo?.status || '?'} />
             <InfoRow label="Genres" value={genres.length > 0 ? genres.join(', ') : '?'} />
             <InfoRow 
@@ -96,7 +96,7 @@ export default function AnimeDetailsCard({ anime }) {
         </div>
 
         {/* Rating Card */}
-        <div className="flex-shrink-0 flex flex-col items-center justify-center glass-container-dark rounded-2xl p-6 border border-orange-500/30 shadow-lg min-w-[240px] max-w-xs self-start md:self-center">
+        <div className="flex-shrink-0 flex flex-col items-center justify-center glass-container-dark rounded-2xl p-6 border border-orange-500/30 shadow-lg w-full md:min-w-[240px] md:max-w-xs self-start md:self-center">
           <div className="text-orange-400 text-base font-bold mb-3 text-center">
             How'd you rate this anime?
           </div>
@@ -129,9 +129,9 @@ export default function AnimeDetailsCard({ anime }) {
 // Helper component for info rows
 function InfoRow({ label, value }) {
   return (
-    <div className="flex gap-2">
-      <span className="text-purple-300 font-medium">{label}:</span>
-      <span className="text-white truncate">{value}</span>
+    <div className="flex gap-2 items-start">
+      <span className="text-purple-300 font-medium whitespace-nowrap">{label}:</span>
+      <span className="text-white break-words">{value}</span>
     </div>
   );
 }
