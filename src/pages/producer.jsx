@@ -1,8 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, Link } from "react-router-dom";
 import { getProducer } from "@/context/api";
-import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import { AnimeCard, AnimeCardSkeleton } from "@/components/producer";
 import {
   Pagination,
   PaginationContent,
@@ -34,68 +33,6 @@ const popularProducers = [
   { id: "pierrot", name: "Pierrot" },
 ];
 
-function AnimeCardSkeleton() {
-  return (
-    <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[2/3]">
-      <Skeleton className="w-full h-full bg-white/5" />
-    </div>
-  );
-}
-
-function AnimeCard({ anime }) {
-  return (
-    <Link to={`/anime/${anime.id}`} className="block group">
-      <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[2/3]">
-        <img
-          src={anime.poster}
-          alt={anime.name}
-          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-          loading="lazy"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-        
-        {/* Type Badge */}
-        {anime.type && (
-          <Badge className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-purple-600 hover:bg-purple-700 text-[10px] sm:text-xs">
-            {anime.type}
-          </Badge>
-        )}
-        
-        {/* Rating Badge */}
-        {anime.rating && (
-          <Badge className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 bg-red-600 hover:bg-red-700 text-[10px] sm:text-xs">
-            {anime.rating}
-          </Badge>
-        )}
-        
-        <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
-          <h3 className="font-semibold text-white text-xs sm:text-sm line-clamp-2 mb-1 sm:mb-2 group-hover:text-purple-400 transition-colors">
-            {anime.name}
-          </h3>
-          <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
-            {anime.episodes?.sub && (
-              <Badge className="bg-pink-500/90 hover:bg-pink-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-3 sm:h-3">
-                  <rect width="20" height="15" x="2" y="7" rx="2" ry="2" />
-                  <polyline points="17 2 12 7 7 2" />
-                </svg>
-                {anime.episodes.sub}
-              </Badge>
-            )}
-            {anime.episodes?.dub && (
-              <Badge className="bg-green-600/90 hover:bg-green-600 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md flex items-center gap-1">
-                🎙️ {anime.episodes.dub}
-              </Badge>
-            )}
-            {anime.duration && (
-              <span className="text-zinc-400 text-[10px] sm:text-xs ml-auto">{anime.duration}</span>
-            )}
-          </div>
-        </div>
-      </div>
-    </Link>
-  );
-}
 
 export default function ProducerPage() {
   const { producerId } = useParams();
@@ -197,8 +134,8 @@ export default function ProducerPage() {
         <div className="relative z-10">
           {/* Header */}
           <div className="border-b border-white/5 backdrop-blur-md bg-gradient-to-b from-black/30 via-black/20 to-transparent">
-            <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-8">
-              <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
+            <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-8 text-center">
+              <h1 className="text-4xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
                 Studios & Producers
               </h1>
               <p className="text-zinc-400">Browse anime by studio or producer</p>
@@ -213,8 +150,28 @@ export default function ProducerPage() {
                 <Link key={producer.id} to={`/producer/${producer.id}`}>
                   <div className="group backdrop-blur-sm bg-white/5 border border-white/10 rounded-xl sm:rounded-2xl p-4 sm:p-5 hover:bg-white/10 hover:border-purple-400/30 transition-all duration-300 hover:scale-105 cursor-pointer">
                     <div className="flex items-center gap-3 sm:gap-4">
-                      <div className="w-12 h-12 sm:w-14 sm:h-14 rounded-xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 flex items-center justify-center group-hover:from-purple-600/30 group-hover:to-pink-600/30 transition-all duration-300 flex-shrink-0">
-                        <Building2 className="h-6 w-6 sm:h-7 sm:w-7 text-purple-400 group-hover:text-purple-300 transition-colors" />
+                      <div className="w-12 h-12 sm:w-14 sm:h-14 flex items-center justify-center flex-shrink-0 overflow-hidden">
+                        <img
+                          src={`/studio-logo/${producer.id}.webp`}
+                          alt={producer.name + ' logo'}
+                          className="object-contain w-10 h-10 sm:w-12 sm:h-12 bg-white/0 rounded transition-all duration-200 mx-auto"
+                          style={{maxWidth: '100%', maxHeight: '100%', display: 'block'}}
+                          onError={function handleImgError(e) {
+                            const fallbackOrder = [
+                              `/studio-logo/${producer.id}.png`,
+                              `/studio-logo/${producer.id}.jpg`,
+                              `/studio-logo/${producer.id}.avif`
+                            ];
+                            const current = e.target.getAttribute('data-fallback') || 0;
+                            if (current < fallbackOrder.length) {
+                              e.target.src = fallbackOrder[current];
+                              e.target.setAttribute('data-fallback', Number(current) + 1);
+                            } else {
+                              e.target.style.display = 'none';
+                            }
+                          }}
+                          data-fallback="0"
+                        />
                       </div>
                       <div className="flex-1 min-w-0">
                         <span className="text-white font-semibold text-sm sm:text-base group-hover:text-purple-300 transition-colors block truncate">
@@ -252,17 +209,31 @@ export default function ProducerPage() {
         {/* Header Section */}
         <div className="border-b border-white/5 backdrop-blur-md bg-gradient-to-b from-black/30 via-black/20 to-transparent">
           <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-6 sm:py-8">
-            {/* Breadcrumb */}
-            <div className="flex items-center gap-2 text-zinc-400 text-xs sm:text-sm mb-4">
-              <Link to="/producer" className="hover:text-purple-400 transition-colors">Studios</Link>
-              <ChevronRight className="h-3 w-3 sm:h-4 sm:w-4" />
-              <span className="text-purple-400 font-medium">{formatProducerName(producerId)}</span>
-            </div>
-
             {/* Studio Header */}
-            <div className="flex items-center gap-4 sm:gap-6">
-              <div className="w-16 h-16 sm:w-20 sm:h-20 rounded-2xl bg-gradient-to-br from-purple-600/20 to-pink-600/20 backdrop-blur-sm border border-white/10 flex items-center justify-center flex-shrink-0">
-                <Building2 className="h-8 w-8 sm:h-10 sm:w-10 text-purple-400" />
+            <div className="flex flex-col items-center justify-center gap-4 sm:gap-6 text-center">
+              <div className="w-28 h-28 sm:w-36 sm:h-36 flex items-center justify-center flex-shrink-0 mx-auto overflow-hidden">
+                <img
+                  key={producerId}
+                  src={`/studio-logo/${producerId}.webp`}
+                  alt={(producerName || formatProducerName(producerId)) + ' logo'}
+                  className="object-contain w-24 h-24 sm:w-32 sm:h-32 bg-white/0 rounded transition-all duration-200 mx-auto"
+                  style={{maxWidth: '100%', maxHeight: '100%', display: 'block'}}
+                  onError={function handleImgError(e) {
+                    const fallbackOrder = [
+                      `/studio-logo/${producerId}.png`,
+                      `/studio-logo/${producerId}.jpg`,
+                      `/studio-logo/${producerId}.avif`
+                    ];
+                    const current = e.target.getAttribute('data-fallback') || 0;
+                    if (current < fallbackOrder.length) {
+                      e.target.src = fallbackOrder[current];
+                      e.target.setAttribute('data-fallback', Number(current) + 1);
+                    } else {
+                      e.target.style.display = 'none';
+                    }
+                  }}
+                  data-fallback="0"
+                />
               </div>
               <div className="flex-1 min-w-0">
                 <h1 className="text-2xl sm:text-3xl md:text-4xl font-bold mb-1 sm:mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
@@ -277,27 +248,22 @@ export default function ProducerPage() {
         </div>
 
         {/* Quick Links Section */}
-        <div className="border-b border-white/5 backdrop-blur-md bg-black/15">
+        <div className="border-b border-white/10 backdrop-blur-sm bg-black/10">
           <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-4">
-            <div className="flex flex-wrap gap-2">
-              {popularProducers.slice(0, 8).map((producer) => (
+            <div className="flex flex-wrap gap-1 justify-center">
+              {popularProducers.map((producer) => (
                 <Link key={producer.id} to={`/producer/${producer.id}`}>
                   <button
-                    className={`px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium transition-all duration-300 ${
-                      producer.id === producerId
-                        ? "bg-gradient-to-br from-purple-600 to-pink-500 text-white shadow-lg shadow-purple-500/30 scale-105"
-                        : "bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 hover:text-white hover:border-purple-400/30 hover:scale-105"
-                    }`}
+                    className={`h-9 min-w-11 px-3 py-0.5 text-[13px] font-medium rounded-md border-zinc-800 bg-black/70 text-white hover:bg-black/90 transition-colors
+                      ${producer.id === producerId ? '!bg-black !text-white !border-purple-600 !ring-2 !ring-purple-700' : ''}
+                      hover:text-purple-400 hover:shadow-[0_0_8px_2px_rgba(192,132,252,0.7)]
+                      whitespace-nowrap
+                    `}
                   >
                     {producer.name}
                   </button>
                 </Link>
               ))}
-              <Link to="/producer">
-                <button className="px-3 sm:px-4 py-1.5 sm:py-2 rounded-lg sm:rounded-xl text-xs sm:text-sm font-medium bg-white/5 border border-white/10 text-zinc-300 hover:bg-white/10 hover:text-white hover:border-purple-400/30 hover:scale-105 transition-all duration-300">
-                  View All →
-                </button>
-              </Link>
             </div>
           </div>
         </div>
