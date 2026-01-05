@@ -73,12 +73,12 @@ export default function Navbar() {
           {/* Logo */}
           <Link to="/" className="flex items-center flex-shrink-0">
             <img 
-              src="/shirayuki2.png" 
+              src="/logo/shirayuki2.png" 
               alt="Shirayuki Logo" 
               className="h-16 sm:h-14 lg:h-22 w-auto object-contain" 
             />
             <img 
-              src="/text.png" 
+              src="/logo/text.png" 
               alt="Shirayuki" 
               className="h-16 sm:h-12 lg:h-20 w-auto object-contain" 
             />

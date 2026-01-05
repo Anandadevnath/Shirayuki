@@ -65,8 +65,8 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="flex flex-col items-center text-center mb-8 sm:mb-12">
             <Link to="/" className="flex items-center">
-              <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-20 sm:h-28 w-auto object-contain" />
-              <img src="/text.png" alt="Shirayuki" className="h-16 sm:h-24 w-auto object-contain" />
+              <img src="/logo/shirayuki2.png" alt="Shirayuki Logo" className="h-20 sm:h-28 w-auto object-contain" />
+              <img src="/logo/text.png" alt="Shirayuki" className="h-16 sm:h-24 w-auto object-contain" />
             </Link>
             <p className="text-zinc-400 text-xs sm:text-sm leading-relaxed max-w-2xl mb-6">
               Your ultimate destination for streaming anime. Watch thousands of episodes in HD quality with no ads.

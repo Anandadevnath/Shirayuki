@@ -98,8 +98,8 @@ export default function Navbar() {
         <div className="flex h-16 sm:h-16 lg:h-20 items-center justify-between">
           {/* Logo */}
           <Link to="/" className="flex items-center flex-shrink-0">
-            <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-16 sm:h-14 lg:h-22 w-auto object-contain" />
-            <img src="/text.png" alt="Shirayuki" className="h-16 sm:h-12 lg:h-20 w-auto object-contain" />
+            <img src="/logo/shirayuki2.png" alt="Shirayuki Logo" className="h-16 sm:h-14 lg:h-22 w-auto object-contain" />
+            <img src="/logo/text.png" alt="Shirayuki" className="h-16 sm:h-12 lg:h-20 w-auto object-contain" />
           </Link>
 
           {/* Desktop Navigation - Centered */}
@@ -256,8 +256,8 @@ export default function Navbar() {
               <SheetContent side="right" className="w-[280px] sm:w-80 bg-zinc-950 border-zinc-800 px-4">
                 <SheetHeader className="flex flex-row items-center justify-between pr-0">
                   <SheetTitle className="text-white flex items-center gap-0">
-                    <img src="/shirayuki2.png" alt="Shirayuki Logo" className="h-12 w-auto object-contain" />
-                    <img src="/text.png" alt="Shirayuki" className="h-10 w-auto object-contain" />
+                    <img src="/logo/shirayuki2.png" alt="Shirayuki Logo" className="h-12 w-auto object-contain" />
+                    <img src="/logo/text.png" alt="Shirayuki" className="h-10 w-auto object-contain" />
                   </SheetTitle>
                 </SheetHeader>
 

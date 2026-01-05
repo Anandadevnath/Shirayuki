@@ -37,12 +37,12 @@ export function MobileMenu({
           <SheetHeader className="flex flex-row items-center justify-between pr-0">
             <SheetTitle className="text-white flex items-center gap-0">
               <img 
-                src="/shirayuki2.png" 
+                src="/logo/shirayuki2.png" 
                 alt="Shirayuki Logo" 
                 className="h-12 w-auto object-contain" 
               />
               <img 
-                src="/text.png" 
+                src="/logo/text.png" 
                 alt="Shirayuki" 
                 className="h-10 w-auto object-contain" 
               />
