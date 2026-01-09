@@ -28,10 +28,24 @@ export default function Navbar() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
+  const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem("isLoggedIn") === "true");
   const searchRef = useRef(null);
   const navigate = useNavigate();
 
-  // Track scroll position
+  useEffect(() => {
+    const handleStorage = () => {
+      setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true");
+    };
+    window.addEventListener("storage", handleStorage);
+    return () => window.removeEventListener("storage", handleStorage);
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.removeItem("isLoggedIn");
+    setIsLoggedIn(false);
+    navigate("/");
+  };
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 10);
@@ -41,7 +55,6 @@ export default function Navbar() {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Debounced search suggestions
   useEffect(() => {
     const timer = setTimeout(async () => {
       if (searchQuery.trim().length >= 2) {
@@ -57,7 +70,6 @@ export default function Navbar() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
-  // Close suggestions when clicking outside
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (searchRef.current && !searchRef.current.contains(event.target)) {
@@ -84,10 +96,6 @@ export default function Navbar() {
     setShowSuggestions(false);
   };
 
-  const clearSearch = () => {
-    setSearchQuery("");
-    setSuggestions([]);
-  };
 
   return (
     <nav className={`sticky top-0 z-50 w-full transition-all duration-300 border-b ${isScrolled
@@ -102,25 +110,8 @@ export default function Navbar() {
             <img src="/logo/text.png" alt="Shirayuki" className="h-16 sm:h-12 lg:h-20 w-auto object-contain" />
           </Link>
 
-          {/* Desktop Navigation - Centered */}
-          <div className="hidden lg:flex items-center gap-6 flex-1 justify-center">
-            {navLinks.map((link) => (
-              <Link
-                key={link.name}
-                to={link.href}
-                className="group text-sm font-medium text-white hover:text-white transition-colors uppercase tracking-wide"
-              >
-                <span className="relative inline-flex items-center gap-2">
-                  {link.icon ? link.icon : null}
-                  <span>{link.name}</span>
-                  <span className="absolute left-0 -bottom-1 h-0.5 w-full bg-blue-200 transform scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100" />
-                </span>
-              </Link>
-            ))}
-          </div>
-
-          {/* Search Bar - Desktop - Right aligned */}
-          <div ref={searchRef} className="hidden md:flex items-center relative ml-auto">
+          {/* Search Bar - Desktop - Left side */}
+          <div ref={searchRef} className="hidden md:flex items-center relative ml-6">
             <form onSubmit={handleSearch} className="flex items-center">
               <div className="relative flex items-center">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-white">
@@ -191,6 +182,15 @@ export default function Navbar() {
                       transform: translateX(0);
                     }
                   }
+                  .bg-size-200 {
+                    background-size: 200% 100%;
+                  }
+                  .bg-pos-0 {
+                    background-position: 0% 0%;
+                  }
+                  .bg-pos-100 {
+                    background-position: 100% 0%;
+                  }
                 `}</style>
                 <div className="p-2 suggestions-scroll suggestion-dropdown">
                   {suggestions.map((suggestion, index) => (
@@ -245,6 +245,68 @@ export default function Navbar() {
             )}
           </div>
 
+          {/* Desktop Navigation - Centered */}
+          <div className="hidden lg:flex items-center gap-6 flex-1 justify-center">
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.href}
+                className="group text-sm font-medium text-white hover:text-white transition-colors uppercase tracking-wide"
+              >
+                <span className="relative inline-flex items-center gap-2">
+                  {link.icon ? link.icon : null}
+                  <span>{link.name}</span>
+                  <span className="absolute left-0 -bottom-1 h-0.5 w-full bg-blue-200 transform scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100" />
+                </span>
+              </Link>
+            ))}
+          </div>
+
+          {/* Profile + Logout/Login - Desktop - Right side */}
+          <div className="hidden lg:flex items-center gap-3 ml-auto">
+            {isLoggedIn ? (
+              <>
+                {/* Profile Avatar/Link */}
+                <Link to="/profile" className="flex items-center gap-2 px-3 py-1 rounded-full hover:bg-white/10 transition">
+                  <img
+                    src="/pfp/bleach/ichigo.png"
+                    alt="Profile"
+                    className="w-9 h-9 rounded-full object-cover border border-white/20"
+                    style={{ background: '#222' }}
+                  />
+                  <span className="text-white text-sm font-medium hidden xl:inline">Profile</span>
+                </Link>
+                <button
+                  className="group relative px-5 py-2 text-sm font-medium text-white border border-white/20 rounded-md hover:border-white/40 transition-all duration-300 uppercase tracking-wide overflow-hidden"
+                  onClick={handleLogout}
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                  <span className="relative z-10 flex items-center gap-2">
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                    </svg>
+                    Logout
+                  </span>
+                  <span className="absolute left-0 bottom-0 h-0.5 w-full bg-blue-200 transform scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100" />
+                </button>
+              </>
+            ) : (
+              <button
+                className="group relative px-5 py-2 text-sm font-medium text-white border border-white/20 rounded-md hover:border-white/40 transition-all duration-300 uppercase tracking-wide overflow-hidden"
+                onClick={() => navigate('/login')}
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                <span className="relative z-10 flex items-center gap-2">
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  Login
+                </span>
+                <span className="absolute left-0 bottom-0 h-0.5 w-full bg-blue-200 transform scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100" />
+              </button>
+            )}
+          </div>
+
           {/* Right Section - Mobile Menu Button */}
           <div className="flex items-center ml-auto lg:hidden">
             <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
@@ -260,6 +322,60 @@ export default function Navbar() {
                     <img src="/logo/text.png" alt="Shirayuki" className="h-10 w-auto object-contain" />
                   </SheetTitle>
                 </SheetHeader>
+
+                {/* Mobile Profile + Login/Logout Button */}
+                <div className="mt-4">
+                  {isLoggedIn ? (
+                    <>
+                      <Link
+                        to="/profile"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                        className="flex items-center gap-3 px-3 py-2 rounded-full hover:bg-white/10 transition mb-2"
+                      >
+                        <img
+                          src="/pfp/bleach/ichigo.png"
+                          alt="Profile"
+                          className="w-9 h-9 rounded-full object-cover border border-white/20"
+                          style={{ background: '#222' }}
+                        />
+                        <span className="text-white text-base font-medium">Profile</span>
+                      </Link>
+                      <button
+                        className="group relative w-full px-5 py-2.5 text-sm font-medium text-white border border-white/20 rounded-md hover:border-white/40 transition-all duration-300 uppercase tracking-wide overflow-hidden"
+                        onClick={() => {
+                          handleLogout();
+                          setIsMobileMenuOpen(false);
+                        }}
+                      >
+                        <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                        <span className="relative z-10 flex items-center justify-center gap-2">
+                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                          </svg>
+                          Logout
+                        </span>
+                        <span className="absolute left-0 bottom-0 h-0.5 w-full bg-pink-400 transform scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100" />
+                      </button>
+                    </>
+                  ) : (
+                    <button
+                      className="group relative w-full px-5 py-2.5 text-sm font-medium text-white border border-white/20 rounded-md hover:border-white/40 transition-all duration-300 uppercase tracking-wide overflow-hidden"
+                      onClick={() => {
+                        navigate('/login');
+                        setIsMobileMenuOpen(false);
+                      }}
+                    >
+                      <div className="absolute inset-0 bg-gradient-to-r from-white/0 via-white/5 to-white/0 opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+                      <span className="relative z-10 flex items-center justify-center gap-2">
+                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                        </svg>
+                        Login
+                      </span>
+                      <span className="absolute left-0 bottom-0 h-0.5 w-full bg-pink-400 transform scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100" />
+                    </button>
+                  )}
+                </div>
 
                 {/* Mobile Search */}
                 <div className="mt-4 relative">

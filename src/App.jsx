@@ -1,5 +1,6 @@
-
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import LoginPage from "@/pages/login";
+import RegisterPage from "@/pages/register";
 import Home from "@/pages/home";
 import AnimeDetails from "@/pages/animeDetails";
 import EpisodeList from "@/pages/episode";
@@ -10,6 +11,7 @@ import GenrePage from "@/pages/genre";
 import CategoryPage from "@/pages/category";
 import ProducerPage from "@/pages/producer";
 import SchedulePage from "@/pages/schedule";
+import ProfilePage from "@/pages/profile";
 import { Layout } from "@/components/layout";
 
 function App() {
@@ -38,6 +40,11 @@ function App() {
           <Route path="/producer" element={<ProducerPage />} />
           <Route path="/producer/:producerId" element={<ProducerPage />} />
           <Route path="/schedule" element={<SchedulePage />} />
+
+          {/* Auth & Profile */}
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
         </Routes>
       </Layout>
     </Router>

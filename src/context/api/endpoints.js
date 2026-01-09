@@ -1,21 +1,35 @@
 export const API_VERSION = "v2";
 
-export const ENDPOINTS = {
-  // Home
-  HOME: `/api/${API_VERSION}/hianime/home`,
+export const ANIME_ENDPOINTS = {
 
-  // A-Z List
+  // Home 
+  HOME: `/api/${API_VERSION}/hianime/home`,
+  
+  // SCHEDULE
+  SCHEDULE: (date) => 
+    `/api/${API_VERSION}/hianime/schedule?date=${date}`,
+
+  // A-Z Listing
   AZ_LIST: (letter = "0-9", page = 1) =>
     `/api/${API_VERSION}/hianime/azlist/${letter}?page=${page}`,
 
-  // Anime
-  ANIME_DETAILS: (animeId) => `/api/${API_VERSION}/hianime/anime/${animeId}`,
+  // Anime Details
+  ANIME_DETAILS: (animeId) => 
+    `/api/${API_VERSION}/hianime/anime/${animeId}`,
+  
+  // Anime all episode
   ANIME_EPISODES: (animeId) =>
     `/api/${API_VERSION}/hianime/anime/${animeId}/episodes`,
 
   // Search
   SEARCH: (query, page = 1) =>
     `/api/${API_VERSION}/hianime/search?q=${encodeURIComponent(query)}&page=${page}`,
+  
+  // Basic Suggestion
+  SEARCH_SUGGESTION: (query) =>
+    `/api/${API_VERSION}/hianime/search/suggestion?q=${encodeURIComponent(query)}`,
+  
+  // Advance Suggestion
   SEARCH_ADVANCED: (params) => {
     const searchParams = new URLSearchParams();
     if (params.q) searchParams.append("q", params.q);
@@ -30,23 +44,83 @@ export const ENDPOINTS = {
     if (params.score) searchParams.append("score", params.score);
     return `/api/${API_VERSION}/hianime/search/advanced?${searchParams.toString()}`;
   },
-  SEARCH_SUGGESTION: (query) =>
-    `/api/${API_VERSION}/hianime/search/suggestion?q=${encodeURIComponent(query)}`,
 
-  // Browse
+  // Browse by Category
   PRODUCER: (producerId, page = 1) =>
     `/api/${API_VERSION}/hianime/producer/${producerId}?page=${page}`,
+  
   GENRE: (genreId, page = 1) =>
     `/api/${API_VERSION}/hianime/genre/${genreId}?page=${page}`,
+  
   CATEGORY: (categoryId, page = 1) =>
     `/api/${API_VERSION}/hianime/category/${categoryId}?page=${page}`,
 
-  // Schedule
-  SCHEDULE: (date) => `/api/${API_VERSION}/hianime/schedule?date=${date}`,
-
-  // Episode
+  // Episode Streaming
   EPISODE_SERVERS: (animeEpisodeId) =>
     `/api/${API_VERSION}/hianime/episode/servers?animeEpisodeId=${animeEpisodeId}`,
+  
+  // Episode Streaming Source
   EPISODE_SOURCES: (animeEpisodeId, server = "hd-1", category = "sub") =>
     `/api/${API_VERSION}/hianime/episode/sources?animeEpisodeId=${animeEpisodeId}&server=${server}&category=${category}`,
+};
+
+
+export const BACKEND_ENDPOINTS = {
+  // Authentication
+  AUTH: {
+    REGISTER: "/api/auth/register",
+    LOGIN: "/api/auth/login",
+    FORGOT_PASSWORD: "/api/auth/forgot-password",
+    UPDATE_PASSWORD: "/api/auth/update-password",
+  },
+  
+  // User Profile
+  USER: {
+    GET_PROFILE: (userId) => `/api/user/info/${userId}`,
+    UPDATE_PROFILE: (userId) => `/api/user/info/${userId}`,
+    DELETE_ACCOUNT: (userId) => `/api/user/${userId}`,
+  },
+  
+  // Profile Pictures
+  PROFILE: {
+    GET_PREBUILT_PFPS: "/api/profile/pfps",
+    UPLOAD_CUSTOM_PFP: "/api/profile/pfp/upload",
+    SELECT_PREBUILT_PFP: "/api/profile/pfp/select",
+  },
+  
+  // Watch Progress & History
+  PROGRESS: {
+    GET_WATCH_PROGRESS: (userId) => `/api/progress/${userId}`,
+    UPDATE_WATCH_PROGRESS: (userId) => `/api/progress/${userId}`,
+    DELETE_WATCH_PROGRESS: (userId, animeId) => `/api/progress/${userId}/${animeId}`,
+  },
+};
+
+
+export const ENDPOINTS = {
+  // Anime endpoints
+  HOME: ANIME_ENDPOINTS.HOME,
+  AZ_LIST: ANIME_ENDPOINTS.AZ_LIST,
+  ANIME_DETAILS: ANIME_ENDPOINTS.ANIME_DETAILS,
+  ANIME_EPISODES: ANIME_ENDPOINTS.ANIME_EPISODES,
+  SEARCH: ANIME_ENDPOINTS.SEARCH,
+  SEARCH_ADVANCED: ANIME_ENDPOINTS.SEARCH_ADVANCED,
+  SEARCH_SUGGESTION: ANIME_ENDPOINTS.SEARCH_SUGGESTION,
+  PRODUCER: ANIME_ENDPOINTS.PRODUCER,
+  GENRE: ANIME_ENDPOINTS.GENRE,
+  CATEGORY: ANIME_ENDPOINTS.CATEGORY,
+  SCHEDULE: ANIME_ENDPOINTS.SCHEDULE,
+  EPISODE_SERVERS: ANIME_ENDPOINTS.EPISODE_SERVERS,
+  EPISODE_SOURCES: ANIME_ENDPOINTS.EPISODE_SOURCES,
+  
+  // Backend endpoints
+  AUTH: BACKEND_ENDPOINTS.AUTH,
+  PROFILE: BACKEND_ENDPOINTS.PROFILE,
+  USER: {
+    GET_USER_PROFILE: BACKEND_ENDPOINTS.USER.GET_PROFILE,
+    UPDATE_USER_PROFILE: BACKEND_ENDPOINTS.USER.UPDATE_PROFILE,
+  },
+  PROGRESS: {
+    WATCH: BACKEND_ENDPOINTS.PROGRESS.GET_WATCH_PROGRESS,
+  },
 };
