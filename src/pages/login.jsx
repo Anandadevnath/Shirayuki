@@ -193,12 +193,13 @@ export default function LoginPage() {
                 </div>
                 <span className="ml-2 text-gray-400 group-hover:text-cyan-300 transition-colors font-mono">Remember Session</span>
               </label>
-              <button
-                type="button"
+              <a
+                href="/forgotPassword"
                 className="text-fuchsia-400 hover:text-fuchsia-300 transition-colors font-mono"
+                style={{ textDecoration: 'none' }}
               >
                 Reset Access
-              </button>
+              </a>
             </div>
 
             {/* Error Message */}

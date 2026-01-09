@@ -150,12 +150,16 @@ export default function ProfilePage() {
 
                 {/* Content Area */}
                 <div className="relative">
-                    {activeTab === "profile" && (
-                        <div className="grid md:grid-cols-2 gap-6">
-                            <ProfileForm user={user} handleChange={handleChange} handleSave={handleSave} saving={saving} error={error} />
-                            <ProfileStats user={user} />
-                        </div>
-                    )}
+                                    {activeTab === "profile" && (
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            <div>
+                                                <ProfileForm user={user} handleChange={handleChange} handleSave={handleSave} saving={saving} error={error} />
+                                            </div>
+                                            <div>
+                                                <ProfileStats user={user} />
+                                            </div>
+                                        </div>
+                                    )}
                     {activeTab !== "profile" && (
                         <div className="relative animate-fade-in-up">
                             <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-500 opacity-50"></div>

@@ -66,13 +66,14 @@ export default function ProfileForm({ user, handleChange, handleSave, saving, er
           <p className="text-xs text-gray-500 mt-2 font-mono">Public display name</p>
         </div>
         {/* Change Password Button */}
-        <button
-          type="button"
+        <a
+          href="/updatePassword"
           className="w-full mb-4 py-3 rounded-md bg-black/40 border border-purple-500/30 text-purple-400 font-mono uppercase text-sm hover:bg-purple-950/30 hover:border-purple-500/50 transition-all flex items-center justify-center gap-2"
+          style={{ textDecoration: 'none' }}
         >
           <Lock className="w-4 h-4" />
           Change Password
-        </button>
+        </a>
         {/* Save Button */}
         <button
           type="submit"

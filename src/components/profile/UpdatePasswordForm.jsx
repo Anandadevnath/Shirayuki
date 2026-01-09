@@ -1,0 +1,73 @@
+import React, { useState } from "react";
+import { updatePassword } from "@/context/api/services";
+
+export default function UpdatePasswordForm({ onSuccess }) {
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [success, setSuccess] = useState("");
+  const [loading, setLoading] = useState(false);
+
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setError("");
+    setSuccess("");
+    if (newPassword !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+    setLoading(true);
+    try {
+      await updatePassword({ currentPassword, newPassword });
+      setSuccess("Password updated successfully");
+      setCurrentPassword("");
+      setNewPassword("");
+      setConfirmPassword("");
+      if (onSuccess) onSuccess();
+    } catch (err) {
+      setError("Failed to update password");
+    }
+    setLoading(false);
+  };
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div>
+        <label className="block text-xs font-mono mb-1">Current Password</label>
+        <input
+          type="password"
+          value={currentPassword}
+          onChange={e => setCurrentPassword(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-mono mb-1">New Password</label>
+        <input
+          type="password"
+          value={newPassword}
+          onChange={e => setNewPassword(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white"
+          required
+        />
+      </div>
+      <div>
+        <label className="block text-xs font-mono mb-1">Confirm New Password</label>
+        <input
+          type="password"
+          value={confirmPassword}
+          onChange={e => setConfirmPassword(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white"
+          required
+        />
+      </div>
+      {error && <div className="text-red-400 text-xs font-mono">{error}</div>}
+      {success && <div className="text-green-400 text-xs font-mono">{success}</div>}
+      <button type="submit" disabled={loading} className="w-full py-2 rounded bg-cyan-600 text-white font-bold mt-2 disabled:opacity-50">
+        {loading ? "Updating..." : "Update Password"}
+      </button>
+    </form>
+  );
+}

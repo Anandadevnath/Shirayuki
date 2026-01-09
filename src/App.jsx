@@ -13,6 +13,8 @@ import ProducerPage from "@/pages/producer";
 import SchedulePage from "@/pages/schedule";
 import ProfilePage from "@/pages/profile";
 import { Layout } from "@/components/layout";
+import UpdatePasswordPage from "@/pages/updatePassword";
+import ForgotPasswordPage from "@/pages/forgotPassword";
 
 function App() {
   return (
@@ -45,6 +47,8 @@ function App() {
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
           <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/updatePassword" element={<UpdatePasswordPage />} />
+          <Route path="/forgotPassword" element={<ForgotPasswordPage />} />
         </Routes>
       </Layout>
     </Router>
