@@ -91,7 +91,7 @@ export default function ProfilePage() {
 
     if (loading) {
         return (
-            <div className="relative flex items-center justify-center min-h-screen bg-black overflow-hidden">
+            <div className="relative flex items-center justify-center min-h-screen bg-black overflow-hidden -mt-20">
                 <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
                 <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/40 via-black to-fuchsia-950/40"></div>
                 <div className="relative text-center">
@@ -150,16 +150,16 @@ export default function ProfilePage() {
 
                 {/* Content Area */}
                 <div className="relative">
-                                    {activeTab === "profile" && (
-                                        <div className="grid md:grid-cols-2 gap-6">
-                                            <div>
-                                                <ProfileForm user={user} handleChange={handleChange} handleSave={handleSave} saving={saving} error={error} />
-                                            </div>
-                                            <div>
-                                                <ProfileStats user={user} />
-                                            </div>
-                                        </div>
-                                    )}
+                    {activeTab === "profile" && (
+                        <div className="grid md:grid-cols-2 gap-6">
+                            <div>
+                                <ProfileForm user={user} handleChange={handleChange} handleSave={handleSave} saving={saving} error={error} />
+                            </div>
+                            <div>
+                                <ProfileStats user={user} />
+                            </div>
+                        </div>
+                    )}
                     {activeTab !== "profile" && (
                         <div className="relative animate-fade-in-up">
                             <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-500 opacity-50"></div>
