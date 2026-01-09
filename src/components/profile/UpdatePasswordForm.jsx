@@ -34,32 +34,35 @@ export default function UpdatePasswordForm({ onSuccess }) {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-xs font-mono mb-1">Current Password</label>
+        <label className="block text-xs text-cyan-300 font-mono uppercase tracking-wider mb-1">Current Password</label>
         <input
           type="password"
           value={currentPassword}
           onChange={e => setCurrentPassword(e.target.value)}
-          className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white"
+          className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white placeholder:text-gray-500 font-mono"
+          placeholder="Enter current password"
           required
         />
       </div>
       <div>
-        <label className="block text-xs font-mono mb-1">New Password</label>
+        <label className="block text-xs text-cyan-300 font-mono uppercase tracking-wider mb-1">New Password</label>
         <input
           type="password"
           value={newPassword}
           onChange={e => setNewPassword(e.target.value)}
-          className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white"
+          className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white placeholder:text-gray-500 font-mono"
+          placeholder="Enter new password"
           required
         />
       </div>
       <div>
-        <label className="block text-xs font-mono mb-1">Confirm New Password</label>
+        <label className="block text-xs text-cyan-300 font-mono uppercase tracking-wider mb-1">Confirm New Password</label>
         <input
           type="password"
           value={confirmPassword}
           onChange={e => setConfirmPassword(e.target.value)}
-          className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white"
+          className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white placeholder:text-gray-500 font-mono"
+          placeholder="Re-enter new password"
           required
         />
       </div>
