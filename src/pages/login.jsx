@@ -78,7 +78,7 @@ export default function LoginPage() {
       {/* Login Container */}
       <div className="relative z-10 w-full max-w-md px-6 mt-4">
         {/* Logo Section */}
-        <div className="text-center mb-6 relative">
+        <div className="text-center mb-6 mt-8 sm:mt-0">
           <div className="relative inline-block">
             <p className="text-cyan-300/80 text-sm tracking-widest uppercase font-mono">
               System Access Portal

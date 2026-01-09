@@ -53,7 +53,7 @@ export default function RegisterPage() {
       {/* Register Container */}
       <div className="relative z-10 w-full max-w-md px-6 my-8">
         {/* Logo Section */}
-        <div className="text-center mb-12 relative ">
+        <div className="text-center mb-12 mt-8 sm:mt-0 relative ">
           <div className="relative inline-block">
             <p className="text-fuchsia-300/80 text-sm tracking-widest uppercase font-mono">
               New User Registration
