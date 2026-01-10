@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useToast } from "../ui/toast";
 import { forgotPassword } from "@/context/api/services";
 
 export default function ForgotPasswordForm() {
@@ -6,6 +7,7 @@ export default function ForgotPasswordForm() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,9 +17,11 @@ export default function ForgotPasswordForm() {
     try {
       await forgotPassword(email);
       setSuccess("Password reset link sent to your email.");
+      showToast({ title: "Reset link sent", description: "Check your email for the reset link.", duration: 3000 });
       setEmail("");
     } catch (err) {
       setError("Failed to send reset link");
+      showToast({ title: "Failed to send reset link", description: "Please try again later.", duration: 3000 });
     }
     setLoading(false);
   };

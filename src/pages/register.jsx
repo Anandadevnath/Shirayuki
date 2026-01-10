@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useToast } from "../components/ui/toast";
 import { ENDPOINTS } from "../context/api/endpoints";
 import { BACKEND_BASE_URL } from "../context/api/config";
 import { useNavigate } from "react-router-dom";
@@ -14,6 +15,7 @@ export default function RegisterPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -27,12 +29,15 @@ export default function RegisterPage() {
       });
       const data = await res.json();
       if (res.ok) {
+        showToast({ title: "Registration successful", description: "You can now log in.", duration: 3000 });
         navigate("/login");
       } else {
         setError(data.message || "Registration failed");
+        showToast({ title: "Registration failed", description: data.message || "Registration failed", duration: 3000 });
       }
     } catch (err) {
       setError("Network error");
+      showToast({ title: "Network error", description: "Please try again later.", duration: 3000 });
     } finally {
       setIsLoading(false);
     }

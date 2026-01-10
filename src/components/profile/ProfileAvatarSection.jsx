@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getPrebuiltPfps, uploadCustomPfp, selectPrebuiltPfp } from "@/context/api/services";
+import { getPrebuiltPfps, uploadCustomPfp, selectPrebuiltPfp, updateUserProfile } from "@/context/api/services";
 import { BACKEND_BASE_URL } from "@/context/api/config";
 
 export default function ProfileAvatarSection({ user, onAvatarChange }) {
@@ -22,24 +22,13 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
     });
   }, []);
 
-  const handlePrebuiltSelect = async (url, id) => {
+  // Only update local state, not backend/localStorage
+  const handlePrebuiltSelect = (url, id) => {
     setError("");
-    const userId = user.id || user._id || user.userId;
-    const { error } = await selectPrebuiltPfp({ userId, pfpId: id });
-    if (!error) {
-      onAvatarChange(url);
-      // Update localStorage user object
-      try {
-        const stored = localStorage.getItem("user");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          parsed.pfpUrl = url;
-          localStorage.setItem("user", JSON.stringify(parsed));
-        }
-      } catch {}
-    } else setError("Failed to set avatar");
+    onAvatarChange(url);
   };
 
+  // Only update local state, not backend/localStorage
   const handleUpload = async (e) => {
     setError("");
     const file = e.target.files[0];
@@ -51,15 +40,6 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
     setUploading(false);
     if (data && data.url) {
       onAvatarChange(data.url);
-      // Update localStorage user object
-      try {
-        const stored = localStorage.getItem("user");
-        if (stored) {
-          const parsed = JSON.parse(stored);
-          parsed.pfpUrl = data.url;
-          localStorage.setItem("user", JSON.stringify(parsed));
-        }
-      } catch {}
     } else setError("Failed to upload avatar");
   };
 

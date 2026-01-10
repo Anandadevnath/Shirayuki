@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { useToast } from "../ui/toast";
 import { updatePassword } from "@/context/api/services";
 
 export default function UpdatePasswordForm({ onSuccess, email }) {
@@ -8,6 +9,7 @@ export default function UpdatePasswordForm({ onSuccess, email }) {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const { showToast } = useToast();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -15,6 +17,7 @@ export default function UpdatePasswordForm({ onSuccess, email }) {
     setSuccess("");
     if (newPassword !== confirmPassword) {
       setError("Passwords do not match");
+      showToast({ title: "Passwords do not match", description: "Please re-enter your new password.", duration: 3000 });
       return;
     }
     setLoading(true);
@@ -25,12 +28,14 @@ export default function UpdatePasswordForm({ onSuccess, email }) {
         await updatePassword({ currentPassword, newPassword });
       }
       setSuccess("Password updated successfully");
+      showToast({ title: "Password updated", description: "Your password was updated successfully.", duration: 3000 });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       if (onSuccess) onSuccess();
     } catch (err) {
       setError("Failed to update password");
+      showToast({ title: "Update failed", description: "Failed to update password.", duration: 3000 });
     }
     setLoading(false);
   };

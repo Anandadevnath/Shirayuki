@@ -1,9 +1,11 @@
 import { useState } from "react";
+import { useToast } from "../components/ui/toast";
 import { ENDPOINTS } from "../context/api/endpoints";
 import { BACKEND_BASE_URL } from "../context/api/config";
 import { useNavigate } from "react-router-dom";
 import { Eye, EyeOff, Mail, Lock, ArrowRight, Zap } from "lucide-react";
 import "../css/login.css";
+import { getUserProfile } from "../context/api/services";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -12,6 +14,7 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
+  const { showToast } = useToast();
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -28,7 +31,6 @@ export default function LoginPage() {
         localStorage.setItem("isLoggedIn", "true");
         try {
           if (data?.token) localStorage.setItem("token", data.token);
-          if (data?.user) localStorage.setItem("user", JSON.stringify(data.user));
         } catch (err) {
           console.warn('Failed to persist user data to localStorage', err);
         }
@@ -50,13 +52,31 @@ export default function LoginPage() {
         const uid = extractId(data?.user?.userId ?? data?.user?._id ?? data?.user?.id);
         if (uid) localStorage.setItem('userId', uid);
 
+        // Fetch latest user profile after login and update localStorage
+        if (uid) {
+          try {
+            const { data: profileData } = await getUserProfile(uid);
+            if (profileData) {
+              localStorage.setItem("user", JSON.stringify(profileData));
+            }
+          } catch (err) {
+            // fallback: if fetch fails, keep whatever is in data.user
+            if (data?.user) localStorage.setItem("user", JSON.stringify(data.user));
+          }
+        } else if (data?.user) {
+          localStorage.setItem("user", JSON.stringify(data.user));
+        }
+
         window.dispatchEvent(new Event("storage"));
+        showToast({ title: "Login successful", description: "Welcome back!", duration: 3000 });
         navigate("/");
       } else {
         setError(data.message || "Login failed");
+        showToast({ title: "Login failed", description: data.message || "Login failed", duration: 3000 });
       }
     } catch (err) {
       setError("Network error");
+      showToast({ title: "Network error", description: "Please try again later.", duration: 3000 });
     } finally {
       setIsLoading(false);
     }

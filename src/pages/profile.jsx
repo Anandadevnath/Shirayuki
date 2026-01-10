@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
-import "../css/profile.css";
+import { useToast } from "../components/ui/toast";
 import { getUserProfile, updateUserProfile } from "@/context/api/services";
 import { User, PlayCircle, Heart, TrendingUp, Edit2, Lock, Save, Camera, Clock, Award } from "lucide-react";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import ProfileTabs from "../components/profile/ProfileTabs";
 import ProfileForm from "../components/profile/ProfileForm";
 import ProfileStats from "../components/profile/ProfileStats";
+import "../css/profile.css";
 
 export default function ProfilePage() {
     const userId = localStorage.getItem("userId");
@@ -14,28 +15,32 @@ export default function ProfilePage() {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState("profile");
+    const { showToast } = useToast();
 
     useEffect(() => {
         async function fetchProfile() {
             setLoading(true);
             setError("");
+            let localUser = null;
+            const raw = localStorage.getItem("user");
+            if (raw) {
+                try {
+                    localUser = JSON.parse(raw);
+                } catch (e) { }
+            }
             if (!userId) {
-                const raw = localStorage.getItem("user");
-                if (raw) {
-                    try {
-                        const parsed = JSON.parse(raw);
-                        const fallback = {
-                            id: parsed.userId || parsed._id || parsed.id,
-                            username: parsed.username,
-                            email: parsed.email,
-                            displayName: parsed.displayName || parsed.username,
-                            avatar: parsed.pfpUrl || parsed.pfpUrl || parsed.avatar || null,
-                        };
-                        setUser(fallback);
-                        setLoading(false);
-                        return;
-                    } catch (e) {
-                    }
+                if (localUser) {
+                    const fallback = {
+                        id: localUser.userId || localUser._id || localUser.id,
+                        username: localUser.username,
+                        email: localUser.email,
+                        displayName: localUser.displayName || localUser.username,
+                        tagline: localUser.tagline || '',
+                        avatar: localUser.pfpUrl || localUser.avatar || null,
+                    };
+                    setUser(fallback);
+                    setLoading(false);
+                    return;
                 }
                 setError("User not logged in.");
                 setLoading(false);
@@ -43,43 +48,41 @@ export default function ProfilePage() {
             }
             const { data, error } = await getUserProfile(userId);
             if (error || !data) {
-                const raw = localStorage.getItem("user");
-                if (raw) {
-                    try {
-                        const parsed = JSON.parse(raw);
-                        const fallback = {
-                            id: parsed.userId || parsed._id || parsed.id,
-                            username: parsed.username,
-                            email: parsed.email,
-                            tagline: parsed.tagline || '',
-                            avatar: parsed.pfpUrl || parsed.avatar || null,
-                        };
-                        setUser(fallback);
-                        setLoading(false);
-                        return;
-                    } catch (e) {}
+                if (localUser) {
+                    const fallback = {
+                        id: localUser.userId || localUser._id || localUser.id,
+                        username: localUser.username,
+                        email: localUser.email,
+                        tagline: localUser.tagline || '',
+                        avatar: localUser.pfpUrl || localUser.avatar || null,
+                    };
+                    setUser(fallback);
+                    setLoading(false);
+                    return;
                 }
                 setError("Failed to load profile.");
             } else {
+                // Prefer avatar from localStorage if available
+                let avatar = data.pfpUrl || data.avatar || null;
+                if (localUser && (localUser.pfpUrl || localUser.avatar)) {
+                    avatar = localUser.pfpUrl || localUser.avatar;
+                }
                 const normalized = {
                     id: data.id || data.userId || data._id || null,
                     username: data.username,
                     email: data.email,
                     tagline: data.tagline || '',
-                    avatar: data.pfpUrl || data.avatar || null,
-                    pfpUrl: data.pfpUrl || data.avatar || null,
+                    avatar,
+                    pfpUrl: avatar,
                 };
                 setUser(normalized);
-                // Update localStorage user object for navbar
                 try {
-                  const stored = localStorage.getItem("user");
-                  if (stored) {
-                    const parsed = JSON.parse(stored);
-                    parsed.pfpUrl = normalized.avatar;
-                    parsed.avatar = normalized.avatar;
-                    localStorage.setItem("user", JSON.stringify(parsed));
-                  }
-                } catch {}
+                    if (localUser) {
+                        localUser.pfpUrl = avatar;
+                        localUser.avatar = avatar;
+                        localStorage.setItem("user", JSON.stringify(localUser));
+                    }
+                } catch { }
             }
             setLoading(false);
         }
@@ -94,10 +97,26 @@ export default function ProfilePage() {
         e.preventDefault();
         setSaving(true);
         setError("");
-        // Exclude avatar from payload
+        // Save avatar and other profile data to backend
         const { avatar, ...profileData } = user;
-        const { data, error } = await updateUserProfile(userId, profileData);
-        if (error) setError("Failed to save profile.");
+        const { data, error } = await updateUserProfile(userId, { ...profileData, avatar });
+        if (!error) {
+            // Update localStorage user object
+            try {
+                const stored = localStorage.getItem("user");
+                if (stored) {
+                    const parsed = JSON.parse(stored);
+                    parsed.pfpUrl = avatar;
+                    parsed.avatar = avatar;
+                    localStorage.setItem("user", JSON.stringify(parsed));
+                    window.dispatchEvent(new Event('storage'));
+                }
+            } catch { }
+            showToast({ title: "Profile updated", description: "Your profile was updated successfully.", duration: 3000 });
+        } else {
+            setError("Failed to save profile.");
+            showToast({ title: "Update failed", description: "Failed to save profile.", duration: 3000 });
+        }
         setSaving(false);
     };
 
