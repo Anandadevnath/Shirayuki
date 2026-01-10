@@ -1,4 +1,4 @@
-import { API_BASE_URL, API_CONFIG } from "./config";
+import { API_BASE_URL, BACKEND_BASE_URL, API_CONFIG } from "./config";
 
 class ApiClient {
   constructor(baseURL = API_BASE_URL) {
@@ -45,5 +45,6 @@ class ApiClient {
   }
 }
 
-export const apiClient = new ApiClient();
+export const apiClient = new ApiClient(API_BASE_URL); 
+export const backendClient = new ApiClient(BACKEND_BASE_URL);
 export default apiClient;

@@ -72,6 +72,8 @@ export const BACKEND_ENDPOINTS = {
     LOGIN: "/api/auth/login",
     FORGOT_PASSWORD: "/api/auth/forgot-password",
     UPDATE_PASSWORD: "/api/auth/update-password",
+    SEND_VERIFICATION: "/api/auth/send-verification",
+    VERIFY_EMAIL: "/api/auth/verify-email",
   },
   
   // User Profile

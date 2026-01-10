@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { updatePassword } from "@/context/api/services";
 
-export default function UpdatePasswordForm({ onSuccess }) {
+export default function UpdatePasswordForm({ onSuccess, email }) {
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -19,7 +19,11 @@ export default function UpdatePasswordForm({ onSuccess }) {
     }
     setLoading(true);
     try {
-      await updatePassword({ currentPassword, newPassword });
+      if (email) {
+        await updatePassword({ email, newPassword });
+      } else {
+        await updatePassword({ currentPassword, newPassword });
+      }
       setSuccess("Password updated successfully");
       setCurrentPassword("");
       setNewPassword("");
@@ -33,17 +37,19 @@ export default function UpdatePasswordForm({ onSuccess }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <label className="block text-xs text-cyan-300 font-mono uppercase tracking-wider mb-1">Current Password</label>
-        <input
-          type="password"
-          value={currentPassword}
-          onChange={e => setCurrentPassword(e.target.value)}
-          className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white placeholder:text-gray-500 font-mono"
-          placeholder="Enter current password"
-          required
-        />
-      </div>
+      {!email && (
+        <div>
+          <label className="block text-xs text-cyan-300 font-mono uppercase tracking-wider mb-1">Current Password</label>
+          <input
+            type="password"
+            value={currentPassword}
+            onChange={e => setCurrentPassword(e.target.value)}
+            className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white placeholder:text-gray-500 font-mono"
+            placeholder="Enter current password"
+            required
+          />
+        </div>
+      )}
       <div>
         <label className="block text-xs text-cyan-300 font-mono uppercase tracking-wider mb-1">New Password</label>
         <input

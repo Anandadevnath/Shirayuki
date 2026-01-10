@@ -10,6 +10,7 @@ export default function RegisterPage() {
   const [password, setPassword] = useState("");
   const [username, setUsername] = useState("");
   const [showPassword, setShowPassword] = useState(false);
+  const [tagline, setTagline] = useState("");
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
@@ -22,7 +23,7 @@ export default function RegisterPage() {
       const res = await fetch(`${BACKEND_BASE_URL}${ENDPOINTS.AUTH.REGISTER}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password, username }),
+        body: JSON.stringify({ email, password, username, tagline }),
       });
       const data = await res.json();
       if (res.ok) {
@@ -115,6 +116,27 @@ export default function RegisterPage() {
                     required
                   />
                   <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-fuchsia-500/5 to-transparent pointer-events-none rounded-r-md"></div>
+                </div>
+              </div>
+            </div>
+
+            {/* Tagline Input */}
+            <div className="mb-6">
+              <label className="block text-cyan-300 text-xs font-mono uppercase tracking-wider mb-3 flex items-center gap-2">
+                <div className="w-1 h-1 bg-cyan-400 rounded-full animate-pulse"></div>
+                Tagline
+              </label>
+              <div className="relative group">
+                <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-md opacity-0 group-focus-within:opacity-20 blur transition duration-300"></div>
+                <div className="relative flex items-center">
+                  <input
+                    type="text"
+                    placeholder="#animefan"
+                    value={tagline}
+                    onChange={(e) => setTagline(e.target.value)}
+                    className="w-full pl-4 pr-4 py-3.5 rounded-md bg-black/40 backdrop-blur-sm text-white border border-cyan-500/30 focus:border-cyan-400 focus:outline-none transition-all placeholder:text-gray-600 font-mono text-sm"
+                  />
+                  <div className="absolute right-0 top-0 w-20 h-full bg-gradient-to-l from-cyan-500/5 to-transparent pointer-events-none rounded-r-md"></div>
                 </div>
               </div>
             </div>

@@ -1,5 +1,5 @@
 import React from "react";
-import UpdatePasswordForm from "../components/profile/UpdatePasswordForm";
+import SecureUpdatePassword from "../components/profile/SecureUpdatePassword";
 
 export default function UpdatePasswordPage() {
   return (
@@ -27,7 +27,7 @@ export default function UpdatePasswordPage() {
             <h1 className="text-3xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-400 mb-6 animate-gradient-text font-mono uppercase text-center tracking-wider">
               Update Password
             </h1>
-            <UpdatePasswordForm />
+            <SecureUpdatePassword />
           </div>
         </div>
       </div>

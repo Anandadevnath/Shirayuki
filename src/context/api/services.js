@@ -1,40 +1,47 @@
-import { apiClient } from "./client";
+import { apiClient, backendClient } from "./client";
 import { ENDPOINTS } from "./endpoints";
+
+// Email Verification
+export const sendVerificationEmail = (payload) =>
+  backendClient.post(ENDPOINTS.AUTH.SEND_VERIFICATION, payload);
+
+export const verifyEmailCode = (payload) =>
+  backendClient.post(ENDPOINTS.AUTH.VERIFY_EMAIL, payload);
 
 // Auth
 export const register = (payload) =>
-  apiClient.post(ENDPOINTS.AUTH.REGISTER, payload);
+  backendClient.post(ENDPOINTS.AUTH.REGISTER, payload);
 
 export const login = (payload) =>
-  apiClient.post(ENDPOINTS.AUTH.LOGIN, payload);
+  backendClient.post(ENDPOINTS.AUTH.LOGIN, payload);
 
 export const forgotPassword = (email) =>
-  apiClient.post(ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
+  backendClient.post(ENDPOINTS.AUTH.FORGOT_PASSWORD, { email });
 
 export const updatePassword = (payload) =>
-  apiClient.post(ENDPOINTS.AUTH.UPDATE_PASSWORD, payload);
+  backendClient.post(ENDPOINTS.AUTH.UPDATE_PASSWORD, payload);
 
 // User Profile
 export const getUserProfile = (userId) =>
-  apiClient.get(ENDPOINTS.USER.GET_USER_PROFILE(userId));
+  backendClient.get(ENDPOINTS.USER.GET_USER_PROFILE(userId));
 
 export const updateUserProfile = (userId, data) =>
-  apiClient.post(ENDPOINTS.USER.UPDATE_USER_PROFILE(userId), data);
+  backendClient.post(ENDPOINTS.USER.UPDATE_USER_PROFILE(userId), data);
 
 export const deleteUserAccount = (userId) =>
-  apiClient.post(ENDPOINTS.USER.DELETE_ACCOUNT(userId));
+  backendClient.post(ENDPOINTS.USER.DELETE_ACCOUNT(userId));
 
 // Profile Pictures
 export const getPrebuiltPfps = () =>
-  apiClient.get(ENDPOINTS.PROFILE.GET_PREBUILT_PFPS);
+  backendClient.get(ENDPOINTS.PROFILE.GET_PREBUILT_PFPS);
 
 export const uploadCustomPfp = (formData) =>
-  apiClient.post(ENDPOINTS.PROFILE.UPLOAD_CUSTOM_PFP, formData, {
+  backendClient.post(ENDPOINTS.PROFILE.UPLOAD_CUSTOM_PFP, formData, {
     headers: { 'Content-Type': 'multipart/form-data' },
   });
 
 export const selectPrebuiltPfp = (payload) =>
-  apiClient.post(ENDPOINTS.PROFILE.SELECT_PREBUILT_PFP, payload);
+  backendClient.post(ENDPOINTS.PROFILE.SELECT_PREBUILT_PFP, payload);
 
 // Home
 export const getHome = () => apiClient.get(ENDPOINTS.HOME);
