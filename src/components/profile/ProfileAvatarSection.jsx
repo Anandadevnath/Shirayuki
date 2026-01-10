@@ -22,13 +22,36 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
     });
   }, []);
 
-  // Only update local state, not backend/localStorage
-  const handlePrebuiltSelect = (url, id) => {
+  // Automatically save to backend and localStorage
+  const handlePrebuiltSelect = async (url, id) => {
     setError("");
     onAvatarChange(url);
+
+    // Save to backend
+    const userId = localStorage.getItem("userId");
+    if (userId) {
+      const { error: updateError } = await updateUserProfile(userId, { avatar: url });
+      if (!updateError) {
+        // Update localStorage
+        try {
+          const stored = localStorage.getItem("user");
+          if (stored) {
+            const parsed = JSON.parse(stored);
+            parsed.pfpUrl = url;
+            parsed.avatar = url;
+            localStorage.setItem("user", JSON.stringify(parsed));
+            window.dispatchEvent(new Event('storage'));
+          }
+        } catch (e) {
+          console.error("Failed to update localStorage:", e);
+        }
+      } else {
+        setError("Failed to save avatar");
+      }
+    }
   };
 
-  // Only update local state, not backend/localStorage
+  // Automatically save to backend and localStorage
   const handleUpload = async (e) => {
     setError("");
     const file = e.target.files[0];
@@ -40,6 +63,29 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
     setUploading(false);
     if (data && data.url) {
       onAvatarChange(data.url);
+
+      // Save to backend
+      const userId = localStorage.getItem("userId");
+      if (userId) {
+        const { error: updateError } = await updateUserProfile(userId, { avatar: data.url });
+        if (!updateError) {
+          // Update localStorage
+          try {
+            const stored = localStorage.getItem("user");
+            if (stored) {
+              const parsed = JSON.parse(stored);
+              parsed.pfpUrl = data.url;
+              parsed.avatar = data.url;
+              localStorage.setItem("user", JSON.stringify(parsed));
+              window.dispatchEvent(new Event('storage'));
+            }
+          } catch (e) {
+            console.error("Failed to update localStorage:", e);
+          }
+        } else {
+          setError("Failed to save avatar");
+        }
+      }
     } else setError("Failed to upload avatar");
   };
 
