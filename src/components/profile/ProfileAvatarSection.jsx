@@ -10,7 +10,6 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
   useEffect(() => {
     getPrebuiltPfps().then(({ data }) => {
       if (data && Array.isArray(data)) {
-        // Store both id and url for each pfp
         const pfps = data.map(item => ({
           id: item.id,
           url: item.url.startsWith("http://") || item.url.startsWith("https://")
@@ -22,17 +21,13 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
     });
   }, []);
 
-  // Automatically save to backend and localStorage
   const handlePrebuiltSelect = async (url, id) => {
     setError("");
     onAvatarChange(url);
-
-    // Save to backend
     const userId = localStorage.getItem("userId");
     if (userId) {
       const { error: updateError } = await updateUserProfile(userId, { avatar: url });
       if (!updateError) {
-        // Update localStorage
         try {
           const stored = localStorage.getItem("user");
           if (stored) {
@@ -51,7 +46,6 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
     }
   };
 
-  // Automatically save to backend and localStorage
   const handleUpload = async (e) => {
     setError("");
     const file = e.target.files[0];
@@ -64,12 +58,10 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
     if (data && data.url) {
       onAvatarChange(data.url);
 
-      // Save to backend
       const userId = localStorage.getItem("userId");
       if (userId) {
         const { error: updateError } = await updateUserProfile(userId, { avatar: data.url });
         if (!updateError) {
-          // Update localStorage
           try {
             const stored = localStorage.getItem("user");
             if (stored) {
@@ -98,6 +90,7 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
             key={pfp.id}
             src={pfp.url}
             alt="prebuilt avatar"
+            loading="lazy"
             className={`w-14 h-14 rounded-full border-2 cursor-pointer ${user.avatar === pfp.url ? "border-fuchsia-400" : "border-cyan-500/30"}`}
             onClick={() => handlePrebuiltSelect(pfp.url, pfp.id)}
           />
