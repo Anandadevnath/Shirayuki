@@ -9,13 +9,13 @@ export default function ProfileForm({ user, handleChange, handleSave, saving, er
     handleChange({ target: { name: "avatar", value: url } });
   };
   return (
-    <form onSubmit={handleSave} className="relative animate-fade-in-up">
-      {/* Corner Decorations */}
-      <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-500 opacity-50"></div>
-      <div className="absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-fuchsia-500 opacity-50"></div>
-      <div className="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-fuchsia-500 opacity-50"></div>
-      <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-500 opacity-50"></div>
-      <div className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-lg p-6 shadow-2xl">
+    <form onSubmit={handleSave} className="relative animate-fade-in-up overflow-hidden">
+      {/* Corner Decorations - hidden on small screens */}
+      <div className="hidden sm:block absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-500 opacity-50"></div>
+      <div className="hidden sm:block absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-fuchsia-500 opacity-50"></div>
+      <div className="hidden sm:block absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-fuchsia-500 opacity-50"></div>
+      <div className="hidden sm:block absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-500 opacity-50"></div>
+      <div className="relative bg-black/80 backdrop-blur-xl border border-cyan-500/30 rounded-lg p-4 sm:p-6 shadow-2xl">
         <div className="flex items-center justify-between mb-6">
           <h2 className="text-xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 to-fuchsia-400 flex items-center gap-2 font-mono uppercase tracking-wider">
             <Edit2 className="w-5 h-5 text-cyan-400" />

@@ -1,55 +1,10 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
-// Shared CSS for suggestions scrollbar
-export const suggestionStyles = `
-  @keyframes suggestionSlideIn {
-    from {
-      opacity: 0;
-      transform: translateY(-8px) scale(0.98);
-    }
-    to {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-  }
-  .suggestion-dropdown {
-    animation: suggestionSlideIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-  }
-  .suggestions-scroll::-webkit-scrollbar {
-    width: 6px;
-  }
-  .suggestions-scroll::-webkit-scrollbar-track {
-    background: transparent;
-    margin: 8px 0;
-  }
-  .suggestions-scroll::-webkit-scrollbar-thumb {
-    background: linear-gradient(180deg, rgba(139, 92, 246, 0.5), rgba(236, 72, 153, 0.5));
-    border-radius: 10px;
-  }
-  .suggestions-scroll::-webkit-scrollbar-thumb:hover {
-    background: linear-gradient(180deg, rgba(139, 92, 246, 0.7), rgba(236, 72, 153, 0.7));
-  }
-  .suggestion-item {
-    animation: suggestionItemIn 0.3s cubic-bezier(0.16, 1, 0.3, 1) forwards;
-    opacity: 0;
-  }
-  @keyframes suggestionItemIn {
-    from {
-      opacity: 0;
-      transform: translateX(-8px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
-    }
-  }
-`;
-
 // Single suggestion item component
 export function SuggestionItem({ suggestion, onClick, index = 0, variant = "desktop" }) {
   const isDesktop = variant === "desktop";
-  
+
   return (
     <button
       onClick={onClick}
@@ -107,23 +62,22 @@ export function SuggestionItem({ suggestion, onClick, index = 0, variant = "desk
 }
 
 // Desktop search suggestions dropdown
-export function SearchSuggestions({ 
-  suggestions, 
-  searchQuery, 
-  onSuggestionClick, 
-  onClose 
+export function SearchSuggestions({
+  suggestions,
+  searchQuery,
+  onSuggestionClick,
+  onClose
 }) {
   if (!suggestions.length) return null;
 
   return (
-    <div 
+    <div
       className="absolute top-full left-0 right-0 mt-3 bg-black/40 backdrop-blur-2xl border border-white/10 rounded-2xl shadow-2xl shadow-black/50 z-50 max-h-96 overflow-y-auto overflow-x-hidden animate-in fade-in slide-in-from-top-2 duration-200"
       style={{
         scrollbarWidth: 'thin',
         scrollbarColor: 'rgba(139, 92, 246, 0.5) transparent'
       }}
     >
-      <style>{suggestionStyles}</style>
       <div className="p-2 suggestions-scroll suggestion-dropdown">
         {suggestions.map((suggestion, index) => (
           <SuggestionItem
@@ -149,16 +103,16 @@ export function SearchSuggestions({
 }
 
 // Mobile search suggestions
-export function MobileSearchSuggestions({ 
-  suggestions, 
-  searchQuery, 
-  onSuggestionClick, 
-  onClose 
+export function MobileSearchSuggestions({
+  suggestions,
+  searchQuery,
+  onSuggestionClick,
+  onClose
 }) {
   if (!suggestions.length) return null;
 
   return (
-    <div 
+    <div
       className="mt-3 bg-zinc-900/80 backdrop-blur-xl border border-white/5 rounded-xl shadow-xl max-h-[50vh] overflow-y-auto"
       style={{
         scrollbarWidth: 'thin',

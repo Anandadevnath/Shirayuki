@@ -164,7 +164,7 @@ export default function ProfilePage() {
     ];
 
     return (
-        <div className="relative min-h-screen bg-black py-12 px-4 overflow-hidden -mt-20">
+        <div className="relative min-h-screen bg-black py-12 px-4 sm:px-6 lg:px-8 overflow-hidden -mt-20">
             {/* Animated Grid Background */}
             <div className="absolute inset-0 bg-grid-pattern opacity-20"></div>
             <div className="absolute inset-0 bg-gradient-to-br from-cyan-950/40 via-black to-fuchsia-950/40"></div>
@@ -173,7 +173,7 @@ export default function ProfilePage() {
             <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-cyan-500/20 rounded-full blur-3xl animate-float-slow pointer-events-none"></div>
             <div className="absolute bottom-1/3 right-1/4 w-80 h-80 bg-fuchsia-500/20 rounded-full blur-3xl animate-float-slower pointer-events-none"></div>
 
-            <div className="relative max-w-6xl mx-auto mt-16">
+            <div className="relative max-w-6xl mx-auto mt-16 w-full">
                 {/* Profile Header Card */}
                 <ProfileHeader user={user} />
                 {/* Tabs Navigation */}

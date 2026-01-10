@@ -1,8 +1,10 @@
 import { Link } from "react-router-dom";
+import { Home } from "lucide-react";
 
 export const NAV_LINKS = [
-  { name: "Genres", href: "/genre/action" },
-  { name: "Types", href: "/category/tv" },
+  { name: "Home", href: "/", icon: <Home size={22} /> },
+  { name: "Genres", href: "/genre" },
+  { name: "Types", href: "/category" },
   { name: "Schedule", href: "/schedule" },
   { name: "A-Z List", href: "/az-list" },
   { name: "Studios", href: "/producer" },
@@ -16,9 +18,13 @@ export function NavLinks() {
         <Link
           key={link.name}
           to={link.href}
-          className="text-sm font-medium text-white hover:text-white transition-colors uppercase tracking-wide"
+          className="group text-sm font-medium text-white hover:text-white transition-colors uppercase tracking-wide"
         >
-          {link.name}
+          <span className="relative inline-flex items-center gap-2">
+            {link.icon ? link.icon : null}
+            <span>{link.name}</span>
+            <span className="absolute left-0 -bottom-1 h-0.5 w-full bg-blue-200 transform scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100" />
+          </span>
         </Link>
       ))}
     </div>
