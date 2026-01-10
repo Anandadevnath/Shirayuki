@@ -43,6 +43,14 @@ class ApiClient {
       body: JSON.stringify(body),
     });
   }
+
+  put(endpoint, body, options = {}) {
+    return this.request(endpoint, {
+      ...options,
+      method: "PUT",
+      body: JSON.stringify(body),
+    });
+  }
 }
 
 export const apiClient = new ApiClient(API_BASE_URL); 

@@ -28,10 +28,14 @@ export default function ProfileHeader({ user }) {
           </div>
           {/* User Info */}
           <div className="flex-1 text-center md:text-left">
-            <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-fuchsia-400 mb-2 animate-gradient-text font-mono uppercase tracking-wider">
-              {user.displayName || user.username}
-            </h1>
-            <p className="text-cyan-300/70 mb-1 font-mono">@{user.username}</p>
+            <div className="flex flex-col md:flex-row md:items-center md:gap-4 justify-center md:justify-start">
+              <h1 className="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-cyan-400 via-purple-400 to-fuchsia-400 mb-2 animate-gradient-text font-mono uppercase tracking-wider">
+                {user.username}
+              </h1>
+              {user.tagline && (
+                <span className="text-lg md:text-xl text-fuchsia-300 font-mono italic mt-1 md:mt-0">{user.tagline}</span>
+              )}
+            </div>
             <p className="text-gray-500 text-sm font-mono">{user.email}</p>
           </div>
           {/* Quick Stats */}

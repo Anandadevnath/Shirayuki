@@ -51,14 +51,13 @@ export default function ProfilePage() {
                             id: parsed.userId || parsed._id || parsed.id,
                             username: parsed.username,
                             email: parsed.email,
-                            displayName: parsed.displayName || parsed.username,
+                            tagline: parsed.tagline || '',
                             avatar: parsed.pfpUrl || parsed.avatar || null,
                         };
                         setUser(fallback);
                         setLoading(false);
                         return;
-                    } catch (e) {
-                    }
+                    } catch (e) {}
                 }
                 setError("Failed to load profile.");
             } else {
@@ -66,10 +65,21 @@ export default function ProfilePage() {
                     id: data.id || data.userId || data._id || null,
                     username: data.username,
                     email: data.email,
-                    displayName: data.displayName || data.username,
-                    avatar: data.avatar || data.pfpUrl || null,
+                    tagline: data.tagline || '',
+                    avatar: data.pfpUrl || data.avatar || null,
+                    pfpUrl: data.pfpUrl || data.avatar || null,
                 };
                 setUser(normalized);
+                // Update localStorage user object for navbar
+                try {
+                  const stored = localStorage.getItem("user");
+                  if (stored) {
+                    const parsed = JSON.parse(stored);
+                    parsed.pfpUrl = normalized.avatar;
+                    parsed.avatar = normalized.avatar;
+                    localStorage.setItem("user", JSON.stringify(parsed));
+                  }
+                } catch {}
             }
             setLoading(false);
         }
@@ -84,7 +94,9 @@ export default function ProfilePage() {
         e.preventDefault();
         setSaving(true);
         setError("");
-        const { data, error } = await updateUserProfile(userId, user);
+        // Exclude avatar from payload
+        const { avatar, ...profileData } = user;
+        const { data, error } = await updateUserProfile(userId, profileData);
         if (error) setError("Failed to save profile.");
         setSaving(false);
     };

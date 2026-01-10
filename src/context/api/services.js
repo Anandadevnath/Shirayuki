@@ -26,7 +26,7 @@ export const getUserProfile = (userId) =>
   backendClient.get(ENDPOINTS.USER.GET_USER_PROFILE(userId));
 
 export const updateUserProfile = (userId, data) =>
-  backendClient.post(ENDPOINTS.USER.UPDATE_USER_PROFILE(userId), data);
+  backendClient.put(ENDPOINTS.USER.UPDATE_USER_PROFILE(userId), data);
 
 export const deleteUserAccount = (userId) =>
   backendClient.post(ENDPOINTS.USER.DELETE_ACCOUNT(userId));

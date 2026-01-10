@@ -29,12 +29,24 @@ export default function Navbar() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isScrolled, setIsScrolled] = useState(false);
   const [isLoggedIn, setIsLoggedIn] = useState(() => localStorage.getItem("isLoggedIn") === "true");
+  const [user, setUser] = useState(() => {
+    try {
+      return JSON.parse(localStorage.getItem("user")) || {};
+    } catch {
+      return {};
+    }
+  });
   const searchRef = useRef(null);
   const navigate = useNavigate();
 
   useEffect(() => {
     const handleStorage = () => {
       setIsLoggedIn(localStorage.getItem("isLoggedIn") === "true");
+      try {
+        setUser(JSON.parse(localStorage.getItem("user")) || {});
+      } catch {
+        setUser({});
+      }
     };
     window.addEventListener("storage", handleStorage);
     return () => window.removeEventListener("storage", handleStorage);
@@ -269,7 +281,7 @@ export default function Navbar() {
                 {/* Profile Avatar/Link */}
                 <Link to="/profile" className="flex items-center gap-2 px-3 py-1 rounded-full hover:bg-white/10 transition">
                   <img
-                    src="/pfp/bleach/ichigo.png"
+                    src={user.pfpUrl || user.avatar || "/pfp/bleach/ichigo.png"}
                     alt="Profile"
                     className="w-9 h-9 rounded-full object-cover border border-white/20"
                     style={{ background: '#222' }}
@@ -333,7 +345,7 @@ export default function Navbar() {
                         className="flex items-center gap-3 px-3 py-2 rounded-full hover:bg-white/10 transition mb-2"
                       >
                         <img
-                          src="/pfp/bleach/ichigo.png"
+                          src={user.pfpUrl || user.avatar || "/pfp/bleach/ichigo.png"}
                           alt="Profile"
                           className="w-9 h-9 rounded-full object-cover border border-white/20"
                           style={{ background: '#222' }}

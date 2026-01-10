@@ -1,7 +1,13 @@
+
 import React from "react";
 import { Edit2, Lock, Save } from "lucide-react";
+import ProfileAvatarSection from "./ProfileAvatarSection";
 
 export default function ProfileForm({ user, handleChange, handleSave, saving, error }) {
+  // Avatar change handler
+  const handleAvatarChange = (url) => {
+    handleChange({ target: { name: "avatar", value: url } });
+  };
   return (
     <form onSubmit={handleSave} className="relative animate-fade-in-up">
       {/* Corner Decorations */}
@@ -16,19 +22,40 @@ export default function ProfileForm({ user, handleChange, handleSave, saving, er
             Edit Profile
           </h2>
         </div>
-        {/* Username */}
+        {/* Avatar Section */}
+        <ProfileAvatarSection user={user} onAvatarChange={handleAvatarChange} />
+        {/* Username#Tagline Combined */}
         <div className="mb-5">
           <label className="block text-cyan-300 text-xs font-mono uppercase tracking-wider mb-3">
-            Username
+            Username & Tagline
           </label>
           <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-md opacity-0 group-focus-within:opacity-20 blur transition duration-300"></div>
+            <div className="absolute -inset-0.5 bg-gradient-to-r from-cyan-500 to-fuchsia-500 rounded-md opacity-0 group-focus-within:opacity-20 blur transition duration-300"></div>
             <input
               type="text"
-              value={user.username}
-              name="username"
-              onChange={handleChange}
+              value={user.tagline && user.tagline.length > 0 ? `${user.username}#${user.tagline.replace(/^#+/, '')}` : user.username}
+              name="usernameTagline"
+              onChange={e => {
+                const value = e.target.value;
+                const [username, ...tagArr] = value.split('#');
+                let tagline = tagArr.join('#');
+                // Remove any leading # from tagline
+                tagline = tagline.replace(/^#+/, '');
+                handleChange({
+                  target: {
+                    name: 'username',
+                    value: username.trim(),
+                  }
+                });
+                handleChange({
+                  target: {
+                    name: 'tagline',
+                    value: tagline.trim(),
+                  }
+                });
+              }}
               className="relative w-full px-4 py-3 rounded-md bg-black/40 backdrop-blur-sm text-white border border-cyan-500/30 focus:border-cyan-400 focus:outline-none transition-all font-mono text-sm"
+              placeholder="username#owner"
             />
           </div>
         </div>
@@ -48,23 +75,7 @@ export default function ProfileForm({ user, handleChange, handleSave, saving, er
             />
           </div>
         </div>
-        {/* Display Name */}
-        <div className="mb-5">
-          <label className="block text-fuchsia-300 text-xs font-mono uppercase tracking-wider mb-3">
-            Display Name
-          </label>
-          <div className="relative group">
-            <div className="absolute -inset-0.5 bg-gradient-to-r from-fuchsia-500 to-cyan-500 rounded-md opacity-0 group-focus-within:opacity-20 blur transition duration-300"></div>
-            <input
-              type="text"
-              value={user.displayName}
-              name="displayName"
-              onChange={handleChange}
-              className="relative w-full px-4 py-3 rounded-md bg-black/40 backdrop-blur-sm text-white border border-fuchsia-500/30 focus:border-fuchsia-400 focus:outline-none transition-all font-mono text-sm"
-            />
-          </div>
-          <p className="text-xs text-gray-500 mt-2 font-mono">Public display name</p>
-        </div>
+        {/* Removed Display Name field */}
         {/* Change Password Button */}
         <a
           href="/updatePassword"
