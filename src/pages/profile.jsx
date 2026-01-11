@@ -6,6 +6,7 @@ import ProfileHeader from "../components/profile/ProfileHeader";
 import ProfileTabs from "../components/profile/ProfileTabs";
 import ProfileForm from "../components/profile/ProfileForm";
 import ProfileStats from "../components/profile/ProfileStats";
+import { AnimeCard } from "../components/az/AnimeCard";
 import "../css/profile.css";
 
 export default function ProfilePage() {
@@ -16,6 +17,26 @@ export default function ProfilePage() {
     const [error, setError] = useState("");
     const [activeTab, setActiveTab] = useState("profile");
     const { showToast } = useToast();
+    const [watchProgress, setWatchProgress] = useState(null);
+    const [watchLoading, setWatchLoading] = useState(false);
+    const [watchError, setWatchError] = useState("");
+
+    useEffect(() => {
+        if (activeTab === "watching") {
+            setWatchLoading(true);
+            setWatchError("");
+            fetch("https://shirayuki-backend.vercel.app/api/progress/695d5da190ff0e9c553a5d8e")
+                .then(res => res.json())
+                .then(data => {
+                    setWatchProgress(data);
+                    setWatchLoading(false);
+                })
+                .catch(err => {
+                    setWatchError("Failed to fetch watch progress.");
+                    setWatchLoading(false);
+                });
+        }
+    }, [activeTab]);
 
     useEffect(() => {
         async function fetchProfile() {
@@ -191,7 +212,80 @@ export default function ProfilePage() {
                             </div>
                         </div>
                     )}
-                    {activeTab !== "profile" && (
+                    {activeTab === "watching" && (
+                        <div className="relative animate-fade-in-up">
+                            <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-500 opacity-50"></div>
+                            <div className="absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-fuchsia-500 opacity-50"></div>
+                            <div className="absolute -bottom-2 -left-2 w-4 h-4 border-b-2 border-l-2 border-fuchsia-500 opacity-50"></div>
+                            <div className="absolute -bottom-2 -right-2 w-4 h-4 border-b-2 border-r-2 border-cyan-500 opacity-50"></div>
+                            <div className="relative bg-black/80 backdrop-blur-xl border border-purple-500/30 rounded-lg p-12 shadow-2xl text-center">
+                                {watchLoading ? (
+                                    <>
+                                        <div className="text-cyan-300 text-lg font-mono uppercase tracking-wider mb-2">Loading Watching Progress...</div>
+                                    </>
+                                ) : watchError ? (
+                                    <>
+                                        <div className="text-red-400 text-lg font-mono uppercase mb-2">{watchError}</div>
+                                    </>
+                                ) : watchProgress && Array.isArray(watchProgress.data) && watchProgress.data.length > 0 ? (
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+                                        {watchProgress.data.map((item, idx) => {
+                                            // Custom card for watching section with redirect to item.url
+                                            const anime = {
+                                                id: item.animeId,
+                                                poster: item.poster || "/public/logo/studio-logo/cloverworks.avif",
+                                                name: item.animeId.replace(/-/g, " "),
+                                                type: item.category,
+                                                episodes: { sub: item.episodeId },
+                                                rating: item.server,
+                                            };
+                                            return (
+                                                <a
+                                                    key={idx}
+                                                    href={item.url}
+                                                    className="block group"
+                                                >
+                                                    <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[2/3]">
+                                                        <img
+                                                            src={anime.poster}
+                                                            alt={anime.name}
+                                                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                                                            loading="lazy"
+                                                        />
+                                                        <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
+                                                        {/* Type Badge */}
+                                                        {anime.type && (
+                                                            <span className="absolute top-1.5 right-1.5 sm:top-2 sm:right-2 bg-purple-600 hover:bg-purple-700 text-[10px] sm:text-xs px-2 py-0.5 rounded text-white font-semibold">{anime.type}</span>
+                                                        )}
+                                                        {/* Rating Badge */}
+                                                        {anime.rating && (
+                                                            <span className="absolute top-1.5 left-1.5 sm:top-2 sm:left-2 bg-red-600 hover:bg-red-700 text-[10px] sm:text-xs px-2 py-0.5 rounded text-white font-semibold">{anime.rating}</span>
+                                                        )}
+                                                        <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
+                                                            <h3 className="font-semibold text-white text-xs sm:text-sm line-clamp-2 mb-1 sm:mb-2 group-hover:text-purple-400 transition-colors">
+                                                                {anime.name}
+                                                            </h3>
+                                                            <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
+                                                                {anime.episodes?.sub && (
+                                                                    <span className="bg-pink-500/90 hover:bg-pink-500 text-white text-[10px] sm:text-xs px-2 py-0.5 rounded-md flex items-center gap-1">
+                                                                        <svg xmlns="http://www.w3.org/2000/svg" width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="sm:w-3 sm:h-3"><rect width="20" height="15" x="2" y="7" rx="2" ry="2" /><polyline points="17 2 12 7 7 2" /></svg>
+                                                                        {anime.episodes.sub}
+                                                                    </span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </a>
+                                            );
+                                        })}
+                                    </div>
+                                ) : (
+                                    <div className="text-gray-400 font-mono text-sm">No watch progress found.</div>
+                                )}
+                            </div>
+                        </div>
+                    )}
+                    {activeTab !== "profile" && activeTab !== "watching" && (
                         <div className="relative animate-fade-in-up">
                             <div className="absolute -top-2 -left-2 w-4 h-4 border-t-2 border-l-2 border-cyan-500 opacity-50"></div>
                             <div className="absolute -top-2 -right-2 w-4 h-4 border-t-2 border-r-2 border-fuchsia-500 opacity-50"></div>

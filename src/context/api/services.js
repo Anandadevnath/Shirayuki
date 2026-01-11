@@ -89,4 +89,7 @@ export const getEpisodeSources = (animeEpisodeId, server = "hd-1", category = "s
 
 // Watch Progress & History
 export const getWatchProgress = (userId) =>
-  apiClient.get(ENDPOINTS.PROGRESS.WATCH(userId));
+  backendClient.get(ENDPOINTS.PROGRESS.GET_WATCH_PROGRESS(userId));
+
+export const postWatchProgress = (userId, payload) =>
+  backendClient.post(ENDPOINTS.PROGRESS.UPDATE_WATCH_PROGRESS(userId), payload);

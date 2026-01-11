@@ -170,6 +170,8 @@ export default function Watch() {
       setLoading(true);
       setError(null);
 
+      console.log("📺 Loading anime:", animeId);
+
       const [epsRes, infoRes] = await Promise.all([
         getAnimeEpisodes(animeId),
         getAnimeDetails(animeId),
@@ -188,6 +190,12 @@ export default function Watch() {
         eps[0];
 
       setCurrentEpisode(current);
+      
+      console.log("🎬 Episode loaded:", {
+        episodeId: current?.episodeId,
+        episodeNumber: current?.number,
+        title: current?.title
+      });
 
       if (!infoRes.error) {
         setAnimeInfo(infoRes.data?.data?.anime);
@@ -221,18 +229,31 @@ export default function Watch() {
           setSelectedServer(first);
           setSelectedCategory(data.sub?.length ? "sub" : "dub");
           setStreamingUrl(first.streaming_url);
+          
+          console.log("🎥 Now Watching:", {
+            animeId: animeId,
+            episodeId: currentEpisode.episodeId,
+            server: first.serverName,
+            category: data.sub?.length ? "sub" : "dub"
+          });
         }
       }
       setServerLoading(false);
     }
 
     loadServers();
-  }, [currentEpisode]);
+  }, [currentEpisode, animeId]);
 
   const handleEpisodeSelect = (ep) => {
     setCurrentEpisode(ep);
     navigate(`/watch/${animeId}/${encodeURIComponent(ep.episodeId)}`, {
       replace: true,
+    });
+    
+    console.log("⏭️ Episode changed:", {
+      animeId: animeId,
+      episodeId: ep.episodeId,
+      episodeNumber: ep.number
     });
   };
 
@@ -250,6 +271,13 @@ export default function Watch() {
     setSelectedServer(server);
     setSelectedCategory(category);
     setStreamingUrl(server.streaming_url);
+    
+    console.log("🎥 Now Watching:", {
+      animeId: animeId,
+      episodeId: currentEpisode?.episodeId,
+      server: server.serverName,
+      category: category
+    });
   };
 
   if (loading) return <WatchSkeleton />;
