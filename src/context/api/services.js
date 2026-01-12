@@ -84,5 +84,5 @@ export const getSchedule = (date) => apiClient.get(ENDPOINTS.SCHEDULE(date));
 export const getEpisodeServers = (animeEpisodeId) =>
   apiClient.get(ENDPOINTS.EPISODE_SERVERS(animeEpisodeId));
 
-export const getEpisodeSources = (animeEpisodeId, server = "hd-1", category = "sub") =>
-  apiClient.get(ENDPOINTS.EPISODE_SOURCES(animeEpisodeId, server, category));
+export const getEpisodeSources = (animeEpisodeId, episodeId, ep, server, category) =>
+  apiClient.get(ENDPOINTS.EPISODE_SOURCES(animeEpisodeId, episodeId, ep, server, category));

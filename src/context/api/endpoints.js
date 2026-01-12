@@ -60,8 +60,11 @@ export const ANIME_ENDPOINTS = {
     `/api/${API_VERSION}/hianime/episode/servers?animeEpisodeId=${animeEpisodeId}`,
   
   // Episode Streaming Source
-  EPISODE_SOURCES: (animeEpisodeId, server = "hd-1", category = "sub") =>
-    `/api/${API_VERSION}/hianime/episode/sources?animeEpisodeId=${animeEpisodeId}&server=${server}&category=${category}`,
+  EPISODE_SOURCES: (animeEpisodeId, episodeId, ep, server, category = 'sub') => {
+    const url = `/api/${API_VERSION}/hianime/episode/sources?animeEpisodeId=${animeEpisodeId}&ep=${episodeId}&ep=${ep}&server=${server}&category=${category}`;
+    console.log("[ENDPOINTS] Episode Sources URL:", url);
+    return url;
+  },
 };
 
 
