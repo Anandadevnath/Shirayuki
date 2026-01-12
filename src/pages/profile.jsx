@@ -1,12 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { useToast } from "../components/ui/toast";
-import { getUserProfile, updateUserProfile } from "@/context/api/services";
-import { User, PlayCircle, Heart, TrendingUp, Edit2, Lock, Save, Camera, Clock, Award } from "lucide-react";
+import { backendClient } from "@/context/api/client";
+import { ENDPOINTS } from "@/context/api/endpoints";
+import { User, PlayCircle, Heart, TrendingUp } from "lucide-react";
 import ProfileHeader from "../components/profile/ProfileHeader";
 import ProfileTabs from "../components/profile/ProfileTabs";
 import ProfileForm from "../components/profile/ProfileForm";
 import ProfileStats from "../components/profile/ProfileStats";
-import { AnimeCard } from "../components/az/AnimeCard";
 import "../css/profile.css";
 
 export default function ProfilePage() {
@@ -25,18 +25,28 @@ export default function ProfilePage() {
         if (activeTab === "watching") {
             setWatchLoading(true);
             setWatchError("");
-            fetch("https://shirayuki-backend.vercel.app/api/progress/695d5da190ff0e9c553a5d8e")
-                .then(res => res.json())
-                .then(data => {
-                    setWatchProgress(data);
+            if (!userId) {
+                setWatchError("User not logged in.");
+                setWatchLoading(false);
+                return;
+            }
+            const endpoint = ENDPOINTS.PROGRESS.WATCH(userId);
+            backendClient.get(endpoint)
+                .then(({ data, error }) => {
+                    if (error || !data) {
+                        setWatchError("Failed to fetch watch progress.");
+                        setWatchProgress(null);
+                    } else {
+                        setWatchProgress(data);
+                    }
                     setWatchLoading(false);
                 })
-                .catch(err => {
+                .catch(() => {
                     setWatchError("Failed to fetch watch progress.");
                     setWatchLoading(false);
                 });
         }
-    }, [activeTab]);
+    }, [activeTab, userId]);
 
     useEffect(() => {
         async function fetchProfile() {
@@ -67,7 +77,8 @@ export default function ProfilePage() {
                 setLoading(false);
                 return;
             }
-            const { data, error } = await getUserProfile(userId);
+            const endpoint = ENDPOINTS.USER.GET_USER_PROFILE(userId);
+            const { data, error } = await backendClient.get(endpoint);
             if (error || !data) {
                 if (localUser) {
                     const fallback = {
@@ -83,7 +94,6 @@ export default function ProfilePage() {
                 }
                 setError("Failed to load profile.");
             } else {
-                // Prefer avatar from localStorage if available
                 let avatar = data.pfpUrl || data.avatar || null;
                 if (localUser && (localUser.pfpUrl || localUser.avatar)) {
                     avatar = localUser.pfpUrl || localUser.avatar;
@@ -118,11 +128,10 @@ export default function ProfilePage() {
         e.preventDefault();
         setSaving(true);
         setError("");
-        // Save avatar and other profile data to backend
         const { avatar, ...profileData } = user;
-        const { data, error } = await updateUserProfile(userId, { ...profileData, avatar });
+        const endpoint = ENDPOINTS.USER.UPDATE_USER_PROFILE(userId);
+        const { data, error } = await backendClient.put(endpoint, { ...profileData, avatar });
         if (!error) {
-            // Update localStorage user object
             try {
                 const stored = localStorage.getItem("user");
                 if (stored) {
