@@ -11,7 +11,6 @@ import EpisodeSidebar from "@/components/watch/EpisodeSidebar";
 import WatchSkeleton from "@/components/watch/WatchSkeleton";
 import VideoPlayer from "@/components/watch/VideoPlayer";
 import {
-  Lightbulb,
   SkipForward,
   SkipBack,
   Plus,
@@ -46,7 +45,6 @@ export default function Watch() {
   const [introSkip, setIntroSkip] = useState(null);
   const [outroSkip, setOutroSkip] = useState(null);
 
-  const [lightOn, setLightOn] = useState(true);
   const [autoPlay, setAutoPlay] = useState(true);
   const [autoNext, setAutoNext] = useState(true);
   const [autoSkipIntro, setAutoSkipIntro] = useState(true);
@@ -109,6 +107,8 @@ export default function Watch() {
           const initialCategory = data.sub?.length ? "sub" : "dub";
           setSelectedCategory(initialCategory);
 
+          // Fetch episode sources
+          console.log('=== INITIAL LOAD: Fetching Episode Sources ===');
           const sourceRes = await getEpisodeSources(
             animeId,
             currentEpisode.episodeId, 
@@ -116,21 +116,61 @@ export default function Watch() {
             first.serverName, 
             initialCategory 
           );
+          
+          console.log('Full API Response:', sourceRes);
+          
           if (!sourceRes.error) {
-            const videoData = sourceRes.data?.video || {};
-            setStreamingUrl(videoData.source?.url || "");
+            // Try multiple possible response structures
+            const videoData = 
+              sourceRes.data?.data?.video ||  // Format 1: { data: { data: { video: {...} } } }
+              sourceRes.data?.video ||         // Format 2: { data: { video: {...} } }
+              sourceRes?.video ||              // Format 3: { video: {...} }
+              {};
             
-            // Extract subtitle tracks
+            console.log('Video Data:', videoData);
+            console.log('Video Data Keys:', Object.keys(videoData));
+            
+            // Get streaming URL
+            const url = videoData.source?.url || videoData?.url || "";
+            console.log('Streaming URL:', url);
+            setStreamingUrl(url);
+            
+            // Extract subtitle tracks with extensive logging
+            console.log('=== SUBTITLE EXTRACTION ===');
+            console.log('Captions object:', videoData.captions);
+            console.log('Captions type:', typeof videoData.captions);
+            
             const tracks = videoData.captions?.tracks || [];
+            console.log('Extracted tracks:', tracks);
+            console.log('Number of tracks:', tracks.length);
+            console.log('Tracks is array:', Array.isArray(tracks));
+            
+            if (tracks.length > 0) {
+              tracks.forEach((track, i) => {
+                console.log(`Track ${i}:`, {
+                  label: track.label,
+                  file: track.file,
+                  kind: track.kind,
+                  default: track.default
+                });
+              });
+            } else {
+              console.warn('⚠️ NO SUBTITLE TRACKS FOUND!');
+              console.log('Full response for debugging:', JSON.stringify(sourceRes, null, 2));
+            }
+            
             setSubtitleTracks(tracks);
+            console.log('✓ Subtitle tracks set in state:', tracks.length);
             
             // Extract intro/outro skip data
             const skipData = videoData.skip || [];
+            console.log('Skip data:', skipData);
             const intro = skipData.find(s => s.name === "Skip Intro");
             const outro = skipData.find(s => s.name === "Skip Outro");
             setIntroSkip(intro || null);
             setOutroSkip(outro || null);
           } else {
+            console.error('API Error:', sourceRes.error);
             setStreamingUrl("");
             setSubtitleTracks([]);
             setIntroSkip(null);
@@ -168,8 +208,11 @@ export default function Watch() {
     }
   };
 
-  // Server switching
+  // Server switching with extensive logging
   const handleServerSelect = async (server, category) => {
+    console.log('=== SERVER SWITCH: Fetching Episode Sources ===');
+    console.log('Server:', server.serverName, 'Category:', category);
+    
     setSelectedServer(server);
     setSelectedCategory(category);
     setServerLoading(true);
@@ -182,16 +225,86 @@ export default function Watch() {
       category 
     );
     
+    console.log('Full API Response:', sourceRes);
+    
     if (!sourceRes.error) {
-      const videoData = sourceRes.data?.video || {};
-      const newUrl = videoData.source?.url || "";
+      // Try multiple possible response structures
+      const videoData = 
+        sourceRes.data?.data?.video ||
+        sourceRes.data?.video ||
+        sourceRes?.video ||
+        {};
+      
+      console.log('Video Data:', videoData);
+      
+      // Get streaming URL
+      const newUrl = videoData.source?.url || videoData?.url || "";
+      console.log('Streaming URL:', newUrl);
       setStreamingUrl(newUrl);
       
-      // Update subtitle tracks
+      // Extract subtitle tracks
+      console.log('=== SUBTITLE EXTRACTION ===');
+      console.log('Captions object:', videoData.captions);
+      
+      const tracks = videoData.captions?.tracks || [];
+      console.log('Extracted tracks:', tracks);
+      console.log('Number of tracks:', tracks.length);
+      
+      if (tracks.length > 0) {
+        tracks.forEach((track, i) => {
+          console.log(`Track ${i}:`, track);
+        });
+      } else {
+        console.warn('⚠️ NO SUBTITLE TRACKS FOUND!');
+      }
+      
+      setSubtitleTracks(tracks);
+      console.log('✓ Subtitle tracks set in state');
+      
+      // Extract intro/outro skip data
+      const skipData = videoData.skip || [];
+      const intro = skipData.find(s => s.name === "Skip Intro");
+      const outro = skipData.find(s => s.name === "Skip Outro");
+      setIntroSkip(intro || null);
+      setOutroSkip(outro || null);
+    } else {
+      console.error('API Error:', sourceRes.error);
+      setStreamingUrl("");
+      setSubtitleTracks([]);
+      setIntroSkip(null);
+      setOutroSkip(null);
+    }
+    
+    setServerLoading(false);
+  };
+
+  // Reload handler for video
+  const handleReloadVideo = async () => {
+    if (!selectedServer || !currentEpisode) return;
+    setServerLoading(true);
+    setStreamingUrl("");
+    
+    const sourceRes = await getEpisodeSources(
+      animeId,
+      currentEpisode.episodeId,
+      currentEpisode.number,
+      selectedServer.serverName,
+      selectedCategory
+    );
+    
+    if (!sourceRes.error) {
+      const videoData = 
+        sourceRes.data?.data?.video ||
+        sourceRes.data?.video ||
+        sourceRes?.video ||
+        {};
+      
+      const url = videoData.source?.url || videoData?.url || "";
+      setStreamingUrl(url);
+      
       const tracks = videoData.captions?.tracks || [];
       setSubtitleTracks(tracks);
       
-      // Update intro/outro skip data
       const skipData = videoData.skip || [];
       const intro = skipData.find(s => s.name === "Skip Intro");
       const outro = skipData.find(s => s.name === "Skip Outro");
@@ -207,38 +320,12 @@ export default function Watch() {
     setServerLoading(false);
   };
 
-  // Reload handler for video
-  const handleReloadVideo = async () => {
-    if (!selectedServer || !currentEpisode) return;
-    setServerLoading(true);
-    setStreamingUrl("");
-    const sourceRes = await getEpisodeSources(
-      animeId,
-      currentEpisode.episodeId,
-      currentEpisode.number,
-      selectedServer.serverName,
-      selectedCategory
-    );
-    if (!sourceRes.error) {
-      const videoData = sourceRes.data?.video || {};
-      setStreamingUrl(videoData.source?.url || "");
-      
-      const tracks = videoData.captions?.tracks || [];
-      setSubtitleTracks(tracks);
-      
-      const skipData = videoData.skip || [];
-      const intro = skipData.find(s => s.name === "Skip Intro");
-      const outro = skipData.find(s => s.name === "Skip Outro");
-      setIntroSkip(intro || null);
-      setOutroSkip(outro || null);
-    } else {
-      setStreamingUrl("");
-      setSubtitleTracks([]);
-      setIntroSkip(null);
-      setOutroSkip(null);
-    }
-    setServerLoading(false);
-  };
+  // Debug: Log subtitle tracks state changes
+  useEffect(() => {
+    console.log('📊 SubtitleTracks State Updated:', subtitleTracks);
+    console.log('   Length:', subtitleTracks.length);
+    console.log('   Is Array:', Array.isArray(subtitleTracks));
+  }, [subtitleTracks]);
 
   if (loading) return <WatchSkeleton />;
 
@@ -319,7 +406,9 @@ export default function Watch() {
                   disabled={episodes.findIndex((e) => e === currentEpisode) === episodes.length - 1}
                 />
               </div>
-              {/* ...removed Lights, Auto Skip, and Auto Next buttons... */}
+              <div className="flex gap-2">
+                <IconBtn icon={<Plus className="h-5 w-5" />} tooltip="Add to List" />
+              </div>
             </div>
 
             {/* Episode Info */}
@@ -464,22 +553,6 @@ function IconBtn({ icon, onClick, disabled = false, tooltip }) {
       }`}
     >
       {icon}
-    </button>
-  );
-}
-
-function ToggleBtn({ icon, label, active, onClick }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-semibold transition-all duration-300 backdrop-blur-xl ${
-        active
-          ? "bg-gradient-to-r from-purple-600 to-purple-500 text-white shadow-lg shadow-purple-500/50 scale-105"
-          : "glass-button hover:scale-105"
-      }`}
-    >
-      {icon}
-      <span>{label}</span>
     </button>
   );
 }

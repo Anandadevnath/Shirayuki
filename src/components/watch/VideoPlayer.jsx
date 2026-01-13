@@ -49,6 +49,21 @@ export default function VideoPlayer({
   const hideControlsTimeoutRef = useRef(null);
   const tracksInitializedRef = useRef(false);
 
+  // DEBUG: Log subtitle tracks when component receives them
+  useEffect(() => {
+    console.log('=== VideoPlayer Subtitle Debug ===');
+    console.log('Subtitle tracks received:', subtitleTracks);
+    console.log('Number of tracks:', subtitleTracks.length);
+    console.log('Selected caption:', selectedCaption);
+    subtitleTracks.forEach((track, i) => {
+      console.log(`Track ${i}:`, {
+        label: track.label,
+        file: track.file,
+        default: track.default
+      });
+    });
+  }, [subtitleTracks, selectedCaption]);
+
   // Format time helper
   const formatTime = (seconds) => {
     if (isNaN(seconds)) return "0:00";
@@ -68,8 +83,10 @@ export default function VideoPlayer({
       
       // Initialize subtitle tracks properly
       if (!tracksInitializedRef.current && video.textTracks.length > 0) {
+        console.log('Video textTracks loaded:', video.textTracks.length);
         const defaultTrack = subtitleTracks.find(t => t.default);
         if (defaultTrack) {
+          console.log('Setting default track:', defaultTrack.label);
           setSelectedCaption(defaultTrack.label);
         }
         tracksInitializedRef.current = true;
@@ -129,17 +146,17 @@ export default function VideoPlayer({
     };
   }, [introSkip, outroSkip, autoSkipIntro, onEnded, subtitleTracks]);
 
-  // Handle subtitle track changes - THIS IS THE KEY FIX
+  // Handle subtitle track changes
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    // Wait for tracks to be loaded
     const checkAndSetTracks = () => {
       const tracks = video.textTracks;
       
+      console.log('Checking tracks - Count:', tracks.length);
+      
       if (tracks.length === 0) {
-        // Tracks not loaded yet, try again in a bit
         setTimeout(checkAndSetTracks, 100);
         return;
       }
@@ -153,10 +170,9 @@ export default function VideoPlayer({
       if (selectedCaption !== null) {
         for (let i = 0; i < tracks.length; i++) {
           const track = tracks[i];
-          // Match by label
           if (subtitleTracks[i]?.label === selectedCaption) {
             track.mode = 'showing';
-            console.log(`Enabled subtitle: ${selectedCaption}`);
+            console.log(`✓ Enabled subtitle: ${selectedCaption} (track ${i})`);
             break;
           }
         }
@@ -275,6 +291,7 @@ export default function VideoPlayer({
   };
 
   const toggleCaptionMenu = () => {
+    console.log('Toggling caption menu. Tracks available:', subtitleTracks.length);
     setShowCaptionMenu(!showCaptionMenu);
   };
 
@@ -383,7 +400,7 @@ export default function VideoPlayer({
         </div>
       )}
 
-      {/* Skip Intro Button - Inside Player */}
+      {/* Skip Intro Button */}
       {showSkipIntro && !autoSkipIntro && (
         <button
           onClick={skipIntro}
@@ -394,7 +411,7 @@ export default function VideoPlayer({
         </button>
       )}
 
-      {/* Skip Outro Button - Inside Player */}
+      {/* Skip Outro Button */}
       {showSkipOutro && (
         <button
           onClick={skipOutro}
@@ -584,6 +601,13 @@ export default function VideoPlayer({
                         <Check className="h-4 w-4 text-purple-400" />
                       )}
                     </button>
+
+                    {/* DEBUG: Show track count */}
+                    {subtitleTracks.length === 0 && (
+                      <div className="px-4 py-2 text-xs text-zinc-400 italic">
+                        No subtitle tracks available
+                      </div>
+                    )}
 
                     {/* Subtitle Tracks */}
                     {subtitleTracks.map((track, index) => (
