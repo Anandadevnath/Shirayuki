@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useMemo, useCallback } from "react";
 import {
   Play,
   Pause,
@@ -11,6 +11,8 @@ import {
   Captions,
   X,
   Check,
+  RotateCcw,
+  RotateCw,
 } from "lucide-react";
 
 export default function VideoPlayer({
@@ -25,6 +27,9 @@ export default function VideoPlayer({
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const progressBarRef = useRef(null);
+  const hideControlsTimeoutRef = useRef(null);
+  const tracksInitializedRef = useRef(false);
+  const lastSrcRef = useRef(null);
 
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [currentTime, setCurrentTime] = useState(0);
@@ -40,41 +45,34 @@ export default function VideoPlayer({
   const [showSkipIntroEarly, setShowSkipIntroEarly] = useState(false);
   const [showSkipOutroEarly, setShowSkipOutroEarly] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
-  
-  // Caption controls - Initialize with default track
   const [showCaptionMenu, setShowCaptionMenu] = useState(false);
-  const [selectedCaption, setSelectedCaption] = useState(() => {
+  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
+
+  const defaultCaption = useMemo(() => {
     const defaultTrack = subtitleTracks.find(t => t.default);
     return defaultTrack ? defaultTrack.label : null;
-  });
+  }, [subtitleTracks]);
 
-  const hideControlsTimeoutRef = useRef(null);
-  const tracksInitializedRef = useRef(false);
+  const [selectedCaption, setSelectedCaption] = useState(defaultCaption);
 
-  // DEBUG: Log subtitle tracks when component receives them
-  useEffect(() => {
-    console.log('=== VideoPlayer Subtitle Debug ===');
-    console.log('Subtitle tracks received:', subtitleTracks);
-    console.log('Number of tracks:', subtitleTracks.length);
-    console.log('Selected caption:', selectedCaption);
-    subtitleTracks.forEach((track, i) => {
-      console.log(`Track ${i}:`, {
-        label: track.label,
-        file: track.file,
-        default: track.default
-      });
-    });
-  }, [subtitleTracks, selectedCaption]);
-
-  // Format time helper
-  const formatTime = (seconds) => {
+  const formatTime = useCallback((seconds) => {
     if (isNaN(seconds)) return "0:00";
     const mins = Math.floor(seconds / 60);
     const secs = Math.floor(seconds % 60);
     return `${mins}:${secs.toString().padStart(2, "0")}`;
-  };
+  }, []);
 
-  // Initialize video
+  useEffect(() => {
+    if (lastSrcRef.current !== src) {
+      lastSrcRef.current = src;
+      tracksInitializedRef.current = false;
+      setSelectedCaption(defaultCaption);
+      setIsLoading(true);
+      setCurrentTime(0);
+      setBuffered(0);
+    }
+  }, [src, defaultCaption]);
+
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -82,73 +80,50 @@ export default function VideoPlayer({
     const handleLoadedMetadata = () => {
       setDuration(video.duration);
       setIsLoading(false);
-      
-      // Initialize subtitle tracks properly
+
       if (!tracksInitializedRef.current && video.textTracks.length > 0) {
-        console.log('Video textTracks loaded:', video.textTracks.length);
-        const defaultTrack = subtitleTracks.find(t => t.default);
-        if (defaultTrack) {
-          console.log('Setting default track:', defaultTrack.label);
-          setSelectedCaption(defaultTrack.label);
-        }
         tracksInitializedRef.current = true;
       }
     };
 
     const handleTimeUpdate = () => {
-      setCurrentTime(video.currentTime);
-      // --- Intro Skip Logic ---
+      const time = video.currentTime;
+      setCurrentTime(time);
+
       if (introSkip) {
+        const { start, end } = introSkip;
         const showEarly = 5;
-        // Early warning: 5s before intro
-        if (
-          video.currentTime >= (introSkip.start - showEarly) &&
-          video.currentTime < introSkip.start
-        ) {
+
+        if (time >= start - showEarly && time < start) {
           setShowSkipIntroEarly(true);
           setShowSkipIntro(false);
-        } else if (
-          video.currentTime >= introSkip.start &&
-          video.currentTime < introSkip.end
-        ) {
+        } else if (time >= start && time < end) {
           setShowSkipIntroEarly(false);
           setShowSkipIntro(true);
-          // Auto-skip if enabled
           if (autoSkipIntro) {
-            video.currentTime = introSkip.end;
+            video.currentTime = end;
             setShowSkipIntro(false);
           }
-        } else {
+        } else if (showSkipIntro || showSkipIntroEarly) {
           setShowSkipIntroEarly(false);
           setShowSkipIntro(false);
         }
-      } else {
-        setShowSkipIntroEarly(false);
-        setShowSkipIntro(false);
       }
-      // --- Outro Skip Logic ---
+
       if (outroSkip) {
+        const { start, end } = outroSkip;
         const showEarly = 5;
-        // Early warning: 5s before outro
-        if (
-          video.currentTime >= (outroSkip.start - showEarly) &&
-          video.currentTime < outroSkip.start
-        ) {
+
+        if (time >= start - showEarly && time < start) {
           setShowSkipOutroEarly(true);
           setShowSkipOutro(false);
-        } else if (
-          video.currentTime >= outroSkip.start &&
-          video.currentTime < outroSkip.end
-        ) {
+        } else if (time >= start && time < end) {
           setShowSkipOutroEarly(false);
           setShowSkipOutro(true);
-        } else {
+        } else if (showSkipOutro || showSkipOutroEarly) {
           setShowSkipOutroEarly(false);
           setShowSkipOutro(false);
         }
-      } else {
-        setShowSkipOutroEarly(false);
-        setShowSkipOutro(false);
       }
     };
 
@@ -163,7 +138,7 @@ export default function VideoPlayer({
     const handleCanPlay = () => setIsLoading(false);
     const handleEnded = () => {
       setIsPlaying(false);
-      if (onEnded) onEnded();
+      onEnded?.();
     };
 
     video.addEventListener("loadedmetadata", handleLoadedMetadata);
@@ -181,55 +156,39 @@ export default function VideoPlayer({
       video.removeEventListener("canplay", handleCanPlay);
       video.removeEventListener("ended", handleEnded);
     };
-  }, [introSkip, outroSkip, autoSkipIntro, onEnded, subtitleTracks]);
+  }, [introSkip, outroSkip, autoSkipIntro, onEnded, showSkipIntro, showSkipIntroEarly, showSkipOutro, showSkipOutroEarly]);
 
-  // Handle subtitle track changes
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
 
-    const checkAndSetTracks = () => {
+    const setTracks = () => {
       const tracks = video.textTracks;
-      
-      console.log('Checking tracks - Count:', tracks.length);
-      
-      if (tracks.length === 0) {
-        setTimeout(checkAndSetTracks, 100);
-        return;
-      }
+      if (tracks.length === 0) return;
 
-      // Disable all tracks first
       for (let i = 0; i < tracks.length; i++) {
         tracks[i].mode = 'disabled';
       }
 
-      // Enable the selected track
       if (selectedCaption !== null) {
         for (let i = 0; i < tracks.length; i++) {
-          const track = tracks[i];
           if (subtitleTracks[i]?.label === selectedCaption) {
-            track.mode = 'showing';
-            console.log(`✓ Enabled subtitle: ${selectedCaption} (track ${i})`);
+            tracks[i].mode = 'showing';
             break;
           }
         }
-      } else {
-        console.log('All subtitles disabled');
       }
     };
 
-    checkAndSetTracks();
+    if (video.textTracks.length === 0) {
+      const timer = setTimeout(setTracks, 100);
+      return () => clearTimeout(timer);
+    } else {
+      setTracks();
+    }
   }, [selectedCaption, subtitleTracks, src]);
 
-  // Reset tracks when video source changes
-  useEffect(() => {
-    tracksInitializedRef.current = false;
-    const defaultTrack = subtitleTracks.find(t => t.default);
-    setSelectedCaption(defaultTrack ? defaultTrack.label : null);
-  }, [src, subtitleTracks]);
-
-  // Handle play/pause
-  const togglePlay = () => {
+  const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
 
@@ -239,18 +198,17 @@ export default function VideoPlayer({
       video.play();
     }
     setIsPlaying(!isPlaying);
-  };
+  }, [isPlaying]);
 
-  // Handle volume
-  const toggleMute = () => {
+  const toggleMute = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
 
     video.muted = !isMuted;
     setIsMuted(!isMuted);
-  };
+  }, [isMuted]);
 
-  const handleVolumeChange = (e) => {
+  const handleVolumeChange = useCallback((e) => {
     const video = videoRef.current;
     if (!video) return;
 
@@ -258,10 +216,9 @@ export default function VideoPlayer({
     video.volume = newVolume;
     setVolume(newVolume);
     setIsMuted(newVolume === 0);
-  };
+  }, []);
 
-  // Handle seeking
-  const handleSeek = (e) => {
+  const handleSeek = useCallback((e) => {
     const video = videoRef.current;
     const progressBar = progressBarRef.current;
     if (!video || !progressBar) return;
@@ -269,10 +226,9 @@ export default function VideoPlayer({
     const rect = progressBar.getBoundingClientRect();
     const pos = (e.clientX - rect.left) / rect.width;
     video.currentTime = pos * video.duration;
-  };
+  }, []);
 
-  // Handle fullscreen
-  const toggleFullscreen = () => {
+  const toggleFullscreen = useCallback(() => {
     const container = containerRef.current;
     if (!container) return;
 
@@ -283,67 +239,63 @@ export default function VideoPlayer({
       document.exitFullscreen();
       setIsFullscreen(false);
     }
-  };
+  }, []);
 
-  // Skip functions
-  const skipIntro = () => {
+  const skipIntro = useCallback(() => {
     const video = videoRef.current;
     if (!video || !introSkip) return;
     video.currentTime = introSkip.end;
     setShowSkipIntro(false);
-  };
+  }, [introSkip]);
 
-  const skipOutro = () => {
+  const skipOutro = useCallback(() => {
     const video = videoRef.current;
     if (!video || !outroSkip) return;
     video.currentTime = outroSkip.end;
     setShowSkipOutro(false);
-  };
+  }, [outroSkip]);
 
-  // Skip forward/backward
-  const skip = (seconds) => {
+  const skip = useCallback((seconds) => {
     const video = videoRef.current;
     if (!video) return;
     video.currentTime = Math.max(0, Math.min(video.currentTime + seconds, video.duration));
-  };
+  }, []);
 
-  // Playback rate
-  const changePlaybackRate = () => {
+  const changePlaybackRate = useCallback((rate) => {
     const video = videoRef.current;
     if (!video) return;
 
-    const rates = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-    const currentIndex = rates.indexOf(playbackRate);
-    const nextRate = rates[(currentIndex + 1) % rates.length];
-    
-    video.playbackRate = nextRate;
-    setPlaybackRate(nextRate);
-  };
+    video.playbackRate = rate;
+    setPlaybackRate(rate);
+    setShowSettingsMenu(false);
+  }, []);
 
-  // Caption selection
-  const handleCaptionSelect = (label) => {
-    console.log('Caption selected:', label);
+  const handleCaptionSelect = useCallback((label) => {
     setSelectedCaption(label);
     setShowCaptionMenu(false);
-  };
+  }, []);
 
-  const toggleCaptionMenu = () => {
-    console.log('Toggling caption menu. Tracks available:', subtitleTracks.length);
-    setShowCaptionMenu(!showCaptionMenu);
-  };
+  const toggleCaptionMenu = useCallback(() => {
+    setShowCaptionMenu(prev => !prev);
+    setShowSettingsMenu(false);
+  }, []);
 
-  // Auto-hide controls
-  const resetHideControlsTimeout = () => {
+  const toggleSettingsMenu = useCallback(() => {
+    setShowSettingsMenu(prev => !prev);
+    setShowCaptionMenu(false);
+  }, []);
+
+  const resetHideControlsTimeout = useCallback(() => {
     setShowControls(true);
     if (hideControlsTimeoutRef.current) {
       clearTimeout(hideControlsTimeoutRef.current);
     }
     hideControlsTimeoutRef.current = setTimeout(() => {
-      if (isPlaying && !showCaptionMenu) {
+      if (isPlaying && !showCaptionMenu && !showSettingsMenu) {
         setShowControls(false);
       }
     }, 3000);
-  };
+  }, [isPlaying, showCaptionMenu, showSettingsMenu]);
 
   useEffect(() => {
     return () => {
@@ -353,7 +305,6 @@ export default function VideoPlayer({
     };
   }, []);
 
-  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (!videoRef.current) return;
@@ -372,14 +323,6 @@ export default function VideoPlayer({
           e.preventDefault();
           skip(10);
           break;
-        case "ArrowUp":
-          e.preventDefault();
-          setVolume((v) => Math.min(1, v + 0.1));
-          break;
-        case "ArrowDown":
-          e.preventDefault();
-          setVolume((v) => Math.max(0, v - 0.1));
-          break;
         case "m":
           e.preventDefault();
           toggleMute();
@@ -397,7 +340,9 @@ export default function VideoPlayer({
 
     document.addEventListener("keydown", handleKeyPress);
     return () => document.removeEventListener("keydown", handleKeyPress);
-  }, [isPlaying, volume, showCaptionMenu]);
+  }, [togglePlay, skip, toggleMute, toggleFullscreen, toggleCaptionMenu]);
+
+  const playbackRates = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
   return (
     <div
@@ -407,8 +352,17 @@ export default function VideoPlayer({
       onMouseLeave={() => {
         setShowControls(false);
         setShowCaptionMenu(false);
+        setShowSettingsMenu(false);
       }}
     >
+      <style>{`
+        video::cue {
+          background: none !important;
+          color: white;
+          text-shadow: 2px 2px 4px #000, 0 0 2px #000;
+          font-size: 1em;
+        }
+      `}</style>
       {/* Video Element */}
       <video
         ref={videoRef}
@@ -417,6 +371,7 @@ export default function VideoPlayer({
         onClick={togglePlay}
         crossOrigin="anonymous"
         autoPlay={autoPlay}
+        preload="metadata"
       >
         {subtitleTracks.map((track, index) => (
           <track
@@ -432,283 +387,260 @@ export default function VideoPlayer({
 
       {/* Loading Spinner */}
       {isLoading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-black/50 backdrop-blur-sm z-10">
-          <Loader2 className="h-16 w-16 text-purple-400 animate-spin" />
+        <div className="absolute inset-0 flex items-center justify-center bg-black/60 backdrop-blur-sm z-10">
+          <div className="relative">
+            <div className="w-20 h-20 rounded-full border-4 border-cyan-500/30 border-t-cyan-400 animate-spin"></div>
+            <div className="absolute inset-0 flex items-center justify-center">
+              <Loader2 className="h-10 w-10 text-cyan-400" />
+            </div>
+          </div>
         </div>
       )}
 
-      {/* Skip Intro Overlay Button (Early + During) */}
-      {(showSkipIntroEarly || (showSkipIntro && !autoSkipIntro)) && (
-        <button
-          onClick={skipIntro}
-          className={`absolute bottom-28 right-6 font-bold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 z-20 flex items-center gap-2 border shadow-2xl
-            ${showSkipIntroEarly ? 'bg-purple-500/80 border-purple-300/50 text-white shadow-purple-400/40' : 'bg-purple-600/90 border-purple-400/50 text-white shadow-purple-500/50 hover:bg-purple-600'}`}
-          style={{ opacity: 1 }}
-        >
-          <SkipForward className="h-5 w-5" />
-          <span className="text-base">{showSkipIntroEarly ? 'Skip Intro (Soon)' : 'Skip Intro'}</span>
-        </button>
-      )}
-
-      {/* Skip Outro Overlay Button (Early + During) */}
       {(showSkipOutroEarly || showSkipOutro) && (
         <button
           onClick={skipOutro}
-          className={`absolute bottom-28 right-6 font-bold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 z-20 flex items-center gap-2 border shadow-2xl
-            ${showSkipOutroEarly ? 'bg-pink-400/80 border-pink-200/50 text-white shadow-pink-300/40' : 'bg-pink-600/90 border-pink-400/50 text-white shadow-pink-500/50 hover:bg-pink-600'}`}
-          style={{ opacity: 1 }}
+          className={`absolute bottom-32 right-8 font-bold px-8 py-4 rounded-2xl transition-all duration-300 hover:scale-105 z-20 flex items-center gap-3 shadow-2xl backdrop-blur-xl border-2
+            ${showSkipOutroEarly
+              ? 'bg-gradient-to-r from-purple-600/80 to-pink-600/80 border-purple-400/50 text-white shadow-purple-500/50'
+              : 'bg-gradient-to-r from-purple-500/90 to-pink-500/90 border-purple-300/50 text-white shadow-purple-400/60 hover:from-purple-400 hover:to-pink-400'}`}
         >
-          <SkipForward className="h-5 w-5" />
-          <span className="text-base">{showSkipOutroEarly ? 'Skip Outro (Soon)' : 'Skip Outro'}</span>
+          <SkipForward className="h-6 w-6" />
+          <span className="text-lg font-extrabold tracking-wide">{showSkipOutroEarly ? 'SKIP OUTRO' : 'SKIP OUTRO'}</span>
         </button>
       )}
 
-      {/* Controls */}
+      {/* Modern Controls Bar */}
       <div
-        className={`absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/95 via-black/80 to-transparent transition-opacity duration-300 ${
-          showControls ? "opacity-100" : "opacity-0"
-        } z-30`}
+        className={`absolute bottom-0 left-0 right-0 transition-all duration-300 ${showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"} z-30`}
+        style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        {/* Progress Bar */}
-        <div className="px-4 py-2">
-          <div
-            ref={progressBarRef}
-            className="relative h-1.5 bg-white/20 rounded-full cursor-pointer group/progress hover:h-2 transition-all"
-            onClick={handleSeek}
-          >
-            {/* Buffered Progress */}
+        {/* Gradient Background */}
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/95 to-transparent pointer-events-none"></div>
+
+        {/* Content */}
+        <div className="relative w-full">
+          {/* Progress Bar */}
+          <div className="px-2 sm:px-6 pb-2">
             <div
-              className="absolute h-full bg-white/30 rounded-full"
-              style={{ width: `${buffered}%` }}
-            />
-            {/* Current Progress */}
-            <div
-              className="absolute h-full bg-gradient-to-r from-purple-600 to-purple-400 rounded-full"
-              style={{ width: `${(currentTime / duration) * 100}%` }}
+              ref={progressBarRef}
+              className="relative h-2 bg-gradient-to-r from-cyan-900/30 to-purple-900/30 rounded-full cursor-pointer group/progress hover:h-2.5 transition-all backdrop-blur-sm"
+              onClick={handleSeek}
             >
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 w-4 h-4 bg-white rounded-full shadow-lg opacity-0 group-hover/progress:opacity-100 transition-opacity" />
+              {/* Buffered */}
+              <div
+                className="absolute h-full bg-gradient-to-r from-cyan-700/40 to-purple-700/40 rounded-full"
+                style={{ width: `${buffered}%` }}
+              />
+              {/* Progress */}
+              <div
+                className="absolute h-full bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 rounded-full shadow-lg shadow-cyan-500/50"
+                style={{ width: `${(currentTime / duration) * 100}%` }}
+              >
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-xl shadow-cyan-400/50 opacity-0 group-hover/progress:opacity-100 transition-opacity border-2 border-cyan-300"></div>
+              </div>
             </div>
           </div>
-          
-          {/* Time Display */}
-          <div className="flex justify-between items-center mt-1 text-xs text-white/80 font-medium">
-            <span>{formatTime(currentTime)}</span>
-            <span>{formatTime(duration)}</span>
-          </div>
-        </div>
 
-        {/* Control Buttons */}
-        <div className="flex items-center justify-between px-4 pb-4">
-          {/* Left Controls */}
-          <div className="flex items-center gap-2">
-            {/* Play/Pause */}
-            <button
-              onClick={togglePlay}
-              className="p-2.5 hover:bg-white/10 rounded-lg transition"
-              title={isPlaying ? "Pause (Space)" : "Play (Space)"}
-            >
-              {isPlaying ? (
-                <Pause className="h-6 w-6 text-white" fill="white" />
-              ) : (
-                <Play className="h-6 w-6 text-white" fill="white" />
-              )}
-            </button>
-
-            {/* Skip Backward */}
-            <button
-              onClick={() => skip(-10)}
-              className="p-2 hover:bg-white/10 rounded-lg transition group/skip"
-              title="Rewind 10s (←)"
-            >
-              <div className="relative">
-                <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2v6l-4-4-4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M2 12a10 10 0 1 0 10-10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">10</span>
-              </div>
-            </button>
-
-            {/* Skip Forward */}
-            <button
-              onClick={() => skip(10)}
-              className="p-2 hover:bg-white/10 rounded-lg transition"
-              title="Forward 10s (→)"
-            >
-              <div className="relative">
-                <svg className="h-6 w-6 text-white" viewBox="0 0 24 24" fill="none">
-                  <path d="M12 2v6l4-4 4 4" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M22 12a10 10 0 1 1-10-10" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-                </svg>
-                <span className="absolute inset-0 flex items-center justify-center text-[10px] font-bold text-white">10</span>
-              </div>
-            </button>
-
-            {/* Volume */}
-            <div className="flex items-center gap-2 group/volume">
+          {/* Controls */}
+          <div
+            className="flex flex-row items-center justify-center gap-1 sm:gap-2 px-1 sm:px-6 pb-3 w-full overflow-x-auto scrollbar-none"
+            style={{ flexWrap: 'nowrap', WebkitOverflowScrolling: 'touch', minHeight: 48 }}
+          >
+            {/* Left Side */}
+            <div className="flex items-center gap-1">
+              {/* Play/Pause */}
               <button
-                onClick={toggleMute}
-                className="p-2 hover:bg-white/10 rounded-lg transition"
-                title={isMuted ? "Unmute (M)" : "Mute (M)"}
+                onClick={togglePlay}
+                className="p-2 sm:p-3 hover:bg-cyan-500/20 rounded-xl transition-all hover:scale-110 group/btn backdrop-blur-sm"
+                title={isPlaying ? "Pause" : "Play"}
               >
-                {isMuted || volume === 0 ? (
-                  <VolumeX className="h-6 w-6 text-white" />
+                {isPlaying ? (
+                  <Pause className="h-6 w-6 sm:h-7 sm:w-7 text-white group-hover/btn:text-cyan-300 transition-colors" fill="white" />
                 ) : (
-                  <Volume2 className="h-6 w-6 text-white" />
+                  <Play className="h-6 w-6 sm:h-7 sm:w-7 text-white group-hover/btn:text-cyan-300 transition-colors" fill="white" />
                 )}
               </button>
-              <input
-                type="range"
-                min="0"
-                max="1"
-                step="0.1"
-                value={volume}
-                onChange={handleVolumeChange}
-                className="w-0 group-hover/volume:w-20 transition-all duration-300 h-1 bg-white/20 rounded-full appearance-none cursor-pointer [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-3 [&::-webkit-slider-thumb]:h-3 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:cursor-pointer"
-              />
+
+              {/* Skip Backward */}
+              <button
+                onClick={() => skip(-10)}
+                className="p-2 hover:bg-cyan-500/20 rounded-xl transition-all hover:scale-110 backdrop-blur-sm"
+                title="Rewind 10s"
+              >
+                <RotateCcw className="h-5 w-5 text-white hover:text-cyan-300 transition-colors" />
+              </button>
+
+              {/* Skip Forward */}
+              <button
+                onClick={() => skip(10)}
+                className="p-2 hover:bg-cyan-500/20 rounded-xl transition-all hover:scale-110 backdrop-blur-sm"
+                title="Forward 10s"
+              >
+                <RotateCw className="h-5 w-5 text-white hover:text-cyan-300 transition-colors" />
+              </button>
+
+              {/* Volume */}
+              <div className="flex items-center gap-1 ml-1 group/volume">
+                <button
+                  onClick={toggleMute}
+                  className="p-2 hover:bg-cyan-500/20 rounded-xl transition-all backdrop-blur-sm"
+                  title={isMuted ? "Unmute" : "Mute"}
+                >
+                  {isMuted || volume === 0 ? (
+                    <VolumeX className="h-5 w-5 text-white hover:text-cyan-300 transition-colors" />
+                  ) : (
+                    <Volume2 className="h-5 w-5 text-white hover:text-cyan-300 transition-colors" />
+                  )}
+                </button>
+                <input
+                  type="range"
+                  min="0"
+                  max="1"
+                  step="0.1"
+                  value={volume}
+                  onChange={handleVolumeChange}
+                  className="w-0 group-hover/volume:w-24 transition-all duration-300 h-2 bg-gradient-to-r from-cyan-900/30 to-purple-900/30 rounded-full appearance-none cursor-pointer 
+                  [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 [&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-gradient-to-r [&::-webkit-slider-thumb]:from-cyan-400 [&::-webkit-slider-thumb]:to-purple-400 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-lg [&::-webkit-slider-thumb]:shadow-cyan-500/50"
+                />
+              </div>
+
+              {/* Time Display */}
+              <div className="hidden md:flex items-center text-sm font-mono text-white/90 ml-3 bg-white/5 px-3 py-1.5 rounded-lg backdrop-blur-sm">
+                <span className="text-cyan-300 font-bold">{formatTime(currentTime)}</span>
+                <span className="mx-2 text-white/40">/</span>
+                <span className="text-white/70">{formatTime(duration)}</span>
+              </div>
             </div>
 
-            {/* Time Display (visible) */}
-            <div className="hidden md:flex items-center text-sm text-white font-medium ml-2">
-              <span>{formatTime(currentTime)}</span>
-              <span className="mx-1 text-white/60">/</span>
-              <span className="text-white/80">{formatTime(duration)}</span>
-            </div>
-          </div>
 
-          {/* Right Controls */}
-          <div className="flex items-center gap-2">
-            {/* Skip Intro Button (in controls) */}
-            {(showSkipIntroEarly || (showSkipIntro && !autoSkipIntro)) && (
-              <button
-                onClick={skipIntro}
-                className={`px-4 py-2 rounded-xl transition text-white text-sm font-bold flex items-center gap-2 shadow-lg
-                  ${showSkipIntroEarly ? 'bg-purple-500/80 hover:bg-purple-500/90 shadow-purple-400/30' : 'bg-purple-600/90 hover:bg-purple-600 shadow-purple-500/30'}`}
-                title={showSkipIntroEarly ? 'Skip Intro (Soon)' : 'Skip Intro'}
-              >
-                <SkipForward className="h-4 w-4" />
-                <span className="hidden sm:inline">{showSkipIntroEarly ? 'Skip Intro (Soon)' : 'Skip Intro'}</span>
-              </button>
-            )}
+            {/* Right Side */}
+            <div className="flex items-center gap-1">
+              {/* Playback Speed */}
+              <div className="relative">
+                <button
+                  onClick={toggleSettingsMenu}
+                  className={`px-4 py-2 rounded-xl transition-all backdrop-blur-sm font-mono font-bold text-sm ${showSettingsMenu ? 'bg-gradient-to-r from-cyan-500/30 to-purple-500/30 text-cyan-300' : 'hover:bg-cyan-500/20 text-white/90 hover:text-cyan-300'}`}
+                  title="Playback speed"
+                >
+                  {playbackRate}x
+                </button>
 
-            {/* Skip Outro Button (in controls) */}
-            {(showSkipOutroEarly || showSkipOutro) && (
-              <button
-                onClick={skipOutro}
-                className={`px-4 py-2 rounded-xl transition text-white text-sm font-bold flex items-center gap-2 shadow-lg
-                  ${showSkipOutroEarly ? 'bg-pink-400/80 hover:bg-pink-400/90 shadow-pink-300/30' : 'bg-pink-600/90 hover:bg-pink-600 shadow-pink-500/30'}`}
-                title={showSkipOutroEarly ? 'Skip Outro (Soon)' : 'Skip Outro'}
-              >
-                <SkipForward className="h-4 w-4" />
-                <span className="hidden sm:inline">{showSkipOutroEarly ? 'Skip Outro (Soon)' : 'Skip Outro'}</span>
-              </button>
-            )}
-
-            {/* Caption Button with Menu */}
-            <div className="relative">
-              <button
-                onClick={toggleCaptionMenu}
-                className={`p-2 rounded-lg transition ${
-                  selectedCaption ? 'bg-purple-600 hover:bg-purple-700' : 'hover:bg-white/10'
-                }`}
-                title="Captions (C)"
-              >
-                <Captions className="h-5 w-5 text-white" />
-              </button>
-
-              {/* Caption Menu */}
-              {showCaptionMenu && (
-                <div className="absolute bottom-full right-0 mb-2 bg-black/95 backdrop-blur-xl rounded-lg border border-white/20 shadow-2xl min-w-[200px] overflow-hidden">
-                  {/* Header */}
-                  <div className="flex items-center justify-between px-4 py-3 border-b border-white/10">
-                    <span className="text-white font-semibold text-sm">Subtitles</span>
-                    <button
-                      onClick={() => setShowCaptionMenu(false)}
-                      className="p-1 hover:bg-white/10 rounded transition"
-                    >
-                      <X className="h-4 w-4 text-white" />
-                    </button>
+                {showSettingsMenu && (
+                  <div className="absolute bottom-full right-0 mb-3 bg-black/95 backdrop-blur-xl rounded-2xl border-2 border-cyan-500/30 shadow-2xl shadow-cyan-500/20 min-w-[180px] overflow-hidden">
+                    <div className="px-4 py-3 border-b border-cyan-500/20 bg-gradient-to-r from-cyan-900/20 to-purple-900/20">
+                      <span className="text-white font-bold text-sm tracking-wide">PLAYBACK SPEED</span>
+                    </div>
+                    <div className="py-2">
+                      {playbackRates.map((rate) => (
+                        <button
+                          key={rate}
+                          onClick={() => changePlaybackRate(rate)}
+                          className={`w-full px-4 py-3 flex items-center justify-between hover:bg-gradient-to-r hover:from-cyan-500/20 hover:to-purple-500/20 transition-all ${playbackRate === rate ? 'bg-gradient-to-r from-cyan-500/10 to-purple-500/10' : ''}`}
+                        >
+                          <span className={`font-mono font-bold text-sm ${playbackRate === rate ? 'text-cyan-300' : 'text-white/80'}`}>
+                            {rate}x
+                          </span>
+                          {playbackRate === rate && (
+                            <Check className="h-4 w-4 text-cyan-400" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
+                )}
+              </div>
 
-                  {/* Caption Options */}
-                  <div className="py-2">
-                    {/* Off Option */}
-                    <button
-                      onClick={() => handleCaptionSelect(null)}
-                      className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-white/10 transition ${
-                        selectedCaption === null ? 'bg-white/5' : ''
-                      }`}
-                    >
-                      <span className="text-white text-sm">Off</span>
-                      {selectedCaption === null && (
-                        <Check className="h-4 w-4 text-purple-400" />
-                      )}
-                    </button>
+              {/* Skip Intro Button (beside 1x) */}
+              {(showSkipIntroEarly || (showSkipIntro && !autoSkipIntro)) && (
+                <button
+                  onClick={skipIntro}
+                  className="ml-2 px-4 py-1.5 rounded-full font-bold text-base flex items-center gap-2 bg-transparent text-cyan-600 border-2 border-cyan-400 hover:bg-cyan-50/20 hover:text-cyan-400 transition-all shadow-sm"
+                  style={{ fontWeight: 700, letterSpacing: 1, minWidth: 110, borderStyle: 'solid', borderWidth: 2, background: 'transparent' }}
+                  title={showSkipIntroEarly ? 'Skip Intro (Soon)' : 'Skip Intro'}
+                >
+                  <SkipForward className="h-5 w-5" />
+                  <span className="uppercase tracking-wide">{showSkipIntroEarly ? 'Skip Intro (Soon)' : 'Skip Intro'}</span>
+                </button>
+              )}
 
-                    {/* DEBUG: Show track count */}
-                    {subtitleTracks.length === 0 && (
-                      <div className="px-4 py-2 text-xs text-zinc-400 italic">
-                        No subtitle tracks available
-                      </div>
-                    )}
+              {/* Captions */}
+              <div className="relative">
+                <button
+                  onClick={toggleCaptionMenu}
+                  className={`p-2.5 rounded-xl transition-all backdrop-blur-sm ${selectedCaption ? 'bg-gradient-to-r from-cyan-500/30 to-purple-500/30 text-cyan-300' : 'hover:bg-cyan-500/20 text-white hover:text-cyan-300'
+                    }`}
+                  title="Captions"
+                >
+                  <Captions className="h-5 w-5" />
+                </button>
 
-                    {/* Subtitle Tracks */}
-                    {subtitleTracks.map((track, index) => (
+                {showCaptionMenu && (
+                  <div className="absolute bottom-full right-0 mb-3 bg-black/95 backdrop-blur-xl rounded-2xl border-2 border-purple-500/30 shadow-2xl shadow-purple-500/20 min-w-[220px] overflow-hidden">
+                    <div className="px-4 py-3 border-b border-purple-500/20 bg-gradient-to-r from-purple-900/20 to-pink-900/20">
+                      <span className="text-white font-bold text-sm tracking-wide">SUBTITLES</span>
+                    </div>
+                    <div className="py-2">
                       <button
-                        key={index}
-                        onClick={() => handleCaptionSelect(track.label)}
-                        className={`w-full px-4 py-2.5 flex items-center justify-between hover:bg-white/10 transition ${
-                          selectedCaption === track.label ? 'bg-white/5' : ''
-                        }`}
+                        onClick={() => handleCaptionSelect(null)}
+                        className={`w-full px-4 py-3 flex items-center justify-between hover:bg-gradient-to-r hover:from-purple-500/20 hover:to-pink-500/20 transition-all ${selectedCaption === null ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10' : ''
+                          }`}
                       >
-                        <span className="text-white text-sm">{track.label}</span>
-                        {selectedCaption === track.label && (
+                        <span className={`text-sm font-semibold ${selectedCaption === null ? 'text-purple-300' : 'text-white/80'}`}>
+                          Off
+                        </span>
+                        {selectedCaption === null && (
                           <Check className="h-4 w-4 text-purple-400" />
                         )}
                       </button>
-                    ))}
+
+                      {subtitleTracks.map((track, index) => (
+                        <button
+                          key={index}
+                          onClick={() => handleCaptionSelect(track.label)}
+                          className={`w-full px-4 py-3 flex items-center justify-between hover:bg-gradient-to-r hover:from-purple-500/20 hover:to-pink-500/20 transition-all ${selectedCaption === track.label ? 'bg-gradient-to-r from-purple-500/10 to-pink-500/10' : ''
+                            }`}
+                        >
+                          <span className={`text-sm font-semibold ${selectedCaption === track.label ? 'text-purple-300' : 'text-white/80'}`}>
+                            {track.label}
+                          </span>
+                          {selectedCaption === track.label && (
+                            <Check className="h-4 w-4 text-purple-400" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
-                </div>
-              )}
+                )}
+              </div>
+
+
+
+              {/* Fullscreen */}
+              <button
+                onClick={toggleFullscreen}
+                className="p-2.5 hover:bg-cyan-500/20 rounded-xl transition-all hover:scale-110 backdrop-blur-sm ml-1"
+                title="Fullscreen"
+              >
+                <Maximize className="h-5 w-5 text-white hover:text-cyan-300 transition-colors" />
+              </button>
             </div>
-
-            {/* Playback Speed */}
-            <button
-              onClick={changePlaybackRate}
-              className="px-3 py-1.5 hover:bg-white/10 rounded-lg transition text-white text-sm font-semibold"
-              title="Playback speed"
-            >
-              {playbackRate}x
-            </button>
-
-            {/* Settings */}
-            <button
-              className="p-2 hover:bg-white/10 rounded-lg transition"
-              title="Settings"
-            >
-              <Settings className="h-5 w-5 text-white" />
-            </button>
-
-            {/* Fullscreen */}
-            <button
-              onClick={toggleFullscreen}
-              className="p-2 hover:bg-white/10 rounded-lg transition"
-              title="Fullscreen (F)"
-            >
-              <Maximize className="h-5 w-5 text-white" />
-            </button>
           </div>
         </div>
       </div>
 
-      {/* Center Play Button (when paused) */}
+      {/* Center Play Button (smaller) */}
       {!isPlaying && !isLoading && (
         <button
           onClick={togglePlay}
-          className="absolute inset-0 flex items-center justify-center z-20"
+          className="absolute inset-0 flex items-center justify-center z-20 group/play"
+          style={{ pointerEvents: 'auto' }}
         >
-          <div className="p-6 bg-white/10 backdrop-blur-xl rounded-full hover:bg-white/20 transition-all hover:scale-110">
-            <Play className="h-16 w-16 text-white" fill="white" />
+          <div className="absolute left-1/2 top-1/2" style={{ transform: 'translate(-50%, -50%)' }}>
+            <div className="absolute left-1/2 top-1/2 bg-gradient-to-r from-cyan-500 to-purple-500 rounded-full blur-xl opacity-50 group-hover/play:opacity-70 transition-opacity" style={{ width: 60, height: 60, transform: 'translate(-50%, -50%)' }}></div>
+            <div className="relative flex items-center justify-center p-2 bg-gradient-to-br from-cyan-500/20 to-purple-500/20 backdrop-blur-xl rounded-full hover:from-cyan-500/30 hover:to-purple-500/30 transition-all hover:scale-110 border-2 border-cyan-400/50 shadow-2xl shadow-cyan-500/30" style={{ width: 60, height: 60 }}>
+              <Play className="h-8 w-8 text-white" fill="white" />
+            </div>
           </div>
         </button>
       )}

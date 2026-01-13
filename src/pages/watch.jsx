@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import {
   getAnimeEpisodes,
@@ -20,8 +20,6 @@ import {
 } from "lucide-react";
 import AnimeDetailsCard from "@/components/details/AnimeDetailsCard";
 
-
-/* -------------------- Main Page -------------------- */
 export default function Watch() {
   const { animeId, episodeId } = useParams();
   const navigate = useNavigate();
@@ -50,248 +48,21 @@ export default function Watch() {
   const [autoSkipIntro, setAutoSkipIntro] = useState(true);
   const [episodeViewMode, setEpisodeViewMode] = useState("list");
 
-  /* -------------------- Fetch Episodes -------------------- */
-  useEffect(() => {
-    async function load() {
-      setLoading(true);
-      setError(null);
-
-      const [epsRes, infoRes] = await Promise.all([
-        getAnimeEpisodes(animeId),
-        getAnimeDetails(animeId),
-      ]);
-
-      if (epsRes.error) {
-        setError(epsRes.error);
-        return;
-      }
-
-      const eps = epsRes.data?.data?.episodes || [];
-      setEpisodes(eps);
-
-      const current =
-        eps.find((e) => e.episodeId === decodeURIComponent(episodeId)) ||
-        eps[0];
-
-      setCurrentEpisode(current);
-      
-      if (!infoRes.error) {
-        setAnimeInfo(infoRes.data?.data?.anime);
-      }
-
-      setLoading(false);
-    }
-    load();
-  }, [animeId, episodeId]);
-
-  /* -------------------- Fetch Servers -------------------- */
-  useEffect(() => {
-    if (!currentEpisode) return;
-
-    async function loadServers() {
-      setServerLoading(true);
-      const res = await getEpisodeServers(currentEpisode.episodeId);
-
-      if (!res.error) {
-        const data = res.data?.data || {};
-        setServers({
-          sub: data.sub || [],
-          dub: data.dub || [],
-        });
-
-        const first =
-          data.sub?.[0] || data.dub?.[0] || data.raw?.[0] || null;
-
-        if (first) {
-          setSelectedServer(first);
-          const initialCategory = data.sub?.length ? "sub" : "dub";
-          setSelectedCategory(initialCategory);
-
-          // Fetch episode sources
-          console.log('=== INITIAL LOAD: Fetching Episode Sources ===');
-          const sourceRes = await getEpisodeSources(
-            animeId,
-            currentEpisode.episodeId, 
-            currentEpisode.number, 
-            first.serverName, 
-            initialCategory 
-          );
-          
-          console.log('Full API Response:', sourceRes);
-          
-          if (!sourceRes.error) {
-            // The response structure is: { data: { status, message, video, captions, skip } }
-            const responseData = sourceRes.data || sourceRes;
-            const videoData = responseData.video || {};
-            const captionsData = responseData.captions || {};
-            const skipData = responseData.skip || [];
-            
-            console.log('Response Data:', responseData);
-            console.log('Video Data:', videoData);
-            console.log('Captions Data:', captionsData);
-            
-            // Get streaming URL
-            const url = videoData.source?.url || videoData.url || "";
-            console.log('Streaming URL:', url);
-            setStreamingUrl(url);
-            
-            // Extract subtitle tracks with extensive logging
-            console.log('=== SUBTITLE EXTRACTION ===');
-            console.log('Captions object:', captionsData);
-            console.log('Captions type:', typeof captionsData);
-            
-            const tracks = captionsData.tracks || [];
-            console.log('Extracted tracks:', tracks);
-            console.log('Number of tracks:', tracks.length);
-            console.log('Tracks is array:', Array.isArray(tracks));
-            
-            if (tracks.length > 0) {
-              tracks.forEach((track, i) => {
-                console.log(`Track ${i}:`, {
-                  label: track.label,
-                  file: track.file,
-                  kind: track.kind,
-                  default: track.default
-                });
-              });
-            } else {
-              console.warn('⚠️ NO SUBTITLE TRACKS FOUND!');
-              console.log('Full response for debugging:', JSON.stringify(sourceRes, null, 2));
-            }
-            
-            setSubtitleTracks(tracks);
-            console.log('✓ Subtitle tracks set in state:', tracks.length);
-            
-            // Extract intro/outro skip data
-            console.log('Skip data:', skipData);
-            const intro = skipData.find(s => s.name === "Skip Intro");
-            const outro = skipData.find(s => s.name === "Skip Outro");
-            setIntroSkip(intro || null);
-            setOutroSkip(outro || null);
-          } else {
-            console.error('API Error:', sourceRes.error);
-            setStreamingUrl("");
-            setSubtitleTracks([]);
-            setIntroSkip(null);
-            setOutroSkip(null);
-          }
-        }
-      }
-      setServerLoading(false);
-    }
-
-    loadServers();
-  }, [currentEpisode, animeId]);
-
-  const handleEpisodeSelect = (ep) => {
-    setCurrentEpisode(ep);
-    navigate(`/watch/${animeId}/${encodeURIComponent(ep.episodeId)}`, {
-      replace: true,
-    });
-  };
-
-  const goPrev = () => {
-    const i = episodes.findIndex((e) => e === currentEpisode);
-    if (i > 0) handleEpisodeSelect(episodes[i - 1]);
-  };
-
-  const goNext = () => {
-    const i = episodes.findIndex((e) => e === currentEpisode);
-    if (i < episodes.length - 1) handleEpisodeSelect(episodes[i + 1]);
-  };
-
-  // Handle video ended (auto-next)
-  const handleVideoEnded = () => {
-    if (autoNext) {
-      goNext();
-    }
-  };
-
-  // Server switching with extensive logging
-  const handleServerSelect = async (server, category) => {
-    console.log('=== SERVER SWITCH: Fetching Episode Sources ===');
-    console.log('Server:', server.serverName, 'Category:', category);
+  // Reusable function to load video sources
+  const loadSources = useCallback(async (episode, server, category) => {
+    if (!episode || !server) return;
     
-    setSelectedServer(server);
-    setSelectedCategory(category);
     setServerLoading(true);
-    
-    const sourceRes = await getEpisodeSources(
-      animeId, 
-      currentEpisode.episodeId, 
-      currentEpisode.number, 
-      server.serverName, 
-      category 
-    );
-    
-    console.log('Full API Response:', sourceRes);
-    
-    if (!sourceRes.error) {
-      // The response structure is: { data: { status, message, video, captions, skip } }
-      const responseData = sourceRes.data || sourceRes;
-      const videoData = responseData.video || {};
-      const captionsData = responseData.captions || {};
-      const skipData = responseData.skip || [];
-      
-      console.log('Video Data:', videoData);
-      
-      // Get streaming URL
-      const newUrl = videoData.source?.url || videoData.url || "";
-      console.log('Streaming URL:', newUrl);
-      setStreamingUrl(newUrl);
-      
-      // Extract subtitle tracks
-      console.log('=== SUBTITLE EXTRACTION ===');
-      console.log('Captions object:', captionsData);
-      
-      const tracks = captionsData.tracks || [];
-      console.log('Extracted tracks:', tracks);
-      console.log('Number of tracks:', tracks.length);
-      
-      if (tracks.length > 0) {
-        tracks.forEach((track, i) => {
-          console.log(`Track ${i}:`, track);
-        });
-      } else {
-        console.warn('⚠️ NO SUBTITLE TRACKS FOUND!');
-      }
-      
-      setSubtitleTracks(tracks);
-      console.log('✓ Subtitle tracks set in state');
-      
-      // Extract intro/outro skip data
-      console.log('Skip data:', skipData);
-      const intro = skipData.find(s => s.name === "Skip Intro");
-      const outro = skipData.find(s => s.name === "Skip Outro");
-      setIntroSkip(intro || null);
-      setOutroSkip(outro || null);
-    } else {
-      console.error('API Error:', sourceRes.error);
-      setStreamingUrl("");
-      setSubtitleTracks([]);
-      setIntroSkip(null);
-      setOutroSkip(null);
-    }
-    
-    setServerLoading(false);
-  };
-
-  // Reload handler for video
-  const handleReloadVideo = async () => {
-    if (!selectedServer || !currentEpisode) return;
-    setServerLoading(true);
-    setStreamingUrl("");
     
     const sourceRes = await getEpisodeSources(
       animeId,
-      currentEpisode.episodeId,
-      currentEpisode.number,
-      selectedServer.serverName,
-      selectedCategory
+      episode.episodeId,
+      episode.number,
+      server.serverName,
+      category
     );
     
     if (!sourceRes.error) {
-      // The response structure is: { data: { status, message, video, captions, skip } }
       const responseData = sourceRes.data || sourceRes;
       const videoData = responseData.video || {};
       const captionsData = responseData.captions || {};
@@ -315,14 +86,99 @@ export default function Watch() {
     }
     
     setServerLoading(false);
-  };
+  }, [animeId]);
 
-  // Debug: Log subtitle tracks state changes
+  // OPTIMIZED: Single combined initial load
   useEffect(() => {
-    console.log('📊 SubtitleTracks State Updated:', subtitleTracks);
-    console.log('   Length:', subtitleTracks.length);
-    console.log('   Is Array:', Array.isArray(subtitleTracks));
-  }, [subtitleTracks]);
+    async function load() {
+      setLoading(true);
+      setError(null);
+
+      // Fetch episodes and info in parallel
+      const [epsRes, infoRes] = await Promise.all([
+        getAnimeEpisodes(animeId),
+        getAnimeDetails(animeId),
+      ]);
+
+      if (epsRes.error) {
+        setError(epsRes.error);
+        setLoading(false);
+        return;
+      }
+
+      const eps = epsRes.data?.data?.episodes || [];
+      setEpisodes(eps);
+
+      const current = eps.find((e) => e.episodeId === decodeURIComponent(episodeId)) || eps[0];
+      setCurrentEpisode(current);
+      
+      if (!infoRes.error) {
+        setAnimeInfo(infoRes.data?.data?.anime);
+      }
+
+      // Immediately fetch servers for current episode
+      if (current) {
+        const serverRes = await getEpisodeServers(current.episodeId);
+        
+        if (!serverRes.error) {
+          const data = serverRes.data?.data || {};
+          setServers({
+            sub: data.sub || [],
+            dub: data.dub || [],
+          });
+
+          // Immediately fetch sources for first available server
+          const first = data.sub?.[0] || data.dub?.[0];
+          if (first) {
+            const initialCategory = data.sub?.length ? "sub" : "dub";
+            setSelectedServer(first);
+            setSelectedCategory(initialCategory);
+            
+            // Load video source
+            await loadSources(current, first, initialCategory);
+          }
+        }
+      }
+
+      setLoading(false);
+    }
+    
+    load();
+  }, [animeId, episodeId, loadSources]);
+
+  const handleEpisodeSelect = useCallback((ep) => {
+    setCurrentEpisode(ep);
+    navigate(`/watch/${animeId}/${encodeURIComponent(ep.episodeId)}`, {
+      replace: true,
+    });
+  }, [animeId, navigate]);
+
+  const goPrev = useCallback(() => {
+    const i = episodes.findIndex((e) => e === currentEpisode);
+    if (i > 0) handleEpisodeSelect(episodes[i - 1]);
+  }, [episodes, currentEpisode, handleEpisodeSelect]);
+
+  const goNext = useCallback(() => {
+    const i = episodes.findIndex((e) => e === currentEpisode);
+    if (i < episodes.length - 1) handleEpisodeSelect(episodes[i + 1]);
+  }, [episodes, currentEpisode, handleEpisodeSelect]);
+
+  const handleVideoEnded = useCallback(() => {
+    if (autoNext) {
+      goNext();
+    }
+  }, [autoNext, goNext]);
+
+  const handleServerSelect = useCallback(async (server, category) => {
+    setSelectedServer(server);
+    setSelectedCategory(category);
+    await loadSources(currentEpisode, server, category);
+  }, [currentEpisode, loadSources]);
+
+  const handleReloadVideo = useCallback(async () => {
+    if (!selectedServer || !currentEpisode) return;
+    await loadSources(currentEpisode, selectedServer, selectedCategory);
+  }, [selectedServer, currentEpisode, selectedCategory, loadSources]);
 
   if (loading) return <WatchSkeleton />;
 
@@ -337,7 +193,6 @@ export default function Watch() {
     );
   }
 
-  /* -------------------- UI -------------------- */
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white relative">
       {/* Gradient overlay */}
@@ -354,9 +209,6 @@ export default function Watch() {
         {/* Player Section */}
         <div className="glass-container rounded-3xl overflow-hidden shadow-2xl border border-white/20">
           {/* Video Player */}
-
-
-
           <div className="aspect-video bg-black/50 backdrop-blur-sm relative">
             {streamingUrl && !serverLoading ? (
               <VideoPlayer
@@ -405,7 +257,6 @@ export default function Watch() {
                   icon={<SkipForward className="h-5 w-5" />}
                   disabled={episodes.findIndex((e) => e === currentEpisode) === episodes.length - 1}
                 />
-                {/* Auto-Skip Intro Toggle Button */}
                 <button
                   onClick={() => setAutoSkipIntro(v => !v)}
                   title={autoSkipIntro ? 'Auto-Skip Intro: ON' : 'Auto-Skip Intro: OFF'}
@@ -549,7 +400,6 @@ export default function Watch() {
   );
 }
 
-/* -------------------- UI Helpers -------------------- */
 function IconBtn({ icon, onClick, disabled = false, tooltip }) {
   return (
     <button
