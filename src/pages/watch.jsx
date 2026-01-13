@@ -354,6 +354,9 @@ export default function Watch() {
         {/* Player Section */}
         <div className="glass-container rounded-3xl overflow-hidden shadow-2xl border border-white/20">
           {/* Video Player */}
+
+
+
           <div className="aspect-video bg-black/50 backdrop-blur-sm relative">
             {streamingUrl && !serverLoading ? (
               <VideoPlayer
@@ -391,7 +394,7 @@ export default function Watch() {
           {/* Player Controls */}
           <div className="flex flex-col gap-3 px-6 py-4 bg-black/30 backdrop-blur-xl border-t border-white/10">
             <div className="flex items-center justify-between">
-              <div className="flex gap-2">
+              <div className="flex gap-2 items-center">
                 <IconBtn 
                   onClick={goPrev} 
                   icon={<SkipBack className="h-5 w-5" />}
@@ -402,6 +405,16 @@ export default function Watch() {
                   icon={<SkipForward className="h-5 w-5" />}
                   disabled={episodes.findIndex((e) => e === currentEpisode) === episodes.length - 1}
                 />
+                {/* Auto-Skip Intro Toggle Button */}
+                <button
+                  onClick={() => setAutoSkipIntro(v => !v)}
+                  title={autoSkipIntro ? 'Auto-Skip Intro: ON' : 'Auto-Skip Intro: OFF'}
+                  className={`ml-2 px-4 py-2 rounded-xl transition-all duration-300 flex items-center justify-center border-2 focus:outline-none font-bold text-sm uppercase tracking-wide
+                    ${autoSkipIntro ? 'bg-purple-600/80 border-purple-400 text-white shadow shadow-purple-500/30' : 'bg-white/5 border-zinc-700 text-purple-200 hover:bg-purple-700/20'}`}
+                  style={{ minWidth: 40, minHeight: 40 }}
+                >
+                  AutoSkip
+                </button>
               </div>
               <div className="flex gap-2">
                 <IconBtn icon={<Plus className="h-5 w-5" />} tooltip="Add to List" />

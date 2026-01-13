@@ -37,6 +37,8 @@ export default function VideoPlayer({
   const [showControls, setShowControls] = useState(true);
   const [showSkipIntro, setShowSkipIntro] = useState(false);
   const [showSkipOutro, setShowSkipOutro] = useState(false);
+  const [showSkipIntroEarly, setShowSkipIntroEarly] = useState(false);
+  const [showSkipOutroEarly, setShowSkipOutroEarly] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   
   // Caption controls - Initialize with default track
@@ -95,22 +97,57 @@ export default function VideoPlayer({
 
     const handleTimeUpdate = () => {
       setCurrentTime(video.currentTime);
-      
-      // Check for intro skip
-      if (introSkip && video.currentTime >= introSkip.start && video.currentTime < introSkip.end) {
-        setShowSkipIntro(true);
-        if (autoSkipIntro) {
-          video.currentTime = introSkip.end;
+      // --- Intro Skip Logic ---
+      if (introSkip) {
+        const showEarly = 5;
+        // Early warning: 5s before intro
+        if (
+          video.currentTime >= (introSkip.start - showEarly) &&
+          video.currentTime < introSkip.start
+        ) {
+          setShowSkipIntroEarly(true);
+          setShowSkipIntro(false);
+        } else if (
+          video.currentTime >= introSkip.start &&
+          video.currentTime < introSkip.end
+        ) {
+          setShowSkipIntroEarly(false);
+          setShowSkipIntro(true);
+          // Auto-skip if enabled
+          if (autoSkipIntro) {
+            video.currentTime = introSkip.end;
+            setShowSkipIntro(false);
+          }
+        } else {
+          setShowSkipIntroEarly(false);
           setShowSkipIntro(false);
         }
       } else {
+        setShowSkipIntroEarly(false);
         setShowSkipIntro(false);
       }
-
-      // Check for outro skip
-      if (outroSkip && video.currentTime >= outroSkip.start && video.currentTime < outroSkip.end) {
-        setShowSkipOutro(true);
+      // --- Outro Skip Logic ---
+      if (outroSkip) {
+        const showEarly = 5;
+        // Early warning: 5s before outro
+        if (
+          video.currentTime >= (outroSkip.start - showEarly) &&
+          video.currentTime < outroSkip.start
+        ) {
+          setShowSkipOutroEarly(true);
+          setShowSkipOutro(false);
+        } else if (
+          video.currentTime >= outroSkip.start &&
+          video.currentTime < outroSkip.end
+        ) {
+          setShowSkipOutroEarly(false);
+          setShowSkipOutro(true);
+        } else {
+          setShowSkipOutroEarly(false);
+          setShowSkipOutro(false);
+        }
       } else {
+        setShowSkipOutroEarly(false);
         setShowSkipOutro(false);
       }
     };
@@ -400,25 +437,29 @@ export default function VideoPlayer({
         </div>
       )}
 
-      {/* Skip Intro Button */}
-      {showSkipIntro && !autoSkipIntro && (
+      {/* Skip Intro Overlay Button (Early + During) */}
+      {(showSkipIntroEarly || (showSkipIntro && !autoSkipIntro)) && (
         <button
           onClick={skipIntro}
-          className="absolute bottom-28 right-6 bg-white/10 backdrop-blur-xl hover:bg-white/20 text-white font-bold px-5 py-2.5 rounded-lg transition-all duration-300 hover:scale-105 z-20 flex items-center gap-2 border border-white/20"
+          className={`absolute bottom-28 right-6 font-bold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 z-20 flex items-center gap-2 border shadow-2xl
+            ${showSkipIntroEarly ? 'bg-purple-500/80 border-purple-300/50 text-white shadow-purple-400/40' : 'bg-purple-600/90 border-purple-400/50 text-white shadow-purple-500/50 hover:bg-purple-600'}`}
+          style={{ opacity: 1 }}
         >
-          <SkipForward className="h-4 w-4" />
-          Skip Intro
+          <SkipForward className="h-5 w-5" />
+          <span className="text-base">{showSkipIntroEarly ? 'Skip Intro (Soon)' : 'Skip Intro'}</span>
         </button>
       )}
 
-      {/* Skip Outro Button */}
-      {showSkipOutro && (
+      {/* Skip Outro Overlay Button (Early + During) */}
+      {(showSkipOutroEarly || showSkipOutro) && (
         <button
           onClick={skipOutro}
-          className="absolute bottom-28 right-6 bg-white/10 backdrop-blur-xl hover:bg-white/20 text-white font-bold px-5 py-2.5 rounded-lg transition-all duration-300 hover:scale-105 z-20 flex items-center gap-2 border border-white/20"
+          className={`absolute bottom-28 right-6 font-bold px-6 py-3 rounded-xl transition-all duration-300 hover:scale-105 z-20 flex items-center gap-2 border shadow-2xl
+            ${showSkipOutroEarly ? 'bg-pink-400/80 border-pink-200/50 text-white shadow-pink-300/40' : 'bg-pink-600/90 border-pink-400/50 text-white shadow-pink-500/50 hover:bg-pink-600'}`}
+          style={{ opacity: 1 }}
         >
-          <SkipForward className="h-4 w-4" />
-          Skip Outro
+          <SkipForward className="h-5 w-5" />
+          <span className="text-base">{showSkipOutroEarly ? 'Skip Outro (Soon)' : 'Skip Outro'}</span>
         </button>
       )}
 
@@ -538,26 +579,28 @@ export default function VideoPlayer({
           {/* Right Controls */}
           <div className="flex items-center gap-2">
             {/* Skip Intro Button (in controls) */}
-            {introSkip && currentTime >= introSkip.start - 5 && currentTime < introSkip.end && (
+            {(showSkipIntroEarly || (showSkipIntro && !autoSkipIntro)) && (
               <button
                 onClick={skipIntro}
-                className="px-3 py-1.5 bg-purple-600/80 hover:bg-purple-600 rounded-lg transition text-white text-sm font-semibold flex items-center gap-1.5"
-                title="Skip Intro"
+                className={`px-4 py-2 rounded-xl transition text-white text-sm font-bold flex items-center gap-2 shadow-lg
+                  ${showSkipIntroEarly ? 'bg-purple-500/80 hover:bg-purple-500/90 shadow-purple-400/30' : 'bg-purple-600/90 hover:bg-purple-600 shadow-purple-500/30'}`}
+                title={showSkipIntroEarly ? 'Skip Intro (Soon)' : 'Skip Intro'}
               >
                 <SkipForward className="h-4 w-4" />
-                <span className="hidden sm:inline">Skip Intro</span>
+                <span className="hidden sm:inline">{showSkipIntroEarly ? 'Skip Intro (Soon)' : 'Skip Intro'}</span>
               </button>
             )}
 
             {/* Skip Outro Button (in controls) */}
-            {outroSkip && currentTime >= outroSkip.start - 5 && currentTime < outroSkip.end && (
+            {(showSkipOutroEarly || showSkipOutro) && (
               <button
                 onClick={skipOutro}
-                className="px-3 py-1.5 bg-purple-600/80 hover:bg-purple-600 rounded-lg transition text-white text-sm font-semibold flex items-center gap-1.5"
-                title="Skip Outro"
+                className={`px-4 py-2 rounded-xl transition text-white text-sm font-bold flex items-center gap-2 shadow-lg
+                  ${showSkipOutroEarly ? 'bg-pink-400/80 hover:bg-pink-400/90 shadow-pink-300/30' : 'bg-pink-600/90 hover:bg-pink-600 shadow-pink-500/30'}`}
+                title={showSkipOutroEarly ? 'Skip Outro (Soon)' : 'Skip Outro'}
               >
                 <SkipForward className="h-4 w-4" />
-                <span className="hidden sm:inline">Skip Outro</span>
+                <span className="hidden sm:inline">{showSkipOutroEarly ? 'Skip Outro (Soon)' : 'Skip Outro'}</span>
               </button>
             )}
 
