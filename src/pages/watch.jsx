@@ -1,5 +1,5 @@
-import { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate, Link } from "react-router-dom";
+import { useEffect, useState } from "react";
+import { useParams, useNavigate } from "react-router-dom";
 import {
   getAnimeEpisodes,
   getEpisodeServers,
@@ -9,13 +9,12 @@ import {
 import { Button } from "@/components/ui/button";
 import EpisodeSidebar from "@/components/watch/EpisodeSidebar";
 import WatchSkeleton from "@/components/watch/WatchSkeleton";
+import VideoPlayer from "@/components/watch/VideoPlayer";
 import {
-  Expand,
   Lightbulb,
   SkipForward,
   SkipBack,
   Plus,
-  Radio,
   Captions,
   Mic,
   RotateCcw,
@@ -41,14 +40,17 @@ export default function Watch() {
   const [selectedServer, setSelectedServer] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("sub");
   const [streamingUrl, setStreamingUrl] = useState("");
+  
+  // Video player data
+  const [subtitleTracks, setSubtitleTracks] = useState([]);
+  const [introSkip, setIntroSkip] = useState(null);
+  const [outroSkip, setOutroSkip] = useState(null);
 
   const [lightOn, setLightOn] = useState(true);
   const [autoPlay, setAutoPlay] = useState(true);
   const [autoNext, setAutoNext] = useState(true);
   const [autoSkipIntro, setAutoSkipIntro] = useState(true);
   const [episodeViewMode, setEpisodeViewMode] = useState("list");
-
-  const videoRef = useRef(null);
 
   /* -------------------- Fetch Episodes -------------------- */
   useEffect(() => {
@@ -115,9 +117,24 @@ export default function Watch() {
             initialCategory 
           );
           if (!sourceRes.error) {
-            setStreamingUrl(sourceRes.data?.video?.source?.url || "");
+            const videoData = sourceRes.data?.video || {};
+            setStreamingUrl(videoData.source?.url || "");
+            
+            // Extract subtitle tracks
+            const tracks = videoData.captions?.tracks || [];
+            setSubtitleTracks(tracks);
+            
+            // Extract intro/outro skip data
+            const skipData = videoData.skip || [];
+            const intro = skipData.find(s => s.name === "Skip Intro");
+            const outro = skipData.find(s => s.name === "Skip Outro");
+            setIntroSkip(intro || null);
+            setOutroSkip(outro || null);
           } else {
             setStreamingUrl("");
+            setSubtitleTracks([]);
+            setIntroSkip(null);
+            setOutroSkip(null);
           }
         }
       }
@@ -144,17 +161,19 @@ export default function Watch() {
     if (i < episodes.length - 1) handleEpisodeSelect(episodes[i + 1]);
   };
 
-  // OPTIMIZED: Instant server switching with optimistic updates
+  // Handle video ended (auto-next)
+  const handleVideoEnded = () => {
+    if (autoNext) {
+      goNext();
+    }
+  };
+
+  // Server switching
   const handleServerSelect = async (server, category) => {
-    // Immediately update UI (optimistic update) - this makes it feel instant
     setSelectedServer(server);
     setSelectedCategory(category);
     setServerLoading(true);
     
-    // Save current playback position to resume from same spot
-    const currentTime = videoRef.current?.currentTime || 0;
-    
-    // Fetch new source in background
     const sourceRes = await getEpisodeSources(
       animeId, 
       currentEpisode.episodeId, 
@@ -164,20 +183,25 @@ export default function Watch() {
     );
     
     if (!sourceRes.error) {
-      const newUrl = sourceRes.data?.video?.source?.url || "";
+      const videoData = sourceRes.data?.video || {};
+      const newUrl = videoData.source?.url || "";
       setStreamingUrl(newUrl);
       
-      // Wait for video element to update, then resume playback
-      setTimeout(() => {
-        if (videoRef.current && newUrl) {
-          videoRef.current.currentTime = currentTime;
-          if (autoPlay) {
-            videoRef.current.play().catch(() => {});
-          }
-        }
-      }, 100);
+      // Update subtitle tracks
+      const tracks = videoData.captions?.tracks || [];
+      setSubtitleTracks(tracks);
+      
+      // Update intro/outro skip data
+      const skipData = videoData.skip || [];
+      const intro = skipData.find(s => s.name === "Skip Intro");
+      const outro = skipData.find(s => s.name === "Skip Outro");
+      setIntroSkip(intro || null);
+      setOutroSkip(outro || null);
     } else {
       setStreamingUrl("");
+      setSubtitleTracks([]);
+      setIntroSkip(null);
+      setOutroSkip(null);
     }
     
     setServerLoading(false);
@@ -196,14 +220,22 @@ export default function Watch() {
       selectedCategory
     );
     if (!sourceRes.error) {
-      setStreamingUrl(sourceRes.data?.video?.source?.url || "");
-      setTimeout(() => {
-        if (videoRef.current && autoPlay) {
-          videoRef.current.play().catch(() => {});
-        }
-      }, 100);
+      const videoData = sourceRes.data?.video || {};
+      setStreamingUrl(videoData.source?.url || "");
+      
+      const tracks = videoData.captions?.tracks || [];
+      setSubtitleTracks(tracks);
+      
+      const skipData = videoData.skip || [];
+      const intro = skipData.find(s => s.name === "Skip Intro");
+      const outro = skipData.find(s => s.name === "Skip Outro");
+      setIntroSkip(intro || null);
+      setOutroSkip(outro || null);
     } else {
       setStreamingUrl("");
+      setSubtitleTracks([]);
+      setIntroSkip(null);
+      setOutroSkip(null);
     }
     setServerLoading(false);
   };
@@ -224,10 +256,10 @@ export default function Watch() {
   /* -------------------- UI -------------------- */
   return (
     <div className="min-h-screen bg-[#0a0a0f] text-white relative">
-      {/* Gradient overlay matching the reference */}
+      {/* Gradient overlay */}
       <div className="fixed inset-0 bg-gradient-to-br from-purple-950/30 via-[#0a0a0f] to-pink-950/20 pointer-events-none"></div>
       
-      {/* Subtle animated background orbs */}
+      {/* Animated background orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-pulse"></div>
         <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
@@ -239,28 +271,17 @@ export default function Watch() {
         <div className="glass-container rounded-3xl overflow-hidden shadow-2xl border border-white/20">
           {/* Video Player */}
           <div className="aspect-video bg-black/50 backdrop-blur-sm relative">
-            {streamingUrl ? (
-              <>
-                <video
-                  ref={videoRef}
-                  key={streamingUrl} // Force remount on URL change for better compatibility
-                  src={streamingUrl}
-                  controls
-                  autoPlay={autoPlay}
-                  className="w-full h-full"
-                />
-                {/* Loading Overlay - shown while switching servers */}
-                {serverLoading && (
-                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10">
-                    <div className="flex flex-col items-center">
-                      <div className="inline-block p-4 rounded-full bg-white/5 backdrop-blur-xl mb-4">
-                        <RotateCcw className="h-12 w-12 text-purple-400 animate-spin" />
-                      </div>
-                      <p className="text-zinc-300 text-lg">Switching server...</p>
-                    </div>
-                  </div>
-                )}
-              </>
+            {streamingUrl && !serverLoading ? (
+              <VideoPlayer
+                key={streamingUrl}
+                src={streamingUrl}
+                subtitleTracks={subtitleTracks}
+                introSkip={introSkip}
+                outroSkip={outroSkip}
+                autoPlay={autoPlay}
+                autoSkipIntro={autoSkipIntro}
+                onEnded={handleVideoEnded}
+              />
             ) : serverLoading ? (
               <div className="flex flex-col items-center justify-center h-full">
                 <div className="inline-block p-4 rounded-full bg-white/5 backdrop-blur-xl mb-4">
@@ -298,16 +319,7 @@ export default function Watch() {
                   disabled={episodes.findIndex((e) => e === currentEpisode) === episodes.length - 1}
                 />
               </div>
-              <div className="flex gap-2">
-                <ToggleBtn
-                  label="Lights"
-                  active={lightOn}
-                  onClick={() => setLightOn(!lightOn)}
-                  icon={<Lightbulb className="h-4 w-4" />}
-                />
-                <IconBtn icon={<Expand className="h-5 w-5" />} tooltip="Fullscreen" />
-                <IconBtn icon={<Plus className="h-5 w-5" />} tooltip="Add to List" />
-              </div>
+              {/* ...removed Lights, Auto Skip, and Auto Next buttons... */}
             </div>
 
             {/* Episode Info */}
@@ -321,13 +333,21 @@ export default function Watch() {
                     {currentEpisode.title}
                   </p>
                 )}
+                {subtitleTracks.length > 0 && (
+                  <div className="flex items-center gap-2 mt-2">
+                    <Captions className="h-4 w-4 text-purple-400" />
+                    <p className="text-xs text-zinc-400">
+                      Subtitles: {subtitleTracks.map(t => t.label).join(', ')}
+                    </p>
+                  </div>
+                )}
               </div>
             )}
           </div>
 
-          {/* Server Selection Section - Mobile: Column Layout, Desktop: Row Layout */}
+          {/* Server Selection Section */}
           <div className="w-full flex flex-col md:flex-row gap-4 md:gap-6 px-4 md:px-6 py-4 md:py-5 backdrop-blur-xl border-t border-white/10">
-            {/* Server Buttons - Shows FIRST on mobile, SECOND on desktop */}
+            {/* Server Buttons */}
             <div className="flex-1 flex flex-col gap-3 md:gap-4 justify-center order-1 md:order-2">
               {/* SUB Servers */}
               <div className="flex items-start gap-3 md:gap-4 flex-wrap">
@@ -392,7 +412,7 @@ export default function Watch() {
               </div>
             </div>
 
-            {/* Info Box - Shows SECOND on mobile, FIRST on desktop */}
+            {/* Info Box */}
             <div className="glass-container-dark rounded-xl px-5 md:px-6 py-4 md:min-w-[240px] border border-purple-500/30 shadow-lg order-2 md:order-1">
               <div className="flex items-center gap-2 mb-2">
                 <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
