@@ -120,27 +120,27 @@ export default function Watch() {
           console.log('Full API Response:', sourceRes);
           
           if (!sourceRes.error) {
-            // Try multiple possible response structures
-            const videoData = 
-              sourceRes.data?.data?.video ||  // Format 1: { data: { data: { video: {...} } } }
-              sourceRes.data?.video ||         // Format 2: { data: { video: {...} } }
-              sourceRes?.video ||              // Format 3: { video: {...} }
-              {};
+            // The response structure is: { data: { status, message, video, captions, skip } }
+            const responseData = sourceRes.data || sourceRes;
+            const videoData = responseData.video || {};
+            const captionsData = responseData.captions || {};
+            const skipData = responseData.skip || [];
             
+            console.log('Response Data:', responseData);
             console.log('Video Data:', videoData);
-            console.log('Video Data Keys:', Object.keys(videoData));
+            console.log('Captions Data:', captionsData);
             
             // Get streaming URL
-            const url = videoData.source?.url || videoData?.url || "";
+            const url = videoData.source?.url || videoData.url || "";
             console.log('Streaming URL:', url);
             setStreamingUrl(url);
             
             // Extract subtitle tracks with extensive logging
             console.log('=== SUBTITLE EXTRACTION ===');
-            console.log('Captions object:', videoData.captions);
-            console.log('Captions type:', typeof videoData.captions);
+            console.log('Captions object:', captionsData);
+            console.log('Captions type:', typeof captionsData);
             
-            const tracks = videoData.captions?.tracks || [];
+            const tracks = captionsData.tracks || [];
             console.log('Extracted tracks:', tracks);
             console.log('Number of tracks:', tracks.length);
             console.log('Tracks is array:', Array.isArray(tracks));
@@ -163,7 +163,6 @@ export default function Watch() {
             console.log('✓ Subtitle tracks set in state:', tracks.length);
             
             // Extract intro/outro skip data
-            const skipData = videoData.skip || [];
             console.log('Skip data:', skipData);
             const intro = skipData.find(s => s.name === "Skip Intro");
             const outro = skipData.find(s => s.name === "Skip Outro");
@@ -228,25 +227,24 @@ export default function Watch() {
     console.log('Full API Response:', sourceRes);
     
     if (!sourceRes.error) {
-      // Try multiple possible response structures
-      const videoData = 
-        sourceRes.data?.data?.video ||
-        sourceRes.data?.video ||
-        sourceRes?.video ||
-        {};
+      // The response structure is: { data: { status, message, video, captions, skip } }
+      const responseData = sourceRes.data || sourceRes;
+      const videoData = responseData.video || {};
+      const captionsData = responseData.captions || {};
+      const skipData = responseData.skip || [];
       
       console.log('Video Data:', videoData);
       
       // Get streaming URL
-      const newUrl = videoData.source?.url || videoData?.url || "";
+      const newUrl = videoData.source?.url || videoData.url || "";
       console.log('Streaming URL:', newUrl);
       setStreamingUrl(newUrl);
       
       // Extract subtitle tracks
       console.log('=== SUBTITLE EXTRACTION ===');
-      console.log('Captions object:', videoData.captions);
+      console.log('Captions object:', captionsData);
       
-      const tracks = videoData.captions?.tracks || [];
+      const tracks = captionsData.tracks || [];
       console.log('Extracted tracks:', tracks);
       console.log('Number of tracks:', tracks.length);
       
@@ -262,7 +260,7 @@ export default function Watch() {
       console.log('✓ Subtitle tracks set in state');
       
       // Extract intro/outro skip data
-      const skipData = videoData.skip || [];
+      console.log('Skip data:', skipData);
       const intro = skipData.find(s => s.name === "Skip Intro");
       const outro = skipData.find(s => s.name === "Skip Outro");
       setIntroSkip(intro || null);
@@ -293,19 +291,18 @@ export default function Watch() {
     );
     
     if (!sourceRes.error) {
-      const videoData = 
-        sourceRes.data?.data?.video ||
-        sourceRes.data?.video ||
-        sourceRes?.video ||
-        {};
+      // The response structure is: { data: { status, message, video, captions, skip } }
+      const responseData = sourceRes.data || sourceRes;
+      const videoData = responseData.video || {};
+      const captionsData = responseData.captions || {};
+      const skipData = responseData.skip || [];
       
-      const url = videoData.source?.url || videoData?.url || "";
+      const url = videoData.source?.url || videoData.url || "";
       setStreamingUrl(url);
       
-      const tracks = videoData.captions?.tracks || [];
+      const tracks = captionsData.tracks || [];
       setSubtitleTracks(tracks);
       
-      const skipData = videoData.skip || [];
       const intro = skipData.find(s => s.name === "Skip Intro");
       const outro = skipData.find(s => s.name === "Skip Outro");
       setIntroSkip(intro || null);
