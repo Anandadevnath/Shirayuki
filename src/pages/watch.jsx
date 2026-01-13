@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import {
   getAnimeEpisodes,
@@ -18,6 +18,7 @@ import {
   Radio,
   Captions,
   Mic,
+  RotateCcw,
 } from "lucide-react";
 import AnimeDetailsCard from "@/components/details/AnimeDetailsCard";
 
@@ -46,6 +47,8 @@ export default function Watch() {
   const [autoNext, setAutoNext] = useState(true);
   const [autoSkipIntro, setAutoSkipIntro] = useState(true);
   const [episodeViewMode, setEpisodeViewMode] = useState("list");
+
+  const videoRef = useRef(null);
 
   /* -------------------- Fetch Episodes -------------------- */
   useEffect(() => {
@@ -116,13 +119,6 @@ export default function Watch() {
           } else {
             setStreamingUrl("");
           }
-
-          // console.log("🎥 Now Watching:", {
-          //   animeId: animeId,
-          //   episodeId: currentEpisode.episodeId,
-          //   server: first.serverName,
-          //   category: initialCategory
-          // });
         }
       }
       setServerLoading(false);
@@ -136,7 +132,6 @@ export default function Watch() {
     navigate(`/watch/${animeId}/${encodeURIComponent(ep.episodeId)}`, {
       replace: true,
     });
-
   };
 
   const goPrev = () => {
@@ -149,10 +144,17 @@ export default function Watch() {
     if (i < episodes.length - 1) handleEpisodeSelect(episodes[i + 1]);
   };
 
+  // OPTIMIZED: Instant server switching with optimistic updates
   const handleServerSelect = async (server, category) => {
+    // Immediately update UI (optimistic update) - this makes it feel instant
     setSelectedServer(server);
     setSelectedCategory(category);
-
+    setServerLoading(true);
+    
+    // Save current playback position to resume from same spot
+    const currentTime = videoRef.current?.currentTime || 0;
+    
+    // Fetch new source in background
     const sourceRes = await getEpisodeSources(
       animeId, 
       currentEpisode.episodeId, 
@@ -160,18 +162,50 @@ export default function Watch() {
       server.serverName, 
       category 
     );
+    
     if (!sourceRes.error) {
-      setStreamingUrl(sourceRes.data?.video?.source?.url || "");
+      const newUrl = sourceRes.data?.video?.source?.url || "";
+      setStreamingUrl(newUrl);
+      
+      // Wait for video element to update, then resume playback
+      setTimeout(() => {
+        if (videoRef.current && newUrl) {
+          videoRef.current.currentTime = currentTime;
+          if (autoPlay) {
+            videoRef.current.play().catch(() => {});
+          }
+        }
+      }, 100);
     } else {
       setStreamingUrl("");
     }
+    
+    setServerLoading(false);
+  };
 
-    // console.log("🎥 Now Watching:", {
-    //   animeId: animeId,
-    //   episodeId: currentEpisode&episodeId,
-    //   server: server.serverName,
-    //   category: category
-    // });
+  // Reload handler for video
+  const handleReloadVideo = async () => {
+    if (!selectedServer || !currentEpisode) return;
+    setServerLoading(true);
+    setStreamingUrl("");
+    const sourceRes = await getEpisodeSources(
+      animeId,
+      currentEpisode.episodeId,
+      currentEpisode.number,
+      selectedServer.serverName,
+      selectedCategory
+    );
+    if (!sourceRes.error) {
+      setStreamingUrl(sourceRes.data?.video?.source?.url || "");
+      setTimeout(() => {
+        if (videoRef.current && autoPlay) {
+          videoRef.current.play().catch(() => {});
+        }
+      }, 100);
+    } else {
+      setStreamingUrl("");
+    }
+    setServerLoading(false);
   };
 
   if (loading) return <WatchSkeleton />;
@@ -206,22 +240,45 @@ export default function Watch() {
           {/* Video Player */}
           <div className="aspect-video bg-black/50 backdrop-blur-sm relative">
             {streamingUrl ? (
-              <video
-                src={streamingUrl}
-                controls
-                autoPlay={autoPlay}
-                className="w-full h-full"
-              />
-            ) : (
-              <div className="flex items-center justify-center h-full">
-                <div className="text-center">
-                  <div className="inline-block p-4 rounded-full bg-white/5 backdrop-blur-xl mb-4">
-                    <Radio className="h-12 w-12 text-purple-400 animate-pulse" />
+              <>
+                <video
+                  ref={videoRef}
+                  key={streamingUrl} // Force remount on URL change for better compatibility
+                  src={streamingUrl}
+                  controls
+                  autoPlay={autoPlay}
+                  className="w-full h-full"
+                />
+                {/* Loading Overlay - shown while switching servers */}
+                {serverLoading && (
+                  <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-10">
+                    <div className="flex flex-col items-center">
+                      <div className="inline-block p-4 rounded-full bg-white/5 backdrop-blur-xl mb-4">
+                        <RotateCcw className="h-12 w-12 text-purple-400 animate-spin" />
+                      </div>
+                      <p className="text-zinc-300 text-lg">Switching server...</p>
+                    </div>
                   </div>
-                  <p className="text-zinc-300 text-lg">
-                    {serverLoading ? "Loading servers..." : "Select a server to start watching"}
-                  </p>
+                )}
+              </>
+            ) : serverLoading ? (
+              <div className="flex flex-col items-center justify-center h-full">
+                <div className="inline-block p-4 rounded-full bg-white/5 backdrop-blur-xl mb-4">
+                  <RotateCcw className="h-12 w-12 text-purple-400 animate-spin" />
                 </div>
+                <p className="text-zinc-300 text-lg">Loading...</p>
+              </div>
+            ) : (
+              <div className="flex flex-col items-center justify-center h-full">
+                <button
+                  onClick={handleReloadVideo}
+                  className="inline-block p-4 rounded-full bg-white/5 backdrop-blur-xl mb-4 hover:bg-purple-600/20 transition"
+                  title="Reload video"
+                  disabled={!selectedServer}
+                >
+                  <RotateCcw className="h-12 w-12 text-purple-400" />
+                </button>
+                <p className="text-zinc-300 text-lg">Video failed to load. Click to retry.</p>
               </div>
             )}
           </div>
@@ -286,12 +343,13 @@ export default function Watch() {
                       <Button
                         key={server.serverId}
                         onClick={() => handleServerSelect(server, "sub")}
+                        disabled={serverLoading}
                         className={`rounded-xl px-4 md:px-6 py-2 text-sm font-bold transition-all duration-300 ${
                           selectedServer?.serverId === server.serverId &&
                           selectedCategory === "sub"
                             ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg shadow-purple-500/50 scale-105"
                             : "glass-button text-purple-200 hover:text-white hover:scale-105"
-                        }`}
+                        } ${serverLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {server.serverName.toUpperCase()}
                       </Button>
@@ -316,12 +374,13 @@ export default function Watch() {
                       <Button
                         key={server.serverId}
                         onClick={() => handleServerSelect(server, "dub")}
+                        disabled={serverLoading}
                         className={`rounded-xl px-4 md:px-6 py-2 text-sm font-bold transition-all duration-300 ${
                           selectedServer?.serverId === server.serverId &&
                           selectedCategory === "dub"
                             ? "bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400 text-white shadow-lg shadow-pink-500/50 scale-105"
                             : "glass-button text-pink-200 hover:text-white hover:scale-105"
-                        }`}
+                        } ${serverLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {server.serverName.toUpperCase()}
                       </Button>
