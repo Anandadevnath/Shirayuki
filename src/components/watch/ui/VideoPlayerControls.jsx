@@ -1,4 +1,4 @@
-import { Maximize, Captions, RotateCcw, RotateCw, Volume2, VolumeX, Pause, Play } from "lucide-react";
+import { Maximize, Captions, RotateCcw, RotateCw, Volume2, VolumeX, Pause, Play, Settings, Check } from "lucide-react";
 import React, { useEffect, useRef, useState } from "react";
 
 export default function VideoPlayerControls({
@@ -18,6 +18,11 @@ export default function VideoPlayerControls({
     selectedCaption,
     handleCaptionSelect,
     subtitleTracks,
+    toggleSettingsMenu,
+    showSettingsMenu,
+    qualityOptions = [],
+    selectedQuality = null,
+    onQualitySelect = () => {},
     toggleFullscreen,
 }) {
 
@@ -38,7 +43,7 @@ export default function VideoPlayerControls({
     const hideTimerRef = useRef(null);
     const isTouchDevice = typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator && navigator.maxTouchPoints > 0) || (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches));
 
-    const handleVolumeButtonClick = (e) => {
+    const handleVolumeButtonClick = () => {
         if (isTouchDevice) {
             setShowVolume(prev => !prev);
             return;
@@ -157,6 +162,30 @@ export default function VideoPlayerControls({
                     >
                         {playbackRate}x
                     </button>
+                </div>
+                {/* Settings / Quality Menu */}
+                <div className="relative">
+                    <button
+                        onClick={() => toggleSettingsMenu()}
+                        className="p-2.5 hover:bg-cyan-500/30 rounded-xl transition-all hover:scale-110 backdrop-blur-sm ml-1 bg-white/2"
+                        title="Settings"
+                    >
+                        <Settings className="h-5 w-5 text-white transition-colors" />
+                    </button>
+                    {showSettingsMenu && qualityOptions && qualityOptions.length > 0 && (
+                        <div className="absolute right-0 mt-2 w-40 bg-black/90 border border-white/10 rounded-lg py-2 shadow-lg z-50">
+                            {qualityOptions.map((q) => (
+                                <button
+                                    key={q.label}
+                                    onClick={() => onQualitySelect(q)}
+                                    className={`w-full text-left px-3 py-2 hover:bg-white/5 flex items-center justify-between ${selectedQuality === q.label ? 'text-cyan-300 font-bold' : 'text-white'}`}
+                                >
+                                    <span className="truncate">{q.label}</span>
+                                    {selectedQuality === q.label && <Check className="h-4 w-4 text-cyan-300" />}
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
                 {/* Captions Toggle */}
                 <button

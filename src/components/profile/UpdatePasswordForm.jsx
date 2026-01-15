@@ -33,7 +33,7 @@ export default function UpdatePasswordForm({ onSuccess, email }) {
       setNewPassword("");
       setConfirmPassword("");
       if (onSuccess) onSuccess();
-    } catch (err) {
+    } catch { /* ignore error */
       setError("Failed to update password");
       showToast({ title: "Update failed", description: "Failed to update password.", duration: 3000 });
     }

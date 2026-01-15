@@ -55,4 +55,5 @@ function Button({
   );
 }
 
-export { Button, buttonVariants }
+// Export only the component to avoid non-component exports in this file for fast-refresh compatibility
+export { Button }

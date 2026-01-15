@@ -1,3 +1,4 @@
+import React from "react";
 import { Link } from "react-router-dom";
 import { Search, Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,7 +12,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { MobileSearchSuggestions } from "./SearchSuggestions";
-import { NAV_LINKS } from "./NavLinks";
+import { NAV_LINKS } from "../navLinksData";
 
 export function MobileMenu({
   isOpen,
@@ -173,7 +174,7 @@ export function MobileMenu({
                     {/* Icon Container */}
                     <div className="relative flex items-center justify-center w-9 h-9 rounded-lg transition-all duration-300 bg-white/5 group-hover:bg-gradient-to-br group-hover:from-cyan-500/30 group-hover:to-fuchsia-500/30">
                       {link.icon ? (
-                        <span className="text-zinc-400 group-hover:text-white transition-colors">{link.icon}</span>
+                        <span className="text-zinc-400 group-hover:text-white transition-colors">{React.createElement(link.icon, { size: 18, className: 'h-4 w-4' })}</span>
                       ) : (
                         <span className="w-4 h-4 rounded-full bg-gradient-to-br from-cyan-500/50 to-fuchsia-500/50"></span>
                       )}

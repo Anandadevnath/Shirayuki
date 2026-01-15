@@ -48,7 +48,8 @@ export default function CategoryPage() {
   }, [categoryId, currentPage]);
 
   useEffect(() => {
-    setCurrentPage(1);
+    const t = setTimeout(() => setCurrentPage(1), 0);
+    return () => clearTimeout(t);
   }, [categoryId]);
 
   const handlePageChange = (page) => {

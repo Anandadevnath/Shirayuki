@@ -35,7 +35,7 @@ export default function RegisterPage() {
         setError(data.message || "Registration failed");
         showToast({ title: "Registration failed", description: data.message || "Registration failed", duration: 3000 });
       }
-    } catch (err) {
+    } catch { /* ignore error */
       setError("Network error");
       showToast({ title: "Network error", description: "Please try again later.", duration: 3000 });
     } finally {

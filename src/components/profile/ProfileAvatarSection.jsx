@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { getPrebuiltPfps, uploadCustomPfp, selectPrebuiltPfp, updateUserProfile } from "@/context/api/services";
+import { getPrebuiltPfps, uploadCustomPfp, updateUserProfile } from "@/context/api/services";
 import { BACKEND_BASE_URL } from "@/context/api/config";
 
 export default function ProfileAvatarSection({ user, onAvatarChange }) {
@@ -21,7 +21,7 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
     });
   }, []);
 
-  const handlePrebuiltSelect = async (url, id) => {
+  const handlePrebuiltSelect = async (url) => {
     setError("");
     onAvatarChange(url);
     const userId = localStorage.getItem("userId");
@@ -45,7 +45,6 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
       }
     }
   };
-
   const handleUpload = async (e) => {
     setError("");
     const file = e.target.files[0];
@@ -53,7 +52,7 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
     const formData = new FormData();
     formData.append("pfp", file);
     setUploading(true);
-    const { data, error } = await uploadCustomPfp(formData);
+    const { data } = await uploadCustomPfp(formData);
     setUploading(false);
     if (data && data.url) {
       onAvatarChange(data.url);
@@ -92,7 +91,7 @@ export default function ProfileAvatarSection({ user, onAvatarChange }) {
             alt="prebuilt avatar"
             loading="lazy"
             className={`w-14 h-14 rounded-full border-2 cursor-pointer ${user.avatar === pfp.url ? "border-fuchsia-400" : "border-cyan-500/30"}`}
-            onClick={() => handlePrebuiltSelect(pfp.url, pfp.id)}
+            onClick={() => handlePrebuiltSelect(pfp.url)}
           />
         ))}
       </div>

@@ -48,9 +48,10 @@ export default function AZList() {
     fetchAnimes();
   }, [letter, currentPage]);
 
-  // Reset page when letter changes
+  // Reset page when letter changes (deferred to avoid synchronous setState in effect)
   useEffect(() => {
-    setCurrentPage(1);
+    const t = setTimeout(() => setCurrentPage(1), 0);
+    return () => clearTimeout(t);
   }, [letter]);
 
   const handleLetterClick = (newLetter) => {

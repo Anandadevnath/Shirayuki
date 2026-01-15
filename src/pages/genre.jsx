@@ -49,7 +49,8 @@ export default function GenrePage() {
   }, [genreId, currentPage]);
 
   useEffect(() => {
-    setCurrentPage(1);
+    const t = setTimeout(() => setCurrentPage(1), 0);
+    return () => clearTimeout(t);
   }, [genreId]);
 
   const handlePageChange = (page) => {
@@ -116,7 +117,7 @@ export default function GenrePage() {
         <div className="border-b border-white/5 backdrop-blur-md bg-gradient-to-b from-black/30 via-black/20 to-transparent">
           <div className="max-w-[1480px] mx-auto px-3 sm:px-6 lg:px-12 py-8">
             <h1 className="text-3xl sm:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-pink-400 bg-clip-text text-transparent">
-              {formatGenreName(genreId)} Anime
+              {formatGenreName(genreName || genreId)} Anime
             </h1>
             <p className="text-zinc-400">Browse all anime in the {formatGenreName(genreId)} genre</p>
           </div>

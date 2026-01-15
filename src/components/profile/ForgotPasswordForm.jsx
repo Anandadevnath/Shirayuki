@@ -19,7 +19,7 @@ export default function ForgotPasswordForm() {
       setSuccess("Password reset link sent to your email.");
       showToast({ title: "Reset link sent", description: "Check your email for the reset link.", duration: 3000 });
       setEmail("");
-    } catch (err) {
+    } catch { /* ignore error */
       setError("Failed to send reset link");
       showToast({ title: "Failed to send reset link", description: "Please try again later.", duration: 3000 });
     }

@@ -23,11 +23,17 @@ export default function ProfilePage() {
 
     useEffect(() => {
         if (activeTab === "watching") {
-            setWatchLoading(true);
-            setWatchError("");
+            const showLoadingTimer = setTimeout(() => {
+                setWatchLoading(true);
+                setWatchError("");
+            }, 0);
+
             if (!userId) {
-                setWatchError("User not logged in.");
-                setWatchLoading(false);
+                clearTimeout(showLoadingTimer);
+                setTimeout(() => {
+                  setWatchError("User not logged in.");
+                  setWatchLoading(false);
+                }, 0);
                 return;
             }
             const endpoint = ENDPOINTS.PROGRESS.WATCH(userId);
@@ -57,7 +63,7 @@ export default function ProfilePage() {
             if (raw) {
                 try {
                     localUser = JSON.parse(raw);
-                } catch (e) { }
+                } catch { /* ignore parse errors */ }
             }
             if (!userId) {
                 if (localUser) {
@@ -73,8 +79,11 @@ export default function ProfilePage() {
                     setLoading(false);
                     return;
                 }
-                setError("User not logged in.");
-                setLoading(false);
+                // Defer state updates to avoid sync setState in effect
+                setTimeout(() => {
+                  setError("User not logged in.");
+                  setLoading(false);
+                }, 0);
                 return;
             }
             const endpoint = ENDPOINTS.USER.GET_USER_PROFILE(userId);
@@ -113,7 +122,7 @@ export default function ProfilePage() {
                         localUser.avatar = avatar;
                         localStorage.setItem("user", JSON.stringify(localUser));
                     }
-                } catch { }
+                } catch { /* ignore localStorage write errors */ }
             }
             setLoading(false);
         }
@@ -130,7 +139,7 @@ export default function ProfilePage() {
         setError("");
         const { avatar, ...profileData } = user;
         const endpoint = ENDPOINTS.USER.UPDATE_USER_PROFILE(userId);
-        const { data, error } = await backendClient.put(endpoint, { ...profileData, avatar });
+        const { error } = await backendClient.put(endpoint, { ...profileData, avatar });
         if (!error) {
             try {
                 const stored = localStorage.getItem("user");
@@ -141,7 +150,7 @@ export default function ProfilePage() {
                     localStorage.setItem("user", JSON.stringify(parsed));
                     window.dispatchEvent(new Event('storage'));
                 }
-            } catch { }
+            } catch { /* ignore localStorage write errors */ }
             showToast({ title: "Profile updated", description: "Your profile was updated successfully.", duration: 3000 });
         } else {
             setError("Failed to save profile.");

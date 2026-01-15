@@ -44,9 +44,7 @@ export default function LoginPage() {
             const m = s.match(/ObjectId\("?([0-9a-fA-F]{24})"?\)/);
             if (m) return m[1];
             return s;
-          } catch (e) {
-            return null;
-          }
+          } catch { return null; }
         };
 
         const uid = extractId(data?.user?.userId ?? data?.user?._id ?? data?.user?.id);
@@ -59,7 +57,7 @@ export default function LoginPage() {
             if (profileData) {
               localStorage.setItem("user", JSON.stringify(profileData));
             }
-          } catch (err) {
+          } catch { /* ignore profile fetch failure */
             // fallback: if fetch fails, keep whatever is in data.user
             if (data?.user) localStorage.setItem("user", JSON.stringify(data.user));
           }
@@ -74,7 +72,7 @@ export default function LoginPage() {
         setError(data.message || "Login failed");
         showToast({ title: "Login failed", description: data.message || "Login failed", duration: 3000 });
       }
-    } catch (err) {
+    } catch { /* ignore error */
       setError("Network error");
       showToast({ title: "Network error", description: "Please try again later.", duration: 3000 });
     } finally {

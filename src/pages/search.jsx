@@ -113,7 +113,7 @@ export default function SearchPage() {
   const [animes, setAnimes] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [suggestionsLoading, setSuggestionsLoading] = useState(false);
+  const [, setSuggestionsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [totalPages, setTotalPages] = useState(1);

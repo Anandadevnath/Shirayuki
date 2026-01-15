@@ -1,4 +1,5 @@
 import { Button } from "@/components/ui/button";
+import { useNavigate } from "react-router-dom";
 
 const genres = [
   "action", "adventure", "cars", "comedy", "dementia", "demons", "drama",
@@ -56,11 +57,12 @@ const glow = {
 };
 
 export default function GenreFilter({ genreId, onGenreClick }) {
+  const navigate = useNavigate();
   const handleClick = (genre) => {
     if (onGenreClick) {
       onGenreClick(genre);
     } else {
-      window.location.href = `/genre/${genre}`;
+      navigate(`/genre/${genre}`);
     }
   };
 

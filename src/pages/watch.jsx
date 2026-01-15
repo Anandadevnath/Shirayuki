@@ -37,14 +37,15 @@ export default function Watch() {
   const [selectedServer, setSelectedServer] = useState(null);
   const [selectedCategory, setSelectedCategory] = useState("sub");
   const [streamingUrl, setStreamingUrl] = useState("");
+  const [streamingSources, setStreamingSources] = useState([]);
   
   // Video player data
   const [subtitleTracks, setSubtitleTracks] = useState([]);
   const [introSkip, setIntroSkip] = useState(null);
   const [outroSkip, setOutroSkip] = useState(null);
 
-  const [autoPlay, setAutoPlay] = useState(true);
-  const [autoNext, setAutoNext] = useState(true);
+  const [autoPlay, _setAutoPlay] = useState(true);
+  const [autoNext, _setAutoNext] = useState(true);
   const [autoSkipIntro, setAutoSkipIntro] = useState(true);
   const [episodeViewMode, setEpisodeViewMode] = useState("list");
 
@@ -68,8 +69,22 @@ export default function Watch() {
       const captionsData = responseData.captions || {};
       const skipData = responseData.skip || [];
       
-      const url = videoData.source?.url || videoData.url || "";
-      setStreamingUrl(url);
+      // Build quality/source list if available
+      let sourcesArray = [];
+      const candidates = videoData.sources || videoData.qualities || videoData.renditions || videoData.alternatives || [];
+      if (Array.isArray(candidates) && candidates.length) {
+        sourcesArray = candidates.map((s) => {
+          const urlCandidate = s.file || s.url || s.src || s.path || (s.source && s.source.url) || videoData.source?.url || videoData.url || '';
+          const label = s.quality || s.label || (s.res ? `${s.res}p` : (s.height ? `${s.height}p` : (s.label || 'Unknown')));
+          return { label: String(label), url: urlCandidate };
+        }).filter(s => s.url);
+      } else {
+        const url = videoData.source?.url || videoData.url || "";
+        if (url) sourcesArray = [{ label: 'Auto', url }];
+      }
+
+      setStreamingSources(sourcesArray);
+      setStreamingUrl(sourcesArray[0]?.url || "");
       
       const tracks = captionsData.tracks || [];
       setSubtitleTracks(tracks);
@@ -214,6 +229,7 @@ export default function Watch() {
               <VideoPlayer
                 key={streamingUrl}
                 src={streamingUrl}
+                sources={streamingSources}
                 subtitleTracks={subtitleTracks}
                 introSkip={introSkip}
                 outroSkip={outroSkip}

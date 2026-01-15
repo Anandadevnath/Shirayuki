@@ -15,7 +15,7 @@ export default function VerifyEmailStep({ onVerified }) {
     try {
       await sendVerificationEmail({ email });
       setCodeSent(true);
-    } catch (err) {
+    } catch { /* ignore error */
       setError("Failed to send verification code");
     }
     setLoading(false);
@@ -28,7 +28,7 @@ export default function VerifyEmailStep({ onVerified }) {
     try {
       await verifyEmailCode({ email, code });
       if (onVerified) onVerified(email);
-    } catch (err) {
+    } catch { /* ignore error */
       setError("Invalid or expired code");
     }
     setLoading(false);

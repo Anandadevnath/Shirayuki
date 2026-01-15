@@ -41,4 +41,5 @@ function Badge({
   );
 }
 
-export { Badge, badgeVariants }
+// Export only the component to keep this file friendly for fast refresh
+export { Badge }

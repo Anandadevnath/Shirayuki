@@ -1,14 +1,6 @@
+import React from "react";
 import { Link } from "react-router-dom";
-import { Home } from "lucide-react";
-
-export const NAV_LINKS = [
-  { name: "Home", href: "/", icon: <Home size={22} /> },
-  { name: "Genres", href: "/genre" },
-  { name: "Types", href: "/category" },
-  { name: "Schedule", href: "/schedule" },
-  { name: "A-Z List", href: "/az-list" },
-  { name: "Studios", href: "/producer" },
-];
+import { NAV_LINKS } from "../navLinksData";
 
 // Desktop Navigation Links
 export function NavLinks() {
@@ -21,7 +13,7 @@ export function NavLinks() {
           className="group text-sm font-medium text-white hover:text-white transition-colors uppercase tracking-wide"
         >
           <span className="relative inline-flex items-center gap-2">
-            {link.icon ? link.icon : null}
+            {link.icon ? React.createElement(link.icon, { size: 22, className: "h-5 w-5" }) : null}
             <span>{link.name}</span>
             <span className="absolute left-0 -bottom-1 h-0.5 w-full bg-blue-200 transform scale-x-0 origin-left transition-transform duration-200 group-hover:scale-x-100" />
           </span>
