@@ -55,5 +55,5 @@ function Button({
   );
 }
 
-// Export only the component to avoid non-component exports in this file for fast-refresh compatibility
-export { Button }
+// Export component and the utility so other UI pieces (like Pagination) can reuse styles
+export { Button, buttonVariants }
