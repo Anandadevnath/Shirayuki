@@ -1,5 +1,5 @@
 import { Maximize, Captions, RotateCcw, RotateCw, Volume2, VolumeX, Pause, Play } from "lucide-react";
-import React from "react";
+import React, { useEffect, useRef, useState } from "react";
 
 export default function VideoPlayerControls({
     isPlaying,
@@ -32,6 +32,38 @@ export default function VideoPlayerControls({
             handleCaptionSelect(englishTrack.label);
         }
     };
+
+    const [showVolume, setShowVolume] = useState(false);
+    const volumeGroupRef = useRef(null);
+    const hideTimerRef = useRef(null);
+    const isTouchDevice = typeof window !== 'undefined' && (('ontouchstart' in window) || (navigator && navigator.maxTouchPoints > 0) || (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(pointer: coarse)').matches));
+
+    const handleVolumeButtonClick = (e) => {
+        if (isTouchDevice) {
+            setShowVolume(prev => !prev);
+            return;
+        }
+        toggleMute();
+    };
+
+    useEffect(() => {
+        if (!showVolume) return;
+        if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+        hideTimerRef.current = setTimeout(() => setShowVolume(false), 3500);
+
+        const onDocClick = (ev) => {
+            if (volumeGroupRef.current && !volumeGroupRef.current.contains(ev.target)) {
+                setShowVolume(false);
+            }
+        };
+        document.addEventListener('mousedown', onDocClick);
+        document.addEventListener('touchstart', onDocClick);
+        return () => {
+            clearTimeout(hideTimerRef.current);
+            document.removeEventListener('mousedown', onDocClick);
+            document.removeEventListener('touchstart', onDocClick);
+        };
+    }, [showVolume]);
 
     const handlePlaybackRateClick = () => {
         if (!playbackRates || playbackRates.length === 0) return;
@@ -73,9 +105,9 @@ export default function VideoPlayerControls({
                     <RotateCw className="h-5 w-5 text-white hover:text-cyan-300 transition-colors" />
                 </button>
                 {/* Volume */}
-                <div className="flex items-center gap-1 ml-1 group/volume">
+                <div ref={volumeGroupRef} className="flex items-center gap-1 ml-1 group/volume">
                     <button
-                        onClick={toggleMute}
+                        onClick={handleVolumeButtonClick}
                         className="p-2 hover:bg-cyan-500/30 rounded-xl transition-all backdrop-blur-sm relative z-10 bg-white/3"
                         title={isMuted ? "Unmute" : "Mute"}
                     >
@@ -91,9 +123,20 @@ export default function VideoPlayerControls({
                         max="1"
                         step="0.1"
                         value={volume}
-                        onChange={handleVolumeChange}
-                        className="w-0 opacity-0 pointer-events-none group-hover/volume:w-28 group-hover/volume:opacity-100 group-hover/volume:pointer-events-auto transition-all duration-300 ease-out h-2 bg-gradient-to-r from-cyan-700/40 to-cyan-700/40 rounded-full appearance-none cursor-pointer ml-3 z-0
-            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-400 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white/40 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-[0_8px_18px_rgba(2,6,23,0.6)]"
+                        onChange={(e) => {
+                            handleVolumeChange(e);
+                            if (isTouchDevice) {
+                                setShowVolume(true);
+                                if (hideTimerRef.current) clearTimeout(hideTimerRef.current);
+                                hideTimerRef.current = setTimeout(() => setShowVolume(false), 3500);
+                            }
+                        }}
+                        className={`
+                            ${showVolume ? 'w-28 opacity-100 pointer-events-auto' : 'w-0 opacity-0 pointer-events-none'}
+                            group-hover/volume:w-28 group-hover/volume:opacity-100 group-hover/volume:pointer-events-auto
+                            transition-all duration-300 ease-out h-2 bg-gradient-to-r from-cyan-700/40 to-cyan-700/40 rounded-full appearance-none cursor-pointer ml-3 z-0
+                            [&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-5 [&::-webkit-slider-thumb]:h-5 [&::-webkit-slider-thumb]:rounded-full [&::-webkit-slider-thumb]:bg-cyan-400 [&::-webkit-slider-thumb]:border-2 [&::-webkit-slider-thumb]:border-white/40 [&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:shadow-[0_8px_18px_rgba(2,6,23,0.6)]
+                        `}
                     />
                 </div>
                 {/* Time Display */}

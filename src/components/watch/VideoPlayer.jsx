@@ -22,6 +22,8 @@ export default function VideoPlayer({
   const tracksInitializedRef = useRef(false);
   const lastSrcRef = useRef(null);
 
+  const isPlayingRef = useRef(autoPlay);
+
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -282,11 +284,11 @@ export default function VideoPlayer({
       clearTimeout(hideControlsTimeoutRef.current);
     }
     hideControlsTimeoutRef.current = setTimeout(() => {
-      if (isPlaying && !showCaptionMenu && !showSettingsMenu) {
+      if (isPlayingRef.current && !showCaptionMenu && !showSettingsMenu) {
         setShowControls(false);
       }
     }, 3000);
-  }, [isPlaying, showCaptionMenu, showSettingsMenu]);
+  }, [showCaptionMenu, showSettingsMenu]);
 
   useEffect(() => {
     return () => {
@@ -295,6 +297,17 @@ export default function VideoPlayer({
       }
     };
   }, []);
+
+  useEffect(() => {
+    isPlayingRef.current = isPlaying;
+    if (!isPlaying) {
+      setShowControls(true);
+      if (hideControlsTimeoutRef.current) {
+        clearTimeout(hideControlsTimeoutRef.current);
+        hideControlsTimeoutRef.current = null;
+      }
+    }
+  }, [isPlaying]);
 
   useEffect(() => {
     const handleKeyPress = (e) => {
