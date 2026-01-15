@@ -8,7 +8,7 @@ import {
 
 export default function VideoPlayer({
   src,
-  sources = [],
+  _sources = [],
   subtitleTracks = [],
   introSkip = null,
   outroSkip = null,
@@ -17,6 +17,8 @@ export default function VideoPlayer({
   onEnded = null,
 }) {
   const videoRef = useRef(null);
+  // reference _sources to avoid no-unused-vars lint error (kept for future use)
+  void _sources;
   const containerRef = useRef(null);
   const progressBarRef = useRef(null);
   const hideControlsTimeoutRef = useRef(null);
@@ -43,52 +45,8 @@ export default function VideoPlayer({
   const [showSkipOutroEarly, setShowSkipOutroEarly] = useState(false);
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showCaptionMenu, setShowCaptionMenu] = useState(false);
-  const [showSettingsMenu, setShowSettingsMenu] = useState(false);
 
-  // Quality options derived from props (avoid calling setState in an effect)
-  const qualityOptions = useMemo(() => (Array.isArray(sources) && sources.length > 0 ? sources : []), [sources]);
-  const [selectedQuality, setSelectedQuality] = useState(null);
-  const effectiveSelectedQuality = useMemo(() => selectedQuality || (qualityOptions[0]?.label || null), [selectedQuality, qualityOptions]);
 
-  const handleQualitySelect = useCallback((q) => {
-    if (!q || !q.url) return;
-    const video = videoRef.current;
-    if (!video) return;
-
-    const current = video.currentTime || 0;
-    const wasPaused = video.paused;
-
-    setIsLoading(true);
-    setSelectedQuality(q.label);
-    setShowSettingsMenu(false);
-
-    // Swap source and attempt to preserve currentTime & playback state
-    try {
-      video.pause();
-      video.src = q.url;
-      video.load();
-    } catch {
-      // ignore
-    }
-
-    const onCanPlay = () => {
-      try {
-        if (!isNaN(video.duration)) {
-          video.currentTime = Math.min(current, video.duration || current);
-        }
-      } catch {
-        // ignore seeking errors
-      }
-      if (!wasPaused) {
-        const p = video.play();
-        if (p && p.catch) p.catch(() => {});
-      }
-      setIsLoading(false);
-      video.removeEventListener('canplay', onCanPlay);
-    };
-
-    video.addEventListener('canplay', onCanPlay);
-  }, []);
 
   const defaultCaption = useMemo(() => {
     const defaultTrack = subtitleTracks.find(t => t.default);
@@ -325,7 +283,6 @@ export default function VideoPlayer({
 
     video.playbackRate = rate;
     setPlaybackRate(rate);
-    setShowSettingsMenu(false);
   }, []);
 
   const handleCaptionSelect = useCallback((label) => {
@@ -335,12 +292,6 @@ export default function VideoPlayer({
 
   const toggleCaptionMenu = useCallback(() => {
     setShowCaptionMenu(prev => !prev);
-    setShowSettingsMenu(false);
-  }, []);
-
-  const toggleSettingsMenu = useCallback(() => {
-    setShowSettingsMenu(prev => !prev);
-    setShowCaptionMenu(false);
   }, []);
 
   const resetHideControlsTimeout = useCallback(() => {
@@ -349,11 +300,11 @@ export default function VideoPlayer({
       clearTimeout(hideControlsTimeoutRef.current);
     }
     hideControlsTimeoutRef.current = setTimeout(() => {
-      if (isPlayingRef.current && !showCaptionMenu && !showSettingsMenu) {
+      if (isPlayingRef.current && !showCaptionMenu) {
         setShowControls(false);
       }
     }, 3000);
-  }, [showCaptionMenu, showSettingsMenu]);
+  }, [showCaptionMenu]);
 
   useEffect(() => {
     return () => {
@@ -442,7 +393,6 @@ export default function VideoPlayer({
       onMouseLeave={() => {
         setShowControls(false);
         setShowCaptionMenu(false);
-        setShowSettingsMenu(false);
       }}
     >
       <style>{`
@@ -525,13 +475,8 @@ export default function VideoPlayer({
             duration={duration}
             formatTime={formatTime}
             playbackRate={playbackRate}
-            toggleSettingsMenu={toggleSettingsMenu}
-            showSettingsMenu={showSettingsMenu}
             changePlaybackRate={changePlaybackRate}
             playbackRates={playbackRates}
-            qualityOptions={qualityOptions}
-            selectedQuality={effectiveSelectedQuality}
-            onQualitySelect={handleQualitySelect}
             showSkipIntroEarly={showSkipIntroEarly}
             showSkipIntro={showSkipIntro}
             autoSkipIntro={autoSkipIntro}
