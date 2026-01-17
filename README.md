@@ -1,21 +1,44 @@
-# ❄️ Shirayuki - Anime Streaming Platform
+# Shirayuki — API Endpoints, Contributing, and License
 
-A modern, responsive anime streaming website built with React, Vite, and Tailwind CSS. Browse, search, and watch your favorite anime with a beautiful dark-themed interface.
+## Endpoints ✅
+All endpoints are exposed via the `ENDPOINTS` constants in `src/context/api/endpoints.js`.
 
-## ✨ Features
+- Anime endpoints
+  - `HOME` — `/api/v2/hianime/home`
+  - `SCHEDULE(date)` — `/api/v2/hianime/schedule?date=${date}`
+  - `AZ_LIST(letter, page)` — `/api/v2/hianime/azlist/${letter}?page=${page}`
+  - `ANIME_DETAILS(animeId)` — `/api/v2/hianime/anime/${animeId}`
+  - `ANIME_EPISODES(animeId)` — `/api/v2/hianime/anime/${animeId}/episodes`
+  - `SEARCH(query, page)` — `/api/v2/hianime/search?q=<query>&page=<page>`
+  - `SEARCH_SUGGESTION(query)` — `/api/v2/hianime/search/suggestion?q=<query>`
+  - `SEARCH_ADVANCED(params)` — `/api/v2/hianime/search/advanced?...` (uses URLSearchParams)
+  - `PRODUCER(id, page)` — `/api/v2/hianime/producer/${id}?page=${page}`
+  - `GENRE(id, page)` — `/api/v2/hianime/genre/${id}?page=${page}`
+  - `CATEGORY(id, page)` — `/api/v2/hianime/category/${id}?page=${page}`
+  - `EPISODE_SERVERS(animeEpisodeId)` — `/api/v2/hianime/episode/servers?animeEpisodeId=${animeEpisodeId}`
+  - `EPISODE_SOURCES(animeEpisodeId, episodeId, ep, server, category)` — `/api/v2/hianime/episode/sources?...`
 
-- 🏠 **Home Page** - Spotlight carousel, trending anime, latest episodes, top 10 rankings
-- 🔍 **Smart Search** - Real-time search suggestions as you type
-- 📺 **Video Player** - Stream anime with multiple server options (SUB/DUB)
-- 📋 **Episode List** - Browse all episodes with search functionality
-- 🔤 **A-Z List** - Browse anime alphabetically with pagination
-- 🎭 **Genre Browser** - Filter anime by genre (Action, Romance, Fantasy, etc.)
-- 📁 **Category/Types** - Browse by type (TV, Movie, OVA, ONA, Special, Music)
-- 🏢 **Studios** - Explore anime by production studio
-- 📅 **Schedule** - View anime airing schedule with calendar picker
-- 📱 **Responsive Design** - Fully responsive across all devices
+- Backend endpoints
+  - `AUTH` — `/api/auth/*` (register, login, forgot-password, update-password, send-verification, verify-email)
+  - `USER` — `/api/user/*` (profile endpoints)
+  - `PROFILE` — `/api/profile/*` (pfp endpoints)
+  - `PROGRESS` — `/api/progress/*` (watch progress endpoints)
 
-## 📦 Installation
+(See `src/context/api/endpoints.js` for precise signatures.)
+
+---
+
+## How to contribute 💡
+- Fork the repo and create a branch: `git checkout -b feat/your-feature`
+- Install & run locally: `npm install` and `npm run dev`
+- Lint & build before PR: `npm run lint` and `npm run build`
+- Open a clear Pull Request describing your change and tests
+
+---
+
+## License 📝
+This project is licensed under the **MIT License**. See `LICENSE` for details.
+
 
 1. **Set up environment variables**
    ```bash
