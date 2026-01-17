@@ -38,7 +38,7 @@ export default function Watch() {
   const [selectedCategory, setSelectedCategory] = useState("sub");
   const [streamingUrl, setStreamingUrl] = useState("");
   const [streamingSources, setStreamingSources] = useState([]);
-  
+
   // Video player data
   const [subtitleTracks, setSubtitleTracks] = useState([]);
   const [introSkip, setIntroSkip] = useState(null);
@@ -52,9 +52,9 @@ export default function Watch() {
   // Reusable function to load video sources
   const loadSources = useCallback(async (episode, server, category) => {
     if (!episode || !server) return;
-    
+
     setServerLoading(true);
-    
+
     const sourceRes = await getEpisodeSources(
       animeId,
       episode.episodeId,
@@ -62,14 +62,13 @@ export default function Watch() {
       server.serverName,
       category
     );
-    
+
     if (!sourceRes.error) {
       const responseData = sourceRes.data || sourceRes;
       const videoData = responseData.video || {};
       const captionsData = responseData.captions || {};
       const skipData = responseData.skip || [];
-      
-      // Build quality/source list if available
+
       let sourcesArray = [];
       const candidates = videoData.sources || videoData.qualities || videoData.renditions || videoData.alternatives || [];
       if (Array.isArray(candidates) && candidates.length) {
@@ -85,10 +84,10 @@ export default function Watch() {
 
       setStreamingSources(sourcesArray);
       setStreamingUrl(sourcesArray[0]?.url || "");
-      
+
       const tracks = captionsData.tracks || [];
       setSubtitleTracks(tracks);
-      
+
       const intro = skipData.find(s => s.name === "Skip Intro");
       const outro = skipData.find(s => s.name === "Skip Outro");
       setIntroSkip(intro || null);
@@ -99,11 +98,10 @@ export default function Watch() {
       setIntroSkip(null);
       setOutroSkip(null);
     }
-    
+
     setServerLoading(false);
   }, [animeId]);
 
-  // OPTIMIZED: Single combined initial load
   useEffect(() => {
     async function load() {
       setLoading(true);
@@ -126,7 +124,7 @@ export default function Watch() {
 
       const current = eps.find((e) => e.episodeId === decodeURIComponent(episodeId)) || eps[0];
       setCurrentEpisode(current);
-      
+
       if (!infoRes.error) {
         setAnimeInfo(infoRes.data?.data?.anime);
       }
@@ -134,7 +132,7 @@ export default function Watch() {
       // Immediately fetch servers for current episode
       if (current) {
         const serverRes = await getEpisodeServers(current.episodeId);
-        
+
         if (!serverRes.error) {
           const data = serverRes.data?.data || {};
           setServers({
@@ -148,16 +146,17 @@ export default function Watch() {
             const initialCategory = data.sub?.length ? "sub" : "dub";
             setSelectedServer(first);
             setSelectedCategory(initialCategory);
-            
-            // Load video source
-            await loadSources(current, first, initialCategory);
+
+            // Load video source in background (don't await) ← FIXED HERE
+            loadSources(current, first, initialCategory);
           }
         }
       }
 
+      // Set loading to false immediately after essential data loads
       setLoading(false);
     }
-    
+
     load();
   }, [animeId, episodeId, loadSources]);
 
@@ -212,11 +211,11 @@ export default function Watch() {
     <div className="min-h-screen bg-[#0a0a0f] text-white relative">
       {/* Gradient overlay */}
       <div className="fixed inset-0 bg-gradient-to-br from-purple-950/30 via-[#0a0a0f] to-pink-950/20 pointer-events-none"></div>
-      
+
       {/* Animated background orbs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none">
         <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-purple-600/10 rounded-full blur-3xl animate-pulse"></div>
-        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl animate-pulse" style={{animationDelay: '1s'}}></div>
+        <div className="absolute bottom-1/3 right-1/3 w-96 h-96 bg-pink-600/10 rounded-full blur-3xl animate-pulse" style={{ animationDelay: '1s' }}></div>
       </div>
 
       {/* Player + Sidebar */}
@@ -263,13 +262,13 @@ export default function Watch() {
           <div className="flex flex-col gap-3 px-6 py-4 bg-black/30 backdrop-blur-xl border-t border-white/10">
             <div className="flex items-center justify-between">
               <div className="flex gap-2 items-center">
-                <IconBtn 
-                  onClick={goPrev} 
+                <IconBtn
+                  onClick={goPrev}
                   icon={<SkipBack className="h-5 w-5" />}
                   disabled={episodes.findIndex((e) => e === currentEpisode) === 0}
                 />
-                <IconBtn 
-                  onClick={goNext} 
+                <IconBtn
+                  onClick={goNext}
                   icon={<SkipForward className="h-5 w-5" />}
                   disabled={episodes.findIndex((e) => e === currentEpisode) === episodes.length - 1}
                 />
@@ -330,12 +329,11 @@ export default function Watch() {
                         key={server.serverId}
                         onClick={() => handleServerSelect(server, "sub")}
                         disabled={serverLoading}
-                        className={`rounded-xl px-4 md:px-6 py-2 text-sm font-bold transition-all duration-300 ${
-                          selectedServer?.serverId === server.serverId &&
-                          selectedCategory === "sub"
+                        className={`rounded-xl px-4 md:px-6 py-2 text-sm font-bold transition-all duration-300 ${selectedServer?.serverId === server.serverId &&
+                            selectedCategory === "sub"
                             ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg shadow-purple-500/50 scale-105"
                             : "glass-button text-purple-200 hover:text-white hover:scale-105"
-                        } ${serverLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          } ${serverLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {server.serverName.toUpperCase()}
                       </Button>
@@ -361,12 +359,11 @@ export default function Watch() {
                         key={server.serverId}
                         onClick={() => handleServerSelect(server, "dub")}
                         disabled={serverLoading}
-                        className={`rounded-xl px-4 md:px-6 py-2 text-sm font-bold transition-all duration-300 ${
-                          selectedServer?.serverId === server.serverId &&
-                          selectedCategory === "dub"
+                        className={`rounded-xl px-4 md:px-6 py-2 text-sm font-bold transition-all duration-300 ${selectedServer?.serverId === server.serverId &&
+                            selectedCategory === "dub"
                             ? "bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400 text-white shadow-lg shadow-pink-500/50 scale-105"
                             : "glass-button text-pink-200 hover:text-white hover:scale-105"
-                        } ${serverLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                          } ${serverLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
                       >
                         {server.serverName.toUpperCase()}
                       </Button>
@@ -395,7 +392,7 @@ export default function Watch() {
         </div>
 
         {/* Episodes Sidebar */}
-        <div className="glass-container rounded-3xl shadow-2xl border border-white/20 overflow-hidden flex flex-col" style={{height: '885px'}}>
+        <div className="glass-container rounded-3xl shadow-2xl border border-white/20 overflow-hidden flex flex-col" style={{ height: '885px' }}>
           <EpisodeSidebar
             episodes={episodes}
             currentEpisode={currentEpisode}
@@ -422,11 +419,10 @@ function IconBtn({ icon, onClick, disabled = false, tooltip }) {
       onClick={onClick}
       disabled={disabled}
       title={tooltip}
-      className={`p-2.5 rounded-xl backdrop-blur-xl transition-all duration-300 ${
-        disabled 
-          ? 'bg-white/5 text-zinc-600 cursor-not-allowed' 
+      className={`p-2.5 rounded-xl backdrop-blur-xl transition-all duration-300 ${disabled
+          ? 'bg-white/5 text-zinc-600 cursor-not-allowed'
           : 'glass-button hover:scale-110 hover:shadow-lg'
-      }`}
+        }`}
     >
       {icon}
     </button>
