@@ -17,14 +17,12 @@ export default function VideoPlayer({
   onEnded = null,
 }) {
   const videoRef = useRef(null);
-  // reference _sources to avoid no-unused-vars lint error (kept for future use)
   void _sources;
   const containerRef = useRef(null);
   const progressBarRef = useRef(null);
   const hideControlsTimeoutRef = useRef(null);
   const tracksInitializedRef = useRef(false);
   const lastSrcRef = useRef(null);
-  // Refs for deferred state updates to avoid synchronous setState in effects
   const resetStateTimeoutRef = useRef(null);
   const showControlsSyncTimeoutRef = useRef(null);
 
@@ -71,7 +69,6 @@ export default function VideoPlayer({
         clearTimeout(resetStateTimeoutRef.current);
       }
 
-      // Defer to next tick to avoid synchronous setState in effect
       resetStateTimeoutRef.current = setTimeout(() => {
         setSelectedCaption(defaultCaption);
         setIsLoading(true);
