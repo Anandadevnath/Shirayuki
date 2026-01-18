@@ -80,13 +80,13 @@ export default function VideoPlayerControls({
                 {/* Play/Pause */}
                 <button
                     onClick={togglePlay}
-                    className="p-2 sm:p-3 hover:bg-cyan-500/20 rounded-xl transition-all hover:scale-110 group/btn backdrop-blur-sm"
+                    className="p-2 hover:bg-cyan-500/20 rounded-xl transition-all hover:scale-110 group/btn backdrop-blur-sm"
                     title={isPlaying ? "Pause" : "Play"}
                 >
                     {isPlaying ? (
-                        <Pause className="h-6 w-6 sm:h-7 sm:w-7 text-white group-hover/btn:text-cyan-300 transition-colors" fill="white" />
+                        <Pause className="h-5 w-5 text-white group-hover/btn:text-cyan-300 transition-colors" fill="white" />
                     ) : (
-                        <Play className="h-6 w-6 sm:h-7 sm:w-7 text-white group-hover/btn:text-cyan-300 transition-colors" fill="white" />
+                        <Play className="h-5 w-5 text-white group-hover/btn:text-cyan-300 transition-colors" fill="white" />
                     )}
                 </button>
                 {/* Skip Backward */}
