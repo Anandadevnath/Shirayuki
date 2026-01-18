@@ -16,8 +16,8 @@ export default function VideoPlayer({
   autoSkipIntro = true,
   onEnded = null,
 }) {
+  // Refs
   const videoRef = useRef(null);
-  void _sources;
   const containerRef = useRef(null);
   const progressBarRef = useRef(null);
   const hideControlsTimeoutRef = useRef(null);
@@ -25,15 +25,16 @@ export default function VideoPlayer({
   const lastSrcRef = useRef(null);
   const resetStateTimeoutRef = useRef(null);
   const showControlsSyncTimeoutRef = useRef(null);
-
+  const isDraggingRef = useRef(false);
   const isPlayingRef = useRef(autoPlay);
+  const isFullscreenRef = useRef(false);
 
+  // State
   const [isPlaying, setIsPlaying] = useState(autoPlay);
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [volume, setVolume] = useState(1);
   const [isMuted, setIsMuted] = useState(false);
-  const isFullscreenRef = useRef(false);
   const [buffered, setBuffered] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
   const [showControls, setShowControls] = useState(true);
@@ -44,8 +45,7 @@ export default function VideoPlayer({
   const [playbackRate, setPlaybackRate] = useState(1);
   const [showCaptionMenu, setShowCaptionMenu] = useState(false);
 
-
-
+  // Memoized values
   const defaultCaption = useMemo(() => {
     const defaultTrack = subtitleTracks.find(t => t.default);
     return defaultTrack ? defaultTrack.label : null;
@@ -53,6 +53,9 @@ export default function VideoPlayer({
 
   const [selectedCaption, setSelectedCaption] = useState(defaultCaption);
 
+  const playbackRates = useMemo(() => [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2], []);
+
+  // Utility functions
   const formatTime = useCallback((seconds) => {
     if (isNaN(seconds)) return "0:00";
     const mins = Math.floor(seconds / 60);
@@ -60,6 +63,52 @@ export default function VideoPlayer({
     return `${mins}:${secs.toString().padStart(2, "0")}`;
   }, []);
 
+  const clearAllTimeouts = useCallback(() => {
+    if (resetStateTimeoutRef.current) clearTimeout(resetStateTimeoutRef.current);
+    if (hideControlsTimeoutRef.current) clearTimeout(hideControlsTimeoutRef.current);
+    if (showControlsSyncTimeoutRef.current) clearTimeout(showControlsSyncTimeoutRef.current);
+  }, []);
+
+  // Skip button logic
+  const updateSkipButtonStates = useCallback((time) => {
+    if (introSkip) {
+      const { start, end } = introSkip;
+      const showEarly = 5;
+
+      if (time >= start - showEarly && time < start) {
+        setShowSkipIntroEarly(true);
+        setShowSkipIntro(false);
+      } else if (time >= start && time < end) {
+        setShowSkipIntroEarly(false);
+        setShowSkipIntro(true);
+        if (autoSkipIntro && videoRef.current) {
+          videoRef.current.currentTime = end;
+          setShowSkipIntro(false);
+        }
+      } else if (showSkipIntro || showSkipIntroEarly) {
+        setShowSkipIntroEarly(false);
+        setShowSkipIntro(false);
+      }
+    }
+
+    if (outroSkip) {
+      const { start, end } = outroSkip;
+      const showEarly = 5;
+
+      if (time >= start - showEarly && time < start) {
+        setShowSkipOutroEarly(true);
+        setShowSkipOutro(false);
+      } else if (time >= start && time < end) {
+        setShowSkipOutroEarly(false);
+        setShowSkipOutro(true);
+      } else if (showSkipOutro || showSkipOutroEarly) {
+        setShowSkipOutroEarly(false);
+        setShowSkipOutro(false);
+      }
+    }
+  }, [introSkip, outroSkip, autoSkipIntro, showSkipIntro, showSkipIntroEarly, showSkipOutro, showSkipOutroEarly]);
+
+  // Reset state when src changes
   useEffect(() => {
     if (lastSrcRef.current !== src) {
       lastSrcRef.current = src;
@@ -81,11 +130,11 @@ export default function VideoPlayer({
     return () => {
       if (resetStateTimeoutRef.current) {
         clearTimeout(resetStateTimeoutRef.current);
-        resetStateTimeoutRef.current = null;
       }
     };
   }, [src, defaultCaption]);
 
+  // Video event handlers
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -100,44 +149,11 @@ export default function VideoPlayer({
     };
 
     const handleTimeUpdate = () => {
+      if (isDraggingRef.current) return;
+      
       const time = video.currentTime;
       setCurrentTime(time);
-
-      if (introSkip) {
-        const { start, end } = introSkip;
-        const showEarly = 5;
-
-        if (time >= start - showEarly && time < start) {
-          setShowSkipIntroEarly(true);
-          setShowSkipIntro(false);
-        } else if (time >= start && time < end) {
-          setShowSkipIntroEarly(false);
-          setShowSkipIntro(true);
-          if (autoSkipIntro) {
-            video.currentTime = end;
-            setShowSkipIntro(false);
-          }
-        } else if (showSkipIntro || showSkipIntroEarly) {
-          setShowSkipIntroEarly(false);
-          setShowSkipIntro(false);
-        }
-      }
-
-      if (outroSkip) {
-        const { start, end } = outroSkip;
-        const showEarly = 5;
-
-        if (time >= start - showEarly && time < start) {
-          setShowSkipOutroEarly(true);
-          setShowSkipOutro(false);
-        } else if (time >= start && time < end) {
-          setShowSkipOutroEarly(false);
-          setShowSkipOutro(true);
-        } else if (showSkipOutro || showSkipOutroEarly) {
-          setShowSkipOutroEarly(false);
-          setShowSkipOutro(false);
-        }
-      }
+      updateSkipButtonStates(time);
     };
 
     const handleProgress = () => {
@@ -169,8 +185,9 @@ export default function VideoPlayer({
       video.removeEventListener("canplay", handleCanPlay);
       video.removeEventListener("ended", handleEnded);
     };
-  }, [introSkip, outroSkip, autoSkipIntro, onEnded, showSkipIntro, showSkipIntroEarly, showSkipOutro, showSkipOutroEarly]);
+  }, [updateSkipButtonStates, onEnded]);
 
+  // Subtitle tracks management
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -179,16 +196,14 @@ export default function VideoPlayer({
       const tracks = video.textTracks;
       if (tracks.length === 0) return;
 
-      for (let i = 0; i < tracks.length; i++) {
-        tracks[i].mode = 'disabled';
-      }
+      // Disable all tracks first
+      Array.from(tracks).forEach(track => track.mode = 'disabled');
 
+      // Enable selected track
       if (selectedCaption !== null) {
-        for (let i = 0; i < tracks.length; i++) {
-          if (subtitleTracks[i]?.label === selectedCaption) {
-            tracks[i].mode = 'showing';
-            break;
-          }
+        const trackIndex = subtitleTracks.findIndex(t => t.label === selectedCaption);
+        if (trackIndex !== -1 && tracks[trackIndex]) {
+          tracks[trackIndex].mode = 'showing';
         }
       }
     };
@@ -201,6 +216,7 @@ export default function VideoPlayer({
     }
   }, [selectedCaption, subtitleTracks, src]);
 
+  // Playback controls
   const togglePlay = useCallback(() => {
     const video = videoRef.current;
     if (!video) return;
@@ -231,15 +247,64 @@ export default function VideoPlayer({
     setIsMuted(newVolume === 0);
   }, []);
 
-  const handleSeek = useCallback((e) => {
-    const video = videoRef.current;
+  // Seek/Progress bar controls
+  const calculateSeekPosition = useCallback((clientX) => {
     const progressBar = progressBarRef.current;
-    if (!video || !progressBar) return;
+    const video = videoRef.current;
+    if (!progressBar || !video) return null;
 
     const rect = progressBar.getBoundingClientRect();
-    const pos = (e.clientX - rect.left) / rect.width;
-    video.currentTime = pos * video.duration;
+    const pos = Math.max(0, Math.min(1, (clientX - rect.left) / rect.width));
+    return pos * video.duration;
   }, []);
+
+  const updateVideoTime = useCallback((clientX) => {
+    const video = videoRef.current;
+    if (!video) return;
+
+    const newTime = calculateSeekPosition(clientX);
+    if (newTime !== null) {
+      video.currentTime = newTime;
+      setCurrentTime(newTime);
+    }
+  }, [calculateSeekPosition]);
+
+  const handleMouseDown = useCallback((e) => {
+    isDraggingRef.current = true;
+    updateVideoTime(e.clientX);
+  }, [updateVideoTime]);
+
+  const handleMouseMove = useCallback((e) => {
+    if (!isDraggingRef.current) return;
+    updateVideoTime(e.clientX);
+  }, [updateVideoTime]);
+
+  const handleMouseUp = useCallback(() => {
+    isDraggingRef.current = false;
+  }, []);
+
+  // Global drag event listeners
+  useEffect(() => {
+    const handleGlobalMouseMove = (e) => {
+      if (isDraggingRef.current) {
+        handleMouseMove(e);
+      }
+    };
+
+    const handleGlobalMouseUp = () => {
+      if (isDraggingRef.current) {
+        handleMouseUp();
+      }
+    };
+
+    document.addEventListener('mousemove', handleGlobalMouseMove);
+    document.addEventListener('mouseup', handleGlobalMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleGlobalMouseMove);
+      document.removeEventListener('mouseup', handleGlobalMouseUp);
+    };
+  }, [handleMouseMove, handleMouseUp]);
 
   const toggleFullscreen = useCallback(() => {
     const container = containerRef.current;
@@ -259,6 +324,7 @@ export default function VideoPlayer({
     if (!video || !introSkip) return;
     video.currentTime = introSkip.end;
     setShowSkipIntro(false);
+    setShowSkipIntroEarly(false);
   }, [introSkip]);
 
   const skipOutro = useCallback(() => {
@@ -266,6 +332,7 @@ export default function VideoPlayer({
     if (!video || !outroSkip) return;
     video.currentTime = outroSkip.end;
     setShowSkipOutro(false);
+    setShowSkipOutroEarly(false);
   }, [outroSkip]);
 
   const skip = useCallback((seconds) => {
@@ -277,7 +344,6 @@ export default function VideoPlayer({
   const changePlaybackRate = useCallback((rate) => {
     const video = videoRef.current;
     if (!video) return;
-
     video.playbackRate = rate;
     setPlaybackRate(rate);
   }, []);
@@ -291,6 +357,7 @@ export default function VideoPlayer({
     setShowCaptionMenu(prev => !prev);
   }, []);
 
+  // Controls visibility management
   const resetHideControlsTimeout = useCallback(() => {
     setShowControls(true);
     if (hideControlsTimeoutRef.current) {
@@ -304,20 +371,16 @@ export default function VideoPlayer({
   }, [showCaptionMenu]);
 
   useEffect(() => {
-    return () => {
-      if (hideControlsTimeoutRef.current) {
-        clearTimeout(hideControlsTimeoutRef.current);
-      }
-    };
-  }, []);
+    return () => clearAllTimeouts();
+  }, [clearAllTimeouts]);
 
   useEffect(() => {
     isPlayingRef.current = isPlaying;
+    
     if (!isPlaying) {
       if (showControlsSyncTimeoutRef.current) {
         clearTimeout(showControlsSyncTimeoutRef.current);
       }
-      // Defer to next tick to avoid lint rule for setState in effect
       showControlsSyncTimeoutRef.current = setTimeout(() => {
         setShowControls(true);
         showControlsSyncTimeoutRef.current = null;
@@ -328,7 +391,6 @@ export default function VideoPlayer({
         hideControlsTimeoutRef.current = null;
       }
     } else {
-      // Clear any pending show-controls timer when playback resumes
       if (showControlsSyncTimeoutRef.current) {
         clearTimeout(showControlsSyncTimeoutRef.current);
         showControlsSyncTimeoutRef.current = null;
@@ -338,49 +400,35 @@ export default function VideoPlayer({
     return () => {
       if (showControlsSyncTimeoutRef.current) {
         clearTimeout(showControlsSyncTimeoutRef.current);
-        showControlsSyncTimeoutRef.current = null;
       }
     };
   }, [isPlaying]);
 
+  // Keyboard shortcuts
   useEffect(() => {
     const handleKeyPress = (e) => {
       if (!videoRef.current) return;
 
-      switch (e.key) {
-        case " ":
-        case "k":
-          e.preventDefault();
-          togglePlay();
-          break;
-        case "ArrowLeft":
-          e.preventDefault();
-          skip(-10);
-          break;
-        case "ArrowRight":
-          e.preventDefault();
-          skip(10);
-          break;
-        case "m":
-          e.preventDefault();
-          toggleMute();
-          break;
-        case "f":
-          e.preventDefault();
-          toggleFullscreen();
-          break;
-        case "c":
-          e.preventDefault();
-          toggleCaptionMenu();
-          break;
+      const keyActions = {
+        " ": togglePlay,
+        "k": togglePlay,
+        "ArrowLeft": () => skip(-10),
+        "ArrowRight": () => skip(10),
+        "m": toggleMute,
+        "f": toggleFullscreen,
+        "c": toggleCaptionMenu,
+      };
+
+      const action = keyActions[e.key];
+      if (action) {
+        e.preventDefault();
+        action();
       }
     };
 
     document.addEventListener("keydown", handleKeyPress);
     return () => document.removeEventListener("keydown", handleKeyPress);
   }, [togglePlay, skip, toggleMute, toggleFullscreen, toggleCaptionMenu]);
-
-  const playbackRates = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
 
   return (
     <div
@@ -400,6 +448,7 @@ export default function VideoPlayer({
           font-size: 1em;
         }
       `}</style>
+
       {/* Video Element */}
       <video
         ref={videoRef}
@@ -425,6 +474,7 @@ export default function VideoPlayer({
       {/* Loading Spinner */}
       {isLoading && <VideoPlayerSpinner />}
 
+      {/* Skip Buttons */}
       <VideoPlayerSkipButtons
         showSkipIntroEarly={showSkipIntroEarly}
         showSkipIntro={showSkipIntro}
@@ -435,31 +485,40 @@ export default function VideoPlayer({
         skipOutro={skipOutro}
       />
 
-      {/* Modern Controls Bar */}
+      {/* Controls Bar */}
       <div
-        className={`absolute bottom-0 left-0 right-0 transition-all duration-300 ${showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"} z-30`}
+        className={`absolute bottom-0 left-0 right-0 transition-all duration-300 ${
+          showControls ? "opacity-100 translate-y-0" : "opacity-0 translate-y-4"
+        } z-30`}
         style={{ WebkitOverflowScrolling: 'touch' }}
       >
-        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/95 to-transparent pointer-events-none"></div>
+        <div className="absolute inset-0 bg-gradient-to-t from-black via-black/95 to-transparent pointer-events-none" />
+        
         <div className="relative w-full">
+          {/* Progress Bar */}
           <div className="px-2 sm:px-6 pb-2">
             <div
               ref={progressBarRef}
               className="relative h-2 bg-gradient-to-r from-cyan-900/30 to-purple-900/30 rounded-full cursor-pointer group/progress hover:h-2.5 transition-all backdrop-blur-sm"
-              onClick={handleSeek}
+              onMouseDown={handleMouseDown}
             >
+              {/* Buffered Progress */}
               <div
-                className="absolute h-full bg-gradient-to-r from-cyan-700/40 to-purple-700/40 rounded-full"
+                className="absolute h-full bg-gradient-to-r from-cyan-700/40 to-purple-700/40 rounded-full pointer-events-none"
                 style={{ width: `${buffered}%` }}
               />
+              
+              {/* Current Progress */}
               <div
-                className="absolute h-full bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 rounded-full shadow-lg shadow-cyan-500/50"
-                style={{ width: `${(currentTime / duration) * 100}%` }}
+                className="absolute h-full bg-gradient-to-r from-cyan-400 via-purple-400 to-pink-400 rounded-full shadow-lg shadow-cyan-500/50 pointer-events-none"
+                style={{ width: `${(currentTime / duration) * 100 || 0}%` }}
               >
-                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-xl shadow-cyan-400/50 opacity-0 group-hover/progress:opacity-100 transition-opacity border-2 border-cyan-300"></div>
+                <div className="absolute right-0 top-1/2 -translate-y-1/2 w-5 h-5 bg-white rounded-full shadow-xl shadow-cyan-400/50 opacity-0 group-hover/progress:opacity-100 transition-opacity border-2 border-cyan-300" />
               </div>
             </div>
           </div>
+
+          {/* Video Controls */}
           <VideoPlayerControls
             isPlaying={isPlaying}
             togglePlay={togglePlay}
@@ -488,7 +547,7 @@ export default function VideoPlayer({
         </div>
       </div>
 
-      {/* Center Play Button (smaller) */}
+      {/* Center Play Button */}
       {!isPlaying && !isLoading && (
         <VideoPlayerPlayButton onClick={togglePlay} />
       )}
