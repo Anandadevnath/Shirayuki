@@ -55,11 +55,12 @@ export default function Watch() {
 
     setServerLoading(true);
 
+    // Always use 'hd-2' as the server
     const sourceRes = await getEpisodeSources(
       animeId,
       episode.episodeId,
       episode.number,
-      server.serverName,
+      'hd-2',
       category
     );
 
@@ -106,8 +107,7 @@ export default function Watch() {
     async function load() {
       setLoading(true);
       setError(null);
-
-      // Fetch episodes and info in parallel
+      
       const [epsRes, infoRes] = await Promise.all([
         getAnimeEpisodes(animeId),
         getAnimeDetails(animeId),
@@ -129,7 +129,6 @@ export default function Watch() {
         setAnimeInfo(infoRes.data?.data?.anime);
       }
 
-      // Immediately fetch servers for current episode
       if (current) {
         const serverRes = await getEpisodeServers(current.episodeId);
 
@@ -140,20 +139,30 @@ export default function Watch() {
             dub: data.dub || [],
           });
 
-          // Immediately fetch sources for first available server
-          const first = data.sub?.[0] || data.dub?.[0];
-          if (first) {
-            const initialCategory = data.sub?.length ? "sub" : "dub";
-            setSelectedServer(first);
+          const hd2Sub = (data.sub || []).find(s => s.serverName?.toLowerCase() === 'hd-2');
+          const hd2Dub = (data.dub || []).find(s => s.serverName?.toLowerCase() === 'hd-2');
+          let initialServer = null;
+          let initialCategory = 'sub';
+          if (hd2Sub) {
+            initialServer = hd2Sub;
+            initialCategory = 'sub';
+          } else if (hd2Dub) {
+            initialServer = hd2Dub;
+            initialCategory = 'dub';
+          } else if ((data.sub || []).length) {
+            initialServer = data.sub[0];
+            initialCategory = 'sub';
+          } else if ((data.dub || []).length) {
+            initialServer = data.dub[0];
+            initialCategory = 'dub';
+          }
+          if (initialServer) {
+            setSelectedServer(initialServer);
             setSelectedCategory(initialCategory);
-
-            // Load video source in background (don't await) ← FIXED HERE
-            loadSources(current, first, initialCategory);
+            loadSources(current, initialServer, initialCategory);
           }
         }
       }
-
-      // Set loading to false immediately after essential data loads
       setLoading(false);
     }
 
@@ -324,20 +333,22 @@ export default function Watch() {
                 </div>
                 <div className="flex gap-2 flex-wrap flex-1">
                   {servers.sub.length > 0 ? (
-                    servers.sub.map((server) => (
-                      <Button
-                        key={server.serverId}
-                        onClick={() => handleServerSelect(server, "sub")}
-                        disabled={serverLoading}
-                        className={`rounded-xl px-4 md:px-6 py-2 text-sm font-bold transition-all duration-300 ${selectedServer?.serverId === server.serverId &&
+                    servers.sub
+                      .filter(server => server.serverName?.toLowerCase() === 'hd-2')
+                      .map((server) => (
+                        <Button
+                          key={server.serverId}
+                          onClick={() => handleServerSelect(server, "sub")}
+                          disabled={serverLoading}
+                          className={`rounded-xl px-4 md:px-6 py-2 text-sm font-bold transition-all duration-300 ${selectedServer?.serverId === server.serverId &&
                             selectedCategory === "sub"
                             ? "bg-gradient-to-r from-purple-600 to-purple-500 hover:from-purple-500 hover:to-purple-400 text-white shadow-lg shadow-purple-500/50 scale-105"
                             : "glass-button text-purple-200 hover:text-white hover:scale-105"
-                          } ${serverLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        {server.serverName.toUpperCase()}
-                      </Button>
-                    ))
+                            } ${serverLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {server.serverName.toUpperCase()}
+                        </Button>
+                      ))
                   ) : (
                     <span className="text-zinc-400 text-sm italic py-2">Not available</span>
                   )}
@@ -354,20 +365,22 @@ export default function Watch() {
                 </div>
                 <div className="flex gap-2 flex-wrap flex-1">
                   {servers.dub.length > 0 ? (
-                    servers.dub.map((server) => (
-                      <Button
-                        key={server.serverId}
-                        onClick={() => handleServerSelect(server, "dub")}
-                        disabled={serverLoading}
-                        className={`rounded-xl px-4 md:px-6 py-2 text-sm font-bold transition-all duration-300 ${selectedServer?.serverId === server.serverId &&
+                    servers.dub
+                      .filter(server => server.serverName?.toLowerCase() === 'hd-2')
+                      .map((server) => (
+                        <Button
+                          key={server.serverId}
+                          onClick={() => handleServerSelect(server, "dub")}
+                          disabled={serverLoading}
+                          className={`rounded-xl px-4 md:px-6 py-2 text-sm font-bold transition-all duration-300 ${selectedServer?.serverId === server.serverId &&
                             selectedCategory === "dub"
                             ? "bg-gradient-to-r from-pink-600 to-pink-500 hover:from-pink-500 hover:to-pink-400 text-white shadow-lg shadow-pink-500/50 scale-105"
                             : "glass-button text-pink-200 hover:text-white hover:scale-105"
-                          } ${serverLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
-                      >
-                        {server.serverName.toUpperCase()}
-                      </Button>
-                    ))
+                            } ${serverLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                        >
+                          {server.serverName.toUpperCase()}
+                        </Button>
+                      ))
                   ) : (
                     <span className="text-zinc-400 text-sm italic py-2">Not available</span>
                   )}
@@ -420,8 +433,8 @@ function IconBtn({ icon, onClick, disabled = false, tooltip }) {
       disabled={disabled}
       title={tooltip}
       className={`p-2.5 rounded-xl backdrop-blur-xl transition-all duration-300 ${disabled
-          ? 'bg-white/5 text-zinc-600 cursor-not-allowed'
-          : 'glass-button hover:scale-110 hover:shadow-lg'
+        ? 'bg-white/5 text-zinc-600 cursor-not-allowed'
+        : 'glass-button hover:scale-110 hover:shadow-lg'
         }`}
     >
       {icon}
