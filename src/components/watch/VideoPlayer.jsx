@@ -8,7 +8,7 @@ import {
 
 export default function VideoPlayer({
   src,
-  _sources = [],
+  // ...existing code...
   subtitleTracks = [],
   introSkip = null,
   outroSkip = null,
