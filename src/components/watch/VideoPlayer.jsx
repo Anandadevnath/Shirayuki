@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useRef, useEffect } from "react";
 import { useVideoState } from "../../components/videoPlayer/logic/Usevideostate";
 import { useVideoControls } from "../../components/videoPlayer/logic/Usevideocontrols";
 import { useVideoEventHandlers } from "../../components/videoPlayer/logic/Usevideoeventhandlers";
@@ -22,6 +22,7 @@ export default function VideoPlayer({
   autoPlay = true,
   autoSkipIntro = true,
   onEnded = null,
+  episodeId = null, // Add this prop to uniquely identify each episode
 }) {
 
   const videoRef = useRef(null);
@@ -63,6 +64,68 @@ export default function VideoPlayer({
     videoControls.toggleFullscreen,
     videoControls.toggleCaptionMenu
   );
+
+  // Save playback position periodically
+  useEffect(() => {
+    if (!episodeId || !videoRef.current) return;
+
+    const saveInterval = setInterval(() => {
+      const currentTime = videoRef.current.currentTime;
+      const duration = videoRef.current.duration;
+      
+      // Only save if video has meaningful progress and isn't near the end
+      if (currentTime > 5 && currentTime < duration - 30) {
+        localStorage.setItem(`video_position_${episodeId}`, currentTime.toString());
+      }
+    }, 5000); // Save every 5 seconds
+
+    return () => clearInterval(saveInterval);
+  }, [episodeId]);
+
+  // Restore playback position on mount
+  useEffect(() => {
+    if (!episodeId || !videoRef.current) return;
+
+    const savedPosition = localStorage.getItem(`video_position_${episodeId}`);
+    
+    if (savedPosition) {
+      const position = parseFloat(savedPosition);
+      const videoEl = videoRef.current;
+      const handleCanPlay = () => {
+        if (videoEl && position > 0) {
+          videoEl.currentTime = position;
+        }
+      };
+
+      if (videoEl) {
+        videoEl.addEventListener('loadedmetadata', handleCanPlay);
+      }
+
+      return () => {
+        if (videoEl) {
+          videoEl.removeEventListener('loadedmetadata', handleCanPlay);
+        }
+      };
+    }
+  }, [episodeId, src]);
+
+  // Clear saved position when video ends
+  useEffect(() => {
+    const videoEl = videoRef.current;
+    if (!episodeId || !videoEl) return;
+
+    const handleEnded = () => {
+      localStorage.removeItem(`video_position_${episodeId}`);
+    };
+
+    videoEl.addEventListener('ended', handleEnded);
+
+    return () => {
+      if (videoEl) {
+        videoEl.removeEventListener('ended', handleEnded);
+      }
+    };
+  }, [episodeId]);
 
   return (
     <div

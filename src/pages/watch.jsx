@@ -237,6 +237,7 @@ export default function Watch() {
               <VideoPlayer
                 key={streamingUrl}
                 src={streamingUrl}
+                episodeId={`${animeId}-${currentEpisode?.episodeId}`}
                 sources={streamingSources}
                 subtitleTracks={subtitleTracks}
                 introSkip={introSkip}
