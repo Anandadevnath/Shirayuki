@@ -1,8 +1,10 @@
 import React, { useState } from "react";
 import { useToast } from "../ui/toast";
+
 import { updatePassword } from "@/context/api/services";
 
 export default function UpdatePasswordForm({ onSuccess, email }) {
+  const userId = localStorage.getItem("userId");
   const [currentPassword, setCurrentPassword] = useState("");
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -22,18 +24,20 @@ export default function UpdatePasswordForm({ onSuccess, email }) {
     }
     setLoading(true);
     try {
-      if (email) {
-        await updatePassword({ email, newPassword });
-      } else {
-        await updatePassword({ currentPassword, newPassword });
-      }
+      const payload = {
+        userId,
+        oldPassword: currentPassword,
+        newPassword
+      };
+      console.log('Update password payload:', payload);
+      await updatePassword(payload);
       setSuccess("Password updated successfully");
       showToast({ title: "Password updated", description: "Your password was updated successfully.", duration: 3000 });
       setCurrentPassword("");
       setNewPassword("");
       setConfirmPassword("");
       if (onSuccess) onSuccess();
-    } catch { /* ignore error */
+    } catch {
       setError("Failed to update password");
       showToast({ title: "Update failed", description: "Failed to update password.", duration: 3000 });
     }
@@ -42,19 +46,17 @@ export default function UpdatePasswordForm({ onSuccess, email }) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      {!email && (
-        <div>
-          <label className="block text-xs text-cyan-300 font-mono uppercase tracking-wider mb-1">Current Password</label>
-          <input
-            type="password"
-            value={currentPassword}
-            onChange={e => setCurrentPassword(e.target.value)}
-            className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white placeholder:text-gray-500 font-mono"
-            placeholder="Enter current password"
-            required
-          />
-        </div>
-      )}
+      <div>
+        <label className="block text-xs text-cyan-300 font-mono uppercase tracking-wider mb-1">Current Password</label>
+        <input
+          type="password"
+          value={currentPassword}
+          onChange={e => setCurrentPassword(e.target.value)}
+          className="w-full px-3 py-2 rounded bg-black/40 border border-cyan-500/30 text-white placeholder:text-gray-500 font-mono"
+          placeholder="Enter current password"
+          required
+        />
+      </div>
       <div>
         <label className="block text-xs text-cyan-300 font-mono uppercase tracking-wider mb-1">New Password</label>
         <input

@@ -50,15 +50,13 @@ export default function LoginPage() {
         const uid = extractId(data?.user?.userId ?? data?.user?._id ?? data?.user?.id);
         if (uid) localStorage.setItem('userId', uid);
 
-        // Fetch latest user profile after login and update localStorage
         if (uid) {
           try {
             const { data: profileData } = await getUserProfile(uid);
             if (profileData) {
               localStorage.setItem("user", JSON.stringify(profileData));
             }
-          } catch { /* ignore profile fetch failure */
-            // fallback: if fetch fails, keep whatever is in data.user
+          } catch {
             if (data?.user) localStorage.setItem("user", JSON.stringify(data.user));
           }
         } else if (data?.user) {
@@ -72,7 +70,7 @@ export default function LoginPage() {
         setError(data.message || "Login failed");
         showToast({ title: "Login failed", description: data.message || "Login failed", duration: 3000 });
       }
-    } catch { /* ignore error */
+    } catch {
       setError("Network error");
       showToast({ title: "Network error", description: "Please try again later.", duration: 3000 });
     } finally {
@@ -212,7 +210,7 @@ export default function LoginPage() {
                 <span className="ml-2 text-gray-400 group-hover:text-cyan-300 transition-colors font-mono">Remember Session</span>
               </label>
               <a
-                href="/forgotPassword"
+                href="/updatePassword"
                 className="text-fuchsia-400 hover:text-fuchsia-300 transition-colors font-mono"
                 style={{ textDecoration: 'none' }}
               >
