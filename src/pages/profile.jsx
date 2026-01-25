@@ -39,7 +39,7 @@ const safeJsonParse = (str) => {
     try {
         return JSON.parse(str);
     } catch {
-        return null;
+        return null; // ignore parse errors
     }
 };
 
@@ -55,6 +55,7 @@ const updateLocalStorage = (key, updates) => {
             }
         }
     } catch {
+        // ignore localStorage write errors
     }
     return false;
 };
@@ -241,7 +242,7 @@ const useUserProfile = (userId) => {
                         });
                     }
                 }
-            } catch (err) {
+            } catch {
                 if (mounted) {
                     setError("Failed to load profile.");
                 }
