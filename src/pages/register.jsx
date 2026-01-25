@@ -17,9 +17,45 @@ export default function RegisterPage() {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
+  const validatePassword = (pwd) => {
+    const errors = [];
+    
+    if (pwd.length < 8) {
+      errors.push("at least 8 characters");
+    }
+    if (!/[A-Z]/.test(pwd)) {
+      errors.push("one uppercase letter");
+    }
+    if (!/[a-z]/.test(pwd)) {
+      errors.push("one lowercase letter");
+    }
+    if (!/[0-9]/.test(pwd)) {
+      errors.push("one number");
+    }
+    if (!/[!@#$%^&*(),.?":{}|<>]/.test(pwd)) {
+      errors.push("one special character (!@#$%^&*...)");
+    }
+    
+    return errors;
+  };
+
   const handleRegister = async (e) => {
     e.preventDefault();
     setError("");
+    
+    // Validate password before sending request
+    const passwordErrors = validatePassword(password);
+    if (passwordErrors.length > 0) {
+      const errorMsg = `Password must contain: ${passwordErrors.join(", ")}`;
+      setError(errorMsg);
+      showToast({ 
+        title: "Weak Password", 
+        description: errorMsg, 
+        duration: 5000 
+      });
+      return;
+    }
+    
     setIsLoading(true);
     try {
       const res = await fetch(`${BACKEND_BASE_URL}${ENDPOINTS.AUTH.REGISTER}`, {
@@ -32,8 +68,27 @@ export default function RegisterPage() {
         showToast({ title: "Registration successful", description: "You can now log in.", duration: 3000 });
         navigate("/login");
       } else {
-        setError(data.message || "Registration failed");
-        showToast({ title: "Registration failed", description: data.message || "Registration failed", duration: 3000 });
+        // Parse backend error message for detailed feedback
+        let errorDescription = data.message || "Registration failed";
+        
+        // Check for common backend validation errors
+        if (data.message) {
+          if (data.message.toLowerCase().includes("password")) {
+            // If backend returns password requirements, show them
+            errorDescription = data.message;
+          } else if (data.message.toLowerCase().includes("email")) {
+            errorDescription = "Email is invalid or already in use";
+          } else if (data.message.toLowerCase().includes("username")) {
+            errorDescription = "Username is invalid or already taken";
+          }
+        }
+        
+        setError(errorDescription);
+        showToast({ 
+          title: "Registration failed", 
+          description: errorDescription, 
+          duration: 5000 
+        });
       }
     } catch { /* ignore error */
       setError("Network error");
