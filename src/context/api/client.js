@@ -3,10 +3,22 @@ import { API_BASE_URL, BACKEND_BASE_URL, API_CONFIG } from "./config";
 class ApiClient {
   constructor(baseURL = API_BASE_URL) {
     this.baseURL = baseURL;
+    this.cache = new Map();
+    this.cacheTTL = 5 * 60 * 1000; // 5 minutes
   }
 
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
+    const method = options.method || 'GET';
+    const cacheKey = `${method}:${url}`;
+
+    // Check cache for GET requests
+    if (method === 'GET') {
+      const cached = this.cache.get(cacheKey);
+      if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
+        return { data: cached.data, error: null };
+      }
+    }
 
     const config = {
       ...API_CONFIG,
@@ -25,6 +37,12 @@ class ApiClient {
       }
 
       const data = await response.json();
+
+      // Cache successful GET requests
+      if (method === 'GET') {
+        this.cache.set(cacheKey, { data, timestamp: Date.now() });
+      }
+
       return { data, error: null };
     } catch (error) {
       console.error("API Error:", error);
@@ -50,6 +68,18 @@ class ApiClient {
       method: "PUT",
       body: JSON.stringify(body),
     });
+  }
+
+  // Clear cache (useful for forced refreshes)
+  clearCache() {
+    this.cache.clear();
+  }
+
+  // Clear specific cache entry
+  clearCacheEntry(endpoint, method = 'GET') {
+    const url = `${this.baseURL}${endpoint}`;
+    const cacheKey = `${method}:${url}`;
+    this.cache.delete(cacheKey);
   }
 }
 

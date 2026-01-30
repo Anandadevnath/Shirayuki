@@ -1,16 +1,17 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export function AnimeCardSkeleton() {
+export const AnimeCardSkeleton = memo(function AnimeCardSkeleton() {
   return (
     <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[2/3]">
       <Skeleton className="w-full h-full bg-white/5" />
     </div>
   );
-}
+});
 
-export function AnimeCard({ anime }) {
+export const AnimeCard = memo(function AnimeCard({ anime }) {
   return (
     <Link to={`/anime/${anime.id}`} className="block group">
       <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[2/3]">
@@ -60,4 +61,4 @@ export function AnimeCard({ anime }) {
       </div>
     </Link>
   );
-}
+});

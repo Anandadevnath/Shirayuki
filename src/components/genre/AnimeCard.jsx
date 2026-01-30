@@ -1,8 +1,9 @@
+import { memo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
-export function AnimeCardSkeleton() {
+export const AnimeCardSkeleton = memo(function AnimeCardSkeleton() {
   return (
     <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[2/3] bg-zinc-900 border border-zinc-800 animate-pulse">
       <div className="w-full h-full flex flex-col">
@@ -16,9 +17,9 @@ export function AnimeCardSkeleton() {
       </div>
     </div>
   );
-}
+});
 
-export function AnimeCard({ anime }) {
+export const AnimeCard = memo(function AnimeCard({ anime }) {
   return (
     <Link to={`/anime/${anime.id}`} className="block group">
       <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[2/3]">
@@ -65,4 +66,4 @@ export function AnimeCard({ anime }) {
       </div>
     </Link>
   );
-}
+});

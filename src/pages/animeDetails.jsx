@@ -71,8 +71,8 @@ export default function AnimeDetails() {
   const { info, moreInfo } = anime;
 
   const description = info.description || "";
-  const truncatedDescription = description.length > 300 
-    ? description.slice(0, 300) + "..." 
+  const truncatedDescription = description.length > 300
+    ? description.slice(0, 300) + "..."
     : description;
 
   // Use cover/banner image for background, fallback to poster

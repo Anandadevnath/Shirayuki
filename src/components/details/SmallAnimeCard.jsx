@@ -1,6 +1,7 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 
-export function SmallAnimeCard({ anime, index }) {
+export const SmallAnimeCard = memo(function SmallAnimeCard({ anime, index }) {
   return (
     <Link to={`/anime/${anime.id}`} className="block group">
       <div className="relative overflow-hidden rounded-2xl transition-all duration-300 shadow-lg group-hover:shadow-pink-500/50">
@@ -53,4 +54,4 @@ export function SmallAnimeCard({ anime, index }) {
       </div>
     </Link>
   );
-}
+});

@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { getSearchSuggestions } from "@/context/api";
 import { NavLinks } from "./navbar/NavLinks";
@@ -36,11 +36,11 @@ export default function Navbar() {
     return () => window.removeEventListener("storage", handleStorage);
   }, []);
 
-  const handleLogout = () => {
+  const handleLogout = useCallback(() => {
     localStorage.removeItem("isLoggedIn");
     setIsLoggedIn(false);
     navigate("/");
-  };
+  }, [navigate]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -77,20 +77,20 @@ export default function Navbar() {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleSearch = (e) => {
+  const handleSearch = useCallback((e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
       setSearchQuery("");
       setShowSuggestions(false);
     }
-  };
+  }, [searchQuery, navigate]);
 
-  const handleSuggestionClick = (suggestion) => {
+  const handleSuggestionClick = useCallback((suggestion) => {
     navigate(`/anime/${suggestion.id}`);
     setSearchQuery("");
     setShowSuggestions(false);
-  };
+  }, [navigate]);
 
 
   return (

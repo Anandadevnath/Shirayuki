@@ -1,4 +1,6 @@
-export function CharacterCard({ character, voiceActor }) {
+import { memo } from "react";
+
+export const CharacterCard = memo(function CharacterCard({ character, voiceActor }) {
   return (
     <div className="flex items-center gap-3 bg-zinc-900 rounded-lg p-3">
       <img
@@ -23,4 +25,4 @@ export function CharacterCard({ character, voiceActor }) {
       </div>
     </div>
   );
-}
+});

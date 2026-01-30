@@ -1,6 +1,7 @@
+import { memo } from "react";
 import { Link } from "react-router-dom";
 
-export function SeasonCard({ season }) {
+export const SeasonCard = memo(function SeasonCard({ season }) {
   return (
     <Link
       to={`/anime/${season.id}`}
@@ -16,4 +17,4 @@ export function SeasonCard({ season }) {
       <p className="text-xs text-zinc-400 mt-1 truncate">{season.title}</p>
     </Link>
   );
-}
+});

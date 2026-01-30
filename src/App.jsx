@@ -1,6 +1,7 @@
 import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import { lazy, Suspense } from "react";
 import { Layout } from "@/components/layout";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const Home = lazy(() => import("@/pages/home"));
 const LoginPage = lazy(() => import("@/pages/login"));
@@ -29,10 +30,11 @@ const LoadingFallback = () => (
 
 function App() {
   return (
-    <Router>
-      <Layout>
-        <Suspense fallback={<LoadingFallback />}>
-          <Routes>
+    <ErrorBoundary>
+      <Router>
+        <Layout>
+          <Suspense fallback={<LoadingFallback />}>
+            <Routes>
             {/* Home */}
             <Route path="/" element={<Home />} />
 
@@ -61,10 +63,11 @@ function App() {
             <Route path="/profile" element={<ProfilePage />} />
             <Route path="/updatePassword" element={<UpdatePasswordPage />} />
             <Route path="/forgotPassword" element={<ForgotPasswordPage />} />
-          </Routes>
-        </Suspense>
-      </Layout>
-    </Router>
+            </Routes>
+          </Suspense>
+        </Layout>
+      </Router>
+    </ErrorBoundary>
   );
 }
 

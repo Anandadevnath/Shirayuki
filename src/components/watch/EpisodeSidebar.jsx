@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { Search, Play, Grid3x3, List } from "lucide-react";
 import { Input } from "@/components/ui/input";
 
@@ -10,14 +11,16 @@ export default function EpisodeSidebar({
   episodeViewMode,
   setEpisodeViewMode
 }) {
-  const filteredEpisodes = episodes.filter((ep) => {
-    if (!searchQuery) return true;
-    const query = searchQuery.toLowerCase();
-    return (
-      ep.number.toString().includes(query) ||
-      ep.title?.toLowerCase().includes(query)
-    );
-  });
+  const filteredEpisodes = useMemo(() => {
+    return episodes.filter((ep) => {
+      if (!searchQuery) return true;
+      const query = searchQuery.toLowerCase();
+      return (
+        ep.number.toString().includes(query) ||
+        ep.title?.toLowerCase().includes(query)
+      );
+    });
+  }, [episodes, searchQuery]);
 
   return (
     <div className="w-full h-full flex flex-col">
