@@ -4,7 +4,7 @@ class ApiClient {
   constructor(baseURL = API_BASE_URL) {
     this.baseURL = baseURL;
     this.cache = new Map();
-    this.cacheTTL = 5 * 60 * 1000; // 5 minutes
+    this.cacheTTL = 5 * 60 * 1000; 
   }
 
   async request(endpoint, options = {}) {
@@ -12,12 +12,17 @@ class ApiClient {
     const method = options.method || 'GET';
     const cacheKey = `${method}:${url}`;
 
-    // Check cache for GET requests
     if (method === 'GET') {
       const cached = this.cache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
         return { data: cached.data, error: null };
       }
+    }
+
+    let authHeaders = {};
+    const token = localStorage.getItem('token');
+    if (token) {
+      authHeaders['Authorization'] = `Bearer ${token}`;
     }
 
     const config = {
@@ -26,6 +31,7 @@ class ApiClient {
       headers: {
         ...API_CONFIG.headers,
         ...options.headers,
+        ...authHeaders,
       },
     };
 
@@ -38,7 +44,6 @@ class ApiClient {
 
       const data = await response.json();
 
-      // Cache successful GET requests
       if (method === 'GET') {
         this.cache.set(cacheKey, { data, timestamp: Date.now() });
       }
