@@ -39,7 +39,7 @@ const safeJsonParse = (str) => {
     try {
         return JSON.parse(str);
     } catch {
-        return null; // ignore parse errors
+        return null;
     }
 };
 
@@ -55,7 +55,7 @@ const updateLocalStorage = (key, updates) => {
             }
         }
     } catch {
-        // ignore localStorage write errors
+
     }
     return false;
 };
@@ -112,19 +112,19 @@ const WatchCard = React.memo(({ item, index }) => (
                 loading="lazy"
             />
             <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
-            
+
             {item.category && (
                 <span className="absolute top-1 right-1 bg-purple-600 hover:bg-purple-700 text-[9px] px-1.5 py-0.5 rounded text-white font-semibold">
                     {item.category}
                 </span>
             )}
-            
+
             {item.server && (
                 <span className="absolute top-1 left-1 bg-red-600 hover:bg-red-700 text-[9px] px-1.5 py-0.5 rounded text-white font-semibold">
                     {item.server}
                 </span>
             )}
-            
+
             <div className="absolute bottom-0 left-0 right-0 p-1.5">
                 <h3 className="font-semibold text-white text-xs line-clamp-2 mb-0.5 group-hover:text-purple-400 transition-colors">
                     {item.title || item.animeId.replace(/-/g, " ")}
@@ -207,7 +207,7 @@ const useUserProfile = (userId) => {
                     }
                     return;
                 }
-                
+
                 setTimeout(() => {
                     if (mounted) {
                         setError("User not logged in.");
@@ -234,11 +234,11 @@ const useUserProfile = (userId) => {
                 } else {
                     const normalized = normalizeUser(data, localUser);
                     setUser(normalized);
-                    
+
                     if (localUser) {
-                        updateLocalStorage("user", { 
-                            pfpUrl: normalized.avatar, 
-                            avatar: normalized.avatar 
+                        updateLocalStorage("user", {
+                            pfpUrl: normalized.avatar,
+                            avatar: normalized.avatar
                         });
                     }
                 }
@@ -287,9 +287,21 @@ const useWatchProgress = (userId, activeTab) => {
                 return;
             }
 
+            let accessToken = localStorage.getItem("accessToken")
+                || localStorage.getItem("token")
+                || localStorage.getItem("jwt")
+                || null;
+
+            if (!accessToken) {
+                setWatchError("No access token found. Please log in again.");
+                setWatchLoading(false);
+                return;
+            }
+
             try {
                 const endpoint = ENDPOINTS.PROGRESS.WATCH(userId);
-                const { data, error } = await backendClient.get(endpoint);
+                const headers = { Authorization: `Bearer ${accessToken}` };
+                const { data, error } = await backendClient.get(endpoint, { headers });
 
                 if (!mounted) return;
 
@@ -299,7 +311,7 @@ const useWatchProgress = (userId, activeTab) => {
                 } else {
                     setWatchProgress(data);
                 }
-            } catch {
+            } catch (err) {
                 if (mounted) {
                     setWatchError("Failed to fetch watch progress.");
                 }
@@ -376,7 +388,7 @@ export default function ProfilePage() {
         }
     }, [user, userId, showToast]);
 
-    const hasWatchData = useMemo(() => 
+    const hasWatchData = useMemo(() =>
         watchProgress && Array.isArray(watchProgress.data) && watchProgress.data.length > 0,
         [watchProgress]
     );
