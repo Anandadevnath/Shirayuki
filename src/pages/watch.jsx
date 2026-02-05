@@ -169,7 +169,7 @@ const useVideoSources = (animeId) => {
         animeId,
         episode.episodeId,
         episode.number,
-        PREFERRED_SERVER,
+        server.serverName,
         category
       );
 
@@ -246,18 +246,22 @@ export default function Watch() {
 
   // Initialize server and load sources when servers/episode change
   useEffect(() => {
-    if (!currentEpisode || !servers.sub && !servers.dub) return;
+    if (!currentEpisode || (!servers.sub && !servers.dub)) return;
 
-    const { server, category } = getInitialServer(servers);
-    if (server) {
-      // Defer state updates to avoid calling setState synchronously within an effect
-      setTimeout(() => {
-        setSelectedServer(server);
-        setSelectedCategory(category);
-        loadSources(currentEpisode, server, category);
-      }, 0);
+    // Only auto-select if no server is selected or the selected server is not in the current list
+    const allServers = [...(servers.sub || []), ...(servers.dub || [])];
+    const isSelectedServerValid = selectedServer && allServers.some(s => s.serverId === selectedServer.serverId);
+    if (!isSelectedServerValid) {
+      const { server, category } = getInitialServer(servers);
+      if (server) {
+        setTimeout(() => {
+          setSelectedServer(server);
+          setSelectedCategory(category);
+          loadSources(currentEpisode, server, category);
+        }, 0);
+      }
     }
-  }, [currentEpisode, servers, loadSources]);
+  }, [currentEpisode, servers, loadSources, selectedServer]);
 
   const handleEpisodeSelect = useCallback((ep) => {
     navigate(`/watch/${animeId}/${encodeURIComponent(ep.episodeId)}`, {
@@ -536,8 +540,8 @@ function ServerSelection({
   handleServerSelect,
   currentEpisode 
 }) {
-  const filteredSubServers = servers.sub.filter(s => s.serverName?.toLowerCase() === PREFERRED_SERVER);
-  const filteredDubServers = servers.dub.filter(s => s.serverName?.toLowerCase() === PREFERRED_SERVER);
+  const filteredSubServers = servers.sub;
+  const filteredDubServers = servers.dub;
 
   return (
     <div className="w-full flex flex-col md:flex-row gap-4 md:gap-6 px-4 md:px-6 py-4 md:py-5 backdrop-blur-xl border-t border-white/10">

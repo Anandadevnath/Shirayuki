@@ -41,6 +41,7 @@ const safeJsonParse = (str) => {
     } catch {
         return null;
     }
+    // Ignore
 };
 
 const updateLocalStorage = (key, updates) => {
@@ -55,7 +56,7 @@ const updateLocalStorage = (key, updates) => {
             }
         }
     } catch {
-
+        // Ignore
     }
     return false;
 };
@@ -311,7 +312,7 @@ const useWatchProgress = (userId, activeTab) => {
                 } else {
                     setWatchProgress(data);
                 }
-            } catch (err) {
+            } catch {
                 if (mounted) {
                     setWatchError("Failed to fetch watch progress.");
                 }
