@@ -61,7 +61,7 @@ export const ANIME_ENDPOINTS = {
   
   // Episode Streaming Source
   EPISODE_SOURCES: (animeEpisodeId, episodeId, ep, server, category = 'sub') => {
-    const url = `/api/${API_VERSION}/hianime/episode/sources?animeEpisodeId=${animeEpisodeId}&ep=${episodeId}&ep=${ep}&server=${server}&category=${category}`;
+    const url = `/api/${API_VERSION}/hianime/episode/sources?animeEpisodeId=${animeEpisodeId}&ep=${ep}&server=${server}&category=${category}`;
     console.log("[ENDPOINTS] Episode Sources URL:", url);
     return url;
   },

@@ -181,7 +181,7 @@ export default function VideoPlayer({
     skipConfig
   );
 
-  const { showControls, resetHideControlsTimeout } = useControlsVisibility(
+  const { showControls, setShowControls, resetHideControlsTimeout } = useControlsVisibility(
     videoState.isPlaying,
     videoControls.showCaptionMenu
   );
@@ -207,9 +207,9 @@ export default function VideoPlayer({
   useBackendSync(videoRef, syncConfig);
 
   const handleMouseLeave = useCallback(() => {
-    videoState.setShowControls(false);
+    setShowControls(false);
     videoControls.setShowCaptionMenu(false);
-  }, [videoState, videoControls]);
+  }, [setShowControls, videoControls]);
 
   const controlsClassName = useMemo(
     () =>
