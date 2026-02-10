@@ -492,11 +492,10 @@ export default function Watch() {
   const [autoSkipIntro, setAutoSkipIntro] = useState(true);
   const [episodeViewMode, setEpisodeViewMode] = useState("list");
 
-  // Initialize server and load sources when servers/episode change
+  // Auto-select server when servers change or when current selection is invalid
   useEffect(() => {
     if (!currentEpisode || (!servers.sub?.length && !servers.dub?.length)) return;
 
-    // Only auto-select if no server is selected or the selected server is not in the current list
     const allServers = [...(servers.sub || []), ...(servers.dub || [])];
     const isSelectedServerValid = selectedServer && allServers.some(s => s.serverId === selectedServer.serverId);
     
@@ -504,13 +503,19 @@ export default function Watch() {
       const { server, category } = getInitialServer(servers);
       if (server) {
         Promise.resolve().then(() => {
-          setSelectedServer(server);
-          setSelectedCategory(category);
+          setSelectedServer(prev => (prev?.serverId !== server.serverId ? server : prev));
+          setSelectedCategory(prev => (prev !== category ? category : prev));
         });
-        loadSources(currentEpisode, server, category);
       }
     }
-  }, [currentEpisode, servers, loadSources, selectedServer]);
+  }, [currentEpisode, servers, selectedServer]);
+
+  // Load sources whenever episode, server, or category changes
+  useEffect(() => {
+    if (currentEpisode && selectedServer) {
+      loadSources(currentEpisode, selectedServer, selectedCategory);
+    }
+  }, [currentEpisode, selectedServer, selectedCategory, loadSources]);
 
   const handleEpisodeSelect = useCallback((ep) => {
     navigate(`/watch/${animeId}/${encodeURIComponent(ep.episodeId)}`, {
