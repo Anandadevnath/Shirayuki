@@ -1,38 +1,42 @@
-# ❄️ Shirayuki
-
-> The modern, beautiful anime streaming platform — built with React, Vite, and Tailwind CSS.
-
-<p align="center">
-  <img src="public/logo/shirayuki1.png" alt="Shirayuki Banner" width="800" />
-</p>
+# 🌸 Shirayuki
+### Your Gateway to Infinite Anime Adventures
 
 <p align="center">
-  <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react" alt="React" />
-  <img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite" alt="Vite" />
-  <img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS" />
-  <img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript" />
-  <img src="https://img.shields.io/badge/React_Router-CA4245?style=for-the-badge&logo=react-router" alt="React Router" />
-  <img src="https://img.shields.io/badge/HLS.js-FFFFFF?style=for-the-badge&logo=javascript" alt="HLS.js" />
-  <img src="https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js" alt="Node.js" />
-  <img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License" />
+<img src="public/logo/shirayuki1.png" alt="Shirayuki Banner" width="800" />
+</p>
+<p align="center">
+<img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react" alt="React" />
+<img src="https://img.shields.io/badge/Vite-646CFF?style=for-the-badge&logo=vite" alt="Vite" />
+<img src="https://img.shields.io/badge/Tailwind_CSS-38B2AC?style=for-the-badge&logo=tailwind-css" alt="Tailwind CSS" />
+<img src="https://img.shields.io/badge/TypeScript-3178C6?style=for-the-badge&logo=typescript" alt="TypeScript" />
+<img src="https://img.shields.io/badge/React_Router-CA4245?style=for-the-badge&logo=react-router" alt="React Router" />
+<img src="https://img.shields.io/badge/HLS.js-FFFFFF?style=for-the-badge&logo=javascript" alt="HLS.js" />
+<img src="https://img.shields.io/badge/Node.js-18+-339933?style=for-the-badge&logo=node.js" alt="Node.js" />
+<img src="https://img.shields.io/badge/License-MIT-yellow.svg?style=for-the-badge" alt="License" />
 </p>
 
-## ✨ Features
+> **Shirayuki** (白雪) — *meaning "white snow"* — is a sleek, modern anime streaming platform where discovery meets devotion. Built for true otaku and casual watchers alike, it brings the anime universe to your fingertips with blazing speed, stunning visuals, and an experience that feels like home.
 
-- 🚀 **Blazing-fast UI** — Powered by Vite + React 19 with hot module replacement
-- 🎨 **Gorgeous design** — Responsive layout with Tailwind CSS, dark/light theme support, and smooth animations
-- 🔎 **Advanced search** — Search by anime, genres, categories, and filters with real-time suggestions
-- 📅 **Seasonal schedules** — Track seasonal anime releases with calendar view
-- 📋 **A-Z lists** — Browse anime alphabetically with pagination
-- 🏢 **Studio/Producer pages** — Explore production details with studio logos and information
-- 📝 **User profiles** — Track favorites, watch progress, and manage account settings
-- 📺 **High-quality streaming** — Multiple server support with HLS.js for adaptive streaming
-- 🔐 **Secure auth** — Authentication, email verification, password reset, and profile management
-- ⌨️ **Keyboard shortcuts** — Control video playback with keyboard shortcuts
-- 📱 **Mobile optimized** — Fully responsive design for all screen sizes
-- ⚡ **Performance optimized** — Code splitting, image optimization, and efficient bundling
+---
 
-## 🗂️ Project Structure
+## ✨ Why Shirayuki Stands Out
+
+- 🚀 **Lightning-Fast Experience** — React 19 + Vite delivers buttery-smooth navigation with instant hot reloads
+- 🎨 **Eye-Catching Interface** — Dark/light modes, fluid animations, and a responsive layout that looks great on any device
+- 🔎 **Smart Search Engine** — Find anime by title, genre, studio, or mood with instant autocomplete and powerful filters
+- 📅 **Seasonal Calendar** — Never miss a release! Track current and upcoming anime by season
+- 🅰️ **A-to-Z Library** — Explore an exhaustive alphabetical catalog with smooth pagination
+- 🏭 **Studio Deep Dives** — Discover the creators behind your favorites with dedicated producer pages
+- 👤 **Personal Watch Hub** — Save favorites, track progress, and customize your profile
+- 📺 **Crystal-Clear Streaming** — Multi-server HLS playback with adaptive quality and subtitle support
+- 🔐 **Complete Auth System** — Secure signup, email verification, password recovery, and account management
+- ⌨️ **Keyboard Controls** — Play, pause, seek, and volume control without leaving the keyboard
+- 📱 **Mobile-First Design** — Fully responsive from phone to 4K desktop
+- ⚡ **Performance Engineering** — Lazy loading, code splitting, and optimized assets for minimal load times
+
+---
+
+## 📂 Project Architecture
 
 ```
 src/
@@ -55,153 +59,122 @@ src/
 └── css/                # Additional CSS files
 ```
 
-## 🚀 Getting Started
+---
 
-### Prerequisites
+## 🛠️ Quick Start
 
-- Node.js 18 or higher
-- npm or yarn package manager
+### What You Need
+- Node.js 18+
+- npm or yarn
 
-### Installation
-
-1. **Clone the repository**
-   ```bash
-   git clone https://github.com/your-username/shirayuki.git
-   cd shirayuki
-   ```
-
-2. **Install dependencies**
-   ```bash
-   npm install
-   # or
-   yarn install
-   ```
-
-3. **Set up environment variables**
-   ```bash
-   cp .env.example .env
-   ```
-   Edit `.env` and set your API base URL:
-   ```env
-   VITE_API_BASE_URL=http://localhost:3000
-   VITE_PROXY_URL=http://localhost:3000/api/v2/hianime/proxy
-   ```
-
-4. **Start the development server**
-   ```bash
-   npm run dev
-   # or
-   yarn dev
-   ```
-
-5. **Open your browser** at [http://localhost:5173](http://localhost:5173)
-
-### Building for Production
+### Setup
 
 ```bash
-# Build the project
-npm run build
+# 1. Clone the repo
+git clone https://github.com/your-username/shirayuki.git
+cd shirayuki
 
-# Preview the production build
+# 2. Install dependencies
+npm install
+# or
+yarn install
+
+# 3. Configure environment
+cp .env.example .env
+# Edit .env with your API URLs:
+# VITE_API_BASE_URL=http://localhost:3000
+# VITE_PROXY_URL=http://localhost:3000/api/v2/hianime/proxy
+
+# 4. Launch
+npm run dev
+# Visit http://localhost:5173
+```
+
+### Build for Production
+
+```bash
+npm run build
 npm run preview
 ```
 
-## 📜 Available Scripts
+---
 
-| Command | Description |
+## 📜 NPM Scripts
+
+| Command | What It Does |
 |---------|-------------|
-| `npm run dev` | Start the development server |
-| `npm run build` | Build for production |
-| `npm run lint` | Lint the codebase with ESLint |
-| `npm run preview` | Preview the production build locally |
+| `npm run dev` | Start local dev server |
+| `npm run build` | Create production bundle |
+| `npm run lint` | Run ESLint checks |
+| `npm run preview` | Preview production build |
 
-## 🔌 API Integration
+---
 
-Shirayuki connects to a backend API for anime data and user management. All API endpoints are defined in `src/context/api/endpoints.js`.
+## 🔌 Backend Integration
 
-### Key Endpoints
+All API routes live in `src/context/api/endpoints.js`.
 
-| Category | Endpoint | Description |
-|----------|----------|-------------|
-| **Anime** | `HOME` | Get homepage data (spotlight, trending, etc.) |
-| | `ANIME_DETAILS` | Get detailed anime information |
-| | `ANIME_EPISODES` | Get anime episode list |
-| | `AZ_LIST` | Browse anime alphabetically |
+| Feature | Endpoint Key | Purpose |
+|---------|--------------|---------|
+| **Anime** | `HOME` | Homepage spotlight & trending |
+| | `ANIME_DETAILS` | Full anime info |
+| | `ANIME_EPISODES` | Episode list |
+| | `AZ_LIST` | Alphabetical browse |
 | **Search** | `SEARCH` | Basic search |
-| | `SEARCH_ADVANCED` | Advanced search with filters |
-| | `SEARCH_SUGGESTION` | Search suggestions |
-| **Browse** | `GENRE` | Browse by genre |
-| | `CATEGORY` | Browse by category |
-| | `PRODUCER` | Browse by studio/producer |
-| **Schedule** | `SCHEDULE` | Get anime schedule for a date |
-| **Streaming** | `EPISODE_SERVERS` | Get available streaming servers |
-| | `EPISODE_SOURCES` | Get streaming sources |
-| **Auth** | `AUTH.*` | Authentication endpoints |
-| **User** | `USER.*` | User profile management |
-| **Progress** | `PROGRESS.*` | Watch progress tracking |
+| | `SEARCH_ADVANCED` | Filtered search |
+| | `SEARCH_SUGGESTION` | Autocomplete |
+| **Browse** | `GENRE` | By genre |
+| | `CATEGORY` | By category |
+| | `PRODUCER` | By studio |
+| **Schedule** | `SCHEDULE` | Release calendar |
+| **Player** | `EPISODE_SERVERS` | Server list |
+| | `EPISODE_SOURCES` | Stream URLs |
+| **User** | `AUTH.*`, `USER.*`, `PROGRESS.*` | Auth & profile |
 
-For complete endpoint details, refer to `src/context/api/endpoints.js`.
+---
 
-## 🛠️ Development
+## 🎬 Video Player Highlights
 
-### Code Style
+The custom player (`src/components/videoPlayer/`) packs:
 
-The project uses ESLint for code quality. Run the linter before committing:
+- HLS.js adaptive streaming
+- Keyboard shortcuts (Space = play/pause, ← → = seek)
+- Subtitle selection
+- Quality picker
+- Picture-in-Picture mode
+- Animated, custom controls
 
-```bash
-npm run lint
-```
+---
 
-### Component Architecture
+## 🤝 Want to Contribute?
 
-- **UI Components**: Located in `src/components/ui/` using `class-variance-authority` for variant management
-- **Page Components**: Located in `src/pages/` for route-level components
-- **State Management**: React Context for global state (auth, theme, etc.)
-- **Routing**: React Router DOM v7 for client-side routing
+1. 🍴 Fork the repo
+2. 🌿 Create a branch: `git checkout -b feat/amazing-feature`
+3. 📦 Install deps: `npm install`
+4. 🔥 Dev server: `npm run dev`
+5. ✏️ Make your changes
+6. ✅ Lint: `npm run lint`
+7. 💾 Commit: `git commit -m "feat: add amazing feature"`
+8. 📤 Push & open a PR
 
-### Video Player Features
+### PR Tips
+- Keep linting green
+- Update docs if needed
+- One feature per PR
+- Write clear descriptions
 
-The custom video player in `src/components/videoPlayer/` includes:
+---
 
-- HLS.js integration for adaptive streaming
-- Keyboard shortcuts (space for play/pause, arrow keys for seeking)
-- Subtitle track support
-- Quality selection
-- Picture-in-picture mode
-- Custom controls with animations
+## � MIT License
 
-## 🤝 Contributing
-
-We welcome contributions! Here's how you can help:
-
-1. **Fork** the repository
-2. **Create a feature branch**: `git checkout -b feat/your-feature`
-3. **Install dependencies**: `npm install`
-4. **Start development server**: `npm run dev`
-5. **Make your changes** following the existing code style
-6. **Run linter**: `npm run lint`
-7. **Test your changes** thoroughly
-8. **Commit your changes**: `git commit -m "feat: description of your feature"`
-9. **Push to your fork**: `git push origin feat/your-feature`
-10. **Open a Pull Request** with a clear description of changes
-
-### Pull Request Guidelines
-
-- Ensure your code passes linting
-- Update documentation if needed
-- Add tests if applicable
-- Keep PRs focused on a single feature or fix
-
-## 🪪 License
-
-This project is licensed under the **MIT License**. See the [LICENSE](LICENSE) file for details.
+This project is open source under the **MIT License**. See [LICENSE](LICENSE) for details.
 
 ---
 
 <div align="center">
 
-## 🌸 Enjoy streaming with Shirayuki!
+### 🌸 Stream Without Boundaries
 
-**If you like this project, please consider giving it a star! ⭐**
+**If Shirayuki brought joy to your anime journey, a ⭐ star would mean the world!**
 
 </div>
