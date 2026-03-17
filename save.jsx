@@ -20,15 +20,8 @@ const DUB = "dub";
 const PROXY_URL = import.meta.env.VITE_PROXY_URL;
 
 // ========== UTILITIES ==========
-const addProxy = (url) => {
-  if (!url) return "";
-  
-  // If already proxied, return as-is
-  if (url.startsWith(PROXY_URL)) return url;
-  
-  // Add proxy to bypass CORS - use the correct format for your test.js proxy
-  return `${PROXY_URL}${encodeURIComponent(url)}`;
-};
+const addProxy = (url) =>
+  !url ? "" : url.startsWith(PROXY_URL) ? url : `${PROXY_URL}${encodeURIComponent(url)}`;
 
 const extractVideoSources = (videoData) => {
   const candidates =
@@ -58,14 +51,15 @@ const extractVideoSources = (videoData) => {
 };
 
 const getInitialServer = (servers) => {
-  // Force hd-2 server selection
   const hd2Sub = servers.sub?.find((s) => s.serverName?.toLowerCase() === PREFERRED_SERVER);
   if (hd2Sub) return { server: hd2Sub, category: SUB };
 
   const hd2Dub = servers.dub?.find((s) => s.serverName?.toLowerCase() === PREFERRED_SERVER);
   if (hd2Dub) return { server: hd2Dub, category: DUB };
 
-  // If hd-2 is not available, return null to force user to select hd-2
+  if (servers.sub?.length) return { server: servers.sub[0], category: SUB };
+  if (servers.dub?.length) return { server: servers.dub[0], category: DUB };
+
   return { server: null, category: SUB };
 };
 
@@ -118,26 +112,9 @@ const useWatchData = (animeId, episodeId) => {
         if (!mounted) return;
 
         const serverData = serverRes.error ? {} : serverRes.data?.data || {};
-        
-        // Filter servers to only show hd-2, but ensure hd-2 is always available
-        const filteredSub = (serverData.sub || []).filter(s => s.serverName?.toLowerCase() === PREFERRED_SERVER);
-        const filteredDub = (serverData.dub || []).filter(s => s.serverName?.toLowerCase() === PREFERRED_SERVER);
-        
-        // Always include hd-2 as an option, even if not in API response
-        const hd2SubExists = filteredSub.length > 0;
-        const hd2DubExists = filteredDub.length > 0;
-        
-        // Create default hd-2 server objects if they don't exist
-        const finalSub = hd2SubExists ? filteredSub : [
-          { serverId: 'hd-2-sub', serverName: 'hd-2', url: '' }
-        ];
-        const finalDub = hd2DubExists ? filteredDub : [
-          { serverId: 'hd-2-dub', serverName: 'hd-2', url: '' }
-        ];
-        
         setState((prev) => ({
           ...prev,
-          servers: { sub: finalSub, dub: finalDub },
+          servers: { sub: serverData.sub || [], dub: serverData.dub || [] },
           loading: false,
         }));
       } catch (err) {

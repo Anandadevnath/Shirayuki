@@ -10,6 +10,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@hono/node-server": "^1.19.11",
     "@radix-ui/react-dialog": "^1.1.15",
     "@radix-ui/react-dropdown-menu": "^2.1.16",
     "@radix-ui/react-popover": "^1.1.15",
@@ -23,6 +24,7 @@
     "date-fns": "^4.1.0",
     "framer-motion": "^12.23.26",
     "hls.js": "^1.6.15",
+    "hono": "^4.12.8",
     "lucide-react": "^0.562.0",
     "react": "^19.2.0",
     "react-day-picker": "^9.13.0",
