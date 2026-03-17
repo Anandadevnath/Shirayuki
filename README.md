@@ -1,8 +1,6 @@
 # 🌸 Shirayuki
-### Your Gateway to Infinite Anime Adventures
-
 <p align="center">
-<img src="public/logo/shirayuki1.png" alt="Shirayuki Banner" width="800" />
+<img src="public/logo/shirayuki1.png" alt="Shirayuki Banner" width="250" />
 </p>
 <p align="center">
 <img src="https://img.shields.io/badge/React-19-61DAFB?style=for-the-badge&logo=react" alt="React" />
