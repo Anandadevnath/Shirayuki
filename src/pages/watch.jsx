@@ -1,11 +1,5 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import {
-  getAnimeEpisodes,
-  getEpisodeServers,
-  getAnimeDetails,
-  getEpisodeSources,
-} from "@/context/api";
 import EpisodeSidebar from "@/components/watch/EpisodeSidebar";
 import WatchSkeleton from "@/components/watch/WatchSkeleton";
 import VideoPlayer from "@/components/watch/VideoPlayer";
