@@ -8,11 +8,12 @@ class ApiClient {
   }
 
   async request(endpoint, options = {}) {
+    const { noCache = false, ...requestOptions } = options;
     const url = `${this.baseURL}${endpoint}`;
-    const method = options.method || 'GET';
+    const method = requestOptions.method || 'GET';
     const cacheKey = `${method}:${url}`;
 
-    if (method === 'GET') {
+    if (method === 'GET' && !noCache) {
       const cached = this.cache.get(cacheKey);
       if (cached && Date.now() - cached.timestamp < this.cacheTTL) {
         return { data: cached.data, error: null };
@@ -27,10 +28,10 @@ class ApiClient {
 
     const config = {
       ...API_CONFIG,
-      ...options,
+      ...requestOptions,
       headers: {
         ...API_CONFIG.headers,
-        ...options.headers,
+        ...requestOptions.headers,
         ...authHeaders,
       },
     };
@@ -44,7 +45,7 @@ class ApiClient {
 
       const data = await response.json();
 
-      if (method === 'GET') {
+      if (method === 'GET' && !noCache) {
         this.cache.set(cacheKey, { data, timestamp: Date.now() });
       }
 

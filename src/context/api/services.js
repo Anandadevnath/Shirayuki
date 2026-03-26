@@ -84,5 +84,15 @@ export const getSchedule = (date) => apiClient.get(ENDPOINTS.SCHEDULE(date));
 export const getEpisodeServers = (animeEpisodeId) =>
   apiClient.get(ENDPOINTS.EPISODE_SERVERS(animeEpisodeId));
 
-export const getEpisodeSources = (animeEpisodeId, episodeId, ep, server, category) =>
-  apiClient.get(ENDPOINTS.EPISODE_SOURCES(animeEpisodeId, episodeId, ep, server, category));
+export const getEpisodeSources = (
+  animeEpisodeId,
+  episodeId,
+  ep,
+  server,
+  category,
+  options = {}
+) =>
+  apiClient.get(
+    ENDPOINTS.EPISODE_SOURCES(animeEpisodeId, episodeId, ep, server, category),
+    { ...options, noCache: true }
+  );

@@ -56,14 +56,26 @@ export const ANIME_ENDPOINTS = {
     `/api/${API_VERSION}/hianime/category/${categoryId}?page=${page}`,
 
   // Episode Streaming
-  EPISODE_SERVERS: (animeEpisodeId) =>
-    `/api/${API_VERSION}/hianime/episode/servers?animeEpisodeId=${animeEpisodeId}`,
+  EPISODE_SERVERS: (animeEpisodeId) => {
+    const searchParams = new URLSearchParams({
+      animeEpisodeId: String(animeEpisodeId || ""),
+    });
+    return `/api/${API_VERSION}/hianime/episode/servers?${searchParams.toString()}`;
+  },
   
   // Episode Streaming Source
   EPISODE_SOURCES: (animeEpisodeId, episodeId, ep, server, category = 'sub') => {
-    const url = `/api/${API_VERSION}/hianime/episode/sources?animeEpisodeId=${animeEpisodeId}&ep=${ep}&server=${server}&category=${category}`;
-    console.log("[ENDPOINTS] Episode Sources URL:", url);
-    return url;
+    const searchParams = new URLSearchParams({
+      animeEpisodeId: String(animeEpisodeId || ""),
+      ep: String(ep || ""),
+      server: String(server || ""),
+      category: String(category || "sub"),
+    });
+
+    // Keep `episodeId` in signature for backward compatibility with existing callers.
+    void episodeId;
+
+    return `/api/${API_VERSION}/hianime/episode/sources?${searchParams.toString()}`;
   },
 };
 
