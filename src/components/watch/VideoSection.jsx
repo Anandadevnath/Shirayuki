@@ -12,10 +12,12 @@ const VideoSection = ({
   selectedServer,
   videoPlayerProps,
 }) => {
-  if (streamingUrl && !serverLoading) {
+  const hasVideo = (streamingUrl || videoPlayerProps?.embedUrl) && !serverLoading;
+
+  if (hasVideo) {
     return (
       <div className="aspect-video bg-black/50 backdrop-blur-sm relative">
-        <VideoPlayer key={streamingUrl} {...videoPlayerProps} />
+        <VideoPlayer key={videoPlayerProps?.embedUrl || streamingUrl} {...videoPlayerProps} />
       </div>
     );
   }

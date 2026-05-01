@@ -47,17 +47,35 @@ export const VideoElement = memo(function VideoElement({
     }
 
     if (Hls.isSupported()) {
-      const hls = new Hls(HLS_CONFIG);
+      const hls = new Hls({
+        ...HLS_CONFIG,
+        // Add fetchSetup to include proper headers like a browser
+        fetchSetup: (context) => {
+          return {
+            ...context,
+            headers: {
+              ...context.headers,
+              "Origin": window.location.origin,
+              "Referer": window.location.origin + "/",
+              "User-Agent": navigator.userAgent,
+            },
+          };
+        },
+      });
       hlsRef.current = hls;
+
+      console.log("[VideoElement] Loading HLS source:", src);
 
       hls.loadSource(src);
       hls.attachMedia(video);
 
-      hls.once(Hls.Events.MANIFEST_PARSED, () => {
-        if (autoPlay) video.play().catch(() => {});
+      hls.once(Hls.Events.MANIFEST_PARSED, (_, data) => {
+        console.log("[VideoElement] Manifest parsed, tracks:", data?.tracks?.length);
+        if (autoPlay) video.play().catch((e) => console.log("[VideoElement] Play error:", e));
       });
 
       hls.on(Hls.Events.ERROR, (_, data) => {
+        console.error("[VideoElement] HLS Error:", data.type, data.details, data.fatal);
         if (!data.fatal) return;
         if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
           hls.startLoad();

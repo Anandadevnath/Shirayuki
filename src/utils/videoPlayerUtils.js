@@ -2,14 +2,16 @@
  * Video player utility functions for stream proxying, source extraction, and server selection
  */
 
-const PROXY_URL = import.meta.env.VITE_PROXY_URL?.trim();
+// Proxy is optional. Do not hardcode a default proxy because third-party proxies
+// frequently start returning 403/blocked responses. Configure explicitly via env.
+const PROXY_URL = import.meta.env.VITE_PROXY_URL?.trim() || "";
 const PREFERRED_SERVER = "hd-1";
 
 /**
  * Add proxy middleware to video stream URLs
  * Supports template-based and query-param-based proxy patterns
  */
-export const addProxy = (url) => {
+export const addProxy = (url, referer = "") => {
   if (!url) return "";
 
   // Keep relative URLs untouched.
@@ -17,6 +19,14 @@ export const addProxy = (url) => {
 
   if (!PROXY_URL) return url;
   if (url.startsWith(PROXY_URL)) return url;
+
+  // For the hls proxy, use src= parameter (optionally include ref= for upstream referer)
+  if (PROXY_URL.includes("src=")) {
+    const proxied = `${PROXY_URL}${encodeURIComponent(url)}`;
+    if (!referer) return proxied;
+    const separator = proxied.includes("?") ? "&" : "?";
+    return `${proxied}${separator}ref=${encodeURIComponent(referer)}`;
+  }
 
   const encodedUrl = encodeURIComponent(url);
 

@@ -14,6 +14,7 @@ const EMPTY_SOURCES_STATE = {
   introSkip: null,
   outroSkip: null,
   serverLoading: false,
+  videoReferer: "",
 };
 
 /**
@@ -154,7 +155,12 @@ export const useVideoSources = (animeId) => {
           sourcesArray = rawSources
             .map((s, i) => ({
               label: s.quality || s.label || `Quality ${i + 1}`,
-              url: addProxy(s.source || s.url || s.file || s.src || ""),
+              // Use m3u8 source directly
+              url: addProxy(
+                s.source || s.url || s.file || s.src || "",
+                s.referer || apiData.referer || ""
+              ),
+              referer: s.referer || "",
             }))
             .filter((s) => s.url);
         } else if (
@@ -171,18 +177,21 @@ export const useVideoSources = (animeId) => {
             linkData.directUrl ||
             linkData.url ||
             (typeof apiData.link === "string" ? apiData.link : "") ||
-            topLevelSource
+            topLevelSource,
+            apiData.referer || ""
           );
-          sourcesArray = [{ label: "Auto", url }];
+          sourcesArray = [{ label: "Auto", url, referer: apiData.referer || "" }];
         } else {
           const videoData = sourceRes.data?.video || apiData.video || {};
           sourcesArray = extractVideoSources(videoData).map((s) => ({
             ...s,
-            url: addProxy(s.url),
+            url: addProxy(s.url, s.referer || apiData.referer || ""),
+            referer: s.referer || "",
           }));
         }
 
         const streamingUrl = sourcesArray[0]?.url || "";
+        const videoReferer = sourcesArray[0]?.referer || "";
 
         // --- Subtitle tracks ---
         const rawTracks = (apiData.tracks || []).filter((t) => {
@@ -228,6 +237,7 @@ export const useVideoSources = (animeId) => {
           introSkip,
           outroSkip,
           serverLoading: false,
+          videoReferer,
         });
       } catch (err) {
         if (err.name !== "AbortError") {

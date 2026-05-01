@@ -149,6 +149,7 @@ const useBackendSync = (videoRef, syncConfig) => {
 
 export default function VideoPlayer({
   src,
+  embedUrl,
   subtitleTracks = [],
   introSkip = null,
   outroSkip = null,
@@ -226,15 +227,27 @@ export default function VideoPlayer({
       onMouseMove={resetHideControlsTimeout}
       onMouseLeave={handleMouseLeave}
     >
-      <VideoElement
-        videoRef={videoRef}
-        src={src}
-        subtitleTracks={subtitleTracks}
-        autoPlay={autoPlay}
-        togglePlay={videoControls.togglePlay}
-      />
+      {/* Use embed URL in iframe if available */}
+      {embedUrl ? (
+        <iframe
+          src={embedUrl}
+          className="absolute inset-0 w-full h-full"
+          allowFullScreen
+          allow="autoplay; fullscreen"
+          title="Video Player"
+          style={{ border: "none" }}
+        />
+      ) : (
+        <VideoElement
+          videoRef={videoRef}
+          src={src}
+          subtitleTracks={subtitleTracks}
+          autoPlay={autoPlay}
+          togglePlay={videoControls.togglePlay}
+        />
+      )}
 
-      {videoState.isLoading && <VideoPlayerSpinner />}
+      {videoState.isLoading && !embedUrl && <VideoPlayerSpinner />}
 
       <VideoPlayerSkipButtons
         showSkipIntroEarly={videoState.showSkipIntroEarly}

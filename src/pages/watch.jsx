@@ -24,7 +24,7 @@ export default function Watch() {
   const { episodes, servers, animeInfo, currentEpisode, loading, error } =
     useWatchData(animeId, episodeId);
 
-  const { streamingUrl, streamingSources, subtitleTracks, introSkip, outroSkip, serverLoading, loadSources } =
+  const { streamingUrl, streamingSources, subtitleTracks, introSkip, outroSkip, serverLoading, loadSources, videoReferer } =
     useVideoSources(animeId);
 
   const [searchQuery, setSearchQuery] = useState("");
