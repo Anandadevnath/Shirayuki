@@ -39,6 +39,7 @@ export default defineConfig({
       compress: {
         drop_console: true,
         drop_debugger: true,
+        pure_funcs: ['console.log', 'console.warn', 'console.error'],
       },
     },
     rollupOptions: {
@@ -55,10 +56,11 @@ export default defineConfig({
             '@radix-ui/react-tabs',
           ],
           'icons-vendor': ['lucide-react'],
+          'video-utils': ['/src/utils/videoPlayerUtils.js', '/src/hooks/useVideoWatch.js'],
         },
       },
     },
-    chunkSizeWarningLimit: 1000,
+    chunkSizeWarningLimit: 500,
     cssCodeSplit: true,
     sourcemap: false,
   },

@@ -1,26 +1,14 @@
-/**
- * Video player utility functions for stream proxying, source extraction, and server selection
- */
-
-// Proxy is optional. Do not hardcode a default proxy because third-party proxies
-// frequently start returning 403/blocked responses. Configure explicitly via env.
 const PROXY_URL = import.meta.env.VITE_PROXY_URL?.trim() || "";
 const PREFERRED_SERVER = "hd-1";
 
-/**
- * Add proxy middleware to video stream URLs
- * Supports template-based and query-param-based proxy patterns
- */
 export const addProxy = (url, referer = "") => {
   if (!url) return "";
 
-  // Keep relative URLs untouched.
   if (url.startsWith("/")) return url;
 
   if (!PROXY_URL) return url;
   if (url.startsWith(PROXY_URL)) return url;
 
-  // For the hls proxy, use src= parameter (optionally include ref= for upstream referer)
   if (PROXY_URL.includes("src=")) {
     const proxied = `${PROXY_URL}${encodeURIComponent(url)}`;
     if (!referer) return proxied;
@@ -42,10 +30,7 @@ export const addProxy = (url, referer = "") => {
   return `${PROXY_URL}${separator}url=${encodedUrl}`;
 };
 
-/**
- * Extract playable video sources from various API response formats
- * Handles nested qualities, renditions, and fallback patterns
- */
+
 export const extractVideoSources = (videoData) => {
   const candidates =
     videoData.sources ||
@@ -73,10 +58,7 @@ export const extractVideoSources = (videoData) => {
   return url ? [{ label: "Auto", url }] : [];
 };
 
-/**
- * Select initial server preference with fallback chain
- * Priority: preferred server (sub) > preferred server (dub) > any sub > any dub
- */
+
 export const getInitialServer = (servers) => {
   const SUB = "sub";
   const DUB = "dub";
@@ -100,19 +82,11 @@ export const getInitialServer = (servers) => {
   return { server: null, category: SUB };
 };
 
-/**
- * Extract episode number from episodeId query string
- * Fallback to episode.number if extraction fails
- */
 export const getEpNumber = (episode) => {
   const match = episode.episodeId?.match(/\?ep=(\d+)/);
   return match ? parseInt(match[1], 10) : episode.number;
 };
 
-/**
- * Normalize skip timings from various API response structures
- * Converts object with start/end into skip timing or returns null
- */
 export const toSkipTiming = (data) =>
   data?.start !== undefined && data?.end !== undefined
     ? { start: data.start, end: data.end }
