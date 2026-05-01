@@ -67,8 +67,49 @@ export default function AnimeDetails() {
     );
   }
 
-  const { anime, seasons, relatedAnimes, recommendedAnimes, mostPopularAnimes } = data;
-  const { info, moreInfo } = anime;
+  const anime = data?.anime || data;
+  const info = anime?.info || {
+    name: data?.title,
+    poster: data?.poster,
+    description: data?.description,
+    episodes: data?.episodes,
+    stats: {
+      type: data?.format,
+      rating: data?.rating,
+      episodes: data?.episodes,
+    },
+  };
+  const details = data?.details || {};
+  const moreInfo = {
+    japanese: details.jname,
+    synonyms: details.altTitle,
+    aired: details.aired,
+    premiered: details.premiered,
+    duration: details.duration,
+    status: details.status,
+    malscore: details.malScore,
+    studios: details.studios,
+    producers: details.producers,
+    broadcast: details.broadcast,
+    totalEpisodes: details.totalEpisodes,
+    country: details.country,
+    genres: data?.genres || [],
+  };
+  const seasons = data?.seasons || [];
+
+  // Map API relations to component format
+  const rawRelations = data?.relations || [];
+  const relatedAnimes = rawRelations.map(item => ({
+    id: item.id,
+    name: item.title,
+    poster: item.poster,
+    type: item.type,
+    episodes: item.episodes,
+    relation: item.relation,
+  }));
+
+  const recommendedAnimes = data?.recommendedAnimes || data?.trending || [];
+  const mostPopularAnimes = data?.mostPopularAnimes || [];
 
   const description = info.description || "";
   const truncatedDescription = description.length > 300
@@ -275,11 +316,11 @@ export default function AnimeDetails() {
                 )}
                 
                 {/* Producers */}
-                {moreInfo?.producers && moreInfo.producers.length > 0 && (
+                {moreInfo?.producers && typeof moreInfo.producers === 'string' && moreInfo.producers.length > 0 && (
                   <div className="pt-2">
                     <span className="text-zinc-400 font-medium">Producers:</span>
-                    <div className="flex flex-wrap gap-x-1 mt-1">
-                      {moreInfo.producers.map((producer, index) => (
+                    <div className="flex flex-wrap gap-1 mt-1">
+                      {moreInfo.producers.split(',').map((producer, index) => (
                         <span key={producer}>
                           <Link 
                             to={`/producer/${producer.toLowerCase().replace(/\s+/g, '-')}`}
@@ -346,8 +387,12 @@ export default function AnimeDetails() {
           <Tabs defaultValue="related" className="mt-12">
             <TabsList className="bg-zinc-900/50 border border-zinc-800">
               <TabsTrigger value="related" className="data-[state=active]:bg-pink-500 text-white">Related</TabsTrigger>
-              <TabsTrigger value="characters" className="data-[state=active]:bg-pink-500 text-white">Characters</TabsTrigger>
-              <TabsTrigger value="recommended" className="data-[state=active]:bg-pink-500 text-white">Recommended</TabsTrigger>
+              {info.charactersVoiceActors?.length > 0 && (
+                <TabsTrigger value="characters" className="data-[state=active]:bg-pink-500 text-white">Characters</TabsTrigger>
+              )}
+              {recommendedAnimes.length > 0 && (
+                <TabsTrigger value="recommended" className="data-[state=active]:bg-pink-500 text-white">Recommended</TabsTrigger>
+              )}
             </TabsList>
 
             {/* Related Anime */}
@@ -363,9 +408,9 @@ export default function AnimeDetails() {
               )}
             </TabsContent>
 
-            {/* Characters */}
-            <TabsContent value="characters" className="mt-6">
-              {info.charactersVoiceActors && info.charactersVoiceActors.length > 0 ? (
+            {/* Characters - only show if data exists */}
+            {info.charactersVoiceActors?.length > 0 && (
+              <TabsContent value="characters" className="mt-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   {info.charactersVoiceActors.slice(0, 12).map((item, index) => (
                     <CharacterCard
@@ -375,23 +420,19 @@ export default function AnimeDetails() {
                     />
                   ))}
                 </div>
-              ) : (
-                <p className="text-zinc-500">No character information available.</p>
-              )}
-            </TabsContent>
+              </TabsContent>
+            )}
 
-            {/* Recommended */}
-            <TabsContent value="recommended" className="mt-6">
-              {recommendedAnimes && recommendedAnimes.length > 0 ? (
+            {/* Recommended - only show if data exists */}
+            {recommendedAnimes.length > 0 && (
+              <TabsContent value="recommended" className="mt-6">
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
                   {recommendedAnimes.slice(0, 12).map((anime, index) => (
                     <SmallAnimeCard key={anime.id} anime={anime} index={index} />
                   ))}
                 </div>
-              ) : (
-                <p className="text-zinc-500">No recommendations found.</p>
-              )}
-            </TabsContent>
+              </TabsContent>
+            )}
           </Tabs>
 
           {/* Promotional Videos */}

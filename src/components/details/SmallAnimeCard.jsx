@@ -28,6 +28,13 @@ export const SmallAnimeCard = memo(function SmallAnimeCard({ anime, index }) {
             {anime.type}
           </div>
         )}
+
+        {/* Relation Badge - Below Type */}
+        {anime.relation && (
+          <div className="absolute top-12 right-3 bg-purple-600 text-white text-xs font-semibold px-2 py-1 rounded-lg">
+            {anime.relation}
+          </div>
+        )}
         
         {/* Episode Badges - Bottom Left */}
         {anime.episodes && (

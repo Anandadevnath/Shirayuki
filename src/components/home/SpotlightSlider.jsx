@@ -95,18 +95,21 @@ export const SpotlightSlider = memo(function SpotlightSlider({ spotlightAnimes }
   const currentAnime = spotlightAnimes[currentIndex];
   const nextAnime = nextIndex !== null ? spotlightAnimes[nextIndex] : null;
 
+  // Helper to get display name (handles both name and title)
+  const getAnimeName = (anime) => anime.name || anime.title;
+
   // Render a slide
   const renderSlide = (anime) => (
     <>
       <img
         src={anime.poster}
-        alt={anime.name}
+        alt={getAnimeName(anime)}
         className="w-full h-full object-cover pointer-events-none"
         draggable={false}
       />
       <div className="absolute inset-0 bg-gradient-to-r from-black/95 via-black/70 to-transparent sm:from-black/90 sm:via-black/60 pointer-events-none" />
       <div className="absolute inset-0 flex flex-col justify-center pb-16 sm:pb-24 max-w-[1480px] mx-auto px-4 sm:px-6 lg:px-12 pointer-events-none">
-        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 sm:mb-4 max-w-2xl line-clamp-2">{anime.name}</h1>
+        <h1 className="text-2xl sm:text-4xl lg:text-5xl font-bold text-white mb-2 sm:mb-4 max-w-2xl line-clamp-2">{getAnimeName(anime)}</h1>
         <div className="flex gap-2 sm:gap-3 mb-2 sm:mb-4">
           {anime.episodes?.sub && (
             <Badge className="bg-zinc-800/80 text-white border border-zinc-600 px-2 sm:px-3 py-0.5 sm:py-1 text-xs sm:text-sm">

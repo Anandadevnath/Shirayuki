@@ -1,8 +1,0 @@
-{
-  "env": {
-    "ANTHROPIC_BASE_URL": "https://openrouter.ai/api",
-    "ANTHROPIC_AUTH_TOKEN": "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",
-    "ANTHROPIC_API_KEY": "",
-    "ANTHROPIC_MODEL": "deepseek/deepseek-v3.2"
-  }
-}

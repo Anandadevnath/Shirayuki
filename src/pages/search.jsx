@@ -26,12 +26,13 @@ function AnimeCardSkeleton() {
 }
 
 function AnimeCard({ anime }) {
+  const animeName = anime.name || anime.title;
   return (
     <Link to={`/anime/${anime.id}`} className="block group">
       <div className="relative overflow-hidden rounded-xl sm:rounded-2xl aspect-[2/3]">
         <img
           src={anime.poster}
-          alt={anime.name}
+          alt={animeName}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
@@ -50,7 +51,7 @@ function AnimeCard({ anime }) {
         )}
         <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
           <h3 className="font-semibold text-white text-xs sm:text-sm line-clamp-2 mb-1 sm:mb-2 group-hover:text-purple-400 transition-colors">
-            {anime.name}
+            {animeName}
           </h3>
           <div className="flex items-center gap-1.5 sm:gap-2 flex-wrap">
             {anime.episodes?.sub && (
@@ -78,6 +79,7 @@ function AnimeCard({ anime }) {
 }
 
 function SuggestionItem({ suggestion, onClick }) {
+  const suggestionName = suggestion.name || suggestion.title;
   return (
     <button
       onClick={() => onClick(suggestion)}
@@ -85,11 +87,11 @@ function SuggestionItem({ suggestion, onClick }) {
     >
       <img
         src={suggestion.poster}
-        alt={suggestion.name}
+        alt={suggestionName}
         className="w-12 h-16 object-cover rounded"
       />
       <div className="flex-1 min-w-0">
-        <p className="text-white font-medium text-sm line-clamp-1">{suggestion.name}</p>
+        <p className="text-white font-medium text-sm line-clamp-1">{suggestionName}</p>
         <p className="text-zinc-500 text-xs line-clamp-1">{suggestion.jname}</p>
         <div className="flex items-center gap-2 mt-1">
           <Badge variant="outline" className="text-xs px-1.5 py-0 border-zinc-600 text-zinc-400">

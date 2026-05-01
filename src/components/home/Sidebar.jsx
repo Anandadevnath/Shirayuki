@@ -19,7 +19,7 @@ export const SidebarAnimeItem = memo(function SidebarAnimeItem({ anime, index, a
       <div className="absolute inset-0">
         <img
           src={anime.poster}
-          alt={anime.name}
+          alt={anime.name || anime.title}
           className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
@@ -37,7 +37,7 @@ export const SidebarAnimeItem = memo(function SidebarAnimeItem({ anime, index, a
         </div>
         <div className="flex-1 min-w-0">
           <h3 className="font-semibold text-white text-base truncate mb-2 group-hover:text-orange-400 transition-colors">
-            {anime.name}
+            {anime.name || anime.title}
           </h3>
           <div className="flex items-center gap-2 flex-wrap">
             {anime.episodes?.sub && (

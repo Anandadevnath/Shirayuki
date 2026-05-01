@@ -69,17 +69,15 @@ export const useWatchData = (animeId, episodeId) => {
         if (!mounted) return;
 
         const serverData = serverRes.error ? {} : serverRes.data?.data || {};
-        // Filter to show only HD-1 servers
-        const finalSub = Array.isArray(serverData.sub) 
-          ? serverData.sub.filter(s => s.serverName?.toLowerCase().includes("hd-1"))
-          : [];
-        const finalDub = Array.isArray(serverData.dub) 
-          ? serverData.dub.filter(s => s.serverName?.toLowerCase().includes("hd-1"))
-          : [];
+        // New API structure uses data.categories
+        const categories = serverData.categories || {};
+        const finalSub = Array.isArray(categories.sub) ? categories.sub : [];
+        const finalDub = Array.isArray(categories.dub) ? categories.dub : [];
+        const finalSoftsub = Array.isArray(categories.softsub) ? categories.softsub : [];
 
         setState((prev) => ({
           ...prev,
-          servers: { sub: finalSub, dub: finalDub },
+          servers: { sub: finalSub, dub: finalDub, softsub: finalSoftsub },
           loading: false,
         }));
       } catch (err) {
@@ -123,11 +121,13 @@ export const useVideoSources = (animeId) => {
       setState((prev) => ({ ...prev, serverLoading: true }));
 
       try {
+        // Extract server identifier from serverId (e.g., "server-1" from "anime:1:sub:server-1")
+        const serverIdPart = server.serverId?.split(':').pop() || 'server-1';
         const sourceRes = await getEpisodeSources(
           animeId,
           episode.episodeId,
           getEpNumber(episode),
-          server.serverName,
+          serverIdPart,
           category,
           { signal: abortRef.current.signal }
         );
@@ -154,7 +154,7 @@ export const useVideoSources = (animeId) => {
           sourcesArray = rawSources
             .map((s, i) => ({
               label: s.quality || s.label || `Quality ${i + 1}`,
-              url: addProxy(s.url || s.file || s.src || ""),
+              url: addProxy(s.source || s.url || s.file || s.src || ""),
             }))
             .filter((s) => s.url);
         } else if (

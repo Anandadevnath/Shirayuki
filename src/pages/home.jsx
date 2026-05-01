@@ -15,6 +15,33 @@ import {
   HomePageSkeleton,
 } from "@/components/home";
 
+// Transform new animekai API response to match component expectations
+function transformHomeData(rawData) {
+  if (!rawData) return null;
+
+  // Add name alias (title -> name) for all anime objects (backward compat)
+  const normalizeAnime = (anime) => ({
+    ...anime,
+    name: anime.title || anime.name, // animekai uses title
+  });
+
+  // Normalize array of anime
+  const normalizeArray = (arr) =>
+    Array.isArray(arr) ? arr.map(normalizeAnime) : [];
+
+  return {
+    spotlightAnimes: normalizeArray(rawData.featuredAnimes),
+    trendingAnimes: normalizeArray(rawData.topTrending?.now || rawData.topTrending),
+    topAiringAnimes: normalizeArray(rawData.topTrending?.now || rawData.topTrending),
+    latestEpisodeAnimes: normalizeArray(rawData.latestUpdates?.all || rawData.latestUpdates),
+    topUpcomingAnimes: normalizeArray(rawData.quickLists?.upcoming),
+    top10Animes: normalizeArray(rawData.topTrending?.now || rawData.topTrending),
+    latestCompletedAnimes: normalizeArray(rawData.quickLists?.completed),
+    mostPopularAnimes: normalizeArray(rawData.topTrending?.week || rawData.topTrending),
+    mostFavoriteAnimes: normalizeArray(rawData.topTrending?.day || rawData.topTrending),
+  };
+}
+
 export default function Home() {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +54,8 @@ export default function Home() {
       if (err) {
         setError(err);
       } else {
-        setData(result.data);
+        const transformed = transformHomeData(result.data);
+        setData(transformed);
       }
       setLoading(false);
     }

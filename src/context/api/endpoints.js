@@ -3,31 +3,31 @@ export const API_VERSION = "v2";
 export const ANIME_ENDPOINTS = {
 
   // Home 
-  HOME: `/api/${API_VERSION}/hianime/home`,
+  HOME: `/api/${API_VERSION}/animekai/home`,
   
   // SCHEDULE
   SCHEDULE: (date) => 
-    `/api/${API_VERSION}/hianime/schedule?date=${date}`,
+    `/api/${API_VERSION}/animekai/schedule?date=${date}`,
 
   // A-Z Listing
   AZ_LIST: (letter = "0-9", page = 1) =>
-    `/api/${API_VERSION}/hianime/azlist/${letter}?page=${page}`,
+    `/api/${API_VERSION}/animekai/azlist/${letter}?page=${page}`,
 
   // Anime Details
   ANIME_DETAILS: (animeId) => 
-    `/api/${API_VERSION}/hianime/anime/${animeId}`,
+    `/api/${API_VERSION}/animekai/anime/${animeId}`,
   
   // Anime all episode
   ANIME_EPISODES: (animeId) =>
-    `/api/${API_VERSION}/hianime/anime/${animeId}/episodes`,
+    `/api/${API_VERSION}/animekai/anime/${animeId}/episodes`,
 
   // Search
   SEARCH: (query, page = 1) =>
-    `/api/${API_VERSION}/hianime/search?q=${encodeURIComponent(query)}&page=${page}`,
+    `/api/${API_VERSION}/animekai/search?q=${encodeURIComponent(query)}&page=${page}`,
   
   // Basic Suggestion
   SEARCH_SUGGESTION: (query) =>
-    `/api/${API_VERSION}/hianime/search/suggestion?q=${encodeURIComponent(query)}`,
+    `/api/${API_VERSION}/animekai/search/suggestion?q=${encodeURIComponent(query)}`,
   
   // Advance Suggestion
   SEARCH_ADVANCED: (params) => {
@@ -42,25 +42,25 @@ export const ANIME_ENDPOINTS = {
     if (params.rated) searchParams.append("rated", params.rated);
     if (params.start_date) searchParams.append("start_date", params.start_date);
     if (params.score) searchParams.append("score", params.score);
-    return `/api/${API_VERSION}/hianime/search/advanced?${searchParams.toString()}`;
+    return `/api/${API_VERSION}/animekai/search/advanced?${searchParams.toString()}`;
   },
 
   // Browse by Category
   PRODUCER: (producerId, page = 1) =>
-    `/api/${API_VERSION}/hianime/producer/${producerId}?page=${page}`,
+    `/api/${API_VERSION}/animekai/producer/${producerId}?page=${page}`,
   
   GENRE: (genreId, page = 1) =>
-    `/api/${API_VERSION}/hianime/genre/${genreId}?page=${page}`,
+    `/api/${API_VERSION}/animekai/genre/${genreId}?page=${page}`,
   
   CATEGORY: (categoryId, page = 1) =>
-    `/api/${API_VERSION}/hianime/category/${categoryId}?page=${page}`,
+    `/api/${API_VERSION}/animekai/category/${categoryId}?page=${page}`,
 
   // Episode Streaming
   EPISODE_SERVERS: (animeEpisodeId) => {
     const searchParams = new URLSearchParams({
       animeEpisodeId: String(animeEpisodeId || ""),
     });
-    return `/api/${API_VERSION}/hianime/episode/servers?${searchParams.toString()}`;
+    return `/api/${API_VERSION}/animekai/episode/servers?${searchParams.toString()}`;
   },
   
   // Episode Streaming Source
@@ -75,7 +75,7 @@ export const ANIME_ENDPOINTS = {
     // Keep `episodeId` in signature for backward compatibility with existing callers.
     void episodeId;
 
-    return `/api/${API_VERSION}/hianime/episode/sources?${searchParams.toString()}`;
+    return `/api/${API_VERSION}/animekai/episode/sources?${searchParams.toString()}`;
   },
 };
 

@@ -2,6 +2,9 @@ import { memo } from "react";
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 
+// Helper to get display name (handles both name and title)
+const getAnimeName = (anime) => anime.name || anime.title;
+
 // Anime Card Component (overlay style for trending/scroll sections)
 export const AnimeCard = memo(function AnimeCard({ anime }) {
   return (
@@ -9,7 +12,7 @@ export const AnimeCard = memo(function AnimeCard({ anime }) {
       <div className="relative overflow-hidden rounded-md sm:rounded-md aspect-[2/3]">
         <img
           src={anime.poster}
-          alt={anime.name}
+          alt={getAnimeName(anime)}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
@@ -20,7 +23,7 @@ export const AnimeCard = memo(function AnimeCard({ anime }) {
           </Badge>
         )}
         <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
-          <h3 className="font-semibold text-white truncate text-xs sm:text-sm mb-1 sm:mb-2">{anime.name}</h3>
+          <h3 className="font-semibold text-white truncate text-xs sm:text-sm mb-1 sm:mb-2">{getAnimeName(anime)}</h3>
           <div className="flex items-center gap-1.5 sm:gap-2">
             {anime.episodes?.sub && (
               <Badge className="bg-pink-500/90 hover:bg-pink-500 text-white text-[10px] sm:text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-md flex items-center gap-1">
@@ -48,14 +51,14 @@ export const AnimeGridCard = memo(function AnimeGridCard({ anime }) {
       <div className="relative overflow-hidden rounded-lg aspect-[2/3]">
         <img
           src={anime.poster}
-          alt={anime.name}
+          alt={getAnimeName(anime)}
           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           loading="lazy"
         />
         <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/30 to-transparent" />
         <div className="absolute bottom-0 left-0 right-0 p-2 sm:p-3">
           <h3 className="font-semibold text-white text-xs sm:text-sm line-clamp-2 mb-1 sm:mb-2 group-hover:text-orange-400 transition-colors">
-            {anime.name}
+            {getAnimeName(anime)}
           </h3>
           <div className="flex items-center gap-1 sm:gap-2 flex-wrap">
             {anime.episodes?.sub && (
