@@ -26,6 +26,7 @@ export const VideoElement = memo(function VideoElement({
   subtitleTracks,
   autoPlay,
   togglePlay,
+  referer,
 }) {
   const hlsRef = useRef(null);
 
@@ -51,12 +52,22 @@ export const VideoElement = memo(function VideoElement({
         ...HLS_CONFIG,
         // Add fetchSetup to include proper headers like a browser
         fetchSetup: (context) => {
+          const fallbackOrigin = window.location.origin;
+          const effectiveReferer = referer || `${fallbackOrigin}/`;
+
+          let effectiveOrigin = fallbackOrigin;
+          try {
+            effectiveOrigin = new URL(effectiveReferer).origin;
+          } catch {
+            // ignore
+          }
+
           return {
             ...context,
             headers: {
               ...context.headers,
-              "Origin": window.location.origin,
-              "Referer": window.location.origin + "/",
+              Origin: effectiveOrigin,
+              Referer: effectiveReferer,
               "User-Agent": navigator.userAgent,
             },
           };

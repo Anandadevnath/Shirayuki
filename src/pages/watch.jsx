@@ -24,8 +24,16 @@ export default function Watch() {
   const { episodes, servers, animeInfo, currentEpisode, loading, error } =
     useWatchData(animeId, episodeId);
 
-  const { streamingUrl, streamingSources, subtitleTracks, introSkip, outroSkip, serverLoading, loadSources, videoReferer } =
-    useVideoSources(animeId);
+  const {
+    streamingUrl,
+    streamingSources,
+    subtitleTracks,
+    introSkip,
+    outroSkip,
+    serverLoading,
+    loadSources,
+    videoReferer,
+  } = useVideoSources(animeId);
 
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedServer, setSelectedServer] = useState(null);
@@ -103,6 +111,7 @@ export default function Watch() {
       category: selectedCategory,
       poster,
       pageUrl: window.location.href,
+      videoReferer,
       sources: streamingSources,
       subtitleTracks,
       introSkip,
@@ -112,7 +121,7 @@ export default function Watch() {
       onEnded: goNext,
     }),
     [streamingUrl, animeId, currentEpisode, selectedServer, selectedCategory, poster,
-      streamingSources, subtitleTracks, introSkip, outroSkip, autoSkipIntro, goNext]
+      videoReferer, streamingSources, subtitleTracks, introSkip, outroSkip, autoSkipIntro, goNext]
   );
 
   if (loading) return <WatchSkeleton />;

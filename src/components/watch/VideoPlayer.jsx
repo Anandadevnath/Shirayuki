@@ -163,6 +163,7 @@ export default function VideoPlayer({
   category = null,
   poster = null,
   pageUrl = null,
+  videoReferer = null,
 }) {
   const videoRef = useRef(null);
   const containerRef = useRef(null);
@@ -244,6 +245,7 @@ export default function VideoPlayer({
           subtitleTracks={subtitleTracks}
           autoPlay={autoPlay}
           togglePlay={videoControls.togglePlay}
+          referer={videoReferer}
         />
       )}
 

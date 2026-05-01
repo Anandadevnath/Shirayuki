@@ -1,3 +1,5 @@
+/* global process */
+
 import { Hono } from "hono";
 import { serve } from "@hono/node-server";
 
@@ -121,7 +123,7 @@ app.use("*", async (c, next) => {
   });
 });
 
-app.options("*", (c) => {
+app.options("*", () => {
   return new Response(null, {
     status: 204,
     headers: withCors(),
@@ -136,7 +138,7 @@ app.get("/", (c) => {
   );
 });
 
-app.on("HEAD", "/", (c) => {
+app.on("HEAD", "/", () => {
   return new Response(null, {
     status: 200,
     headers: withCors(),
