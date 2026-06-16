@@ -1,0 +1,141 @@
+@import "tailwindcss";
+
+/* ─────────────────────────────────────────────────────────────
+   Sode no Shirayuki — design tokens (see docs/04-design-system.md)
+   Dark-first. Glacial slate surfaces. One frost accent. Snow text.
+   ───────────────────────────────────────────────────────────── */
+@theme {
+  /* Surfaces */
+  --color-base: oklch(0.16 0.012 250);
+  --color-surface: oklch(0.2 0.013 250);
+  --color-surface-2: oklch(0.24 0.014 250);
+  --color-overlay: oklch(0.18 0.012 250 / 0.72);
+  --color-line: oklch(0.3 0.015 250);
+
+  /* Foreground — snow */
+  --color-snow: oklch(0.97 0.004 240);
+  --color-muted: oklch(0.74 0.012 245);
+  --color-faint: oklch(0.56 0.012 248);
+
+  /* Brand — frost */
+  --color-frost: oklch(0.82 0.12 215);
+  --color-frost-deep: oklch(0.64 0.15 245);
+  --color-frost-soft: oklch(0.82 0.12 215 / 0.14);
+
+  /* Whisper accent */
+  --color-sakura: oklch(0.83 0.07 350);
+
+  /* Semantic */
+  --color-success: oklch(0.8 0.13 165);
+  --color-warning: oklch(0.84 0.12 85);
+  --color-danger: oklch(0.68 0.18 25);
+
+  /* Radii */
+  --radius-sm: 0.5rem;
+  --radius-md: 0.875rem;
+  --radius-lg: 1.25rem;
+  --radius-xl: 1.75rem;
+
+  /* Shadows */
+  --shadow-frost: 0 8px 30px -12px oklch(0.64 0.15 245 / 0.35);
+  --shadow-soft: 0 4px 24px -10px oklch(0 0 0 / 0.5);
+
+  /* Fonts (wired via next/font CSS vars in layout.tsx) */
+  --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-zen), var(--font-geist-sans), sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+}
+
+@layer base {
+  * {
+    border-color: var(--color-line);
+  }
+  html {
+    scroll-behavior: smooth;
+    color-scheme: dark;
+  }
+  body {
+    background-color: var(--color-base);
+    color: var(--color-snow);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    text-rendering: optimizeLegibility;
+  }
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+  p { text-wrap: pretty; }
+
+  ::selection {
+    background: var(--color-frost-soft);
+    color: var(--color-snow);
+  }
+
+  /* Frost focus ring */
+  :focus-visible {
+    outline: 2px solid var(--color-frost);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  /* Cool scrollbar */
+  ::-webkit-scrollbar { width: 10px; height: 10px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb {
+    background: var(--color-surface-2);
+    border-radius: 999px;
+    border: 2px solid var(--color-base);
+  }
+  ::-webkit-scrollbar-thumb:hover { background: var(--color-line); }
+}
+
+@layer utilities {
+  .glass {
+    background: var(--color-overlay);
+    backdrop-filter: blur(16px) saturate(1.1);
+    -webkit-backdrop-filter: blur(16px) saturate(1.1);
+    border: 1px solid var(--color-line);
+  }
+  .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
+  .no-scrollbar::-webkit-scrollbar { display: none; }
+  .text-gradient-frost {
+    background: linear-gradient(135deg, var(--color-frost), var(--color-frost-deep));
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
+  }
+  .snap-x-rail {
+    scroll-snap-type: x mandatory;
+  }
+  .snap-start { scroll-snap-align: start; }
+}
+
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+.shimmer::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    oklch(1 0 0 / 0.06),
+    transparent
+  );
+  animation: shimmer 1.6s infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}

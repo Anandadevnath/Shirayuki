@@ -1,0 +1,73 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import Link from "next/link";
+import Image from "next/image";
+import { Play, X } from "lucide-react";
+import { listProgress, removeProgress, type WatchEntry } from "@/lib/progress/local";
+import { formatTime } from "@/lib/utils/format";
+
+export function ContinueWatching() {
+  const [items, setItems] = useState<WatchEntry[]>([]);
+
+  useEffect(() => {
+    setItems(listProgress());
+  }, []);
+
+  if (!items.length) return null;
+
+  function drop(animeId: string) {
+    removeProgress(animeId);
+    setItems(listProgress());
+  }
+
+  return (
+    <section className="py-6">
+      <h2 className="mb-3 text-lg font-bold sm:text-xl">Continue Watching</h2>
+      <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
+        {items.map((e) => {
+          const pct = Math.min(100, Math.round((e.seconds / e.duration) * 100));
+          return (
+            <div
+              key={e.animeId}
+              className="group relative w-[70vw] shrink-0 sm:w-[320px]"
+            >
+              <Link
+                href={`/watch/${e.animeId}/${encodeURIComponent(e.episodeId)}`}
+                className="block overflow-hidden rounded-md ring-1 ring-line transition-all hover:ring-frost/40"
+              >
+                <div className="relative aspect-video bg-surface-2">
+                  {e.poster && (
+                    <Image src={e.poster} alt="" fill sizes="320px" className="object-cover" />
+                  )}
+                  <div className="absolute inset-0 bg-gradient-to-t from-base/95 to-transparent" />
+                  <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity group-hover:opacity-100">
+                    <span className="grid size-11 place-items-center rounded-full glass text-frost">
+                      <Play className="size-5 translate-x-0.5 fill-current" />
+                    </span>
+                  </span>
+                  <div className="absolute inset-x-0 bottom-0 p-3">
+                    <p className="line-clamp-1 text-sm font-semibold text-snow">{e.title}</p>
+                    <p className="text-xs text-muted">
+                      EP {e.episodeNumber} · {formatTime(e.seconds)} / {formatTime(e.duration)}
+                    </p>
+                  </div>
+                  <div className="absolute inset-x-0 bottom-0 h-1 bg-base/60">
+                    <div className="h-full bg-frost" style={{ width: `${pct}%` }} />
+                  </div>
+                </div>
+              </Link>
+              <button
+                onClick={() => drop(e.animeId)}
+                aria-label={`Remove ${e.title} from continue watching`}
+                className="absolute right-2 top-2 grid size-7 place-items-center rounded-full glass text-snow opacity-0 transition-opacity group-hover:opacity-100"
+              >
+                <X className="size-4" />
+              </button>
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
+}
