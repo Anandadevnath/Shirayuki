@@ -141,8 +141,14 @@ export async function getServers(
   const { data } = await apiFetch(path, S.envelope(S.serversData), {
     noStore: true,
   });
-  const map = (arr: { name: string; nameId: string }[], category: ServerCategory) =>
-    arr.map((s) => ({ name: s.name, nameId: s.nameId, category }));
+  // HiAnime can list the same server twice in a category (e.g. dub →
+  // hd-2, hd-2, doodstream, doodstream); dedupe by nameId, keep first.
+  const map = (arr: { name: string; nameId: string }[], category: ServerCategory) => {
+    const seen = new Set<string>();
+    return arr
+      .filter((s) => (seen.has(s.nameId) ? false : (seen.add(s.nameId), true)))
+      .map((s) => ({ name: s.name, nameId: s.nameId, category }));
+  };
   return {
     animeId: data.animeId ?? "",
     episode: data.episode,
