@@ -2,11 +2,8 @@ import { getHome, safe } from "@/lib/api";
 import { Spotlight } from "@/components/home/Spotlight";
 import { ContinueWatching } from "@/components/home/ContinueWatching";
 import { Rail } from "@/components/anime/Rail";
-import { RankList } from "@/components/home/RankList";
-import { Top10Tabs } from "@/components/home/Top10Tabs";
 import { QuickLists } from "@/components/home/QuickLists";
-import { GenreCloud } from "@/components/home/GenreCloud";
-import { SectionHeader } from "@/components/common/SectionHeader";
+import { DiscoverColumns } from "@/components/home/DiscoverColumns";
 import { ErrorState } from "@/components/common/States";
 
 export default async function HomePage() {
@@ -44,23 +41,18 @@ export default async function HomePage() {
         {/* Card rails first — posters get room to breathe */}
         <Rail title="Latest Episodes" eyebrow="Just aired" items={home.latestEpisodes} />
 
+        <DiscoverColumns
+          topAiring={home.topAiring}
+          mostPopular={home.mostPopular}
+          newReleases={home.newReleases}
+          completed={home.completed}
+        />
+
         <QuickLists
           newReleases={home.newReleases}
           completed={home.completed}
           upcoming={home.upcoming}
         />
-
-        {/* Dense ranked lists grouped as a single "charts" block near the end */}
-        <section>
-          <SectionHeader title="Top Charts" eyebrow="Most watched" />
-          <div className="grid gap-4 lg:grid-cols-3">
-            <RankList title="Top Airing" items={home.topAiring} href="/category/top-airing" />
-            <RankList title="Most Popular" items={home.mostPopular} href="/category/most-popular" />
-            <Top10Tabs buckets={home.top10} />
-          </div>
-        </section>
-
-          <GenreCloud genres={home.genres} />
         </div>
       </div>
     </div>
