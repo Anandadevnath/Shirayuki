@@ -2,6 +2,7 @@ import { getHome, safe } from "@/lib/api";
 import { Spotlight } from "@/components/home/Spotlight";
 import { ContinueWatching } from "@/components/home/ContinueWatching";
 import { Rail } from "@/components/anime/Rail";
+import { Trending } from "@/components/home/Trending";
 import { QuickLists } from "@/components/home/QuickLists";
 import { DiscoverColumns } from "@/components/home/DiscoverColumns";
 import { ErrorState } from "@/components/common/States";
@@ -22,7 +23,7 @@ export default async function HomePage() {
   return (
     <div>
       {home.spotlight.length > 0 && (
-        <Spotlight items={home.spotlight} trending={home.trending} />
+        <Spotlight items={home.spotlight} />
       )}
 
       <div className="relative">
@@ -35,8 +36,10 @@ export default async function HomePage() {
           className="pointer-events-none absolute left-1/2 top-0 h-72 w-screen -translate-x-1/2 bg-gradient-to-b from-base from-5% via-base/55 via-45% to-transparent"
         />
 
-        <div className="relative space-y-12 pt-3 sm:pt-4">
+        <div className="relative z-10 -mt-[6vh] space-y-12 sm:-mt-[7vh]">
           <ContinueWatching />
+
+        <Trending items={home.trending} />
 
         {/* Card rails first — posters get room to breathe */}
         <Rail title="Latest Episodes" eyebrow="Just aired" items={home.latestEpisodes} />
