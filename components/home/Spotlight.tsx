@@ -233,7 +233,7 @@ export function Spotlight({
         </div>
 
         {/* ── Integrated Trending carousel ── */}
-        <div className="relative z-10 mx-auto w-full max-w-[1460px] px-4 pb-20 sm:px-6 lg:px-8">
+        <div className="relative z-10 mx-auto w-full max-w-[1460px] px-4 pb-10 sm:px-6 lg:px-8">
           <div>
             <div className="mb-2.5 flex items-center justify-between gap-4 px-0.5">
               <h2 className="font-display text-sm font-bold text-snow sm:text-base">

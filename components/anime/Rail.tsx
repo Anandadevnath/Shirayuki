@@ -47,13 +47,13 @@ export function Rail({
 
       <div
         ref={ref}
-        className="no-scrollbar snap-x-rail flex gap-3 overflow-x-auto scroll-pl-1 pb-1"
+        className="no-scrollbar snap-x-rail flex gap-4 overflow-x-auto scroll-pl-1 px-1 pb-4 pt-3"
       >
         {items.map((a) => (
           <AnimeCard
             key={`${a.id}-${a.episodeNumber ?? ""}`}
             anime={a}
-            className="w-[40vw] shrink-0 sm:w-[22vw] md:w-[180px]"
+            className="w-[44vw] shrink-0 sm:w-[24vw] md:w-[200px]"
           />
         ))}
       </div>
