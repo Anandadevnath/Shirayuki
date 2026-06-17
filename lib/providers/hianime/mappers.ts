@@ -23,7 +23,7 @@ export function toCard(r: Raw): AnimeCardModel {
     episodes: epCount(r.episodes),
     rank: r.rank ?? null,
     airingTime: r.airingTime ?? null,
-    episodeNumber: r.episodeNumber ?? null,
+    episodeNumber: r.episodeNumber ?? r.episode ?? null,
   };
 }
 

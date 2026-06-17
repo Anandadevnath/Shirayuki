@@ -46,7 +46,7 @@ export function Nav() {
           scrolled ? "glass" : "bg-transparent",
         )}
       >
-        <nav className="mx-auto flex h-16 w-full max-w-[1440px] items-center gap-6 px-4 sm:px-6 lg:px-8">
+        <nav className="mx-auto flex h-16 w-full max-w-[1460px] items-center gap-6 px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5 font-display text-lg font-bold">
             <span className="grid size-8 place-items-center rounded-[10px] bg-frost-soft text-frost">
               <Snowflake className="size-5" strokeWidth={2.2} />

@@ -4,6 +4,7 @@ import "./globals.css";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { SnowLayer } from "@/components/layout/SnowLayer";
+import { Ambient } from "@/components/layout/Ambient";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
@@ -38,10 +39,11 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${zen.variable}`}>
-      <body className="min-h-dvh antialiased">
+      <body className="min-h-dvh overflow-x-clip antialiased">
+        <Ambient />
         <SnowLayer />
         <Nav />
-        <main className="relative mx-auto w-full max-w-[1440px] px-4 pb-24 pt-4 sm:px-6 lg:px-8">
+        <main className="relative mx-auto w-full max-w-[1460px] px-4 pb-24 pt-4 sm:px-6 lg:px-8">
           {children}
         </main>
         <Footer />

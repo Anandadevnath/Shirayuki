@@ -50,7 +50,7 @@ export function AnimeCard({
       href={`/anime/${anime.id}`}
       className={cn("group block snap-start", className)}
     >
-      <div className="relative aspect-[2/3] overflow-hidden rounded-md bg-surface-2 shadow-[var(--shadow-soft)] ring-1 ring-line transition-all duration-200 group-hover:-translate-y-1 group-hover:ring-frost/40 group-hover:shadow-[var(--shadow-frost)]">
+      <div className="relative aspect-[2/3] overflow-hidden rounded-lg bg-surface-2 shadow-[var(--shadow-soft)] ring-1 ring-line transition-all duration-200 group-hover:-translate-y-1 group-hover:ring-frost/40 group-hover:shadow-[var(--shadow-frost)]">
         {anime.poster ? (
           <Image
             src={anime.poster}

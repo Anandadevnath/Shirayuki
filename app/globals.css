@@ -5,12 +5,12 @@
    Dark-first. Glacial slate surfaces. One frost accent. Snow text.
    ───────────────────────────────────────────────────────────── */
 @theme {
-  /* Surfaces */
-  --color-base: oklch(0.16 0.012 250);
-  --color-surface: oklch(0.2 0.013 250);
-  --color-surface-2: oklch(0.24 0.014 250);
-  --color-overlay: oklch(0.18 0.012 250 / 0.72);
-  --color-line: oklch(0.3 0.015 250);
+  /* Surfaces — premium near-black glass (#050505-ish base) */
+  --color-base: oklch(0.07 0.012 250);
+  --color-surface: oklch(0.12 0.013 250);
+  --color-surface-2: oklch(0.16 0.014 250);
+  --color-overlay: oklch(0.11 0.012 250 / 0.55);
+  --color-line: oklch(0.26 0.015 250);
 
   /* Foreground — snow */
   --color-snow: oklch(0.97 0.004 240);
@@ -39,6 +39,7 @@
   /* Shadows */
   --shadow-frost: 0 8px 30px -12px oklch(0.64 0.15 245 / 0.35);
   --shadow-soft: 0 4px 24px -10px oklch(0 0 0 / 0.5);
+  --shadow-neon: 0 0 28px -6px var(--color-frost), 0 0 1px 0 var(--color-frost);
 
   /* Fonts (wired via next/font CSS vars in layout.tsx) */
   --font-sans: var(--font-geist-sans), ui-sans-serif, system-ui, sans-serif;
@@ -53,7 +54,14 @@
   html {
     scroll-behavior: smooth;
     color-scheme: dark;
+    /* Overlay scrollbar — floats over content instead of reserving a gutter,
+       so full-bleed 100vw sections reach the true viewport edge. */
+    scrollbar-gutter: auto;
+    /* Firefox: hide the scrollbar, keep scrolling. */
+    scrollbar-width: none;
   }
+  /* WebKit/Blink: hide the root scrollbar entirely. */
+  html::-webkit-scrollbar { width: 0; height: 0; display: none; }
   body {
     background-color: var(--color-base);
     color: var(--color-snow);
@@ -80,15 +88,17 @@
     border-radius: var(--radius-sm);
   }
 
-  /* Cool scrollbar */
-  ::-webkit-scrollbar { width: 10px; height: 10px; }
-  ::-webkit-scrollbar-track { background: transparent; }
-  ::-webkit-scrollbar-thumb {
+  /* Cool scrollbar — applied to inner scroll regions only. The root page keeps
+     the platform overlay scrollbar so it never reserves a gutter that breaks
+     full-bleed 100vw heroes. */
+  :where(.scroll-frost)::-webkit-scrollbar { width: 10px; height: 10px; }
+  :where(.scroll-frost)::-webkit-scrollbar-track { background: transparent; }
+  :where(.scroll-frost)::-webkit-scrollbar-thumb {
     background: var(--color-surface-2);
     border-radius: 999px;
     border: 2px solid var(--color-base);
   }
-  ::-webkit-scrollbar-thumb:hover { background: var(--color-line); }
+  :where(.scroll-frost)::-webkit-scrollbar-thumb:hover { background: var(--color-line); }
 }
 
 @layer utilities {

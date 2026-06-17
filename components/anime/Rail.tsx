@@ -1,17 +1,19 @@
 "use client";
 
 import { useRef } from "react";
-import Link from "next/link";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { AnimeCardModel } from "@/lib/providers/types";
+import { SectionHeader } from "@/components/common/SectionHeader";
 import { AnimeCard } from "./AnimeCard";
 
 export function Rail({
   title,
+  eyebrow,
   items,
   href,
 }: {
   title: string;
+  eyebrow?: string;
   items: AnimeCardModel[];
   href?: string;
 }) {
@@ -23,33 +25,25 @@ export function Rail({
   };
 
   return (
-    <section className="relative py-6">
-      <div className="mb-3 flex items-center justify-between gap-4">
-        <h2 className="text-lg font-bold sm:text-xl">{title}</h2>
-        <div className="flex items-center gap-2">
-          {href && (
-            <Link href={href} className="text-sm text-muted transition-colors hover:text-frost">
-              See all
-            </Link>
-          )}
-          <div className="hidden gap-1 sm:flex">
-            <button
-              onClick={() => scroll(-1)}
-              aria-label="Scroll left"
-              className="grid size-8 place-items-center rounded-sm border border-line text-muted transition-colors hover:border-frost/40 hover:text-snow"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            <button
-              onClick={() => scroll(1)}
-              aria-label="Scroll right"
-              className="grid size-8 place-items-center rounded-sm border border-line text-muted transition-colors hover:border-frost/40 hover:text-snow"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
+    <section className="relative">
+      <SectionHeader title={title} eyebrow={eyebrow} href={href}>
+        <div className="hidden gap-1 sm:flex">
+          <button
+            onClick={() => scroll(-1)}
+            aria-label="Scroll left"
+            className="grid size-8 place-items-center rounded-full glass text-muted transition-colors hover:border-frost/40 hover:text-snow"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <button
+            onClick={() => scroll(1)}
+            aria-label="Scroll right"
+            className="grid size-8 place-items-center rounded-full glass text-muted transition-colors hover:border-frost/40 hover:text-snow"
+          >
+            <ChevronRight className="size-4" />
+          </button>
         </div>
-      </div>
+      </SectionHeader>
 
       <div
         ref={ref}

@@ -26,11 +26,14 @@ export async function getHome(): Promise<HomeModel> {
     spotlight: data.spotlight.map(M.toSpotlight),
     trending: data.trending.map(M.toCard),
     topAiring: data.topAiring.map(M.toCard),
+    mostPopular: data.mostPopular.map(M.toCard),
     // AnimeX exposes richer sections than the legacy provider.
     latestEpisodes: (data.seasonal?.results ?? []).map(M.toCard),
-    mostPopular: data.mostPopular.map(M.toCard),
-    top10: data.topRated.map(M.toCard),
+    newReleases: [],
+    completed: [],
     upcoming: data.upcoming.map(M.toCard),
+    top10: { day: data.topRated.map(M.toCard), week: [], month: [] },
+    genres: [],
   };
 }
 

@@ -4,7 +4,7 @@ import { Snowflake } from "lucide-react";
 export function Footer() {
   return (
     <footer className="relative z-10 mt-16 border-t border-line">
-      <div className="mx-auto flex w-full max-w-[1440px] flex-col gap-4 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
+      <div className="mx-auto flex w-full max-w-[1460px] flex-col gap-4 px-4 py-10 sm:flex-row sm:items-center sm:justify-between sm:px-6 lg:px-8">
         <div className="flex items-center gap-2.5">
           <span className="grid size-7 place-items-center rounded-[9px] bg-frost-soft text-frost">
             <Snowflake className="size-4" strokeWidth={2.2} />

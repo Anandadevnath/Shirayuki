@@ -23,6 +23,7 @@ export const rawCard = z
     description: str,
     airingTime: str,
     episodeNumber: num,
+    episode: num,
     episodes: z
       .object({ sub: num, dub: num })
       .partial()
@@ -58,6 +59,11 @@ export const homeData = z
       .partial()
       .nullable()
       .optional(),
+    genres: z
+      .array(
+        z.object({ name: z.string(), slug: z.string() }).passthrough(),
+      )
+      .default([]),
   })
   .passthrough();
 

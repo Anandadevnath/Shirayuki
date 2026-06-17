@@ -29,14 +29,28 @@ export interface SpotlightModel extends AnimeCardModel {
   quality: string | null;
 }
 
+export interface GenreModel {
+  name: string;
+  slug: string;
+}
+
+export interface Top10Buckets {
+  day: AnimeCardModel[];
+  week: AnimeCardModel[];
+  month: AnimeCardModel[];
+}
+
 export interface HomeModel {
   spotlight: SpotlightModel[];
   trending: AnimeCardModel[];
   topAiring: AnimeCardModel[];
-  latestEpisodes: AnimeCardModel[];
   mostPopular: AnimeCardModel[];
-  top10: AnimeCardModel[];
+  latestEpisodes: AnimeCardModel[];
+  newReleases: AnimeCardModel[];
+  completed: AnimeCardModel[];
   upcoming: AnimeCardModel[];
+  top10: Top10Buckets;
+  genres: GenreModel[];
 }
 
 export interface AnimeDetail {

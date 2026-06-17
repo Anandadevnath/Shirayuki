@@ -6,6 +6,7 @@ import Image from "next/image";
 import { Play, X } from "lucide-react";
 import { listProgress, removeProgress, type WatchEntry } from "@/lib/progress/local";
 import { formatTime } from "@/lib/utils/format";
+import { SectionHeader } from "@/components/common/SectionHeader";
 
 export function ContinueWatching() {
   const [items, setItems] = useState<WatchEntry[]>([]);
@@ -22,8 +23,8 @@ export function ContinueWatching() {
   }
 
   return (
-    <section className="py-6">
-      <h2 className="mb-3 text-lg font-bold sm:text-xl">Continue Watching</h2>
+    <section>
+      <SectionHeader title="Continue Watching" eyebrow="Jump back in" />
       <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
         {items.map((e) => {
           const pct = Math.min(100, Math.round((e.seconds / e.duration) * 100));

@@ -21,15 +21,22 @@ export async function getHome(): Promise<HomeModel> {
     revalidate: HOME_REVALIDATE,
     tags: ["home"],
   });
-  const top10src = data.top10?.week ?? data.top10?.day ?? data.top10?.month ?? [];
+  const ql = data.quickLists;
   return {
     spotlight: data.spotlight.map(M.toSpotlight),
     trending: data.trending.map(M.toCard),
     topAiring: data.topAiring.map(M.toCard),
-    latestEpisodes: data.latestEpisodes.map(M.toCard),
     mostPopular: data.mostPopular.map(M.toCard),
-    top10: top10src.map(M.toCard),
-    upcoming: (data.quickLists?.upcoming ?? []).map(M.toCard),
+    latestEpisodes: data.latestEpisodes.map(M.toCard),
+    newReleases: (ql?.newReleases ?? []).map(M.toCard),
+    completed: (ql?.completed ?? []).map(M.toCard),
+    upcoming: (ql?.upcoming ?? []).map(M.toCard),
+    top10: {
+      day: (data.top10?.day ?? []).map(M.toCard),
+      week: (data.top10?.week ?? []).map(M.toCard),
+      month: (data.top10?.month ?? []).map(M.toCard),
+    },
+    genres: (data.genres ?? []).map((g) => ({ name: g.name, slug: g.slug })),
   };
 }
 
