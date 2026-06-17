@@ -87,7 +87,7 @@ export function Spotlight({
       aria-roledescription="carousel"
       aria-label="Featured anime"
     >
-      <div className="relative flex h-[72svh] min-h-[540px] max-h-[920px] w-full flex-col">
+      <div className="relative flex h-[82svh] min-h-[600px] max-h-[1000px] w-full flex-col">
         {/* ── Background depth: blurred fill + sharp edge-masked key art ── */}
         <div className="absolute inset-0">
           {list.map((s, idx) =>
@@ -122,7 +122,7 @@ export function Spotlight({
         {/* Cinematic scrims — a gentle vignette so the art reads as one calm
             scene: darker at the edges and base, lighter through the middle. */}
         <div className="absolute inset-0 bg-gradient-to-r from-base/95 via-base/45 to-base/70" />
-        <div className="absolute inset-x-0 bottom-0 h-[78%] bg-gradient-to-t from-base from-22% via-base/35 via-60% to-transparent" />
+        <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-base from-6% via-base/25 via-42% to-transparent" />
         <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-base/85 via-base/25 to-transparent" />
 
         {/* ── Left vertical "featured" strip ── */}

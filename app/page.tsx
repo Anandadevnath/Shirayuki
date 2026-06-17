@@ -27,16 +27,12 @@ export default async function HomePage() {
       )}
 
       <div className="relative">
-        {/* Seam blend — carries the hero's flat base down across the section
-            boundary and fades it into the page's ambient glow + falling snow,
-            so the two section backgrounds merge instead of meeting at a hard
-            line. Full-bleed so it spans the same width as the snow/ambient. */}
         <div
           aria-hidden
           className="pointer-events-none absolute left-1/2 top-0 h-72 w-screen -translate-x-1/2 bg-gradient-to-b from-base from-5% via-base/55 via-45% to-transparent"
         />
 
-        <div className="relative z-10 -mt-[6vh] space-y-12 sm:-mt-[7vh]">
+        <div className="relative z-10 -mt-[2vh] space-y-12 sm:-mt-[4vh]">
           <ContinueWatching />
 
         <Trending items={home.trending} />
