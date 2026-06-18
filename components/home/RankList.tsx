@@ -2,36 +2,42 @@ import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
 import type { AnimeCardModel } from "@/lib/providers/types";
-import { EpBadges, TypePill } from "@/components/anime/Badges";
+import { EpBadges } from "@/components/anime/Badges";
 import { cn } from "@/lib/utils/cn";
 
-/** A single numbered row — low visual weight, used inside RankList panels. */
-export function RankRow({ anime, rank }: { anime: AnimeCardModel; rank: number }) {
+/** A single row in the Top 10 panel — poster, title, then sub/dub + type. */
+export function RankRow({ anime }: { anime: AnimeCardModel; rank?: number }) {
   return (
     <Link
       href={`/anime/${anime.id}`}
-      className="group flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-surface-2/70"
+      className="group flex items-center gap-3 py-3 transition-colors"
     >
-      <span
-        className={cn(
-          "w-7 shrink-0 text-center font-display text-lg font-bold tabular-nums",
-          rank <= 3 ? "text-gradient-frost" : "text-faint",
-        )}
-      >
-        {rank}
-      </span>
-      <span className="relative h-16 w-12 shrink-0 overflow-hidden rounded bg-surface-2 ring-1 ring-line">
+      {/* Poster — sharp (square) edges, full-bleed image */}
+      <span className="relative h-16 w-12 shrink-0 overflow-hidden bg-surface-2">
         {anime.poster && (
-          <Image src={anime.poster} alt="" fill sizes="48px" className="object-cover" />
+          <Image
+            src={anime.poster}
+            alt=""
+            fill
+            sizes="48px"
+            className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
+          />
         )}
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="line-clamp-2 text-sm font-medium text-snow group-hover:text-frost">
+
+      {/* Title + meta — takes the rest of the container width */}
+      <span className="flex min-w-0 flex-1 flex-col gap-1.5">
+        <span className="line-clamp-2 text-sm font-semibold leading-snug text-snow transition-colors group-hover:text-frost">
           {anime.title}
         </span>
-        <span className="mt-1 flex items-center gap-2">
-          <TypePill type={anime.type} />
+        <span className="flex flex-wrap items-center gap-1.5 text-[11px]">
           <EpBadges sub={anime.episodes.sub} dub={anime.episodes.dub} />
+          {anime.type && (
+            <>
+              <span className="text-faint/60">•</span>
+              <span className="font-medium text-muted">{anime.type}</span>
+            </>
+          )}
         </span>
       </span>
     </Link>

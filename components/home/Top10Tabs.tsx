@@ -25,16 +25,11 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
   const items = buckets[active] ?? [];
 
   return (
-    <section className="glass rounded-lg p-4 sm:p-5">
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="min-w-0">
-          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.35em] text-frost">
-            Most watched
-          </p>
-          <h2 className="text-gradient-frost font-display text-lg font-extrabold sm:text-xl">
-            Top 10
-          </h2>
-        </div>
+    <section className="glass flex h-full flex-col rounded-lg p-4 sm:p-5">
+      <div className="flex items-center justify-between gap-3">
+        <h2 className="text-gradient-frost font-display text-xl font-extrabold sm:text-2xl">
+          Top 10
+        </h2>
         <div className="flex shrink-0 gap-1 rounded-full border border-line bg-base/40 p-0.5">
           {available.map((p) => (
             <button
@@ -52,7 +47,7 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
           ))}
         </div>
       </div>
-      <div className="flex flex-col">
+      <div className="mt-3 divide-y divide-line/40 border-t border-line/40">
         {items.map((a, idx) => (
           <RankRow key={`${a.id}-${idx}`} anime={a} rank={a.rank ?? idx + 1} />
         ))}
