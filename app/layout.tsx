@@ -6,12 +6,13 @@ import { Footer } from "@/components/layout/Footer";
 import { SnowLayer } from "@/components/layout/SnowLayer";
 import { Ambient } from "@/components/layout/Ambient";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"] });
+const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"], display: "swap" });
+const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"], display: "swap" });
 const zen = Zen_Kaku_Gothic_New({
   variable: "--font-zen",
   subsets: ["latin"],
   weight: ["500", "700", "900"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {

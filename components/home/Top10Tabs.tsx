@@ -26,15 +26,22 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
 
   return (
     <section className="glass rounded-lg p-4 sm:p-5">
-      <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-base font-bold sm:text-lg">Top 10</h2>
-        <div className="flex gap-1 rounded-sm border border-line bg-base/40 p-0.5">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="min-w-0">
+          <p className="font-mono text-[10px] font-semibold uppercase tracking-[0.35em] text-frost">
+            Most watched
+          </p>
+          <h2 className="text-gradient-frost font-display text-lg font-extrabold sm:text-xl">
+            Top 10
+          </h2>
+        </div>
+        <div className="flex shrink-0 gap-1 rounded-full border border-line bg-base/40 p-0.5">
           {available.map((p) => (
             <button
               key={p.key}
               onClick={() => setActive(p.key)}
               className={cn(
-                "rounded-[6px] px-2.5 py-1 text-xs font-medium transition-colors",
+                "rounded-full px-2.5 py-1 text-xs font-semibold transition-colors",
                 active === p.key
                   ? "bg-frost-soft text-frost"
                   : "text-muted hover:text-snow",

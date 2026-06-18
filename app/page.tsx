@@ -5,6 +5,7 @@ import { Rail } from "@/components/anime/Rail";
 import { Trending } from "@/components/home/Trending";
 import { QuickLists } from "@/components/home/QuickLists";
 import { DiscoverColumns } from "@/components/home/DiscoverColumns";
+import { Top10Tabs } from "@/components/home/Top10Tabs";
 import { ErrorState } from "@/components/common/States";
 
 export default async function HomePage() {
@@ -47,11 +48,21 @@ export default async function HomePage() {
           completed={home.completed}
         />
 
-        <QuickLists
-          newReleases={home.newReleases}
-          completed={home.completed}
-          upcoming={home.upcoming}
-        />
+        {/* Poster rails on the left; the Top 10 panel fills the right gap and
+            stays pinned while the rails scroll past it. Stacks on mobile. */}
+        <div className="grid grid-cols-1 gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]">
+          <div className="min-w-0">
+            <QuickLists
+              newReleases={home.newReleases}
+              completed={home.completed}
+              upcoming={home.upcoming}
+            />
+          </div>
+
+          <aside className="lg:sticky lg:top-24 lg:self-start">
+            <Top10Tabs buckets={home.top10} />
+          </aside>
+        </div>
         </div>
       </div>
     </div>
