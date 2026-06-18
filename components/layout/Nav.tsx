@@ -7,6 +7,10 @@ import { useCallback, useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils/cn";
+// `prefetchSearchIndex` is a tiny, side-effect-free function — imported
+// eagerly so the Nav can warm the local search index on mount. The palette
+// component itself stays in the lazy chunk.
+import { prefetchSearchIndex } from "@/components/search/CommandPalette";
 
 // The search palette is only revealed on ⌘K / click, so keep it out of the
 // initial JS bundle and mount it lazily the first time it's opened.
@@ -40,6 +44,13 @@ export function Nav() {
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
+  // Pre-warm the local search index in the background so the first ⌘K
+  // resolves instantly from a synchronous in-memory scan rather than waiting
+  // on the network. The endpoint is server-cached so this is cheap.
+  useEffect(() => {
+    prefetchSearchIndex();
   }, []);
 
   useEffect(() => {
