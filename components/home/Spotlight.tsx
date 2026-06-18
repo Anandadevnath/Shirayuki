@@ -81,7 +81,7 @@ export function Spotlight({
     <section
       // Full-bleed: break out of the centered <main> to the true viewport edges.
       // body has overflow-x-clip, so 100vw spans full width with no horizontal scroll.
-      className="relative left-1/2 w-screen -translate-x-1/2 -mt-20 overflow-hidden"
+      className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-hidden"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       aria-roledescription="carousel"

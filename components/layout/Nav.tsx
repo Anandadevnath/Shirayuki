@@ -1,9 +1,10 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Search, Snowflake } from "lucide-react";
+import { Search } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 import { CommandPalette } from "@/components/search/CommandPalette";
 
@@ -47,11 +48,27 @@ export function Nav() {
         )}
       >
         <nav className="mx-auto flex h-16 w-full max-w-[1460px] items-center gap-6 px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center gap-2.5 font-display text-lg font-bold">
-            <span className="grid size-8 place-items-center rounded-[10px] bg-frost-soft text-frost">
-              <Snowflake className="size-5" strokeWidth={2.2} />
+          <Link href="/" className="flex items-center" aria-label="Shirayuki — Home">
+            <span className="relative h-16 w-14 shrink-0 drop-shadow-[0_4px_16px_rgba(120,180,255,0.25)]">
+              <Image
+                src="/logos/shirayuki2.png"
+                alt=""
+                fill
+                sizes="56px"
+                className="object-contain"
+                priority
+              />
             </span>
-            <span className="hidden sm:inline">Shirayuki</span>
+            <span className="relative -ml-3 hidden h-16 w-60 sm:inline-block">
+              <Image
+                src="/logos/text.png"
+                alt="Shirayuki"
+                fill
+                sizes="240px"
+                className="object-contain object-left"
+                priority
+              />
+            </span>
           </Link>
 
           <ul className="hidden items-center gap-1 md:flex">
