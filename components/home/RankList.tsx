@@ -10,16 +10,16 @@ export function RankRow({ anime }: { anime: AnimeCardModel; rank?: number }) {
   return (
     <Link
       href={`/anime/${anime.id}`}
-      className="group flex items-center gap-3 py-3 transition-colors"
+      className="group -mx-2 flex items-center gap-4 rounded-none px-2 py-3 transition-colors hover:bg-white/[0.015]"
     >
-      {/* Poster — sharp (square) edges, full-bleed image */}
-      <span className="relative h-16 w-12 shrink-0 overflow-hidden bg-surface-2">
+      {/* Poster — softly rounded, full-bleed image */}
+      <span className="relative h-20 w-14 shrink-0 overflow-hidden rounded-sm bg-surface-2">
         {anime.poster && (
           <Image
             src={anime.poster}
             alt=""
             fill
-            sizes="48px"
+            sizes="56px"
             className="object-cover transition-transform duration-300 ease-out group-hover:scale-105"
           />
         )}
@@ -27,7 +27,7 @@ export function RankRow({ anime }: { anime: AnimeCardModel; rank?: number }) {
 
       {/* Title + meta — takes the rest of the container width */}
       <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <span className="line-clamp-2 text-sm font-semibold leading-snug text-snow transition-colors group-hover:text-frost">
+        <span className="line-clamp-2 text-[15px] font-semibold leading-snug text-snow transition-colors group-hover:text-frost">
           {anime.title}
         </span>
         <span className="flex flex-wrap items-center gap-1.5 text-[11px]">

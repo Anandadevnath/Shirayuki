@@ -60,12 +60,11 @@ export default async function HomePage() {
           completed={home.completed}
         />
 
-        {/* New Releases / Latest Completed (left) and the Top 10 list (right)
-            are two separate but matching glass containers, side by side. Grid's
-            default `items-stretch` keeps them the SAME height, which grows and
-            shrinks automatically with whichever side has more content. Stacks
-            on mobile. */}
-        <div className="grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]">
+        {/* Latest Completed (left) and the Top 10 list (right) are two separate
+            glass containers side by side. `items-start` lets each panel hug its
+            own content height so neither is stretched into dead space. Stacks on
+            mobile. */}
+        <div className="grid grid-cols-1 items-start gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]">
           <QuickLists completed={completed} />
 
           <Top10Tabs buckets={home.top10} />

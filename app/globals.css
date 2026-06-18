@@ -139,6 +139,72 @@
   animation: shimmer 1.6s infinite;
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Laser frame — a frost comet that revolves around a panel's edge.
+   A conic gradient (transparent tail → bright head) is masked to a
+   thin ring on the border box, then spun. Drop-shadow gives the glow.
+   Apply `.laser-frame` to any `position: relative`, rounded element;
+   the ring inherits the element's border-radius automatically.
+   ───────────────────────────────────────────────────────────── */
+@property --laser-angle {
+  syntax: "<angle>";
+  inherits: false;
+  initial-value: 0deg;
+}
+
+@keyframes laser-spin {
+  to { --laser-angle: 360deg; }
+}
+
+.laser-frame {
+  position: relative;
+  isolation: isolate;
+}
+/* Soft static aura so the edge always glows a little, even between sweeps. */
+.laser-frame::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(
+    140deg,
+    color-mix(in oklch, var(--color-frost-deep) 35%, transparent),
+    transparent 40%,
+    transparent 60%,
+    color-mix(in oklch, var(--color-frost) 35%, transparent)
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  pointer-events: none;
+}
+/* The travelling comet. */
+.laser-frame::after {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  z-index: 0;
+  border-radius: inherit;
+  padding: 2px;
+  background: conic-gradient(
+    from var(--laser-angle) at 50% 50%,
+    transparent 0deg,
+    transparent 235deg,
+    var(--color-frost-deep) 300deg,
+    var(--color-frost) 344deg,
+    #ffffff 358deg,
+    transparent 360deg
+  );
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  filter: drop-shadow(0 0 6px var(--color-frost)) drop-shadow(0 0 12px var(--color-frost-deep));
+  animation: laser-spin 3.6s linear infinite;
+  pointer-events: none;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
