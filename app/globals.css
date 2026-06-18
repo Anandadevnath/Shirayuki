@@ -180,27 +180,34 @@
           mask-composite: exclude;
   pointer-events: none;
 }
-/* The travelling comet. */
+/* Two travelling comets, 180° apart, on a thin bright ring. */
 .laser-frame::after {
   content: "";
   position: absolute;
   inset: -1px;
   z-index: 0;
   border-radius: inherit;
-  padding: 2px;
+  padding: 1px;
   background: conic-gradient(
     from var(--laser-angle) at 50% 50%,
     transparent 0deg,
-    transparent 235deg,
-    var(--color-frost-deep) 300deg,
-    var(--color-frost) 344deg,
-    #ffffff 358deg,
+    transparent 38deg,
+    color-mix(in oklch, var(--color-frost-deep) 55%, transparent) 74deg,
+    var(--color-frost) 86deg,
+    #ffffff 90deg,
+    transparent 94deg,
+    transparent 218deg,
+    color-mix(in oklch, var(--color-frost-deep) 55%, transparent) 254deg,
+    var(--color-frost) 266deg,
+    #ffffff 270deg,
+    transparent 274deg,
     transparent 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  filter: drop-shadow(0 0 6px var(--color-frost)) drop-shadow(0 0 12px var(--color-frost-deep));
+  filter: drop-shadow(0 0 4px var(--color-frost)) drop-shadow(0 0 9px var(--color-frost))
+    drop-shadow(0 0 16px var(--color-frost-deep));
   animation: laser-spin 3.6s linear infinite;
   pointer-events: none;
 }
