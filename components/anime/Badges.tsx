@@ -14,12 +14,12 @@ export function EpBadges({
   return (
     <div className={cn("flex items-center gap-1", className)}>
       {!!sub && (
-        <span className="flex items-center gap-1 rounded-sm bg-base/80 px-1.5 py-0.5 text-[10px] font-semibold text-snow backdrop-blur-sm">
+        <span className="flex items-center gap-1 rounded-sm bg-base/90 px-1.5 py-0.5 text-[10px] font-semibold text-snow">
           <Captions className="size-3 text-frost" /> {sub}
         </span>
       )}
       {!!dub && (
-        <span className="flex items-center gap-1 rounded-sm bg-base/80 px-1.5 py-0.5 text-[10px] font-semibold text-snow backdrop-blur-sm">
+        <span className="flex items-center gap-1 rounded-sm bg-base/90 px-1.5 py-0.5 text-[10px] font-semibold text-snow">
           <Mic className="size-3 text-sakura" /> {dub}
         </span>
       )}

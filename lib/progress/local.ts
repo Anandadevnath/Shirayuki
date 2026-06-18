@@ -16,17 +16,19 @@ export interface WatchEntry {
   updatedAt: number;
 }
 
-// v2: AnimeX provider uses numeric ids; v1 (hianime) slug entries are abandoned.
+// Active provider is HiAnime, whose anime ids are slugs (e.g. "witch-hat-atelier-18133").
 const KEY = "shirayuki:progress:v2";
 
 function read(): Record<string, WatchEntry> {
   if (typeof window === "undefined") return {};
   try {
     const map: Record<string, WatchEntry> = JSON.parse(localStorage.getItem(KEY) || "{}");
-    // Defensive: drop any entry whose id isn't a numeric AnimeX id.
+    // Drop legacy AnimeX entries: their numeric ids can't be resolved by HiAnime,
+    // so clicking one lands on the not-found page. HiAnime slugs are never purely
+    // numeric, so a numeric key is always a stale entry.
     const clean: Record<string, WatchEntry> = {};
     for (const [k, v] of Object.entries(map)) {
-      if (/^\d+$/.test(k)) clean[k] = v;
+      if (!/^\d+$/.test(k)) clean[k] = v;
     }
     return clean;
   } catch {
