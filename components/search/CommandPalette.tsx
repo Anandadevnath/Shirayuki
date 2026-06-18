@@ -5,15 +5,12 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import {
   Search,
-  CornerDownLeft,
-  ArrowUp,
-  ArrowDown,
-  Sparkles,
   Star,
+  CornerDownLeft,
+  ArrowRight,
 } from "lucide-react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { cn } from "@/lib/utils/cn";
-import { EpBadges } from "@/components/anime/Badges";
 
 interface Props {
   open: boolean;
@@ -107,6 +104,15 @@ function searchLocal(entries: IndexEntry[], raw: string, limit = 8): IndexedHit[
 
 function escapeRegex(s: string) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+/** Flatten {sub, dub} into a single muted "sub · dub" string for the right
+ *  meta column — strips the per-badge pills (Linear doesn't render them). */
+function formatEpisodes(ep: { sub: number | null; dub: number | null }): string | null {
+  const parts: string[] = [];
+  if (typeof ep.sub === "number") parts.push(String(ep.sub));
+  if (typeof ep.dub === "number" && ep.dub !== ep.sub) parts.push(String(ep.dub));
+  return parts.length > 0 ? parts.join(" · ") : null;
 }
 
 export function CommandPalette({ open, onOpenChange }: Props) {
@@ -233,26 +239,28 @@ export function CommandPalette({ open, onOpenChange }: Props) {
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-start justify-center p-4 pt-[8vh] sm:pt-[10vh]"
+      className="fixed inset-0 z-50 flex items-center justify-center p-4"
       role="dialog"
       aria-modal="true"
       aria-label="Search"
     >
-      {/* Backdrop — heavier frost + slow fade so the panel feels cinematic. */}
+      {/* Backdrop — heavier frost + cinematic scrim, deep blur so the panel
+          feels like it's floating above the page. */}
       <button
-        className="absolute inset-0 cursor-default bg-base/75 backdrop-blur-md"
+        className="absolute inset-0 cursor-default bg-base/85 backdrop-blur-xl"
         aria-label="Close search"
         onClick={() => onOpenChange(false)}
       />
 
       {/* Panel — laser-frame gives the moving frost comet edges (same identity
-          as the home glass panels), glass gives the frosted body. */}
-      <div className="laser-frame glass relative w-full max-w-xl overflow-hidden rounded-xl shadow-[var(--shadow-frost)]">
+          as the home glass panels), glass gives the frosted body. max-w-2xl
+          gives the panel real presence; vertically centred on screen. */}
+      <div className="laser-frame glass relative w-full max-w-2xl overflow-hidden rounded-xl shadow-[var(--shadow-frost)]">
         {/* Input row */}
         <div className="relative flex items-center gap-2.5 px-4">
           <Search
             className={cn(
-              "size-4 shrink-0 transition-colors",
+              "size-4 shrink-0",
               trimmed ? "text-frost" : "text-faint",
             )}
           />
@@ -262,15 +270,20 @@ export function CommandPalette({ open, onOpenChange }: Props) {
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Search anime…"
-            className="h-11 w-full bg-transparent text-sm text-snow outline-none placeholder:text-faint/80"
+            className="h-12 w-full bg-transparent text-sm text-snow outline-none placeholder:text-faint/80"
             aria-label="Search anime"
             autoComplete="off"
             spellCheck={false}
           />
-          {loading && <FrostDots />}
-          {!loading && trimmed && (
-            <kbd className="hidden rounded border border-line/80 bg-surface-2/60 px-1.5 py-0.5 font-mono text-[10px] text-faint sm:inline">
-              ↵
+          {loading ? (
+            <FrostDots />
+          ) : trimmed ? (
+            <kbd className="hidden rounded border border-frost/25 px-1.5 py-0.5 font-mono text-[10px] text-frost/80 sm:inline-flex sm:items-center sm:gap-0.5">
+              <CornerDownLeft className="size-2.5" />
+            </kbd>
+          ) : (
+            <kbd className="hidden rounded border border-line/80 bg-base/40 px-1.5 py-0.5 font-mono text-[10px] text-faint sm:inline">
+              ⌘K
             </kbd>
           )}
         </div>
@@ -278,7 +291,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
         {/* Animated focus underline — a frost bar that slides in under the
             input when the user types. Pure transform/opacity, GPU-only. */}
         <div className="relative h-px overflow-hidden">
-          <div className="h-px bg-line/60" />
+          <div className="h-px bg-line/40" />
           <div
             aria-hidden
             className={cn(
@@ -288,24 +301,26 @@ export function CommandPalette({ open, onOpenChange }: Props) {
           />
         </div>
 
-        {/* Results */}
-        <div className="max-h-[52vh] overflow-y-auto p-1.5 scroll-frost">
-          {/* Empty state — only when there is no query AND the local index
-              hasn't been replaced by something useful. */}
-          {empty && (
-            <div className="flex flex-col items-center gap-2 px-4 py-8 text-center">
-              <Sparkles className="size-4 text-frost/70" />
-              <p className="text-xs text-muted">
-                Start typing to summon results.
-              </p>
-              {!indexReady && (
-                <p className="text-[11px] text-faint">Warming the catalogue…</p>
-              )}
-            </div>
-          )}
+        {/* Section label — micro header. "Suggestions" while typing, "Featured
+            this season" on empty state. Whisper-thin mono caps with wide
+            tracking, the Linear-style eyebrow. */}
+        {(merged.length > 0 || empty) && (
+          <div className="flex items-center justify-between px-4 pt-2.5 pb-1.5">
+            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">
+              {empty ? "Featured this season" : "Suggestions"}
+            </span>
+            <span className="font-mono text-[10px] tabular-nums text-faint/70">
+              {merged.length > 0 ? merged.length : indexReady ? "" : "…"}
+            </span>
+          </div>
+        )}
 
+        {/* Results — pb-9 reserves space for the floating footer so the
+            last row is never clipped by it. */}
+        <div className="no-scrollbar max-h-[64vh] overflow-y-auto pb-9">
+          {/* No-results state — only when there's a query but nothing matched. */}
           {!empty && merged.length === 0 && !loading && indexReady && (
-            <p className="px-3 py-6 text-center text-xs text-faint">
+            <p className="px-4 py-6 text-center text-xs text-faint">
               No matches.{" "}
               <button
                 onClick={submitSearch}
@@ -316,108 +331,104 @@ export function CommandPalette({ open, onOpenChange }: Props) {
             </p>
           )}
 
-          <ul className="flex flex-col gap-0.5">
-            {merged.map((r, i) => (
-              <li key={r.id}>
-                <button
-                  onMouseEnter={() => setActive(i)}
-                  onClick={() => go(r.id)}
-                  className={cn(
-                    "group relative flex w-full items-center gap-2.5 overflow-hidden rounded-md px-2.5 py-1.5 text-left transition-colors",
-                    i === active
-                      ? "bg-frost-soft/70"
-                      : "hover:bg-surface-2/70",
-                  )}
+          {/* Rows — whisper-thin dividers, no card padding. Each row is a
+              single 40–44px strip: poster · title+jname · score+eps·type. */}
+          <ul className="flex flex-col">
+            {merged.map((r, i) => {
+              const epText = formatEpisodes(r.episodes);
+              const hasMeta =
+                typeof r.score === "number" || epText || r.type;
+              return (
+                <li
+                  key={r.id}
+                  className="border-b border-line/30 last:border-b-0"
                 >
-                  {/* Active left-edge frost beam — slides in via transform-only. */}
-                  <span
-                    aria-hidden
+                  <button
+                    onMouseEnter={() => setActive(i)}
+                    onClick={() => go(r.id)}
                     className={cn(
-                      "absolute inset-y-1 left-0 w-[2px] origin-top rounded-full bg-gradient-to-b from-frost via-frost-deep to-transparent transition-transform duration-300 ease-out",
-                      i === active ? "scale-y-100 opacity-100" : "scale-y-0 opacity-0",
+                      "group relative flex w-full items-center gap-3 overflow-hidden px-4 py-1.5 text-left",
+                      i === active
+                        ? "bg-frost-soft/60"
+                        : "hover:bg-frost-soft/30",
                     )}
-                  />
-                  <span className="relative h-10 w-7 shrink-0 overflow-hidden rounded bg-surface-2 ring-1 ring-line/60">
-                    {r.poster && (
-                      <Image
-                        src={r.poster}
-                        alt=""
-                        fill
-                        sizes="28px"
-                        className={cn(
-                          "object-cover transition-transform duration-300 ease-out",
-                          i === active ? "scale-105" : "scale-100",
-                        )}
-                      />
-                    )}
-                  </span>
-                  <span className="min-w-0 flex-1">
+                  >
+                    {/* Active left-edge frost beam — snaps in via transform-only. */}
                     <span
+                      aria-hidden
                       className={cn(
-                        "block truncate text-[13px] font-semibold leading-tight transition-colors",
-                        i === active ? "text-frost" : "text-snow",
+                        "absolute inset-y-1 left-0 w-[2px] origin-top rounded-full bg-gradient-to-b from-frost via-frost-deep to-transparent",
+                        i === active
+                          ? "scale-y-100 opacity-100"
+                          : "scale-y-0 opacity-0",
                       )}
-                    >
-                      {highlight(r.title, trimmed)}
+                    />
+                    <span className="relative h-10 w-7 shrink-0 overflow-hidden rounded bg-surface-2 ring-1 ring-line/60">
+                      {r.poster && (
+                        <Image
+                          src={r.poster}
+                          alt=""
+                          fill
+                          sizes="28px"
+                          className="object-cover"
+                        />
+                      )}
                     </span>
-                    {r.jname && (
-                      <span className="block truncate text-[11px] leading-tight text-faint">
-                        {highlight(r.jname, trimmed)}
+                    <span className="min-w-0 flex-1">
+                      <span
+                        className={cn(
+                          "block truncate text-[13px] font-semibold leading-tight",
+                          i === active ? "text-frost" : "text-snow",
+                        )}
+                      >
+                        {highlight(r.title, trimmed)}
+                      </span>
+                      {r.jname && (
+                        <span className="block truncate text-[11px] leading-tight text-faint">
+                          {highlight(r.jname, trimmed)}
+                        </span>
+                      )}
+                    </span>
+                    {hasMeta && (
+                      <span className="flex shrink-0 items-center gap-2 text-[11px] tabular-nums text-faint">
+                        {typeof r.score === "number" && (
+                          <span className="flex items-center gap-0.5 font-semibold text-snow/90">
+                            <Star className="size-3 fill-warning text-warning" />
+                            {r.score.toFixed(1)}
+                          </span>
+                        )}
+                        {epText && (
+                          <span className="font-mono text-faint">{epText}</span>
+                        )}
+                        {r.type && (
+                          <span className="font-mono text-[10px] uppercase tracking-wide text-faint/80">
+                            {r.type}
+                          </span>
+                        )}
                       </span>
                     )}
-                  </span>
-                  <span className="flex shrink-0 items-center gap-1">
-                    {typeof r.score === "number" && (
-                      <span className="flex items-center gap-0.5 text-[11px] font-semibold text-snow/90">
-                        <Star className="size-3 fill-warning text-warning" />
-                        {r.score}
-                      </span>
-                    )}
-                    <EpBadges sub={r.episodes.sub} dub={r.episodes.dub} />
-                    {r.type && (
-                      <span className="rounded border border-line/80 bg-surface-2/60 px-1 py-px font-mono text-[9px] uppercase tracking-wide text-faint">
-                        {r.type}
-                      </span>
-                    )}
-                  </span>
-                </button>
-              </li>
-            ))}
+                  </button>
+                </li>
+              );
+            })}
           </ul>
         </div>
 
-        {/* Footer hints — kbd chips + "see all" */}
-        <div className="flex items-center justify-between gap-2 border-t border-line/60 bg-base/30 px-3 py-1.5 text-[10px] text-faint backdrop-blur-sm">
-          <div className="flex items-center gap-1.5">
-            <KbdChip Icon={ArrowUp} />
-            <KbdChip Icon={ArrowDown} />
-            <span>navigate</span>
-            <span className="mx-1 h-3 w-px bg-line/60" />
-            <KbdChip Icon={CornerDownLeft} />
-            <span>open</span>
-            <span className="mx-1 h-3 w-px bg-line/60" />
-            <span className="rounded border border-line/80 bg-surface-2/60 px-1 py-px font-mono text-[9px]">
-              esc
-            </span>
-            <span>close</span>
-          </div>
+        {/* Footer — absolute, floats over the bottom of the results. The
+            gradient + backdrop-blur keep rows legible as they scroll
+            underneath. No layout reservation, so the last row is never
+            clipped by it. */}
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-gradient-to-t from-base/90 via-base/60 to-transparent px-4 py-2 text-[10px] text-faint backdrop-blur-[6px]">
           <button
             onClick={submitSearch}
-            className="rounded-full border border-frost/30 bg-frost-soft px-2.5 py-0.5 text-[10px] font-semibold text-frost transition-colors hover:border-frost/60 hover:bg-frost-soft/80"
+            className="pointer-events-auto group inline-flex items-center gap-1.5 rounded-full border border-frost/40 bg-base/40 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-frost transition-colors hover:border-frost/70 hover:text-snow"
           >
-            See all results for “{trimmed || "…"}”
+            See all results
+            <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
           </button>
         </div>
       </div>
     </div>
-  );
-}
-
-function KbdChip({ Icon }: { Icon: typeof ArrowUp }) {
-  return (
-    <span className="grid size-5 place-items-center rounded border border-line/80 bg-surface-2/60 text-faint">
-      <Icon className="size-3" />
-    </span>
   );
 }
 
