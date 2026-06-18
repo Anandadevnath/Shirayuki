@@ -5,7 +5,6 @@ import Link from "next/link";
 import Image from "next/image";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import type { AnimeCardModel } from "@/lib/providers/types";
-import { CinematicHeader } from "@/components/common/SectionHeader";
 import { cn } from "@/lib/utils/cn";
 
 /**
@@ -25,8 +24,22 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
 
   return (
     <section className="relative">
-      <CinematicHeader title="Trending" eyebrow="Hot right now">
-        <div className="hidden gap-1.5 sm:flex">
+      {/* Editorial header — a frost accent bar + stacked eyebrow/title on the
+          left, a hairline rule bridging the gap, then the rail arrows. Distinct
+          from the centred cinematic headers but on the same frost palette. */}
+      <div className="mb-4 flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <span className="h-9 w-1 shrink-0 rounded-full bg-gradient-to-b from-frost to-frost-deep shadow-[var(--shadow-neon)]" />
+          <div className="min-w-0">
+            <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-frost">
+              Hot right now
+            </span>
+            <h2 className="font-display text-xl font-extrabold leading-tight tracking-tight sm:text-2xl">
+              Trending
+            </h2>
+          </div>
+        </div>
+        <div className="ml-auto hidden shrink-0 gap-1.5 sm:flex">
           <button
             onClick={() => scrollRail(-1)}
             aria-label="Scroll trending left"
@@ -42,7 +55,7 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
             <ChevronRight className="size-4" />
           </button>
         </div>
-      </CinematicHeader>
+      </div>
 
       <div ref={railRef} className="no-scrollbar flex gap-3.5 overflow-x-auto px-0.5 pb-4 pt-3">
         {items.map((s, idx) => {
