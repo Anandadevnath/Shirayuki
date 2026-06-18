@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Play, Plus, Check, Star, Film, Flame } from "lucide-react";
+import { Play, Plus, Check, Star, Film, Flame, Diamond } from "lucide-react";
 import type { AnimeCardModel, SpotlightModel } from "@/lib/providers/types";
 import { EpBadges } from "@/components/anime/Badges";
 import { truncate } from "@/lib/utils/format";
@@ -143,12 +143,36 @@ export function Spotlight({
           <span className="h-16 w-px bg-gradient-to-b from-frost/60 to-transparent" />
         </div>
 
+        {/* ── Right vertical diamond nav — one facet per slide ── */}
+        {n > 1 && (
+          <div className="absolute right-5 top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 sm:right-7 sm:flex">
+            {list.map((_, idx) => (
+              <button
+                key={idx}
+                onClick={() => go(idx)}
+                aria-label={`Go to slide ${idx + 1}`}
+                aria-current={idx === active}
+                className="group grid place-items-center p-1 transition-transform hover:scale-125"
+              >
+                <Diamond
+                  className={cn(
+                    "transition-all",
+                    idx === active
+                      ? "size-3.5 fill-frost text-frost drop-shadow-[var(--shadow-neon)]"
+                      : "size-2.5 fill-snow/25 text-snow/25 group-hover:fill-snow/60 group-hover:text-snow/60",
+                  )}
+                />
+              </button>
+            ))}
+          </div>
+        )}
+
         {/* ── Copy + CTAs, anchored to the upper-left so the lower band stays
             clear for the Trending rail that tucks up beneath the hero. ── */}
-        <div className="relative z-10 flex flex-1 items-start pt-24 sm:pt-28">
+        <div className="relative z-10 flex flex-1 items-center">
           <div className="mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
             <div className="flex max-w-xl flex-col gap-4">
-              <h1 className="font-display text-4xl font-extrabold leading-[1.04] drop-shadow-[0_2px_28px_rgba(0,0,0,0.8)] sm:text-5xl md:text-6xl">
+              <h1 className="font-display text-3xl font-extrabold leading-[1.04] drop-shadow-[0_2px_28px_rgba(0,0,0,0.8)] sm:text-4xl md:text-5xl">
                 <span className="line-clamp-2">{a.title}</span>
               </h1>
 
@@ -205,25 +229,6 @@ export function Spotlight({
                 </Link>
                 <MyListButton anime={a} />
               </div>
-
-              {/* Slide indicators — a quiet horizontal row under the CTAs */}
-              {n > 1 && (
-                <div className="mt-4 flex items-center gap-2">
-                  {list.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => go(idx)}
-                      aria-label={`Go to slide ${idx + 1}`}
-                      className={cn(
-                        "h-1 rounded-full transition-all",
-                        idx === active
-                          ? "w-8 bg-frost shadow-[var(--shadow-neon)]"
-                          : "w-4 bg-snow/30 hover:bg-snow/60",
-                      )}
-                    />
-                  ))}
-                </div>
-              )}
             </div>
           </div>
         </div>

@@ -32,7 +32,7 @@ export default async function HomePage() {
           className="pointer-events-none absolute left-1/2 top-0 h-72 w-screen -translate-x-1/2 bg-gradient-to-b from-base from-5% via-base/55 via-45% to-transparent"
         />
 
-        <div className="relative z-10 flex flex-col gap-12 -translate-y-[8vh] sm:-translate-y-[16vh]">
+        <div className="relative z-10 flex flex-col gap-12 -translate-y-[8vh] sm:-translate-y-[14vh]">
           <ContinueWatching />
 
         <Trending items={home.trending} />
