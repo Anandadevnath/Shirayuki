@@ -53,7 +53,7 @@ function DiscoverColumn({
   if (!items?.length) return null;
 
   return (
-    <section className="laser-frame glass flex flex-col rounded-lg p-4 sm:p-5">
+    <section className="glass flex flex-col rounded-lg p-4 sm:p-5">
       <h3 className="text-gradient-frost mb-1 font-display text-lg font-extrabold">
         {title}
       </h3>
