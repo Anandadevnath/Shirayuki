@@ -1,9 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Play, Plus, Check, Star, Film, Flame, Diamond } from "lucide-react";
+import {
+  Play,
+  Plus,
+  Check,
+  Star,
+  Film,
+  Flame,
+  Diamond,
+} from "lucide-react";
 import type { AnimeCardModel, SpotlightModel } from "@/lib/providers/types";
 import { EpBadges } from "@/components/anime/Badges";
 import { truncate } from "@/lib/utils/format";
@@ -61,7 +69,9 @@ export function Spotlight({
   const list = items ?? [];
   const n = list.length;
   const [active, setActive] = useState(0);
-  const [paused, setPaused] = useState(false);
+  // Auto-advance pauses while hovered, focused, or dragging — single flag
+  // mirrors LatestEpisodes so both carousels feel identical to the user.
+  const [interacting, setInteracting] = useState(false);
 
   // Only the slides that have been shown (plus the one queued next) mount their
   // heavy key-art. The crossfade is unaffected — every slide's container stays
@@ -80,14 +90,67 @@ export function Spotlight({
   }, [active, n]);
 
   const go = useCallback((idx: number) => setActive(((idx % n) + n) % n), [n]);
+  // Wrap-around step used by both keyboard arrows and drag-to-swipe.
+  const step = useCallback(
+    (dir: 1 | -1) => setActive((p) => (p + dir + n) % n),
+    [n],
+  );
+  // Drag-to-swipe: pointer-down captures the start X, any horizontal move past
+  // the 60px threshold steps the carousel once (in the drag direction). The
+  // slide change uses the existing opacity crossfade — no rubber-band
+  // translation, the image stays put while the drag is in flight.
+  const drag = useRef<{ x: number; moved: boolean } | null>(null);
 
-  // Auto-rotate
+  // Auto-rotate — gated on !interacting (hover/focus/drag) and reduced-motion.
   useEffect(() => {
-    if (!n || paused) return;
+    if (!n || interacting) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     const t = setInterval(() => setActive((p) => (p + 1) % n), 7000);
     return () => clearInterval(t);
-  }, [n, paused]);
+  }, [n, interacting]);
+
+  // Keyboard arrows when the section has focus.
+  const onKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      step(1);
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      step(-1);
+    }
+  };
+
+  // Pointer / touch swipe. Pointer Events cover mouse + touch + pen in one
+  // path; we DON'T capture the pointer on press so that clicks on the Watch
+  // Now / My List buttons still fire normally — capture happens on the first
+  // horizontal move past the threshold instead, which guarantees a pure
+  // press-then-release with no movement still routes to the underlying button.
+  // We also don't translate the slide under the cursor — the image stays put
+  // while the drag is in flight, and the crossfade swaps to the next slide
+  // once the threshold is crossed.
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (e.button !== 0 && e.pointerType === "mouse") return; // primary button only
+    drag.current = { x: e.clientX, moved: false };
+    setInteracting(true);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    const d = drag.current;
+    if (!d) return;
+    const dx = e.clientX - d.x;
+    if (!d.moved && Math.abs(dx) > 60) {
+      d.moved = true;
+      // Now that we've committed to a drag, capture the pointer so a release
+      // outside the section still ends the gesture cleanly.
+      (e.currentTarget as HTMLElement).setPointerCapture(e.pointerId);
+      step(dx < 0 ? 1 : -1);
+    }
+  };
+  const endDrag = (e: React.PointerEvent) => {
+    const el = e.currentTarget as HTMLElement;
+    if (el.hasPointerCapture(e.pointerId)) el.releasePointerCapture(e.pointerId);
+    drag.current = null;
+    setInteracting(false);
+  };
 
   if (!n) return null;
   const a = list[active];
@@ -97,11 +160,26 @@ export function Spotlight({
     <section
       // Full-bleed: break out of the centered <main> to the true viewport edges.
       // body has overflow-x-clip, so 100vw spans full width with no horizontal scroll.
-      className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-hidden"
-      onMouseEnter={() => setPaused(true)}
-      onMouseLeave={() => setPaused(false)}
+      className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-hidden focus:outline-none touch-pan-y select-none"
+      role="group"
       aria-roledescription="carousel"
       aria-label="Featured anime"
+      tabIndex={0}
+      onKeyDown={onKeyDown}
+      onPointerEnter={() => setInteracting(true)}
+      onPointerLeave={() => {
+        // Don't release `interacting` mid-drag — the pointer may briefly leave
+        // the section as it crosses an internal edge, and we don't want the
+        // autoplay timer to restart under the user's finger.
+        if (drag.current) return;
+        setInteracting(false);
+      }}
+      onPointerDown={onPointerDown}
+      onPointerMove={onPointerMove}
+      onPointerUp={endDrag}
+      onPointerCancel={endDrag}
+      onFocus={() => setInteracting(true)}
+      onBlur={() => setInteracting(false)}
     >
       <div className="relative flex h-[82svh] min-h-[600px] max-h-[1000px] w-full flex-col">
         {/* ── Background depth: a single sharp key art (priority on slide 0)
