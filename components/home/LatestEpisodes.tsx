@@ -4,10 +4,15 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
+import { motion, useReducedMotion } from "framer-motion";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { CinematicHeader } from "@/components/common/SectionHeader";
 import { EpBadges } from "@/components/anime/Badges";
 import { cn } from "@/lib/utils/cn";
+
+// Auto-advance cadence, ms between steps. Latest Episodes drifts left-to-right
+// (active index decreasing) — deliberately opposite to the Trending marquee.
+const AUTOPLAY_MS = 3200;
 
 // ── Coverflow geometry ──────────────────────────────────────────────────────
 // Each card is placed relative to the active one. Its offset (i - active) drives
@@ -185,9 +190,14 @@ function FlowCard({
           >
             <div className="overflow-hidden">
               <div className="flex items-center gap-2 pt-3">
-                <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-frost to-frost-deep px-3.5 py-1.5 text-xs font-bold text-base shadow-[var(--shadow-neon)]">
+                <motion.span
+                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-frost to-frost-deep px-3.5 py-1.5 text-xs font-bold text-base shadow-[var(--shadow-neon)]"
+                  whileHover={{ scale: 1.06 }}
+                  whileTap={{ scale: 0.96 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                >
                   <Play className="size-3.5 translate-x-px fill-current" /> Watch
-                </span>
+                </motion.span>
                 {anime.type && (
                   <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-snow/90">
                     {anime.type}
@@ -208,14 +218,26 @@ function FlowCard({
 }
 
 export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
+  const reduce = useReducedMotion();
   // Open on the middle card so the fan is balanced on both sides at first paint.
   const [active, setActive] = useState(() => Math.floor(((items?.length ?? 1) - 1) / 2));
+  // Auto-advance pauses while hovered/focused/dragging.
+  const [interacting, setInteracting] = useState(false);
   const stageRef = useRef<HTMLDivElement>(null);
   const drag = useRef<{ x: number; moved: boolean } | null>(null);
 
   const len = items?.length ?? 0;
   // Wrap-around navigation: stepping past either end loops back to the other.
   const go = useCallback((dir: 1 | -1) => setActive((a) => (a + dir + len) % len), [len]);
+
+  // Auto-advance LEFT-TO-RIGHT — posters slide in from the left, so the active
+  // index steps backward (-1). Opposite to Trending's right-to-left drift.
+  const auto = !interacting && !reduce && len > 1;
+  useEffect(() => {
+    if (!auto) return;
+    const id = window.setInterval(() => go(-1), AUTOPLAY_MS);
+    return () => window.clearInterval(id);
+  }, [auto, go]);
 
   // Keyboard arrows when the stage has focus.
   const onKeyDown = (e: React.KeyboardEvent) => {
@@ -228,9 +250,10 @@ export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
     }
   };
 
-  // Pointer / touch swipe.
+  // Pointer / touch swipe. Any drag also counts as interaction (pauses auto).
   const onPointerDown = (e: React.PointerEvent) => {
     drag.current = { x: e.clientX, moved: false };
+    setInteracting(true);
   };
   const onPointerMove = (e: React.PointerEvent) => {
     const d = drag.current;
@@ -267,7 +290,13 @@ export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
         onPointerDown={onPointerDown}
         onPointerMove={onPointerMove}
         onPointerUp={onPointerUp}
-        onPointerLeave={onPointerUp}
+        onPointerEnter={() => setInteracting(true)}
+        onPointerLeave={() => {
+          onPointerUp();
+          setInteracting(false);
+        }}
+        onFocus={() => setInteracting(true)}
+        onBlur={() => setInteracting(false)}
         style={{ perspective: "1800px" }}
         className="relative h-[43vw] max-h-[296px] min-h-[224px] w-full touch-pan-y select-none overflow-x-clip [transform-style:preserve-3d] focus:outline-none"
       >
