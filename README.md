@@ -1,39 +1,218 @@
-# Sode no Shirayuki — `shirayuki-next`
+<div align="center">
 
-A premium anime streaming platform. Next.js App Router · TypeScript · Tailwind CSS v4 · Motion · hls.js. Dark-first "snow & ice" identity. Full plan in [`docs/`](./docs).
-
-## Run
-
-```bash
-npm install
-npm run dev      # http://localhost:3000
-npm run build && npm start
-npm run typecheck
+```
+                                    *
+                              ·         ❄         ·
+                          *                   *
+                       ·       ❄                      ·
+                  *         shirayuki              ❄          *
+               ❄     ·  ❄  ·  ❄  ·  ❄  ·  ❄    ·     ❄
+                    ╔══════════════════════════════════╗
+                    ║   Sode no Shirayuki · v0.1.0     ║
+                    ║   ─── snow & ice, dark-first ─── ║
+                    ╚══════════════════════════════════╝
+               ❄     ·  ❄  ·  ❄  ·  ❄  ·  ❄    ·     ❄
+                  *         ·                ❄          *
+                       ·        ❄                  ·
+                          *                   ·
+                              ·         ❄         ·
+                                    *
 ```
 
-Env (`.env.local`): `API_BASE_URL` (the scraper API, server-side only).
+### *「 白い雪の姫 」* — *the white-snow princess*
 
-## What's built (Phase 0–3 vertical slice)
+> A premium anime streaming platform, forged in frost.
+> Built on the bleeding edge: **Next.js 15 · React 19 · Tailwind v4 · hls.js**.
 
-- **Design system** — OKLCH frost tokens, Geist + Zen Kaku Gothic fonts, snow layer, glass utilities, reduced-motion respected. `app/globals.css`.
-- **Typed, validated data layer** — swappable provider behind one interface, **Zod-validated** raw responses → normalized models, Next fetch-cache with tags, retry/timeout, `Result` wrapper so the provider never crashes a page. `lib/providers/`, `lib/api/`.
-- **Pages (RSC + streaming SSR):** Home (spotlight, rails, Continue Watching), Anime details (+JSON-LD), Search, Category/Genre/A–Z browse, Schedule (Season Radar), Watch.
-- **The player (the old app's broken core, fixed):**
-  - First-party **HLS proxy** (`app/api/stream`) that injects `Referer` and rewrites playlist URIs — verified end-to-end.
-  - **hls.js** with quality switching + native-HLS (Safari) fallback.
-  - **Skip intro/outro** wired to the API's `intro`/`outro` timings; auto-skip remembered.
-  - Remembered prefs (sub/dub, server, volume, speed, autoplay) via `lib/stores/prefs.ts`.
-  - Keyboard shortcuts, PiP, subtitle proxy, autoplay next, server failover UI.
-- **Continue Watching** — local-first (`lib/progress/local.ts`), instant, works logged-out.
-- **One** `AnimeCard` (variants) — replaces the old app's five. **One** Nav, **one** player.
-- **`⌘K` command palette**, SEO metadata + JSON-LD + robots + manifest.
+</div>
 
-## Not yet built (next phases — see `docs/05-roadmap.md`)
+❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄
 
-Accounts + cross-device sync (Phase 4) · AniList sync, seek-bar preview thumbnails, advanced filters (Phase 5) · filler-marker data source, character/studio explorers, mood discovery (Phase 6). Episode `isFiller` is plumbed through the UI; it needs the AnimeFillerList data source wired in.
+## ✦ What is this?
 
-## Notes
+**Shirayuki** is a dark-first, performance-obsessed anime streaming client. It replaces
+a fragmented legacy app with **one player**, **one card**, **one nav** — and a
+typed, validated, swappable data layer that never lets a flaky upstream crash a page.
 
-- Upstream provider (`hianime.ad` mirror) is fragile and serves **ephemeral** stream tokens — sources are fetched `no-store` and played immediately. Treat the provider as swappable (`lib/providers/`).
-- `/watch/*` is `noindex` by design.
-# Shirayuki-V2
+The aesthetic is deliberate: **OKLCH frost tokens**, Geist + Zen Kaku Gothic, a drifting
+snow layer, glass utilities, motion that respects `prefers-reduced-motion`. Cold, calm,
+precise.
+
+<details>
+<summary><b>❄ Stack at a glance</b></summary>
+
+| Layer        | Tech                                                  |
+| ------------ | ----------------------------------------------------- |
+| Framework    | Next.js 15 (App Router, RSC, streaming SSR)          |
+| Language     | TypeScript 5.7 (strict)                               |
+| UI           | React 19 · Tailwind v4 · `class-variance-authority`   |
+| Motion       | `framer-motion` — respects reduced-motion             |
+| Streaming    | `hls.js` + native HLS (Safari) · first-party proxy    |
+| State        | `zustand` (prefs) · local-first progress              |
+| Validation   | `zod` (raw provider → normalized model)               |
+| Icons        | `lucide-react`                                        |
+| Theming      | OKLCH frost tokens · custom snow layer                |
+
+</details>
+
+❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄
+
+## ✦ Run
+
+```bash
+# 1. install
+npm install
+
+# 2. env (server-side only)
+echo "API_BASE_URL=https://your-scraper.example" > .env.local
+
+# 3. dev
+npm run dev          # → http://localhost:3000
+
+# prod
+npm run build && npm start
+
+# sanity
+npm run typecheck
+npm run lint
+```
+
+| Command            | What it does                                  |
+| ------------------ | --------------------------------------------- |
+| `npm run dev`      | Dev server with HMR                           |
+| `npm run build`    | Production build                              |
+| `npm start`        | Serve the production build                    |
+| `npm run lint`     | Next.js + ESLint                              |
+| `npm run typecheck`| `tsc --noEmit`                                |
+
+❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄
+
+## ✦ Architecture — the frozen stream
+
+```
+  ┌──────────────┐    ┌─────────────────┐    ┌──────────────────┐
+  │  Upstream    │    │  /api/stream    │    │   Player (RSC)   │
+  │  provider    │──▶ │  HLS proxy      │──▶ │  hls.js client   │
+  │  (fragile)   │    │  • inject Ref.  │    │  • quality switch│
+  │              │    │  • rewrite URI  │    │  • native fallback│
+  └──────────────┘    └─────────────────┘    │  • PiP · shortcuts│
+           │                                   └────────┬─────────┘
+           │ validated by zod                           │
+           ▼                                            ▼
+  ┌──────────────┐                            ┌──────────────────┐
+  │ lib/providers│ ── normalizes to ──▶       │  Progress store  │
+  │ (swappable)  │     AnimeCardModel         │  (local, instant)│
+  └──────────────┘                            └──────────────────┘
+```
+
+The **HLS proxy** is the keystone — it injects the `Referer` header the upstream
+demands and rewrites playlist URIs so the client never has to know upstream is hostile.
+
+❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄
+
+## ✦ Feature matrix
+
+| Capability                          | Status | Where                                 |
+| ----------------------------------- | :----: | ------------------------------------- |
+| Spotlight + rails + Continue Watching |   ✅   | `components/home/`                    |
+| Anime details + JSON-LD             |   ✅   | `app/(browse)/anime/[id]/`            |
+| Search · Category · Genre · A–Z     |   ✅   | `app/(browse)/...`                    |
+| Schedule / Season Radar             |   ✅   | `app/(browse)/schedule/`              |
+| Watch (HLS player)                  |   ✅   | `app/watch/[episodeId]/`              |
+| Skip intro / outro                  |   ✅   | wired to `intro`/`outro` timings      |
+| Auto-skip (remembered)              |   ✅   | `lib/stores/prefs.ts`                 |
+| Sub/dub · server · vol · speed · AP |   ✅   | `lib/stores/prefs.ts`                 |
+| Keyboard shortcuts · PiP            |   ✅   | `components/player/`                  |
+| HLS proxy (Referer + URI rewrite)   |   ✅   | `app/api/stream/`                     |
+| Quality switching + native fallback |   ✅   | `hls.js`                              |
+| Continue Watching (local-first)     |   ✅   | `lib/progress/local.ts`               |
+| ⌘K command palette                  |   ✅   | —                                     |
+| SEO meta · JSON-LD · robots · PWA   |   ✅   | `app/`                                |
+| Frost design system                 |   ✅   | `app/globals.css`                     |
+| Accounts + cross-device sync        |   🔜   | Phase 4 · `docs/05-roadmap.md`         |
+| AniList sync                        |   🔜   | Phase 5                               |
+| Filler-marker data source           |   🔜   | Phase 6 (UI plumbed; data wired next)  |
+| Seek-bar preview thumbnails         |   🔜   | Phase 5                               |
+
+❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄
+
+## ✦ Project shape
+
+```
+shirayuki-next/
+├─ app/                   ← routes (App Router · RSC)
+│  ├─ (browse)/           ← grouped: anime · search · schedule · …
+│  ├─ api/stream/         ← HLS proxy (Referer + URI rewrite)
+│  ├─ watch/[episodeId]/  ← the player
+│  ├─ layout.tsx          ← fonts · theme · snow layer
+│  ├─ globals.css         ← OKLCH frost tokens · glass · motion
+│  ├─ manifest.ts · robots.ts
+│  └─ error.tsx · loading.tsx · not-found.tsx
+│
+├─ components/
+│  ├─ anime/ · common/ · details/ · home/ · layout/ · player/ · search/ · ui/
+│  └─  → ONE AnimeCard · ONE Nav · ONE Player
+│
+├─ lib/
+│  ├─ providers/          ← swappable · Zod-validated · normalized
+│  ├─ api/                ← fetch wrapper · cache tags · retry · timeout
+│  ├─ progress/           ← local-first Continue Watching
+│  ├─ stores/             ← zustand: prefs
+│  ├─ utils/ · watchlist/
+│  └─ (never crashes a page — Result<T,E> wrapper)
+│
+└─ docs/                  ← the full plan: 00–05
+```
+
+❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄
+
+## ✦ Design tenets
+
+- **One of each.** One card. One nav. One player. Variants, not duplicates.
+- **Types first.** Raw upstream is hostile and ephemeral — validate with `zod`,
+  normalize to `AnimeCardModel`, then the rest of the app sees a clean shape.
+- **The page never crashes.** The provider returns `Result<T, E>`; render the empty
+  state, never a stack trace.
+- **Local-first when possible.** Continue Watching lives in `localStorage` and
+  hydrates instantly — no auth required.
+- **Motion with restraint.** Drift, fade, settle. Respect `prefers-reduced-motion`.
+- **Dark-first.** OKLCH frost tokens, never pure `#000`.
+
+❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄
+
+## ✦ Caveats (read these)
+
+- The default upstream provider (`hianime.ad` mirror) is **fragile** and serves
+  **ephemeral** stream tokens. Sources are fetched `no-store` and played immediately.
+  The provider interface is swappable — `lib/providers/` — so a saner backend
+  drops in without touching the UI.
+- `/watch/*` is **`noindex`** by design.
+- Episode `isFiller` is plumbed through the UI; the data source (AnimeFillerList)
+  is the next thing wired in.
+
+❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄
+
+## ✦ Roadmap
+
+| Phase | Theme                                                             |
+| :---: | ----------------------------------------------------------------- |
+|  0–3  | **Shipped** — design system, data layer, player, browse, watch. |
+|   4   | Accounts · cross-device sync · watchlist server-side             |
+|   5   | AniList sync · seek-bar preview thumbs · advanced filters        |
+|   6   | Filler markers · character/studio explorers · mood discovery      |
+
+Full plan: [`docs/`](./docs).
+
+❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄
+
+<div align="center">
+
+```
+        ·    ❄    ·    ❄    ·    ❄    ·    ❄    ·    ❄    ·
+                          ───  white. pure. precise.  ───
+        ·    ❄    ·    ❄    ·    ❄    ·    ❄    ·    ❄    ·
+```
+
+*Built with ❄ in the cold.*
+
+</div>
