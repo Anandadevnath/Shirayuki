@@ -1,4 +1,4 @@
-import { getHome, getCategory, safe } from "@/lib/api";
+import { getHome, getCategory, getSchedule, safe } from "@/lib/api";
 import { Spotlight } from "@/components/home/Spotlight";
 import { ContinueWatching } from "@/components/home/ContinueWatching";
 import { Trending } from "@/components/home/Trending";
@@ -6,15 +6,33 @@ import { LatestEpisodes } from "@/components/home/LatestEpisodes";
 import { QuickLists } from "@/components/home/QuickLists";
 import { DiscoverColumns } from "@/components/home/DiscoverColumns";
 import { Top10Tabs } from "@/components/home/Top10Tabs";
+import { Schedule, type ScheduleDay } from "@/components/home/Schedule";
 import { ErrorState } from "@/components/common/States";
+
+/** Today + the next 6 days, as deterministic UTC tabs for the schedule panel. */
+function upcomingWeek(todayISO: string): ScheduleDay[] {
+  const base = new Date(`${todayISO}T00:00:00Z`);
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(base);
+    d.setUTCDate(base.getUTCDate() + i);
+    return {
+      iso: d.toISOString().slice(0, 10),
+      label: d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
+      day: d.getUTCDate(),
+      month: d.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }),
+    };
+  });
+}
 
 export default async function HomePage() {
   // The home payload's `completed` list is tiny (~5), which leaves the Latest
   // Completed panel mostly empty. Pull a fuller page from the category endpoint
   // and cap it so the grid fills out to roughly the Top 10 panel's height.
-  const [res, completedRes] = await Promise.all([
+  const today = new Date().toISOString().slice(0, 10);
+  const [res, completedRes, scheduleRes] = await Promise.all([
     safe(getHome),
     safe(() => getCategory("completed")),
+    safe(() => getSchedule(today)),
   ]);
 
   if (!res.ok) {
@@ -31,6 +49,9 @@ export default async function HomePage() {
       ? completedRes.data.results
       : home.completed
   ).slice(0, 15);
+
+  const scheduleDays = upcomingWeek(today);
+  const scheduleItems = scheduleRes.ok ? scheduleRes.data : [];
 
   return (
     <div>
@@ -69,6 +90,12 @@ export default async function HomePage() {
 
           <Top10Tabs buckets={home.top10} />
         </div>
+
+        {/* Estimated airing schedule — cinematic week strip + per-day list. */}
+        <Schedule
+          days={scheduleDays}
+          initial={{ iso: today, items: scheduleItems }}
+        />
         </div>
       </div>
     </div>

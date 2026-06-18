@@ -3,10 +3,17 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { Search } from "lucide-react";
+import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils/cn";
-import { CommandPalette } from "@/components/search/CommandPalette";
+
+// The search palette is only revealed on ⌘K / click, so keep it out of the
+// initial JS bundle and mount it lazily the first time it's opened.
+const CommandPalette = dynamic(
+  () => import("@/components/search/CommandPalette").then((m) => m.CommandPalette),
+  { ssr: false },
+);
 
 const LINKS = [
   { href: "/", label: "Home" },
@@ -20,6 +27,13 @@ export function Nav() {
   const pathname = usePathname();
   const [scrolled, setScrolled] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
+  // Latches true on first open so the lazy chunk mounts once, then stays.
+  const [paletteMounted, setPaletteMounted] = useState(false);
+
+  const openPalette = useCallback(() => {
+    setPaletteMounted(true);
+    setPaletteOpen(true);
+  }, []);
 
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 8);
@@ -32,12 +46,12 @@ export function Nav() {
     const onKey = (e: KeyboardEvent) => {
       if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
         e.preventDefault();
-        setPaletteOpen(true);
+        openPalette();
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [openPalette]);
 
   return (
     <>
@@ -91,7 +105,7 @@ export function Nav() {
           </ul>
 
           <button
-            onClick={() => setPaletteOpen(true)}
+            onClick={openPalette}
             className="group ml-auto flex items-center gap-2 rounded-sm border border-line bg-surface/60 px-3 py-2 text-sm text-faint transition-colors hover:border-frost/40 hover:text-muted"
             aria-label="Search anime (⌘K)"
           >
@@ -104,7 +118,9 @@ export function Nav() {
         </nav>
       </header>
 
-      <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      {paletteMounted && (
+        <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
+      )}
     </>
   );
 }

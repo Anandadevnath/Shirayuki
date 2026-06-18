@@ -63,6 +63,22 @@ export function Spotlight({
   const [active, setActive] = useState(0);
   const [paused, setPaused] = useState(false);
 
+  // Only the slides that have been shown (plus the one queued next) mount their
+  // heavy key-art. The crossfade is unaffected — every slide's container stays
+  // mounted and animates opacity; we just defer the <Image> network requests so
+  // first paint fetches one slide's art instead of all N.
+  const [seen, setSeen] = useState<Set<number>>(() => new Set([0]));
+  useEffect(() => {
+    setSeen((prev) => {
+      const nextIdx = (active + 1) % n;
+      if (prev.has(active) && prev.has(nextIdx)) return prev;
+      const next = new Set(prev);
+      next.add(active);
+      next.add(nextIdx);
+      return next;
+    });
+  }, [active, n]);
+
   const go = useCallback((idx: number) => setActive(((idx % n) + n) % n), [n]);
 
   // Auto-rotate
@@ -99,21 +115,30 @@ export function Spotlight({
                   idx === active ? "opacity-100" : "opacity-0",
                 )}
               >
-                <Image
-                  src={s.poster}
-                  alt=""
-                  fill
-                  sizes="100vw"
-                  className="scale-110 object-cover object-center opacity-60 blur-2xl"
-                />
-                <Image
-                  src={s.poster}
-                  alt=""
-                  fill
-                  priority={idx === 0}
-                  sizes="100vw"
-                  className="object-cover object-[center_22%] brightness-[0.82]"
-                />
+                {seen.has(idx) && (
+                  <>
+                    {/* Blurred fill — heavily blurred + upscaled, so a small
+                        low-quality variant is visually identical at a fraction
+                        of the bytes. */}
+                    <Image
+                      src={s.poster}
+                      alt=""
+                      fill
+                      sizes="50vw"
+                      quality={30}
+                      loading={idx === 0 ? "eager" : "lazy"}
+                      className="scale-110 object-cover object-center opacity-60 blur-2xl"
+                    />
+                    <Image
+                      src={s.poster}
+                      alt=""
+                      fill
+                      priority={idx === 0}
+                      sizes="100vw"
+                      className="object-cover object-[center_22%] brightness-[0.82]"
+                    />
+                  </>
+                )}
               </div>
             ) : null,
           )}
