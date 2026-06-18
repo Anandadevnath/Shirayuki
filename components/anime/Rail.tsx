@@ -59,11 +59,12 @@ export function Rail({
         style={{ maskImage: RAIL_FADE, WebkitMaskImage: RAIL_FADE }}
         className="no-scrollbar snap-x-rail -mx-1 flex gap-4 overflow-x-auto scroll-pl-1 px-1 pb-4 pt-3"
       >
-        {items.map((a) => (
+        {items.map((a, i) => (
           <AnimeCard
             key={`${a.id}-${a.episodeNumber ?? ""}`}
             anime={a}
-            className="w-[44vw] shrink-0 sm:w-[24vw] md:w-[200px]"
+            style={{ ["--reveal-delay" as string]: `${Math.min(i, 9) * 60}ms` }}
+            className="reveal w-[44vw] shrink-0 sm:w-[24vw] md:w-[200px]"
           />
         ))}
       </div>

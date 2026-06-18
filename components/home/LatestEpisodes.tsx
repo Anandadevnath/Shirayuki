@@ -2,12 +2,12 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { CinematicHeader } from "@/components/common/SectionHeader";
 import { EpBadges } from "@/components/anime/Badges";
+import { SmartImage } from "@/components/ui/SmartImage";
 import { cn } from "@/lib/utils/cn";
 
 // Auto-advance cadence, ms between steps. Latest Episodes drifts left-to-right
@@ -118,16 +118,20 @@ function FlowCard({
         )}
       >
         {anime.poster ? (
-          <Image
-            src={anime.poster}
-            alt={anime.title}
-            fill
-            sizes="(max-width:640px) 60vw, (max-width:1024px) 38vw, 320px"
+          <div
             className={cn(
-              "object-cover transition-transform duration-700 ease-out",
+              "absolute inset-0 transition-transform duration-700 ease-out",
               active && "scale-[1.04] group-hover:scale-[1.08]",
             )}
-          />
+          >
+            <SmartImage
+              src={anime.poster}
+              alt={anime.title}
+              fill
+              sizes="(max-width:640px) 60vw, (max-width:1024px) 38vw, 320px"
+              className="object-cover"
+            />
+          </div>
         ) : (
           <div className="grid h-full place-items-center text-faint">No image</div>
         )}

@@ -2,7 +2,6 @@
 
 import { useRef } from "react";
 import Link from "next/link";
-import Image from "next/image";
 import { Play, Flame, ChevronLeft, ChevronRight } from "lucide-react";
 import {
   motion,
@@ -11,6 +10,7 @@ import {
   useReducedMotion,
 } from "framer-motion";
 import type { AnimeCardModel } from "@/lib/providers/types";
+import { SmartImage } from "@/components/ui/SmartImage";
 import { cn } from "@/lib/utils/cn";
 
 // Marquee drift speed, px/s. The rail glides right-to-left so it reads as a
@@ -41,7 +41,7 @@ function TrendCard({
       )}
     >
       {s.poster && (
-        <Image
+        <SmartImage
           src={s.poster}
           alt=""
           fill

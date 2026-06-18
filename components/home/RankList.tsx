@@ -1,8 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
 import type { ReactNode } from "react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { EpBadges } from "@/components/anime/Badges";
+import { SmartImage } from "@/components/ui/SmartImage";
 import { cn } from "@/lib/utils/cn";
 
 /** A single row in the Top 10 panel — poster, title, then sub/dub + type. */
@@ -15,7 +15,7 @@ export function RankRow({ anime }: { anime: AnimeCardModel; rank?: number }) {
       {/* Poster — softly rounded, full-bleed image */}
       <span className="relative h-20 w-14 shrink-0 overflow-hidden rounded-sm bg-surface-2">
         {anime.poster && (
-          <Image
+          <SmartImage
             src={anime.poster}
             alt=""
             fill

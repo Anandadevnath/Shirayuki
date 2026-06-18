@@ -122,8 +122,24 @@
   .snap-start { scroll-snap-align: start; }
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Skeleton shimmer — a frost sheen sweeping over a faintly breathing
+   surface. The base pulses opacity while a soft highlight glides across,
+   so placeholders read as "alive / loading" rather than static blocks.
+   GPU-only (transform/opacity); honours reduced-motion below.
+   ───────────────────────────────────────────────────────────── */
 @keyframes shimmer {
   100% { transform: translateX(100%); }
+}
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.55; }
+  50% { opacity: 0.9; }
+}
+.shimmer {
+  position: relative;
+  overflow: hidden;
+  isolation: isolate;
+  animation: skeleton-pulse 2s ease-in-out infinite;
 }
 .shimmer::after {
   content: "";
@@ -133,10 +149,48 @@
   background: linear-gradient(
     90deg,
     transparent,
-    oklch(1 0 0 / 0.06),
+    color-mix(in oklch, var(--color-frost) 12%, transparent) 45%,
+    oklch(1 0 0 / 0.08) 50%,
+    color-mix(in oklch, var(--color-frost) 12%, transparent) 55%,
     transparent
   );
-  animation: shimmer 1.6s infinite;
+  animation: shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Render reveals — content arrives, never "pops". Each keyframe rises a
+   few px and settles with a touch of scale, on a GPU-composited transform.
+   `.reveal` plays once on mount (SSR-safe: paints from frame 0 immediately,
+   no JS/observer gating, so nothing is ever stuck invisible). Stagger via
+   `--reveal-delay` (set inline per index) for the cinematic cascade.
+   ───────────────────────────────────────────────────────────── */
+@keyframes reveal-rise {
+  from { opacity: 0; transform: translate3d(0, 14px, 0) scale(0.985); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes reveal-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.reveal {
+  animation: reveal-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+  will-change: transform, opacity;
+}
+.reveal-fade {
+  animation: reveal-fade 0.5s ease-out both;
+  animation-delay: var(--reveal-delay, 0ms);
+}
+/* Cross-fade a skeleton → its real content with no layout jump: both occupy
+   the same grid cell; the leaving layer fades out, the arriving one fades in. */
+@keyframes media-in {
+  from { opacity: 0; transform: scale(1.04); }
+  to   { opacity: 1; transform: scale(1); }
+}
+.media-in {
+  animation: media-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -217,6 +271,7 @@
   *::before,
   *::after {
     animation-duration: 0.001ms !important;
+    animation-delay: 0ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.001ms !important;
     scroll-behavior: auto !important;

@@ -1,8 +1,8 @@
 import Link from "next/link";
-import Image from "next/image";
 import { ChevronRight } from "lucide-react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { EpBadges } from "@/components/anime/Badges";
+import { SmartImage } from "@/components/ui/SmartImage";
 
 /** A single compact row — poster, title, then sub/dub badges and the type. */
 function DiscoverRow({ anime }: { anime: AnimeCardModel }) {
@@ -13,7 +13,7 @@ function DiscoverRow({ anime }: { anime: AnimeCardModel }) {
     >
       <span className="relative h-[68px] w-[48px] shrink-0 overflow-hidden rounded bg-surface-2 ring-1 ring-line/60">
         {anime.poster && (
-          <Image
+          <SmartImage
             src={anime.poster}
             alt=""
             fill

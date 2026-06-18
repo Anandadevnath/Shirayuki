@@ -1,9 +1,9 @@
 import Link from "next/link";
-import Image from "next/image";
 import { Play, Star, Captions, Mic } from "lucide-react";
 import type { ReactNode } from "react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { cn } from "@/lib/utils/cn";
+import { SmartImage } from "@/components/ui/SmartImage";
 import { EpBadges, TypePill } from "./Badges";
 
 /**
@@ -49,15 +49,18 @@ export function AnimeCard({
   anime,
   variant = "poster",
   className,
+  style,
 }: {
   anime: AnimeCardModel;
   variant?: "poster" | "row";
   className?: string;
+  style?: React.CSSProperties;
 }) {
   if (variant === "row") {
     return (
       <Link
         href={`/anime/${anime.id}`}
+        style={style}
         className={cn(
           "group flex items-center gap-3 rounded-md p-2 transition-colors hover:bg-surface-2",
           className,
@@ -65,7 +68,7 @@ export function AnimeCard({
       >
         <span className="relative h-16 w-12 shrink-0 overflow-hidden rounded bg-surface-2">
           {anime.poster && (
-            <Image src={anime.poster} alt="" fill sizes="48px" className="object-cover" />
+            <SmartImage src={anime.poster} alt="" fill sizes="48px" className="object-cover" />
           )}
         </span>
         <span className="min-w-0 flex-1">
@@ -85,7 +88,7 @@ export function AnimeCard({
   const meta = [anime.type, anime.jname].filter(Boolean).join(" · ");
 
   const poster = anime.poster ? (
-    <Image
+    <SmartImage
       src={anime.poster}
       alt={anime.title}
       fill
@@ -122,7 +125,7 @@ export function AnimeCard({
   // using a 0fr→1fr grid expand (animates height with no magic pixel values).
   if (CARD_DESIGN === "cinematic") {
     return (
-      <Link href={`/anime/${anime.id}`} className={cn("group block snap-start", className)}>
+      <Link href={`/anime/${anime.id}`} style={style} className={cn("group block snap-start", className)}>
         {/* Lift wrapper carries the only transform on the card body. The two
             shadow layers live here (outside the frame's overflow clip) and
             cross-fade via opacity — far cheaper than re-rasterising a blurred

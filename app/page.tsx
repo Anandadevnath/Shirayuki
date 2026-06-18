@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { getHome, getCategory, getSchedule, safe } from "@/lib/api";
 import { Spotlight } from "@/components/home/Spotlight";
 import { ContinueWatching } from "@/components/home/ContinueWatching";
@@ -8,6 +9,7 @@ import { DiscoverColumns } from "@/components/home/DiscoverColumns";
 import { Top10Tabs } from "@/components/home/Top10Tabs";
 import { Schedule, type ScheduleDay } from "@/components/home/Schedule";
 import { ErrorState } from "@/components/common/States";
+import { ScheduleSkeleton } from "@/components/ui/Skeleton";
 
 /** Today + the next 6 days, as deterministic UTC tabs for the schedule panel. */
 function upcomingWeek(todayISO: string): ScheduleDay[] {
@@ -24,15 +26,29 @@ function upcomingWeek(todayISO: string): ScheduleDay[] {
   });
 }
 
+/**
+ * Schedule streams independently: the main board never blocks on the schedule
+ * endpoint. Suspense shows ScheduleSkeleton until this resolves, then swaps it
+ * in with no layout shift (the skeleton matches the panel's footprint).
+ */
+async function ScheduleSection({ days, today }: { days: ScheduleDay[]; today: string }) {
+  const scheduleRes = await safe(() => getSchedule(today));
+  return (
+    <Schedule
+      days={days}
+      initial={{ iso: today, items: scheduleRes.ok ? scheduleRes.data : [] }}
+    />
+  );
+}
+
 export default async function HomePage() {
   // The home payload's `completed` list is tiny (~5), which leaves the Latest
   // Completed panel mostly empty. Pull a fuller page from the category endpoint
   // and cap it so the grid fills out to roughly the Top 10 panel's height.
   const today = new Date().toISOString().slice(0, 10);
-  const [res, completedRes, scheduleRes] = await Promise.all([
+  const [res, completedRes] = await Promise.all([
     safe(getHome),
     safe(() => getCategory("completed")),
-    safe(() => getSchedule(today)),
   ]);
 
   if (!res.ok) {
@@ -51,7 +67,6 @@ export default async function HomePage() {
   ).slice(0, 15);
 
   const scheduleDays = upcomingWeek(today);
-  const scheduleItems = scheduleRes.ok ? scheduleRes.data : [];
 
   return (
     <div>
@@ -65,37 +80,51 @@ export default async function HomePage() {
           className="pointer-events-none absolute left-1/2 top-0 h-72 w-screen -translate-x-1/2 bg-gradient-to-b from-base from-5% via-base/55 via-45% to-transparent"
         />
 
+        {/* Section-level cascade — each board section fades up in sequence as
+            the page paints, so nothing snaps in. Pure-CSS, runs once on mount
+            (no scroll observer, so content is never gated behind hydration). */}
         <div className="relative z-10 flex flex-col gap-12 -translate-y-[8vh] sm:-translate-y-[14vh]">
-          <ContinueWatching />
+          <div className="reveal" style={{ ["--reveal-delay" as string]: "0ms" }}>
+            <ContinueWatching />
+          </div>
 
-        <Trending items={home.trending} />
+          <div className="reveal" style={{ ["--reveal-delay" as string]: "80ms" }}>
+            <Trending items={home.trending} />
+          </div>
 
-        {/* Card rails first — posters get room to breathe. Latest Episodes gets
-            the cinematic 3D treatment (pointer-tilt floating posters). */}
-        <LatestEpisodes items={home.latestEpisodes} />
+          {/* Card rails first — posters get room to breathe. Latest Episodes
+              gets the cinematic 3D treatment (pointer-tilt floating posters). */}
+          <div className="reveal" style={{ ["--reveal-delay" as string]: "160ms" }}>
+            <LatestEpisodes items={home.latestEpisodes} />
+          </div>
 
-        <DiscoverColumns
-          topAiring={home.topAiring}
-          mostPopular={home.mostPopular}
-          newReleases={home.newReleases}
-          completed={home.completed}
-        />
+          <div className="reveal" style={{ ["--reveal-delay" as string]: "240ms" }}>
+            <DiscoverColumns
+              topAiring={home.topAiring}
+              mostPopular={home.mostPopular}
+              newReleases={home.newReleases}
+              completed={home.completed}
+            />
+          </div>
 
-        {/* Latest Completed (left) and the Top 10 list (right) are two separate
-            glass containers side by side. They stretch to a shared height (the
-            taller of the two) and the left poster grid distributes its rows to
-            fill, so neither panel is left with dead space. Stacks on mobile. */}
-        <div className="grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]">
-          <QuickLists completed={completed} />
+          {/* Latest Completed (left) and the Top 10 list (right) are two separate
+              glass containers side by side. They stretch to a shared height (the
+              taller of the two) and the left poster grid distributes its rows to
+              fill, so neither panel is left with dead space. Stacks on mobile. */}
+          <div
+            className="reveal grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]"
+            style={{ ["--reveal-delay" as string]: "320ms" }}
+          >
+            <QuickLists completed={completed} />
 
-          <Top10Tabs buckets={home.top10} />
-        </div>
+            <Top10Tabs buckets={home.top10} />
+          </div>
 
-        {/* Estimated airing schedule — cinematic week strip + per-day list. */}
-        <Schedule
-          days={scheduleDays}
-          initial={{ iso: today, items: scheduleItems }}
-        />
+          {/* Estimated airing schedule — streamed independently so it never
+              blocks the board above; shows its own skeleton until ready. */}
+          <Suspense fallback={<ScheduleSkeleton />}>
+            <ScheduleSection days={scheduleDays} today={today} />
+          </Suspense>
         </div>
       </div>
     </div>
