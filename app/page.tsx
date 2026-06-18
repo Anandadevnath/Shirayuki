@@ -82,10 +82,10 @@ export default async function HomePage() {
         />
 
         {/* Latest Completed (left) and the Top 10 list (right) are two separate
-            glass containers side by side. `items-start` lets each panel hug its
-            own content height so neither is stretched into dead space. Stacks on
-            mobile. */}
-        <div className="grid grid-cols-1 items-start gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]">
+            glass containers side by side. They stretch to a shared height (the
+            taller of the two) and the left poster grid distributes its rows to
+            fill, so neither panel is left with dead space. Stacks on mobile. */}
+        <div className="grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]">
           <QuickLists completed={completed} />
 
           <Top10Tabs buckets={home.top10} />

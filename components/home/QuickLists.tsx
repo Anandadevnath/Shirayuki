@@ -12,7 +12,7 @@ export function QuickLists({ completed }: { completed: AnimeCardModel[] }) {
   if (!completed.length) return null;
 
   return (
-    <section className="laser-frame glass min-w-0 rounded-lg p-4 sm:p-5">
+    <section className="laser-frame glass flex min-w-0 flex-col rounded-lg p-4 sm:p-5">
       <CinematicHeader title="Latest Completed" eyebrow="Finished">
         <Link
           href="/category/completed"
@@ -21,7 +21,9 @@ export function QuickLists({ completed }: { completed: AnimeCardModel[] }) {
           View more
         </Link>
       </CinematicHeader>
-      <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {/* Grid grows to fill the panel (matched to the Top 10 height beside it);
+          rows space out evenly so there's no dead gap at the bottom. */}
+      <div className="grid flex-1 grid-cols-2 content-between gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {completed.map((a) => (
           <AnimeCard key={a.id} anime={a} />
         ))}
