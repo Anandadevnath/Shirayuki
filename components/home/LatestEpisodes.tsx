@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
 import type { AnimeCardModel } from "@/lib/providers/types";
-import { SectionHeader } from "@/components/common/SectionHeader";
+import { CinematicHeader } from "@/components/common/SectionHeader";
 import { EpBadges } from "@/components/anime/Badges";
 import { cn } from "@/lib/utils/cn";
 
@@ -254,31 +254,7 @@ export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
 
   return (
     <section className="relative">
-      <SectionHeader title="Latest Episodes" eyebrow="Just aired">
-        <div className="flex items-center gap-3">
-          <span className="hidden font-mono text-xs tabular-nums text-faint sm:block">
-            <span className="text-snow">{String(active + 1).padStart(2, "0")}</span>
-            {" / "}
-            {String(len).padStart(2, "0")}
-          </span>
-          <div className="flex gap-1">
-            <button
-              onClick={() => go(-1)}
-              aria-label="Previous"
-              className="grid size-8 place-items-center rounded-full glass text-muted transition-colors hover:border-frost/40 hover:text-snow"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            <button
-              onClick={() => go(1)}
-              aria-label="Next"
-              className="grid size-8 place-items-center rounded-full glass text-muted transition-colors hover:border-frost/40 hover:text-snow"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
-        </div>
-      </SectionHeader>
+      <CinematicHeader title="Latest Episodes" eyebrow="Just aired" />
 
       {/* 3D stage */}
       <div

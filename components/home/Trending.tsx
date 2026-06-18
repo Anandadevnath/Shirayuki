@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import type { AnimeCardModel } from "@/lib/providers/types";
-import { SectionHeader } from "@/components/common/SectionHeader";
+import { CinematicHeader } from "@/components/common/SectionHeader";
 import { cn } from "@/lib/utils/cn";
 
 /**
@@ -25,7 +25,7 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
 
   return (
     <section className="relative">
-      <SectionHeader title="Trending" eyebrow="Hot right now">
+      <CinematicHeader title="Trending" eyebrow="Hot right now">
         <div className="hidden gap-1.5 sm:flex">
           <button
             onClick={() => scrollRail(-1)}
@@ -42,7 +42,7 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
             <ChevronRight className="size-4" />
           </button>
         </div>
-      </SectionHeader>
+      </CinematicHeader>
 
       <div ref={railRef} className="no-scrollbar flex gap-3.5 overflow-x-auto px-0.5 pb-4 pt-3">
         {items.map((s, idx) => {

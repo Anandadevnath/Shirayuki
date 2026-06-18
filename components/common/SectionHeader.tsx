@@ -77,17 +77,17 @@ export function CinematicHeader({
           {eyebrow}
         </span>
       )}
-      <div className="flex w-full items-center justify-center gap-3 sm:gap-4">
-        <span className="h-px w-20 bg-gradient-to-r from-transparent to-frost/70 sm:w-40" />
+      <div className="flex w-full items-center justify-center gap-4 sm:gap-6">
+        <span className="h-px flex-1 bg-gradient-to-r from-transparent via-frost/40 to-frost/70" />
         <h2
           className={cn(
-            "font-display text-xl font-extrabold leading-tight tracking-tight sm:text-2xl",
+            "shrink-0 font-display text-xl font-extrabold leading-tight tracking-tight sm:text-2xl",
             titleClassName,
           )}
         >
           {title}
         </h2>
-        <span className="h-px w-20 bg-gradient-to-l from-transparent to-frost/70 sm:w-40" />
+        <span className="h-px flex-1 bg-gradient-to-l from-transparent via-frost/40 to-frost/70" />
       </div>
       {children && <div className="mt-1 flex items-center justify-center gap-2">{children}</div>}
     </div>
