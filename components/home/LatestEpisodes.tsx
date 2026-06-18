@@ -293,7 +293,7 @@ export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
         onPointerUp={onPointerUp}
         onPointerLeave={onPointerUp}
         style={{ perspective: "1800px" }}
-        className="relative h-[46vw] max-h-[320px] min-h-[240px] w-full touch-pan-y select-none overflow-x-clip [transform-style:preserve-3d] focus:outline-none"
+        className="relative h-[43vw] max-h-[296px] min-h-[224px] w-full touch-pan-y select-none overflow-x-clip [transform-style:preserve-3d] focus:outline-none"
       >
         {items.map((a, i) => (
           <FlowCard
@@ -322,13 +322,6 @@ export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
         </button>
       </div>
 
-      {/* Progress track */}
-      <div className="mx-auto mt-2 h-0.5 w-32 overflow-hidden rounded-full bg-line/60">
-        <div
-          className="h-full rounded-full bg-gradient-to-r from-frost to-frost-deep transition-[width] duration-500 ease-out"
-          style={{ width: `${((active + 1) / len) * 100}%` }}
-        />
-      </div>
     </section>
   );
 }

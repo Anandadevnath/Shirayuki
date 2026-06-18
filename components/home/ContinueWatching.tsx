@@ -25,13 +25,13 @@ export function ContinueWatching() {
   return (
     <section>
       <SectionHeader title="Continue Watching" eyebrow="Jump back in" />
-      <div className="no-scrollbar flex gap-3 overflow-x-auto pb-1">
+      <div className="no-scrollbar flex gap-3 overflow-x-auto px-0.5 py-1">
         {items.map((e) => {
           const pct = Math.min(100, Math.round((e.seconds / e.duration) * 100));
           return (
             <div
               key={e.animeId}
-              className="group relative w-[70vw] shrink-0 sm:w-[320px]"
+              className="group relative w-[62vw] shrink-0 sm:w-[280px]"
             >
               <Link
                 href={`/watch/${e.animeId}/${encodeURIComponent(e.episodeId)}`}
