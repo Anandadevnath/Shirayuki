@@ -6,7 +6,10 @@ const nextConfig: NextConfig = {
   // Only ship the lucide icons that are actually used (it's imported across many
   // client components) and keep barrel imports cheap to compile.
   experimental: {
-    optimizePackageImports: ["lucide-react"],
+    // Barrel-imported libs that get auto-tree-shaken per route. framer-motion
+    // ships ~50kb gz from its index — restricting to specific entry points
+    // shaves a real chunk off the client bundle.
+    optimizePackageImports: ["lucide-react", "framer-motion"],
   },
   images: {
     // AnimeX posters come from many rotating CDN hosts (anizara.store,
@@ -18,6 +21,9 @@ const nextConfig: NextConfig = {
       { protocol: "https", hostname: "**" },
       { protocol: "http", hostname: "**" },
     ],
+    // Prefer AVIF where the browser supports it; falls back to WebP, then the
+    // source format. AVIF is ~30% smaller than WebP at equivalent visual quality.
+    formats: ["image/avif", "image/webp"],
     // Posters change rarely; cache optimised variants for a day to avoid
     // re-encoding the same URL on every request.
     minimumCacheTTL: 86400,

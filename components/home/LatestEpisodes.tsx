@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
 import { motion, useReducedMotion } from "framer-motion";
@@ -34,7 +34,14 @@ function wrapOffset(off: number, len: number): number {
   return off;
 }
 
-type Pose = { transform: string; opacity: number; zIndex: number; blur: number };
+type Pose = {
+  transform: string;
+  opacity: number;
+  zIndex: number;
+  blur: number;
+  /** Recede-scrim opacity for non-centre posters (0 on the hero). */
+  scrim: number;
+};
 
 function pose(offset: number): Pose {
   const abs = Math.abs(offset);
@@ -48,6 +55,7 @@ function pose(offset: number): Pose {
     opacity: abs > VISIBLE ? 0 : 1 - abs * 0.16,
     zIndex: 50 - abs,
     blur: abs === 0 ? 0 : Math.min(abs * 1.3, 4),
+    scrim: Math.min(abs * 0.22 + 0.18, 0.7),
   };
 }
 
@@ -56,21 +64,25 @@ function pose(offset: number): Pose {
  * frost halo and reveals its meta; side cards angle back, dim and, on click,
  * glide to the centre instead of navigating. All motion is transform/opacity
  * only (GPU-composited) and flattened under reduced-motion.
+ *
+ * Memoized: receives a precomputed `Pose` (hoisted to the parent's useMemo)
+ * so neighbour cards don't re-render on every state tick — only the active
+ * card's props actually change when `active` flips.
  */
-function FlowCard({
+const FlowCard = memo(function FlowCard({
   anime,
-  offset,
+  p,
   active,
+  hidden,
   onSelect,
 }: {
   anime: AnimeCardModel;
-  offset: number;
+  p: Pose;
   active: boolean;
+  hidden: boolean;
   onSelect: () => void;
 }) {
-  const p = pose(offset);
   const epNum = typeof anime.episodeNumber === "number" ? anime.episodeNumber : null;
-  const hidden = Math.abs(offset) > VISIBLE;
 
   return (
     <Link
@@ -140,7 +152,7 @@ function FlowCard({
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 bg-base transition-opacity duration-500"
-          style={{ opacity: active ? 0 : Math.min(Math.abs(offset) * 0.22 + 0.18, 0.7) }}
+          style={{ opacity: active ? 0 : p.scrim }}
         />
 
         {/* Bottom gradient for legible meta */}
@@ -219,7 +231,7 @@ function FlowCard({
       </div>
     </Link>
   );
-}
+});
 
 export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
   const reduce = useReducedMotion();
@@ -233,6 +245,14 @@ export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
   const len = items?.length ?? 0;
   // Wrap-around navigation: stepping past either end loops back to the other.
   const go = useCallback((dir: 1 | -1) => setActive((a) => (a + dir + len) % len), [len]);
+
+  // Hoist pose calculation so neighbour FlowCards receive a stable Pose prop
+  // and memo() can skip them when only the active index changes. Recomputed
+  // only when the list or the active card changes.
+  const poses = useMemo(
+    () => items.map((_, i) => pose(wrapOffset(i - active, len))),
+    [items, active, len],
+  );
 
   // Auto-advance LEFT-TO-RIGHT — posters slide in from the left, so the active
   // index steps backward (-1). Opposite to Trending's right-to-left drift.
@@ -308,8 +328,9 @@ export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
           <FlowCard
             key={`${a.id}-${a.episodeNumber ?? i}`}
             anime={a}
-            offset={wrapOffset(i - active, len)}
+            p={poses[i]}
             active={i === active}
+            hidden={Math.abs(wrapOffset(i - active, len)) > VISIBLE}
             onSelect={() => setActive(i)}
           />
         ))}

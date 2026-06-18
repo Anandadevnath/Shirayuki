@@ -1,6 +1,6 @@
 import Link from "next/link";
 import { Play, Star, Captions, Mic } from "lucide-react";
-import type { ReactNode } from "react";
+import { memo, type ReactNode } from "react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { cn } from "@/lib/utils/cn";
 import { SmartImage } from "@/components/ui/SmartImage";
@@ -45,7 +45,7 @@ function Chip({
   );
 }
 
-export function AnimeCard({
+export const AnimeCard = memo(function AnimeCard({
   anime,
   variant = "poster",
   className,
@@ -324,4 +324,4 @@ export function AnimeCard({
       </div>
     </Link>
   );
-}
+});

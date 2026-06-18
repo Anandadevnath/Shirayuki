@@ -13,22 +13,25 @@ export type ScheduleDay = {
   month: string; // "Jun"
 };
 
-/** A live-updating date/time pill — mirrors the reference's clock chip. */
+/** A live-updating date/time pill — mirrors the reference's clock chip.
+ *  Updates via direct DOM mutation (textContent) so React never re-renders
+ *  the Schedule panel on every tick. */
 function LiveClock() {
-  const [now, setNow] = useState<string | null>(null);
+  const ref = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    const tick = () =>
-      setNow(
-        new Date().toLocaleString("en-US", {
-          month: "numeric",
-          day: "numeric",
-          year: "numeric",
-          hour: "2-digit",
-          minute: "2-digit",
-          second: "2-digit",
-        }),
-      );
+    const el = ref.current;
+    if (!el) return;
+    const tick = () => {
+      el.textContent = new Date().toLocaleString("en-US", {
+        month: "numeric",
+        day: "numeric",
+        year: "numeric",
+        hour: "2-digit",
+        minute: "2-digit",
+        second: "2-digit",
+      });
+    };
     tick();
     const t = setInterval(tick, 1000);
     return () => clearInterval(t);
@@ -37,8 +40,9 @@ function LiveClock() {
   return (
     <span className="flex items-center gap-2 rounded-full border border-line glass px-4 py-2 font-mono text-xs text-snow tabular-nums sm:text-sm">
       <Clock className="size-3.5 text-frost" />
-      {/* Rendered client-side only so SSR/hydration stays deterministic. */}
-      <span className="min-w-[9.5rem]">{now ?? "—"}</span>
+      {/* textContent is updated imperatively above; SSR/hydration stays
+          deterministic with this placeholder. */}
+      <span ref={ref} className="min-w-[9.5rem]">—</span>
     </span>
   );
 }

@@ -104,7 +104,12 @@ export function Spotlight({
       aria-label="Featured anime"
     >
       <div className="relative flex h-[82svh] min-h-[600px] max-h-[1000px] w-full flex-col">
-        {/* ── Background depth: blurred fill + sharp edge-masked key art ── */}
+        {/* ── Background depth: a single sharp key art (priority on slide 0)
+            sits over a CSS-only blurred backdrop painted from the same poster
+            URL. The backdrop uses `background-image` (browser cache hit, no
+            second `<Image>` pipeline / no extra optimizer pass), so the hero
+            makes ONE network request per slide instead of two. Slides that
+            haven't been seen yet keep their shimmer placeholder visible. ── */}
         <div className="absolute inset-0">
           {list.map((s, idx) =>
             s.poster ? (
@@ -115,29 +120,30 @@ export function Spotlight({
                   idx === active ? "opacity-100" : "opacity-0",
                 )}
               >
+                {/* CSS-only blurred fill — same URL, browser-cached by the time
+                    the sharp <Image> finishes decoding, painted with a single
+                    GPU-composited background. */}
                 {seen.has(idx) && (
-                  <>
-                    {/* Blurred fill — heavily blurred + upscaled, so a small
-                        low-quality variant is visually identical at a fraction
-                        of the bytes. */}
-                    <Image
-                      src={s.poster}
-                      alt=""
-                      fill
-                      sizes="50vw"
-                      quality={30}
-                      loading={idx === 0 ? "eager" : "lazy"}
-                      className="scale-110 object-cover object-center opacity-60 blur-2xl"
-                    />
-                    <Image
-                      src={s.poster}
-                      alt=""
-                      fill
-                      priority={idx === 0}
-                      sizes="100vw"
-                      className="object-cover object-[center_22%] brightness-[0.82]"
-                    />
-                  </>
+                  <div
+                    aria-hidden
+                    style={{ backgroundImage: `url(${s.poster})` }}
+                    className="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-2xl"
+                  />
+                )}
+                {seen.has(idx) ? (
+                  <Image
+                    src={s.poster}
+                    alt=""
+                    fill
+                    priority={idx === 0}
+                    sizes="100vw"
+                    className="object-cover object-[center_22%] brightness-[0.82]"
+                  />
+                ) : (
+                  /* Skeleton-grade placeholder for unseen slides; matches the
+                     exact dimensions of the sharp <Image> so when it swaps in
+                     there's zero layout shift. */
+                  <div className="absolute inset-0 bg-surface-2 shimmer" />
                 )}
               </div>
             ) : null,

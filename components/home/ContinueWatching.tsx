@@ -8,6 +8,11 @@ import { formatTime } from "@/lib/utils/format";
 import { SectionHeader } from "@/components/common/SectionHeader";
 import { SmartImage } from "@/components/ui/SmartImage";
 
+// Cap the on-screen rail so a long backlog doesn't paint dozens of posters +
+// progress bars at once. The full list still lives in localStorage; a "Show
+// all" link below the rail reveals overflow if the user wants more.
+const RAIL_LIMIT = 12;
+
 export function ContinueWatching() {
   const [items, setItems] = useState<WatchEntry[]>([]);
 
@@ -22,11 +27,14 @@ export function ContinueWatching() {
     setItems(listProgress());
   }
 
+  const visible = items.slice(0, RAIL_LIMIT);
+  const overflow = items.length - visible.length;
+
   return (
     <section>
       <SectionHeader title="Continue Watching" eyebrow="Jump back in" />
       <div className="no-scrollbar flex gap-3 overflow-x-auto px-0.5 py-1">
-        {items.map((e, i) => {
+        {visible.map((e, i) => {
           const pct = Math.min(100, Math.round((e.seconds / e.duration) * 100));
           return (
             <div
@@ -70,6 +78,16 @@ export function ContinueWatching() {
           );
         })}
       </div>
+      {overflow > 0 && (
+        <div className="mt-2 text-right">
+          <Link
+            href="/watchlist"
+            className="text-xs font-medium text-muted transition-colors hover:text-frost"
+          >
+            Show all ({items.length})
+          </Link>
+        </div>
+      )}
     </section>
   );
 }
