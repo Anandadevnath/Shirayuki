@@ -175,27 +175,28 @@ export const AnimeCard = memo(function AnimeCard({
               {anime.title}
             </h3>
 
-            {/* Reveal row: collapsed (0fr) → expanded (1fr) on hover.
-                Outer wrapper animates ONLY the height; the content fades + slides
-                in via GPU-composited transform/opacity so the reveal stays smooth. */}
-            <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-300 ease-out will-change-[grid-template-rows] group-hover:grid-rows-[1fr] motion-reduce:transition-none">
-              <div className="overflow-hidden">
-                <div className="flex translate-y-1 transform-gpu items-center gap-2 pt-2.5 opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100">
-                  <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-frost to-frost-deep px-3 py-1 text-[11px] font-bold text-base shadow-[var(--shadow-neon)]">
-                    <Play className="size-3 translate-x-px fill-current" /> Watch
-                  </span>
-                  {anime.type && (
-                    <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-snow/90">
-                      {anime.type}
-                    </span>
-                  )}
-                  {!!anime.score && (
-                    <span className="ml-auto flex items-center gap-0.5 text-[11px] font-bold text-snow/90">
-                      <Star className="size-3 fill-warning text-warning" /> {anime.score}
-                    </span>
-                  )}
-                </div>
-              </div>
+            {/* Reveal row: composited fade + slide on hover. The wrapper takes its
+                natural height at all times (so the row's footprint is always
+                reserved inside the bottom content overlay → always inside the
+                card frame, never below it). The inner strip is opacity-0 at
+                rest and translates down a touch; on hover it fades and slides
+                up. Both opacity and transform are GPU-composited — no layout
+                invalidation of the parent's backdrop-filter, so hover stays
+                smooth inside glass panels like QuickLists. */}
+            <div className="flex translate-y-1 transform-gpu items-center gap-2 pt-2.5 opacity-0 transition-[transform,opacity] duration-300 ease-out will-change-[transform,opacity] group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100">
+              <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-frost to-frost-deep px-3 py-1 text-[11px] font-bold text-base shadow-[var(--shadow-neon)]">
+                <Play className="size-3 translate-x-px fill-current" /> Watch
+              </span>
+              {anime.type && (
+                <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-snow/90">
+                  {anime.type}
+                </span>
+              )}
+              {!!anime.score && (
+                <span className="ml-auto flex items-center gap-0.5 text-[11px] font-bold text-snow/90">
+                  <Star className="size-3 fill-warning text-warning" /> {anime.score}
+                </span>
+              )}
             </div>
           </div>
           </div>

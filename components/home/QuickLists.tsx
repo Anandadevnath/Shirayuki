@@ -21,9 +21,11 @@ export function QuickLists({ completed }: { completed: AnimeCardModel[] }) {
           View more
         </Link>
       </CinematicHeader>
-      {/* Grid grows to fill the panel (matched to the Top 10 height beside it);
-          rows space out evenly so there's no dead gap at the bottom. */}
-      <div className="grid flex-1 grid-cols-2 content-between gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+      {/* Grid flows top-down with uniform row/column gaps so the cards "perfectly
+          adjust" to the panel — no uneven content-between stretching the gap
+          between row 1 and row 2. Slightly tighter column gap makes the cards
+          a touch wider so they fill more of the panel width. */}
+      <div className="grid flex-1 grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {completed.map((a) => (
           <AnimeCard key={a.id} anime={a} />
         ))}
