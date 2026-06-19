@@ -1,9 +1,10 @@
 import type { z } from "zod";
-import type { rawCard } from "./schemas";
+import type { rawCard, rawSeason } from "./schemas";
 import type {
   AnimeCardModel,
   AnimeDetail,
   EpisodeCount,
+  SeasonModel,
   SpotlightModel,
 } from "../types";
 
@@ -32,6 +33,26 @@ export function toSpotlight(r: Raw): SpotlightModel {
     ...toCard(r),
     description: r.description ?? null,
     quality: r.quality ?? null,
+  };
+}
+
+/** Convert a sibling-season entry from the provider into the app model.
+ *  `duration` arrives as a year string ("2016") — keep it as string so the
+ *  consumer can decide whether to display it as a date or season badge. */
+export function toSeason(r: z.infer<typeof rawSeason>): SeasonModel {
+  const eps = r.episodes ?? {};
+  return {
+    id: r.id,
+    title: r.title ?? r.ename ?? "Untitled",
+    jname: r.jname ?? null,
+    poster: r.poster ?? null,
+    type: r.type ?? null,
+    year: r.duration ?? null,
+    episodes: { sub: eps.sub ?? null, dub: eps.dub ?? null },
+    order: r.order ?? null,
+    isCurrent: !!r.isCurrent,
+    season: r.season ?? null,
+    part: r.part ?? null,
   };
 }
 
@@ -77,6 +98,8 @@ export function toDetail(d: {
   } | null;
   info?: Record<string, unknown> | null;
   recommended: Raw[];
+  trending?: Raw[];
+  seasons?: z.infer<typeof rawSeason>[];
 }): AnimeDetail {
   const info = d.info ?? {};
   const durationRaw = infoStr(info, "duration"); // e.g. "24"
@@ -99,11 +122,15 @@ export function toDetail(d: {
     score: null,
     rating: d.stats?.pg ?? null,
     duration,
+    aired: infoStr(info, "aired"),
+    malScore: infoStr(info, "mal score"),
     genres: infoNames(info, "genres"),
     studios: infoNames(info, "studios"),
     episodes: { sub: d.stats?.sub ?? null, dub: d.stats?.dub ?? null },
     info: d.info ?? {},
     recommended: (d.recommended ?? []).map(toCard),
+    trending: (d.trending ?? []).map(toCard),
+    seasons: (d.seasons ?? []).map(toSeason),
   };
 }
 

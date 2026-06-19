@@ -1,43 +1,34 @@
-"use client";
-
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Play, Flame } from "lucide-react";
-import type { AnimeCardModel } from "@/lib/providers/types";
+import { Play } from "lucide-react";
+import type { SeasonModel } from "@/lib/providers/types";
 import { RailShell } from "@/components/common/RailShell";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { TypePill } from "@/components/anime/Badges";
 import { cn } from "@/lib/utils/cn";
 
-/**
- * Trending rail — portrait 3:4 poster cards matching the Seasons/Franchise
- * chrome (same ring treatment, type pill + eps count row, frost hover). The
- * leading card (lowest rank) gets a "Hot" pill in place of Seasons' "Current"
- * pill so the visual language still differentiates the two rails.
- *
- * Rendered inside the shared `RailShell` for the same masked snap-scroll
- * behaviour + chevron controls as every other rail on the home page.
- *
- * TODO: trending payloads don't carry `year` (only `rawDetailAnime` does), so
- * the year badge is omitted. If the upstream provider is updated to include
- * it, add a top-right `bg-base/80` pill here, mirroring SeasonRail.
- */
-export function Trending({ items }: { items: AnimeCardModel[] }) {
+export function SeasonRail({
+  title = "Seasons",
+  items,
+  currentId,
+}: {
+  title?: string;
+  items: SeasonModel[];
+  currentId?: string;
+}) {
   if (!items?.length) return null;
 
-  // Order by provider rank so the chart-top item is always first; nulls go to
-  // the tail so unranked fallbacks still render in the order we received them.
+  // Sort by `order` so the provider can reorder without breaking the UI; fall
+  // back to season+part as a deterministic secondary key.
   const ordered = [...items].sort((a, b) => {
-    const ar = typeof a.rank === "number" ? a.rank : Number.POSITIVE_INFINITY;
-    const br = typeof b.rank === "number" ? b.rank : Number.POSITIVE_INFINITY;
-    return ar - br;
+    const ao = a.order ?? (a.season ?? 0) * 10 + (a.part ?? 0);
+    const bo = b.order ?? (b.season ?? 0) * 10 + (b.part ?? 0);
+    return ao - bo;
   });
 
   return (
-    <RailShell title="Trending" eyebrow="Hot right now">
+    <RailShell title={title} eyebrow="Franchise">
       {ordered.map((s, i) => {
-        const isHot = i === 0;
-        const eps = s.episodes.sub ?? s.episodes.dub;
+        const isCurrent = s.isCurrent || s.id === currentId;
         return (
           <Link
             key={s.id}
@@ -48,7 +39,7 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
             <div
               className={cn(
                 "relative aspect-[3/4] overflow-hidden rounded-2xl bg-surface-2 ring-1 transition-all duration-300 ease-out",
-                isHot
+                isCurrent
                   ? "ring-frost shadow-[var(--shadow-frost)]"
                   : "ring-line group-hover:-translate-y-1 group-hover:ring-frost/40 group-hover:shadow-[var(--shadow-frost)]",
               )}
@@ -68,27 +59,17 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
               <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-base via-base/30 to-base/0" />
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
 
-              {isHot && (
+              {isCurrent && (
                 <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-frost/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-base shadow-[var(--shadow-neon)]">
-                  <motion.span
-                    aria-hidden
-                    animate={{ rotate: [0, -10, 10, -6, 0], scale: [1, 1.18, 1] }}
-                    transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-                    className="inline-flex"
-                  >
-                    <Flame className="size-2.5 fill-current" />
-                  </motion.span>
-                  Hot
+                  <Play className="size-2.5 fill-current" /> Current
                 </span>
               )}
 
-              {/* Hover play affordance — same as SeasonRail keeps the rail
-                  family feeling uniform when the user hovers. */}
-              <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <span className="grid size-11 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
-                  <Play className="size-5 fill-current" />
+              {s.year && (
+                <span className="absolute right-2 top-2 rounded-md bg-base/80 px-1.5 py-0.5 text-[10px] font-bold text-snow backdrop-blur">
+                  {s.year}
                 </span>
-              </span>
+              )}
 
               <div className="absolute inset-x-0 bottom-0 p-3">
                 <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-snow drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
@@ -96,9 +77,9 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
                 </h3>
                 <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-semibold text-muted">
                   {s.type && <TypePill type={s.type} />}
-                  {eps != null && (
+                  {(s.episodes.sub ?? s.episodes.dub) != null && (
                     <span className="rounded-sm bg-base/70 px-1.5 py-0.5 text-snow">
-                      {eps} eps
+                      {s.episodes.sub ?? s.episodes.dub} eps
                     </span>
                   )}
                 </div>

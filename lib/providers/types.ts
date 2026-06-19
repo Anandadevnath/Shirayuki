@@ -68,11 +68,41 @@ export interface AnimeDetail {
   score: number | null;
   rating: string | null;
   duration: number | null;
+  /** Normalised air-date window, e.g. "Apr 8, 2026 to ?" — surfaced
+   *  separately from `info` so the page doesn't have to duck-type the
+   *  raw provider record. */
+  aired: string | null;
+  /** Raw MAL score as a string (e.g. "8.42") so the page can render the
+   *  "MAL" chip without re-parsing the provider's `info["mal score"]`. */
+  malScore: string | null;
   genres: string[];
   studios: string[];
   episodes: EpisodeCount;
   info: Record<string, unknown>;
   recommended: AnimeCardModel[];
+  /** Same shape as a card, but represents sibling titles in the provider's
+   *  "trending" rail. Kept as cards so the existing Rail component renders
+   *  them with zero customisation. */
+  trending: AnimeCardModel[];
+  /** Sibling seasons in the same franchise. order + isCurrent are display
+   *  hints; the consumer (SeasonRail) renders "current" with a frost chip
+   *  and orders by the provider-provided `order` field. */
+  seasons: SeasonModel[];
+}
+
+/** Sibling-season card: prequel / sequel / "part 2" split. */
+export interface SeasonModel {
+  id: string;
+  title: string;
+  jname: string | null;
+  poster: string | null;
+  type: string | null;
+  year: string | null;
+  episodes: EpisodeCount;
+  order: number | null;
+  isCurrent: boolean;
+  season: number | null;
+  part: number | null;
 }
 
 export interface EpisodeModel {

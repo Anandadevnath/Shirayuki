@@ -69,11 +69,18 @@ export function toDetail(d: Detail): AnimeDetail {
     score: a.score ?? null,
     rating: a.isAdult ? "18+" : null,
     duration: a.duration ?? null,
+    aired: null,
+    malScore: null,
     genres: a.genres ?? [],
     studios: studioNames(a.studios),
     episodes: epCount(a.episodes),
     info: {},
     recommended: (d.recommendations ?? []).map(toCard),
+    // AnimeX doesn't surface a per-detail trending/season rail today; keep
+    // the contract consistent by returning empty arrays so downstream pages
+    // can unconditionally render the new sections.
+    trending: [],
+    seasons: [],
   };
 }
 

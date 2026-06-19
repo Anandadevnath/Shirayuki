@@ -89,9 +89,6 @@ export function EpisodeList({
               href={`/watch/${animeId}/${encodeURIComponent(e.episodeId)}`}
               className="group flex items-center gap-3 rounded-md border border-line bg-surface/40 px-3 py-2.5 transition-colors hover:border-frost/40 hover:bg-surface-2"
             >
-              <span className="grid size-9 shrink-0 place-items-center rounded-sm bg-base font-mono text-sm text-frost">
-                {e.number}
-              </span>
               <span className="line-clamp-1 flex-1 text-sm text-snow group-hover:text-frost">
                 {e.title ?? `Episode ${e.number}`}
               </span>

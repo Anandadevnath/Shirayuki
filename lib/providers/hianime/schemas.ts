@@ -67,6 +67,34 @@ export const homeData = z
   })
   .passthrough();
 
+/** Season entry — sibling titles in the same franchise (e.g. "Season 2",
+ *  "Season 3 part 2"). Field shape is fixed by HiAnime, but permissive here
+ *  so an upstream tweak doesn't break parsing. */
+export const rawSeason = z
+  .object({
+    order: z.number().optional(),
+    id: z.string(),
+    title: str,
+    jname: str,
+    ename: str,
+    href: str,
+    url: str,
+    poster: str,
+    type: str,
+    duration: str,
+    episode: num,
+    episodes: z
+      .object({ sub: num, dub: num })
+      .partial()
+      .nullable()
+      .optional(),
+    isCurrent: z.boolean().optional(),
+    season: z.number().optional(),
+    part: z.number().optional(),
+  })
+  .passthrough();
+export type RawSeason = z.infer<typeof rawSeason>;
+
 export const detailData = z
   .object({
     id: z.string(),
@@ -83,6 +111,11 @@ export const detailData = z
       .optional(),
     info: z.record(z.unknown()).nullable().optional(),
     recommended: z.array(rawCard).default([]),
+    // Provider returns the same trending rail embedded on detail pages; keep
+    // it default-empty so older responses don't 500.
+    trending: z.array(rawCard).default([]),
+    // Sibling seasons (prequels / sequels / "part 2" splits).
+    seasons: z.array(rawSeason).default([]),
   })
   .passthrough();
 
