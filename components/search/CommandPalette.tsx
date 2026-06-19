@@ -244,23 +244,27 @@ export function CommandPalette({ open, onOpenChange }: Props) {
       aria-modal="true"
       aria-label="Search"
     >
-      {/* Backdrop — heavier frost + cinematic scrim, deep blur so the panel
-          feels like it's floating above the page. */}
+      {/* Backdrop — translucent scrim, deep blur so the panel
+          feels like it's floating above the page. Lower opacity lets the
+          page bleed through, reinforcing the glassy/transparent feel. */}
       <button
-        className="absolute inset-0 cursor-default bg-base/85 backdrop-blur-xl"
+        className="absolute inset-0 cursor-default bg-base/55 backdrop-blur-2xl"
         aria-label="Close search"
         onClick={() => onOpenChange(false)}
       />
 
       {/* Panel — laser-frame gives the moving frost comet edges (same identity
           as the home glass panels), glass gives the frosted body. max-w-2xl
-          gives the panel real presence; vertically centred on screen. */}
-      <div className="laser-frame glass relative w-full max-w-2xl overflow-hidden rounded-xl shadow-[var(--shadow-frost)]">
-        {/* Input row */}
-        <div className="relative flex items-center gap-2.5 px-4">
+          gives the panel real presence; vertically centred on screen. The
+          custom `rounded-[3px]` is deliberately sharp — a tech/HUD vibe,
+          not a friendly bubble. */}
+      <div className="laser-frame glass relative w-full max-w-2xl overflow-hidden rounded-[3px] shadow-[var(--shadow-frost)]">
+        {/* Input row — taller (h-14) and roomier (px-5) so the search
+            field reads as the primary control, not a thin strip. */}
+        <div className="relative flex items-center gap-3 px-5">
           <Search
             className={cn(
-              "size-4 shrink-0",
+              "size-5 shrink-0",
               trimmed ? "text-frost" : "text-faint",
             )}
           />
@@ -270,7 +274,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Search anime…"
-            className="h-12 w-full bg-transparent text-sm text-snow outline-none placeholder:text-faint/80"
+            className="h-14 w-full bg-transparent text-base text-snow outline-none placeholder:text-faint/80"
             aria-label="Search anime"
             autoComplete="off"
             spellCheck={false}
@@ -278,11 +282,11 @@ export function CommandPalette({ open, onOpenChange }: Props) {
           {loading ? (
             <FrostDots />
           ) : trimmed ? (
-            <kbd className="hidden rounded border border-frost/25 px-1.5 py-0.5 font-mono text-[10px] text-frost/80 sm:inline-flex sm:items-center sm:gap-0.5">
-              <CornerDownLeft className="size-2.5" />
+            <kbd className="hidden rounded-sm border border-frost/30 px-2 py-0.5 font-mono text-[11px] text-frost/80 sm:inline-flex sm:items-center sm:gap-0.5">
+              <CornerDownLeft className="size-3" />
             </kbd>
           ) : (
-            <kbd className="hidden rounded border border-line/80 bg-base/40 px-1.5 py-0.5 font-mono text-[10px] text-faint sm:inline">
+            <kbd className="hidden rounded-sm border border-line/80 bg-base/40 px-2 py-0.5 font-mono text-[11px] text-faint sm:inline">
               ⌘K
             </kbd>
           )}
@@ -295,7 +299,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
           <div
             aria-hidden
             className={cn(
-              "absolute inset-x-4 top-0 h-px origin-left bg-gradient-to-r from-transparent via-frost to-transparent transition-transform duration-500 ease-out",
+              "absolute inset-x-5 top-0 h-px origin-left bg-gradient-to-r from-transparent via-frost to-transparent transition-transform duration-500 ease-out",
               trimmed ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0",
             )}
           />
@@ -305,22 +309,23 @@ export function CommandPalette({ open, onOpenChange }: Props) {
             this season" on empty state. Whisper-thin mono caps with wide
             tracking, the Linear-style eyebrow. */}
         {(merged.length > 0 || empty) && (
-          <div className="flex items-center justify-between px-4 pt-2.5 pb-1.5">
-            <span className="font-mono text-[10px] uppercase tracking-[0.18em] text-faint">
+          <div className="flex items-center justify-between px-5 pt-3 pb-2">
+            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-faint">
               {empty ? "Featured this season" : "Suggestions"}
             </span>
-            <span className="font-mono text-[10px] tabular-nums text-faint/70">
+            <span className="font-mono text-[11px] tabular-nums text-faint/70">
               {merged.length > 0 ? merged.length : indexReady ? "" : "…"}
             </span>
           </div>
         )}
 
-        {/* Results — pb-9 reserves space for the floating footer so the
-            last row is never clipped by it. */}
-        <div className="no-scrollbar max-h-[64vh] overflow-y-auto pb-9">
+        {/* Results — pb-12 reserves space for the floating footer so the
+            last row is never clipped by it. Rows are 60–68px tall — poster
+            + title + jname all read clearly, no longer cramped. */}
+        <div className="no-scrollbar max-h-[64vh] overflow-y-auto pb-12">
           {/* No-results state — only when there's a query but nothing matched. */}
           {!empty && merged.length === 0 && !loading && indexReady && (
-            <p className="px-4 py-6 text-center text-xs text-faint">
+            <p className="px-5 py-8 text-center text-sm text-faint">
               No matches.{" "}
               <button
                 onClick={submitSearch}
@@ -332,7 +337,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
           )}
 
           {/* Rows — whisper-thin dividers, no card padding. Each row is a
-              single 40–44px strip: poster · title+jname · score+eps·type. */}
+              roomy strip: poster · title+jname · score+eps·type. */}
           <ul className="flex flex-col">
             {merged.map((r, i) => {
               const epText = formatEpisodes(r.episodes);
@@ -347,7 +352,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
                     onMouseEnter={() => setActive(i)}
                     onClick={() => go(r.id)}
                     className={cn(
-                      "group relative flex w-full items-center gap-3 overflow-hidden px-4 py-1.5 text-left",
+                      "group relative flex w-full items-center gap-4 overflow-hidden px-5 py-2.5 text-left",
                       i === active
                         ? "bg-frost-soft/60"
                         : "hover:bg-frost-soft/30",
@@ -357,19 +362,19 @@ export function CommandPalette({ open, onOpenChange }: Props) {
                     <span
                       aria-hidden
                       className={cn(
-                        "absolute inset-y-1 left-0 w-[2px] origin-top rounded-full bg-gradient-to-b from-frost via-frost-deep to-transparent",
+                        "absolute inset-y-2 left-0 w-[2px] origin-top bg-gradient-to-b from-frost via-frost-deep to-transparent",
                         i === active
                           ? "scale-y-100 opacity-100"
                           : "scale-y-0 opacity-0",
                       )}
                     />
-                    <span className="relative h-10 w-7 shrink-0 overflow-hidden rounded bg-surface-2 ring-1 ring-line/60">
+                    <span className="relative h-14 w-10 shrink-0 overflow-hidden bg-surface-2 ring-1 ring-line/60">
                       {r.poster && (
                         <Image
                           src={r.poster}
                           alt=""
                           fill
-                          sizes="28px"
+                          sizes="40px"
                           className="object-cover"
                         />
                       )}
@@ -377,23 +382,23 @@ export function CommandPalette({ open, onOpenChange }: Props) {
                     <span className="min-w-0 flex-1">
                       <span
                         className={cn(
-                          "block truncate text-[13px] font-semibold leading-tight",
+                          "block truncate text-[15px] font-semibold leading-tight",
                           i === active ? "text-frost" : "text-snow",
                         )}
                       >
                         {highlight(r.title, trimmed)}
                       </span>
                       {r.jname && (
-                        <span className="block truncate text-[11px] leading-tight text-faint">
+                        <span className="mt-1 block truncate text-[13px] leading-tight text-faint">
                           {highlight(r.jname, trimmed)}
                         </span>
                       )}
                     </span>
                     {hasMeta && (
-                      <span className="flex shrink-0 items-center gap-2 text-[11px] tabular-nums text-faint">
+                      <span className="flex shrink-0 items-center gap-2.5 text-[12px] tabular-nums text-faint">
                         {typeof r.score === "number" && (
-                          <span className="flex items-center gap-0.5 font-semibold text-snow/90">
-                            <Star className="size-3 fill-warning text-warning" />
+                          <span className="flex items-center gap-1 font-semibold text-snow/90">
+                            <Star className="size-3.5 fill-warning text-warning" />
                             {r.score.toFixed(1)}
                           </span>
                         )}
@@ -401,7 +406,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
                           <span className="font-mono text-faint">{epText}</span>
                         )}
                         {r.type && (
-                          <span className="font-mono text-[10px] uppercase tracking-wide text-faint/80">
+                          <span className="font-mono text-[11px] uppercase tracking-wide text-faint/80">
                             {r.type}
                           </span>
                         )}
@@ -418,10 +423,10 @@ export function CommandPalette({ open, onOpenChange }: Props) {
             gradient + backdrop-blur keep rows legible as they scroll
             underneath. No layout reservation, so the last row is never
             clipped by it. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-gradient-to-t from-base/90 via-base/60 to-transparent px-4 py-2 text-[10px] text-faint backdrop-blur-[6px]">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-gradient-to-t from-base/80 via-base/45 to-transparent px-5 py-2.5 text-[11px] text-faint backdrop-blur-[6px]">
           <button
             onClick={submitSearch}
-            className="pointer-events-auto group inline-flex items-center gap-1.5 rounded-full border border-frost/40 bg-base/40 px-2.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-frost transition-colors hover:border-frost/70 hover:text-snow"
+            className="pointer-events-auto group inline-flex items-center gap-2 rounded-sm border border-frost/40 bg-base/40 px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-frost transition-colors hover:border-frost/70 hover:text-snow"
           >
             See all results
             <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />

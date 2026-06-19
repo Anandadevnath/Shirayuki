@@ -103,10 +103,10 @@
 
 @layer utilities {
   .glass {
-    background: var(--color-overlay);
-    backdrop-filter: blur(16px) saturate(1.1);
-    -webkit-backdrop-filter: blur(16px) saturate(1.1);
-    border: 1px solid var(--color-line);
+    background: color-mix(in oklch, var(--color-base) 35%, transparent);
+    backdrop-filter: blur(20px) saturate(1.15);
+    -webkit-backdrop-filter: blur(20px) saturate(1.15);
+    border: 1px solid color-mix(in oklch, var(--color-frost) 14%, transparent);
   }
   .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
@@ -230,57 +230,50 @@
   padding: 1px;
   background: linear-gradient(
     140deg,
-    color-mix(in oklch, var(--color-frost-deep) 35%, transparent),
-    transparent 40%,
-    transparent 60%,
-    color-mix(in oklch, var(--color-frost) 35%, transparent)
+    color-mix(in oklch, var(--color-frost-deep) 55%, transparent),
+    transparent 35%,
+    transparent 65%,
+    color-mix(in oklch, var(--color-frost) 55%, transparent)
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
+  filter: drop-shadow(0 0 6px color-mix(in oklch, var(--color-frost) 35%, transparent));
   pointer-events: none;
 }
-/* Two travelling comets, 180° apart, on a thin bright ring. */
+/* Two travelling comets, 180° apart, on a thin bright ring. The ring is now
+   a full 2px thick (up from 1px) with a hard bright head and a longer tail
+   for an unmistakable laser-sweep identity. */
 .laser-frame::after {
   content: "";
   position: absolute;
   inset: -1px;
   z-index: 0;
   border-radius: inherit;
-  padding: 1px;
+  padding: 2px;
   background: conic-gradient(
     from var(--laser-angle) at 50% 50%,
     transparent 0deg,
-    transparent 38deg,
-    color-mix(in oklch, var(--color-frost-deep) 55%, transparent) 74deg,
-    var(--color-frost) 86deg,
-    #ffffff 90deg,
-    transparent 94deg,
-    transparent 218deg,
-    color-mix(in oklch, var(--color-frost-deep) 55%, transparent) 254deg,
-    var(--color-frost) 266deg,
-    #ffffff 270deg,
-    transparent 274deg,
+    transparent 30deg,
+    color-mix(in oklch, var(--color-frost-deep) 70%, transparent) 72deg,
+    var(--color-frost) 84deg,
+    #ffffff 88deg,
+    transparent 92deg,
+    transparent 210deg,
+    color-mix(in oklch, var(--color-frost-deep) 70%, transparent) 252deg,
+    var(--color-frost) 264deg,
+    #ffffff 268deg,
+    transparent 272deg,
     transparent 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  filter: drop-shadow(0 0 4px var(--color-frost))
-    drop-shadow(0 0 12px var(--color-frost-deep));
-  animation: laser-spin 3.6s linear infinite;
+  filter: drop-shadow(0 0 6px var(--color-frost))
+    drop-shadow(0 0 18px var(--color-frost-deep))
+    drop-shadow(0 0 2px #ffffff);
+  animation: laser-spin 3.2s linear infinite;
   pointer-events: none;
-}
-/* Freeze the revolving comet while the panel is hovered or keyboard-focused.
-   The conic-gradient + drop-shadow ring repaints the full perimeter every
-   frame; left running, that per-frame raster contends with the GPU hover
-   transitions of cards INSIDE the panel and reads as micro-stutter ("a bit of
-   delay") when moving across the grid. The comet only matters at rest — the
-   eye is on the cards during interaction — so pausing it hands the whole frame
-   budget back to the hover animation. Resumes the instant the pointer leaves. */
-.laser-frame:hover::after,
-.laser-frame:focus-within::after {
-  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {
