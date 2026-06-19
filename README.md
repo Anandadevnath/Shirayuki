@@ -4,7 +4,6 @@
 <p align="center">
   <picture>
     <source media="(prefers-color-scheme: dark)" srcset="public/logos/shirayuki2.png" />
-    <source media="(prefers-color-scheme: light)" srcset="public/logos/shirayuki2.png" />
     <img
       src="public/logos/shirayuki2.png"
       alt="Shirayuki"
