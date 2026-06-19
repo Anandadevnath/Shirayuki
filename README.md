@@ -2,25 +2,6 @@
      the #gh-light-mode-only / #gh-dark-mode-only fragment trick. -->
 
 <p align="center">
-  <picture>
-    <source media="(prefers-color-scheme: dark)" srcset="public/logos/shirayuki2.png" />
-    <img
-      src="public/logos/shirayuki2.png"
-      alt="Shirayuki"
-      width="120"
-      height="120"
-      align="right"
-      style="margin-left: 24px;"
-    />
-  </picture>
-  <img
-    src="public/logos/text.png"
-    alt="Sode no Shirayuki"
-    width="520"
-  />
-</p>
-
-<p align="center">
   <em>「 白い雪の姫 」 — the white-snow princess</em><br/>
   <strong>A dark-first, performance-obsessed anime streaming client.</strong><br/>
   Forged in frost. One player. One card. One nav. No stack traces.
