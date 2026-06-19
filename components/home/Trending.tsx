@@ -179,24 +179,25 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
         </div>
       ) : (
         // Auto-drifting marquee — pauses on any pointer/touch interaction.
+        // The container itself is masked on the left/right edges so cards
+        // physically fade into transparency at the rails (no overlay divs, no
+        // scrim layers — the page background shows through wherever the mask
+        // is transparent). Center cards are unaffected; hover/scroll/click
+        // behaviour is preserved.
         <div
           className="relative overflow-hidden"
+          style={{
+            WebkitMaskImage:
+              "linear-gradient(to right, transparent 0, black 120px, black calc(100% - 120px), transparent 100%)",
+            maskImage:
+              "linear-gradient(to right, transparent 0, black 120px, black calc(100% - 120px), transparent 100%)",
+          }}
           onPointerEnter={() => setPaused(true)}
           onPointerLeave={() => setPaused(false)}
           onTouchStart={() => setPaused(true)}
           onTouchEnd={() => setPaused(false)}
           onTouchCancel={() => setPaused(false)}
         >
-          {/* Edge fades so cards melt in/out of the track instead of clipping */}
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 left-0 z-10 w-16 bg-gradient-to-r from-base to-transparent"
-          />
-          <div
-            aria-hidden
-            className="pointer-events-none absolute inset-y-0 right-0 z-10 w-16 bg-gradient-to-l from-base to-transparent"
-          />
-
           <motion.div
             ref={trackRef}
             style={{ x }}
