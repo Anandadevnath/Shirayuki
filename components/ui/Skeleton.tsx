@@ -253,3 +253,110 @@ export function ScheduleSkeleton() {
     </section>
   );
 }
+
+// ── Watch page (player + title strip + server strip + episode sidebar) ────────
+// Mirrors the row-1 + row-2 layout of app/watch/[id]/[ep]/page.tsx so the
+// transition from skeleton → content causes zero layout shift.
+export function WatchSkeleton() {
+  return (
+    <div className="space-y-8">
+      {/* Row 1: Player + Episode Sidebar (synced height) */}
+      <div className="grid items-stretch gap-6 lg:grid-cols-[1fr_360px]">
+        {/* Player column */}
+        <div className="laser-frame glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
+          {/* Video frame */}
+          <Skeleton className="aspect-video w-full rounded-t-md" />
+
+          {/* Title strip */}
+          <div className="border-t border-line/60 bg-surface/30 px-5 py-4 backdrop-blur-md sm:px-6">
+            <Skeleton className="h-6 w-2/3 rounded-md" />
+            <Skeleton className="mt-2 h-3.5 w-1/3 rounded" />
+          </div>
+
+          {/* Server switcher strip */}
+          <div className="space-y-3 border-t border-line/60 bg-surface/20 px-5 py-4 backdrop-blur-md sm:px-6">
+            <div className="flex flex-wrap items-center gap-3">
+              <Skeleton className="h-3 w-28 rounded" />
+              <div className="flex gap-1">
+                <Skeleton className="h-6 w-14 rounded-sm" />
+                <Skeleton className="h-6 w-14 rounded-sm" />
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <Skeleton className="h-3 w-16 rounded" />
+              <div className="flex flex-wrap gap-1">
+                <Skeleton className="h-6 w-20 rounded-sm" />
+                <Skeleton className="h-6 w-16 rounded-sm" />
+                <Skeleton className="h-6 w-20 rounded-sm" />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Episode sidebar */}
+        <aside className="laser-frame glass flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md">
+          <div className="flex items-center justify-between border-b border-line/60 bg-surface/30 px-5 py-4 backdrop-blur-md">
+            <Skeleton className="h-4 w-28 rounded" />
+            <Skeleton className="h-3 w-8 rounded" />
+          </div>
+          <div className="max-h-[640px] flex-1 space-y-1 overflow-hidden p-2">
+            {Array.from({ length: 12 }).map((_, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-3 rounded-md px-2.5 py-2"
+              >
+                <Skeleton className="size-7 shrink-0 rounded-sm" />
+                <div
+                  className="h-3.5 rounded bg-surface-2 shimmer"
+                  style={{ width: `${65 - (i % 4) * 10}%` }}
+                />
+              </div>
+            ))}
+          </div>
+        </aside>
+      </div>
+
+      {/* Row 2: Cinematic info (mirrors CinematicInfo layout) */}
+      <section className="relative overflow-hidden rounded-md glass p-5 sm:p-8">
+        <div className="grid gap-6 md:grid-cols-[180px_1fr]">
+          {/* Poster */}
+          <Skeleton className="aspect-[3/4] w-full rounded-md" />
+
+          {/* Info column */}
+          <div className="min-w-0 space-y-5">
+            {/* Title */}
+            <div className="space-y-3">
+              <Skeleton className="h-7 w-3/4 rounded-md sm:h-9" />
+              <Skeleton className="h-7 w-1/2 rounded-md sm:h-9" />
+            </div>
+
+            {/* Meta pills row */}
+            <div className="flex flex-wrap gap-2">
+              <Skeleton className="h-6 w-16 rounded-full" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+              <Skeleton className="h-6 w-14 rounded-full" />
+              <Skeleton className="h-6 w-24 rounded-full" />
+            </div>
+
+            {/* Description */}
+            <div className="space-y-2">
+              <Skeleton className="h-3.5 w-full rounded" />
+              <Skeleton className="h-3.5 w-full rounded" />
+              <Skeleton className="h-3.5 w-5/6 rounded" />
+              <Skeleton className="h-3.5 w-2/3 rounded" />
+            </div>
+
+            {/* Genres */}
+            <div className="flex flex-wrap gap-1.5">
+              <Skeleton className="h-6 w-16 rounded-full" />
+              <Skeleton className="h-6 w-20 rounded-full" />
+              <Skeleton className="h-6 w-14 rounded-full" />
+              <Skeleton className="h-6 w-[4.5rem] rounded-full" />
+              <Skeleton className="h-6 w-12 rounded-full" />
+            </div>
+          </div>
+        </div>
+      </section>
+    </div>
+  );
+}
