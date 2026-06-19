@@ -266,10 +266,21 @@
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  filter: drop-shadow(0 0 4px var(--color-frost)) drop-shadow(0 0 9px var(--color-frost))
-    drop-shadow(0 0 16px var(--color-frost-deep));
+  filter: drop-shadow(0 0 4px var(--color-frost))
+    drop-shadow(0 0 12px var(--color-frost-deep));
   animation: laser-spin 3.6s linear infinite;
   pointer-events: none;
+}
+/* Freeze the revolving comet while the panel is hovered or keyboard-focused.
+   The conic-gradient + drop-shadow ring repaints the full perimeter every
+   frame; left running, that per-frame raster contends with the GPU hover
+   transitions of cards INSIDE the panel and reads as micro-stutter ("a bit of
+   delay") when moving across the grid. The comet only matters at rest — the
+   eye is on the cards during interaction — so pausing it hands the whole frame
+   budget back to the hover animation. Resumes the instant the pointer leaves. */
+.laser-frame:hover::after,
+.laser-frame:focus-within::after {
+  animation-play-state: paused;
 }
 
 @media (prefers-reduced-motion: reduce) {

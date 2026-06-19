@@ -123,7 +123,11 @@ const FlowCard = memo(function FlowCard({
       <div
         className={cn(
           "relative h-full w-full overflow-hidden rounded-[1.5rem] bg-surface-2 ring-1 transition-[box-shadow,filter] duration-500 ease-out",
-          "[filter:blur(var(--blur))]",
+          // Only the receding side cards get the blur filter. Applying any
+          // `filter` (even blur(0)) to the active hero forces a compositor layer
+          // that hi-DPI browsers rasterize at 1× and upscale — softening the
+          // poster. The hero's blur is always 0, so we simply omit the filter.
+          !active && "[filter:blur(var(--blur))]",
           active
             ? "ring-frost/60 shadow-[0_40px_80px_-24px_rgba(0,0,0,0.9),var(--shadow-frost)]"
             : "ring-line/70 shadow-[var(--shadow-soft)]",
@@ -140,7 +144,14 @@ const FlowCard = memo(function FlowCard({
               src={anime.poster}
               alt={anime.title}
               fill
-              sizes="(max-width:640px) 60vw, (max-width:1024px) 38vw, 320px"
+              // Posters are 16:9 "big_cover" banners shown in a 3:4 portrait box
+              // via object-cover, so the image is scaled up until its HEIGHT fills
+              // the card — the width-based candidate must be large enough that the
+              // derived height still covers ~296px @2dpr (~1080px wide). A 320px
+              // sizes hint fetched a 640px variant and upscaled it vertically ~1.6×,
+              // which read as blur. These values keep the centred hero crisp.
+              sizes="(max-width:640px) 80vw, (max-width:1024px) 60vw, 600px"
+              quality={90}
               className="object-cover"
             />
           </div>
