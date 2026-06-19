@@ -3,9 +3,18 @@ import { Play } from "lucide-react";
 import type { SeasonModel } from "@/lib/providers/types";
 import { RailShell } from "@/components/common/RailShell";
 import { SmartImage } from "@/components/ui/SmartImage";
-import { TypePill } from "@/components/anime/Badges";
 import { cn } from "@/lib/utils/cn";
 
+/**
+ * Season rail — same landscape [3/2] card + oversized chart-number overlay
+ * as the home Trending rail, so the two ranked rails share one visual
+ * language. The number here is the season's position in the franchise
+ * (derived from `order`/`season`/`part`) and is what makes the rail read
+ * as a "seasons chart" rather than a flat poster strip.
+ *
+ * The current season keeps the "Current" pill (mirrors how Trending marks
+ * its chart-top entry with "Hot") so the visual vocabulary stays parallel.
+ */
 export function SeasonRail({
   title = "Seasons",
   items,
@@ -29,19 +38,33 @@ export function SeasonRail({
     <RailShell title={title} eyebrow="Franchise">
       {ordered.map((s, i) => {
         const isCurrent = s.isCurrent || s.id === currentId;
+        // Display label: prefer provider "season" (e.g. "2"), then part
+        // ("Part 2"), then fall back to the sorted position. Falls back to
+        // ordinal when the provider didn't supply a season number (some
+        // movie/special entries), so the rail always reads as a ranked list.
+        const label =
+          s.season != null
+            ? `S${s.season}${s.part != null && s.part > 1 ? `·${s.part}` : ""}`
+            : s.part != null
+              ? `Part ${s.part}`
+              : String(i + 1);
+        const top3 = i < 3;
+
         return (
           <Link
             key={s.id}
             href={`/anime/${s.id}`}
             style={{ ["--reveal-delay" as string]: `${Math.min(i, 9) * 60}ms` }}
-            className="reveal group block w-[44vw] shrink-0 snap-start sm:w-[24vw] md:w-[200px]"
+            className="reveal group block w-44 shrink-0 snap-start sm:w-52 md:w-56"
           >
             <div
               className={cn(
-                "relative aspect-[3/4] overflow-hidden rounded-2xl bg-surface-2 ring-1 transition-all duration-300 ease-out",
+                "relative aspect-[3/2] overflow-hidden rounded-2xl bg-surface-2 ring-1 transition-all duration-300 ease-out",
                 isCurrent
                   ? "ring-frost shadow-[var(--shadow-frost)]"
-                  : "ring-line group-hover:-translate-y-1 group-hover:ring-frost/40 group-hover:shadow-[var(--shadow-frost)]",
+                  : top3
+                    ? "ring-frost/40 group-hover:-translate-y-1 group-hover:ring-frost group-hover:shadow-[var(--shadow-frost)]"
+                    : "ring-line group-hover:-translate-y-1 group-hover:ring-frost/60 group-hover:shadow-[var(--shadow-frost)]",
               )}
             >
               {s.poster ? (
@@ -49,40 +72,61 @@ export function SeasonRail({
                   src={s.poster}
                   alt={s.title}
                   fill
-                  sizes="(max-width:640px) 40vw, (max-width:1024px) 22vw, 180px"
-                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
+                  sizes="(max-width:640px) 44vw, (max-width:1024px) 24vw, 224px"
+                  className="object-cover brightness-[0.88] transition-[filter] duration-300 group-hover:brightness-110"
                 />
               ) : (
                 <div className="grid h-full place-items-center text-faint">No image</div>
               )}
 
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-base via-base/30 to-base/0" />
+              {/* Deep bottom scrim — seats the oversized number + title */}
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-base via-base/35 to-transparent" />
               <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
 
-              {isCurrent && (
-                <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-frost/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-base shadow-[var(--shadow-neon)]">
-                  <Play className="size-2.5 fill-current" /> Current
-                </span>
-              )}
+              {/* Hover frost wash — tints the art instead of zooming it */}
+              <div className="pointer-events-none absolute inset-0 bg-frost-soft opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
+              {/* Year pill (top-right) — keeps the chronology legible at a
+                  glance, same role as before but repositioned to match the
+                  larger layout. */}
               {s.year && (
                 <span className="absolute right-2 top-2 rounded-md bg-base/80 px-1.5 py-0.5 text-[10px] font-bold text-snow backdrop-blur">
                   {s.year}
                 </span>
               )}
 
-              <div className="absolute inset-x-0 bottom-0 p-3">
-                <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-snow drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
-                  {s.title}
-                </h3>
-                <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-semibold text-muted">
-                  {s.type && <TypePill type={s.type} />}
-                  {(s.episodes.sub ?? s.episodes.dub) != null && (
-                    <span className="rounded-sm bg-base/70 px-1.5 py-0.5 text-snow">
-                      {s.episodes.sub ?? s.episodes.dub} eps
-                    </span>
+              {/* Current season pill (top-left) — mirrors Trending's "Hot" */}
+              {isCurrent && (
+                <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-frost/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-base shadow-[var(--shadow-neon)]">
+                  <Play className="size-2.5 fill-current" /> Current
+                </span>
+              )}
+
+              {/* Hover play affordance */}
+              <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                <span className="grid size-11 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
+                  <Play className="size-5 fill-current" />
+                </span>
+              </span>
+
+              {/* Oversized season label + title, baseline-aligned */}
+              <div className="absolute inset-x-0 bottom-0 flex items-end gap-2 p-2.5">
+                <span
+                  className={cn(
+                    "font-display text-4xl font-extrabold leading-[0.78] tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] sm:text-5xl",
+                    isCurrent || top3 ? "text-frost" : "text-snow",
                   )}
-                </div>
+                  style={{
+                    WebkitTextStroke: isCurrent || top3
+                      ? "1.5px var(--color-frost)"
+                      : "1px rgba(255,255,255,0.55)",
+                  }}
+                >
+                  {label}
+                </span>
+                <span className="line-clamp-2 pb-0.5 text-left text-[12px] font-semibold leading-tight text-snow drop-shadow-[0_1px_6px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
+                  {s.title}
+                </span>
               </div>
             </div>
           </Link>
