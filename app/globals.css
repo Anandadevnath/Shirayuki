@@ -287,3 +287,90 @@
     scroll-behavior: auto !important;
   }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Cinematic details — premium anime info card.
+   GPU-only (transform/opacity). Honors reduced-motion above.
+   ───────────────────────────────────────────────────────────── */
+
+/* Poster slow-float idle motion (transform-only) */
+@keyframes poster-float {
+  0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
+  50%      { transform: translate3d(0, -4px, 0) scale(1.005); }
+}
+.poster-float { animation: poster-float 6s ease-in-out infinite; }
+
+/* Soft ambient glow breathing behind the poster */
+@keyframes ambient-pulse {
+  0%, 100% { opacity: 0.55; transform: scale(1); }
+  50%      { opacity: 0.85; transform: scale(1.06); }
+}
+.ambient-pulse { animation: ambient-pulse 5s ease-in-out infinite; }
+
+/* Banner slow zoom-in (one-shot, on mount) */
+@keyframes banner-reveal {
+  from { transform: scale3d(1.08, 1.08, 1); opacity: 0; }
+  to   { transform: scale3d(1, 1, 1);          opacity: 1; }
+}
+.banner-reveal { animation: banner-reveal 1.4s cubic-bezier(0.16, 1, 0.3, 1) both; }
+
+/* Title rise (slightly more pronounced than .reveal) */
+@keyframes title-rise {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.title-rise { animation: title-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: var(--reveal-delay, 0ms); }
+
+/* Hover-lift preset for cards (transform-only) */
+.hover-lift {
+  transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 350ms cubic-bezier(0.16, 1, 0.3, 1),
+              border-color 350ms ease;
+  will-change: transform;
+}
+.hover-lift:hover {
+  transform: translate3d(0, -2px, 0);
+}
+
+/* Genre pill interactive */
+.genre-pill {
+  transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
+              background-color 250ms ease,
+              border-color 250ms ease,
+              box-shadow 250ms ease;
+  will-change: transform;
+}
+.genre-pill:hover {
+  transform: translate3d(0, -1px, 0) scale(1.04);
+}
+
+/* Stat-card micro-shine sweep (background-position, GPU friendly) */
+@keyframes shine-sweep {
+  0%   { background-position: -200% 50%; }
+  100% { background-position: 200% 50%; }
+}
+
+/* Read-more caret pulse */
+@keyframes caret-blink {
+  0%, 100% { opacity: 0.3; }
+  50%      { opacity: 1; }
+}
+.caret-blink { animation: caret-blink 1.4s ease-in-out infinite; }
+
+/* Frost underline accent (used in title eyebrow) */
+.frost-eyebrow {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  text-transform: uppercase;
+  letter-spacing: 0.18em;
+  font-size: 10px;
+  color: var(--color-frost);
+}
+.frost-eyebrow::before {
+  content: "";
+  width: 18px;
+  height: 1px;
+  background: linear-gradient(90deg, var(--color-frost), transparent);
+}

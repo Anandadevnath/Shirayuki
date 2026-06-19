@@ -6,6 +6,7 @@ import { getAnime, getEpisodes, getServers, getSources, safe } from "@/lib/api";
 import type { ServerModel } from "@/lib/providers/types";
 import { Player } from "@/components/player/Player";
 import { ErrorState } from "@/components/common/States";
+import CinematicInfo from "@/components/details/CinematicInfo";
 import { cn } from "@/lib/utils/cn";
 
 export const dynamic = "force-dynamic";
@@ -48,7 +49,6 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const category: "sub" | "dub" =
     cat === "dub" && servers.dub.length ? "dub" : "sub";
   const pool: ServerModel[] = category === "dub" ? servers.dub : servers.sub;
-  // Honour the requested server, else fall back to the provider's first.
   const chosen = pool.find((s) => s.nameId === server) ?? pool[0] ?? null;
 
   const currentIdx = episodes.findIndex((e) => e.episodeId === episodeId);
@@ -70,135 +70,163 @@ export default async function WatchPage({ params, searchParams }: Props) {
     `/watch/${id}/${encodeURIComponent(episodeId)}?cat=${c}&server=${s}`;
 
   return (
-    <div className="grid gap-6 lg:grid-cols-[1fr_340px]">
-      <div className="min-w-0">
-        {playerSrc && sources ? (
-          <Player
-            src={playerSrc}
-            poster={anime.poster}
-            tracks={sources.tracks.map((t) => ({ src: t.file, label: t.label, default: t.default }))}
-            intro={sources.intro}
-            outro={sources.outro}
-            nextHref={nextHref}
-            meta={{
-              animeId: id,
-              title: anime.title,
-              poster: anime.poster,
-              episodeId,
-              episodeNumber: epNum,
-              category,
-              server: chosen?.nameId ?? "",
-            }}
-          />
-        ) : (
-          <div className="aspect-video">
-            <ErrorState
-              message={
-                pool.length === 0
-                  ? "No streaming server is available for this episode yet. Try another episode."
-                  : "This server didn’t return a playable source. Pick a different server below."
-              }
-              retryHref={`/watch/${id}/${encodeURIComponent(episodeId)}`}
-            />
-          </div>
-        )}
-
-        <div className="mt-4">
-          <h1 className="text-xl font-bold">{anime.title}</h1>
-          <p className="text-sm text-muted">
-            Episode {epNum}
-            {episodes[currentIdx]?.title ? ` · ${episodes[currentIdx]?.title}` : ""}
-          </p>
-        </div>
-
-        {/* Category + server switcher (transparent reliability) */}
-        <div className="mt-4 space-y-3 rounded-lg border border-line bg-surface/40 p-4">
-          <div className="flex flex-wrap items-center gap-3">
-            <span className="flex items-center gap-1.5 text-xs text-faint">
-              <Captions className="size-3.5" /> Subtitles / Dub
-            </span>
-            <div className="flex gap-1">
-              {servers.sub.length > 0 && (
-                <Link
-                  href={swHref("sub", servers.sub[0].nameId)}
-                  className={cn(
-                    "flex items-center gap-1 rounded-sm px-3 py-1 text-xs",
-                    category === "sub" ? "bg-frost-soft text-frost" : "border border-line text-muted",
-                  )}
-                >
-                  <Captions className="size-3" /> SUB
-                </Link>
-              )}
-              {servers.dub.length > 0 && (
-                <Link
-                  href={swHref("dub", servers.dub[0].nameId)}
-                  className={cn(
-                    "flex items-center gap-1 rounded-sm px-3 py-1 text-xs",
-                    category === "dub" ? "bg-frost-soft text-frost" : "border border-line text-muted",
-                  )}
-                >
-                  <Mic className="size-3" /> DUB
-                </Link>
-              )}
-            </div>
+    <>
+      {/* ============== Row 1: Player + Episode Sidebar (synced height) ============== */}
+      <div className="grid items-stretch gap-6 lg:grid-cols-[1fr_360px]">
+        {/* ── Player container ──────────────────────────────────────── */}
+        <div className="laser-frame glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
+          <div className="relative">
+            {playerSrc && sources ? (
+              <Player
+                src={playerSrc}
+                poster={anime.poster}
+                tracks={sources.tracks.map((t) => ({ src: t.file, label: t.label, default: t.default }))}
+                intro={sources.intro}
+                outro={sources.outro}
+                nextHref={nextHref}
+                meta={{
+                  animeId: id,
+                  title: anime.title,
+                  poster: anime.poster,
+                  episodeId,
+                  episodeNumber: epNum,
+                  category,
+                  server: chosen?.nameId ?? "",
+                }}
+              />
+            ) : (
+              <div className="aspect-video rounded-t-md">
+                <ErrorState
+                  message={
+                    pool.length === 0
+                      ? "No streaming server is available for this episode yet. Try another episode."
+                      : "This server didn't return a playable source. Pick a different server below."
+                  }
+                  retryHref={`/watch/${id}/${encodeURIComponent(episodeId)}`}
+                />
+              </div>
+            )}
           </div>
 
-          {pool.length > 0 && (
+          {/* ── Title strip ─────────────────────────────────────────── */}
+          <div className="border-t border-line/60 bg-surface/30 px-5 py-4 backdrop-blur-md sm:px-6">
+            <h1 className="text-xl font-bold text-snow sm:text-2xl">{anime.title}</h1>
+            <p className="mt-0.5 text-sm text-muted">
+              Episode {epNum}
+              {episodes[currentIdx]?.title ? ` · ${episodes[currentIdx]?.title}` : ""}
+            </p>
+          </div>
+
+          {/* ── Server switcher (transparent + glassy) ──────────────── */}
+          <div className="space-y-3 border-t border-line/60 bg-surface/20 px-5 py-4 backdrop-blur-md sm:px-6">
             <div className="flex flex-wrap items-center gap-3">
               <span className="flex items-center gap-1.5 text-xs text-faint">
-                <ServerCog className="size-3.5" /> Server
+                <Captions className="size-3.5" /> Subtitles / Dub
               </span>
-              <div className="flex flex-wrap gap-1">
-                {pool.map((s) => (
+              <div className="flex gap-1">
+                {servers.sub.length > 0 && (
                   <Link
-                    key={s.nameId}
-                    href={swHref(category, s.nameId)}
+                    href={swHref("sub", servers.sub[0].nameId)}
                     className={cn(
-                      "rounded-sm px-3 py-1 text-xs",
-                      s.nameId === chosen?.nameId
+                      "flex items-center gap-1 rounded-sm px-3 py-1 text-xs transition-colors",
+                      category === "sub"
                         ? "bg-frost-soft text-frost"
-                        : "border border-line text-muted hover:text-snow",
+                        : "border border-line/60 text-muted hover:text-snow",
                     )}
                   >
-                    {s.name}
+                    <Captions className="size-3" /> SUB
                   </Link>
-                ))}
+                )}
+                {servers.dub.length > 0 && (
+                  <Link
+                    href={swHref("dub", servers.dub[0].nameId)}
+                    className={cn(
+                      "flex items-center gap-1 rounded-sm px-3 py-1 text-xs transition-colors",
+                      category === "dub"
+                        ? "bg-frost-soft text-frost"
+                        : "border border-line/60 text-muted hover:text-snow",
+                    )}
+                  >
+                    <Mic className="size-3" /> DUB
+                  </Link>
+                )}
               </div>
             </div>
-          )}
+
+            {pool.length > 0 && (
+              <div className="flex flex-wrap items-center gap-3">
+                <span className="flex items-center gap-1.5 text-xs text-faint">
+                  <ServerCog className="size-3.5" /> Server
+                </span>
+                <div className="flex flex-wrap gap-1">
+                  {pool.map((s) => (
+                    <Link
+                      key={s.nameId}
+                      href={swHref(category, s.nameId)}
+                      className={cn(
+                        "rounded-sm px-3 py-1 text-xs transition-colors",
+                        s.nameId === chosen?.nameId
+                          ? "bg-frost-soft text-frost"
+                          : "border border-line/60 text-muted hover:text-snow",
+                      )}
+                    >
+                      {s.name}
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
         </div>
+
+        {/* ── Episode Sidebar (height syncs with player) ──────────── */}
+        <aside className="laser-frame glass flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md">
+          <div className="flex items-center justify-between border-b border-line/60 bg-surface/30 px-5 py-4 backdrop-blur-md">
+            <h2 className="text-sm font-semibold text-snow">
+              Episodes <span className="text-faint">({episodes.length})</span>
+            </h2>
+            <span className="font-mono text-[10px] uppercase tracking-widest text-faint">
+              {category.toUpperCase()}
+            </span>
+          </div>
+          <div className="no-scrollbar scroll-frost max-h-[640px] flex-1 space-y-1 overflow-y-auto p-2">
+            {episodes.map((e) => (
+              <Link
+                key={e.episodeId}
+                href={`/watch/${id}/${encodeURIComponent(e.episodeId)}`}
+                className={cn(
+                  "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors",
+                  e.episodeId === episodeId
+                    ? "bg-frost-soft text-frost"
+                    : "text-muted hover:bg-surface-2/70 hover:text-snow",
+                )}
+              >
+                <span
+                  className={cn(
+                    "grid size-7 shrink-0 place-items-center rounded-sm font-mono text-xs",
+                    e.episodeId === episodeId
+                      ? "bg-frost/20 text-frost"
+                      : "bg-base text-faint",
+                  )}
+                >
+                  {e.number}
+                </span>
+                <span className="line-clamp-1 flex-1">
+                  {e.title ?? `Episode ${e.number}`}
+                </span>
+                {e.isFiller && (
+                  <span className="shrink-0 rounded-sm bg-warning/15 px-1.5 py-0.5 text-[10px] text-warning">
+                    F
+                  </span>
+                )}
+              </Link>
+            ))}
+          </div>
+        </aside>
       </div>
 
-      {/* Episode sidebar */}
-      <aside className="min-w-0">
-        <h2 className="mb-3 text-sm font-semibold text-muted">
-          Episodes ({episodes.length})
-        </h2>
-        <div className="no-scrollbar max-h-[70vh] space-y-1 overflow-y-auto rounded-lg border border-line bg-surface/40 p-2">
-          {episodes.map((e) => (
-            <Link
-              key={e.episodeId}
-              href={`/watch/${id}/${encodeURIComponent(e.episodeId)}`}
-              className={cn(
-                "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors",
-                e.episodeId === episodeId
-                  ? "bg-frost-soft text-frost"
-                  : "text-muted hover:bg-surface-2 hover:text-snow",
-              )}
-            >
-              <span className="grid size-7 shrink-0 place-items-center rounded-sm bg-base font-mono text-xs">
-                {e.number}
-              </span>
-              <span className="line-clamp-1 flex-1">{e.title ?? `Episode ${e.number}`}</span>
-              {e.isFiller && (
-                <span className="shrink-0 rounded-sm bg-warning/15 px-1.5 py-0.5 text-[10px] text-warning">
-                  F
-                </span>
-              )}
-            </Link>
-          ))}
-        </div>
-      </aside>
-    </div>
+      {/* ============== Row 2: Full-width Anime Details (Cinematic) ============== */}
+      <CinematicInfo anime={anime} category={category} epNum={epNum} />
+    </>
   );
 }

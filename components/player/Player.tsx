@@ -221,7 +221,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref }: Pl
   return (
     <div
       ref={wrapRef}
-      className="group relative aspect-video w-full overflow-hidden rounded-xl bg-black ring-1 ring-line"
+      className="group relative aspect-video w-full overflow-hidden rounded-t-md bg-black ring-1 ring-line"
       onMouseMove={nudgeUI}
       onMouseLeave={() => playing && setShowUI(false)}
     >
