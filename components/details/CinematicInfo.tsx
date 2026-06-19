@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Image from "next/image";
 import {
   Star, Tv, Clock, Film, Calendar, Building2, Play, Plus,
   Share2, Check, Sparkles, Award, Languages, Activity,
@@ -243,14 +244,16 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
           <div className="group/poster relative w-[180px]">
             {/* Glass frame with poster inside */}
             <div className="poster-float relative">
-              <div className="relative overflow-hidden rounded-md border border-line/60 bg-surface/40 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)] ring-1 ring-white/5 transition-transform duration-500 group-hover/poster:-translate-y-1 group-hover/poster:shadow-[0_30px_80px_-20px_rgba(124,58,237,0.4)]">
+              <div className="relative aspect-[2/3] w-full overflow-hidden rounded-md border border-line/60 bg-surface/40 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)] ring-1 ring-white/5 transition-transform duration-500 group-hover/poster:-translate-y-1 group-hover/poster:shadow-[0_30px_80px_-20px_rgba(124,58,237,0.4)]">
                 {anime.poster ? (
-                  <img
+                  <Image
                     src={anime.poster}
                     alt={anime.title}
-                    loading="lazy"
-                    decoding="async"
-                    className="block aspect-[2/3] w-full object-cover transition-transform duration-700 group-hover/poster:scale-[1.03]"
+                    fill
+                    priority
+                    sizes="(max-width: 768px) 160px, 180px"
+                    quality={85}
+                    className="object-cover transition-transform duration-700 group-hover/poster:scale-[1.03]"
                   />
                 ) : (
                   <div className="grid aspect-[2/3] w-full place-items-center bg-surface-2 text-xs text-faint">

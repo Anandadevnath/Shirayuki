@@ -1,7 +1,8 @@
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { getHome, safe } from "@/lib/api";
+import { getGenres, safe } from "@/lib/api";
 
 const QUICK_LINKS = [
   { href: "/category/most-popular", label: "Popular" },
@@ -36,10 +37,6 @@ function Social({ href, label, children }: { href: string; label: string; childr
 
 export async function Footer() {
   const year = new Date().getFullYear();
-  // Genres come from the (cached) home payload, so the footer adds no extra
-  // round-trip when it renders alongside the home page.
-  const res = await safe(getHome);
-  const genres = res.ok ? res.data.genres : [];
 
   return (
     <footer className="relative z-10 mt-20 overflow-hidden border-t border-line/70">
@@ -65,7 +62,6 @@ export async function Footer() {
                 fill
                 sizes="80px"
                 className="object-contain"
-                priority
               />
             </span>
             <span className="relative -ml-6 h-16 w-52 sm:-ml-4 sm:h-20 sm:w-64">
@@ -75,7 +71,6 @@ export async function Footer() {
                 fill
                 sizes="256px"
                 className="object-contain object-left"
-                priority
               />
             </span>
           </div>
@@ -119,20 +114,20 @@ export async function Footer() {
           ))}
         </nav>
 
-        {/* ── Browse by genre + A–Z — full-width chip blocks ── */}
-        {genres.length > 0 && (
-          <div className="mt-9 flex flex-wrap justify-center gap-2">
-            {genres.map((g) => (
-              <Link
-                key={g.slug}
-                href={`/genre/${g.slug}`}
-                className="rounded-md border border-line bg-base/40 px-3 py-1.5 text-sm text-muted transition-colors hover:border-frost/40 hover:bg-frost-soft hover:text-frost"
-              >
-                {g.name}
-              </Link>
-            ))}
-          </div>
-        )}
+        {/* ── Browse by genre — streamed independently so the static
+            footer chrome (links, AZ, socials, legal) ships in the first
+            byte and the genre chips paint in via Suspense. ── */}
+        <Suspense
+          fallback={
+            <div className="mt-9 flex flex-wrap justify-center gap-2" aria-hidden>
+              {Array.from({ length: 8 }).map((_, i) => (
+                <div key={i} className="h-8 w-20 rounded-md bg-surface-2 shimmer" />
+              ))}
+            </div>
+          }
+        >
+          <FooterGenres />
+        </Suspense>
         <div className="mt-6 flex flex-wrap justify-center gap-1.5">
           {AZ.map((l) => (
             <Link
@@ -164,5 +159,29 @@ export async function Footer() {
         </p>
       </div>
     </footer>
+  );
+}
+
+/**
+ * Genre chip row — extracted as a separate async server component so the
+ * main Footer (and the rest of the layout above it) doesn't block on the
+ * upstream call. Wrapped in <Suspense> in the parent.
+ */
+async function FooterGenres() {
+  const res = await safe(getGenres);
+  const genres = res.ok ? res.data : [];
+  if (genres.length === 0) return null;
+  return (
+    <div className="mt-9 flex flex-wrap justify-center gap-2">
+      {genres.map((g) => (
+        <Link
+          key={g.slug}
+          href={`/genre/${g.slug}`}
+          className="rounded-md border border-line bg-base/40 px-3 py-1.5 text-sm text-muted transition-colors hover:border-frost/40 hover:bg-frost-soft hover:text-frost"
+        >
+          {g.name}
+        </Link>
+      ))}
+    </div>
   );
 }

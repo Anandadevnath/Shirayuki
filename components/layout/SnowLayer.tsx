@@ -19,6 +19,12 @@ export function SnowLayer() {
 
     let raf = 0;
     let running = true;
+    // Idle throttle: when the tab is unfocused (but visible), drop to 30fps
+    // so background snow doesn't compete with whatever the user is doing on
+    // another tab. Hidden tabs pause entirely (see onVisibility).
+    let lastPaint = 0;
+    const FRAME_MS = 1000 / 60;
+    const IDLE_FRAME_MS = 1000 / 30;
     const dpr = Math.min(window.devicePixelRatio || 1, 2);
 
     type Flake = { x: number; y: number; r: number; vy: number; vx: number; o: number };
@@ -38,32 +44,41 @@ export function SnowLayer() {
       }));
     }
 
-    function frame() {
+    function frame(now: number) {
       if (!running) return;
-      ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
-      for (const f of flakes) {
-        f.y += f.vy;
-        f.x += f.vx;
-        if (f.y > canvas!.height) {
-          f.y = -f.r;
-          f.x = Math.random() * canvas!.width;
+      const focused = document.hasFocus();
+      const minGap = focused ? FRAME_MS : IDLE_FRAME_MS;
+      if (now - lastPaint >= minGap) {
+        lastPaint = now;
+        ctx!.clearRect(0, 0, canvas!.width, canvas!.height);
+        for (const f of flakes) {
+          f.y += f.vy;
+          f.x += f.vx;
+          if (f.y > canvas!.height) {
+            f.y = -f.r;
+            f.x = Math.random() * canvas!.width;
+          }
+          ctx!.beginPath();
+          ctx!.arc(f.x, f.y, f.r, 0, Math.PI * 2);
+          ctx!.fillStyle = `rgba(226, 240, 255, ${f.o})`;
+          ctx!.fill();
         }
-        ctx!.beginPath();
-        ctx!.arc(f.x, f.y, f.r, 0, Math.PI * 2);
-        ctx!.fillStyle = `rgba(226, 240, 255, ${f.o})`;
-        ctx!.fill();
       }
       raf = requestAnimationFrame(frame);
     }
 
     function onVisibility() {
       running = !document.hidden;
-      if (running) frame();
-      else cancelAnimationFrame(raf);
+      if (running) {
+        lastPaint = 0; // paint immediately on resume
+        raf = requestAnimationFrame(frame);
+      } else {
+        cancelAnimationFrame(raf);
+      }
     }
 
     size();
-    frame();
+    raf = requestAnimationFrame(frame);
     window.addEventListener("resize", size);
     document.addEventListener("visibilitychange", onVisibility);
     return () => {

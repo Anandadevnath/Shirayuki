@@ -204,6 +204,38 @@
   will-change: transform, opacity;
 }
 
+/* Image blur-up — runs once on mount. Starts at a hair of scale + blur + 0
+   opacity, settles to crisp full-opacity. Pure CSS, no React state, so the
+   parent (SmartImage) stays a Server Component. The shimmer placeholder
+   sits in the same absolute box and cross-fades out as the keyframe lands
+   via its own .shimmer fade. */
+@keyframes image-stack-in {
+  from { opacity: 0; transform: scale(1.04); filter: blur(8px); }
+  to   { opacity: 1; transform: scale(1);    filter: blur(0); }
+}
+.image-stack {
+  animation: image-stack-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: transform, opacity, filter;
+}
+@media (prefers-reduced-motion: reduce) {
+  .image-stack { animation: none; filter: none; }
+}
+/* Shimmer placeholder that sits behind `.image-stack` and fades out as the
+   image lands. The animation runs once, ending at opacity 0, so the
+   placeholder never paints over the loaded image. */
+@keyframes shimmer-stack-out {
+  0%   { opacity: 1; }
+  60%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+.shimmer-stack {
+  animation: shimmer-stack-out 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
+  will-change: opacity;
+}
+@media (prefers-reduced-motion: reduce) {
+  .shimmer-stack { animation: none; opacity: 0; }
+}
+
 /* ─────────────────────────────────────────────────────────────
    Laser frame — a frost comet that revolves around a panel's edge.
    A conic gradient (transparent tail → bright head) is masked to a
@@ -378,6 +410,24 @@
   50%      { opacity: 1; }
 }
 .caret-blink { animation: caret-blink 1.4s ease-in-out infinite; }
+
+/* "Watch" pill spring — replaces the framer-motion motion.span in
+   LatestEpisodes. Same hover/active feel, pure CSS (transform/opacity only,
+   GPU-composited, respects reduced-motion via the global override). */
+.watch-pill-spring {
+  transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: transform;
+}
+.watch-pill-spring:hover { transform: scale(1.06); }
+.watch-pill-spring:active { transform: scale(0.96); }
+
+/* Flame icon wobble — replaces the framer-motion motion.span in Trending.
+   Same keyframe pattern (rotate + scale loop) at 2.6s, GPU-only. */
+@keyframes flame-wobble {
+  0%, 100% { transform: rotate(0deg)   scale(1); }
+  50%      { transform: rotate(-8deg)  scale(1.18); }
+}
+.flame-wobble { animation: flame-wobble 2.6s ease-in-out infinite; }
 
 /* Frost underline accent (used in title eyebrow) */
 .frost-eyebrow {

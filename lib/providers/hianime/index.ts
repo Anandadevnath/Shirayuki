@@ -15,6 +15,7 @@ import type {
 const HOME_REVALIDATE = 900;
 const LIST_REVALIDATE = 900;
 const DETAIL_REVALIDATE = 3600;
+const GENRES_REVALIDATE = 3600;
 
 export async function getHome(): Promise<HomeModel> {
   const { data } = await apiFetch(`${V2}/home`, S.envelope(S.homeData), {
@@ -38,6 +39,21 @@ export async function getHome(): Promise<HomeModel> {
     },
     genres: (data.genres ?? []).map((g) => ({ name: g.name, slug: g.slug })),
   };
+}
+
+/**
+ * Lightweight genres-only fetch for chrome (footer, etc.) that doesn't need
+ * the rest of the home payload. The upstream exposes genres only on `/home`,
+ * so this shares the data cache entry with getHome() — the upstream call is
+ * deduped, only the in-memory mapping is new. Tag-isolated for fine-grained
+ * revalidation.
+ */
+export async function getGenres(): Promise<{ name: string; slug: string }[]> {
+  const { data } = await apiFetch(`${V2}/home`, S.envelope(S.homeData), {
+    revalidate: GENRES_REVALIDATE,
+    tags: ["genres"],
+  });
+  return (data.genres ?? []).map((g) => ({ name: g.name, slug: g.slug }));
 }
 
 export async function getAnime(id: string): Promise<AnimeDetail | null> {

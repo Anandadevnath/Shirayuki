@@ -47,70 +47,40 @@ function LiveClock() {
   );
 }
 
-function RowSkeleton() {
-  return (
-    <div className="flex items-center gap-4 py-4">
-      <span className="h-3.5 w-12 rounded bg-surface-2 shimmer relative overflow-hidden" />
-      <span className="h-3.5 flex-1 rounded bg-surface-2 shimmer relative overflow-hidden" />
-      <span className="h-3.5 w-20 rounded bg-surface-2 shimmer relative overflow-hidden" />
-    </div>
-  );
-}
+
 
 /**
  * "Estimated Schedule" — a cinematic glass panel for the home page. A frost-lit
- * week strip drives a per-day broadcast list; the current day is server-rendered
- * and other days are fetched on demand (cached client-side so re-selecting is
- * instant). Pure frost palette to sit with the rest of the board.
+ * week strip drives a per-day broadcast list; all 7 days are server-rendered
+ * up front so tab switches are instant (no HTTP hop, no spinner). Pure frost
+ * palette to sit with the rest of the board.
  */
 export function Schedule({
   days,
-  initial,
+  initialByDay,
+  initialIso,
 }: {
   days: ScheduleDay[];
-  initial: { iso: string; items: ScheduleItem[] };
+  initialByDay: Record<string, ScheduleItem[]>;
+  initialIso: string;
 }) {
   const COLLAPSED = 8;
-  const [selected, setSelected] = useState(initial.iso);
-  const [loading, setLoading] = useState(false);
+  const [selected, setSelected] = useState(initialIso);
   const [expanded, setExpanded] = useState(false);
-  // Day → items, seeded with the server-rendered current day.
+  // All 7 days are pre-fetched server-side — pure local switch, no HTTP.
   const cache = useRef<Map<string, ScheduleItem[]>>(
-    new Map([[initial.iso, initial.items]]),
+    new Map(Object.entries(initialByDay)),
   );
-  const [items, setItems] = useState<ScheduleItem[]>(initial.items);
-  // Latest day the user asked for — used to drop stale in-flight responses.
-  const reqRef = useRef(initial.iso);
+  const [items, setItems] = useState<ScheduleItem[]>(initialByDay[initialIso] ?? []);
 
-  const select = useCallback(async (iso: string) => {
+  const select = useCallback((iso: string) => {
     setSelected(iso);
     setExpanded(false); // each day reopens collapsed
-    reqRef.current = iso;
     const cached = cache.current.get(iso);
-    if (cached) {
-      setItems(cached);
-      setLoading(false);
-      return;
-    }
-    setLoading(true);
-    try {
-      const res = await fetch(`/api/schedule?date=${iso}`);
-      const data: { items?: ScheduleItem[] } = await res.json();
-      const next = data.items ?? [];
-      cache.current.set(iso, next);
-      // Ignore a slow response if the user has since picked another day.
-      if (reqRef.current === iso) {
-        setItems(next);
-        setLoading(false);
-      }
-    } catch {
-      cache.current.set(iso, []);
-      if (reqRef.current === iso) {
-        setItems([]);
-        setLoading(false);
-      }
-    }
+    setItems(cached ?? []);
   }, []);
+
+  if (!days.length) return null;
 
   return (
     <section className="relative">
@@ -173,13 +143,7 @@ export function Schedule({
 
         {/* ── Broadcast list ── */}
         <div className="relative min-h-[14rem]">
-          {loading ? (
-            <div className="divide-y divide-line/40">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <RowSkeleton key={i} />
-              ))}
-            </div>
-          ) : items.length === 0 ? (
+          {items.length === 0 ? (
             <div className="grid place-items-center py-16 text-center">
               <CalendarDays className="mb-3 size-8 text-faint" />
               <p className="text-sm font-medium text-muted">No broadcasts scheduled</p>
@@ -223,7 +187,7 @@ export function Schedule({
           )}
 
           {/* View more / less — only when a day has more than the collapsed count */}
-          {!loading && items.length > COLLAPSED && (
+          {items.length > COLLAPSED && (
             <div className="mt-4 flex justify-center">
               <button
                 onClick={() => setExpanded((v) => !v)}

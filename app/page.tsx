@@ -1,5 +1,6 @@
 import { Suspense } from "react";
 import { getHome, getCategory, getSchedule, safe } from "@/lib/api";
+import type { ScheduleItem } from "@/lib/providers/hianime";
 import { Spotlight } from "@/components/home/Spotlight";
 import { ContinueWatching } from "@/components/home/ContinueWatching";
 import { Trending } from "@/components/home/Trending";
@@ -30,13 +31,24 @@ function upcomingWeek(todayISO: string): ScheduleDay[] {
  * Schedule streams independently: the main board never blocks on the schedule
  * endpoint. Suspense shows ScheduleSkeleton until this resolves, then swaps it
  * in with no layout shift (the skeleton matches the panel's footprint).
+ *
+ * All 7 days are pre-fetched server-side in parallel — each `/api/schedule`
+ * hit shares the data cache, so the upstream call is a single deduped read
+ * for the whole week. Tab switching on the client is then instant (no HTTP).
  */
 async function ScheduleSection({ days, today }: { days: ScheduleDay[]; today: string }) {
-  const scheduleRes = await safe(() => getSchedule(today));
+  const results = await Promise.all(
+    days.map((d) => safe(() => getSchedule(d.iso))),
+  );
+  const initialByDay: Record<string, ScheduleItem[]> = {};
+  days.forEach((d, i) => {
+    initialByDay[d.iso] = results[i].ok ? results[i].data : [];
+  });
   return (
     <Schedule
       days={days}
-      initial={{ iso: today, items: scheduleRes.ok ? scheduleRes.data : [] }}
+      initialByDay={initialByDay}
+      initialIso={today}
     />
   );
 }

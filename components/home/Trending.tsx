@@ -1,14 +1,8 @@
 "use client";
 
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { Play, Flame, ChevronLeft, ChevronRight } from "lucide-react";
-import {
-  motion,
-  useAnimationFrame,
-  useMotionValue,
-  useReducedMotion,
-} from "framer-motion";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { cn } from "@/lib/utils/cn";
@@ -16,6 +10,22 @@ import { cn } from "@/lib/utils/cn";
 // Marquee drift speed, px/s. The rail glides right-to-left so it reads as a
 // "train" of posters — deliberately the opposite direction to Latest Episodes.
 const SPEED = 34;
+
+/**
+ * Tiny SSR-safe reduced-motion probe — replaces `useReducedMotion` from
+ * framer-motion. Reads once on mount; same default for SSR (false).
+ */
+function useReducedMotionSSR(): boolean {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduce(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReduce(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return reduce;
+}
 
 /** One ranked landscape card. Pulled out so the marquee and the reduced-motion
  *  fallback rail can share the exact same markup. */
@@ -93,21 +103,43 @@ function TrendCard({
  * Reduced-motion users get the original arrow-driven scroll rail instead.
  */
 export function Trending({ items }: { items: AnimeCardModel[] }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSSR();
   const trackRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
-  const x = useMotionValue(0);
+  // Plain numeric x offset — written from a single rAF loop, painted via
+  // direct DOM mutation. Replaces framer-motion's useMotionValue + motion.div,
+  // which pulled in the entire motion-value/animation engine.
+  const xRef = useRef(0);
   const paused = useRef(false);
 
   // Continuous leftward drift, wrapped seamlessly at half the doubled track.
-  useAnimationFrame((_, delta) => {
-    if (reduce || paused.current || !trackRef.current) return;
-    const half = trackRef.current.scrollWidth / 2;
-    if (!half) return;
-    let next = x.get() - (SPEED * delta) / 1000;
-    if (next <= -half) next += half; // loop back into the first copy
-    x.set(next);
-  });
+  // Same behaviour as the old useAnimationFrame loop — the only difference
+  // is that we now drive a numeric ref + a 60fps state tick instead of a
+  // motion value. React skips re-render when x hasn't changed.
+  useEffect(() => {
+    if (reduce) return;
+    let raf = 0;
+    let last = performance.now();
+    const tick = (now: number) => {
+      const dt = now - last;
+      last = now;
+      if (!paused.current && trackRef.current) {
+        const half = trackRef.current.scrollWidth / 2;
+        if (half) {
+          let next = xRef.current - (SPEED * dt) / 1000;
+          if (next <= -half) next += half;
+          xRef.current = next;
+          // Update via DOM directly to avoid React reconciliation each frame —
+          // same trick as the SnowLayer clock. The visible width still changes
+          // because we mutate the style attribute.
+          trackRef.current.style.transform = `translate3d(${next}px, 0, 0)`;
+        }
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => cancelAnimationFrame(raf);
+  }, [reduce]);
 
   const setPaused = (v: boolean) => {
     paused.current = v;
@@ -134,14 +166,9 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
           <span className="h-9 w-1 shrink-0 rounded-full bg-gradient-to-b from-frost to-frost-deep shadow-[var(--shadow-neon)]" />
           <div className="min-w-0">
             <span className="flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-frost">
-              <motion.span
-                aria-hidden
-                animate={reduce ? {} : { rotate: [0, -10, 10, -6, 0], scale: [1, 1.18, 1] }}
-                transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-                className="inline-flex"
-              >
+              <span aria-hidden className="flame-wobble inline-flex">
                 <Flame className="size-3.5 fill-frost/25" />
-              </motion.span>
+              </span>
               Hot right now
             </span>
             <h2 className="font-display text-xl font-extrabold leading-tight tracking-tight sm:text-2xl">
@@ -198,10 +225,10 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
           onTouchEnd={() => setPaused(false)}
           onTouchCancel={() => setPaused(false)}
         >
-          <motion.div
+          <div
             ref={trackRef}
-            style={{ x }}
             className="flex w-max gap-3.5 px-0.5 pb-4 pt-3 will-change-transform"
+            style={{ transform: "translate3d(0, 0, 0)" }}
           >
             {/* Doubled track: the second copy is decorative (hidden from a11y). */}
             {items.map((s, idx) => (
@@ -210,7 +237,7 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
             {items.map((s, idx) => (
               <TrendCard key={`b-${s.id}-${idx}`} s={s} rank={rankOf(s, idx)} ariaHidden />
             ))}
-          </motion.div>
+          </div>
         </div>
       )}
     </section>

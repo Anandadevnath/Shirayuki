@@ -4,12 +4,11 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: process.cwd(),
   // Only ship the lucide icons that are actually used (it's imported across many
-  // client components) and keep barrel imports cheap to compile.
+  // client components) and keep barrel imports cheap to compile. zustand's
+  // barrel re-exports create/middleware, so tree-shaking the entry point also
+  // helps on the watch page where the Player persists prefs.
   experimental: {
-    // Barrel-imported libs that get auto-tree-shaken per route. framer-motion
-    // ships ~50kb gz from its index — restricting to specific entry points
-    // shaves a real chunk off the client bundle.
-    optimizePackageImports: ["lucide-react", "framer-motion"],
+    optimizePackageImports: ["lucide-react", "zustand"],
   },
   images: {
     // AnimeX posters come from many rotating CDN hosts (anizara.store,

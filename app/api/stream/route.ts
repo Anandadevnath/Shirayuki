@@ -73,7 +73,10 @@ export async function GET(req: NextRequest) {
   try {
     res = await fetch(upstream.toString(), { headers, redirect: "follow" });
   } catch {
-    return new Response("Upstream fetch failed", { status: 502 });
+    return new Response("Upstream fetch failed", {
+      status: 502,
+      headers: { "Cache-Control": "public, max-age=30" },
+    });
   }
 
   if (!res.ok && res.status !== 206) {
@@ -93,7 +96,11 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "application/vnd.apple.mpegurl",
-        "Cache-Control": "no-store",
+        // VOD playlists are stable for the lifetime of the upload. Short
+        // fresh window + stale-while-revalidate lets the edge serve the
+        // cached rewritten playlist to repeat viewers without an upstream
+        // round-trip, while still picking up upstream changes within ~5 min.
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
         "Access-Control-Allow-Origin": "*",
       },
     });

@@ -4,9 +4,9 @@ import { notFound } from "next/navigation";
 import { Captions, Mic, ServerCog } from "lucide-react";
 import { getAnime, getEpisodes, getServers, getSources, safe } from "@/lib/api";
 import type { ServerModel } from "@/lib/providers/types";
-import { Player } from "@/components/player/Player";
 import { ErrorState } from "@/components/common/States";
 import CinematicInfo from "@/components/details/CinematicInfo";
+import { PlayerLoader } from "@/components/player/PlayerLoader";
 import { cn } from "@/lib/utils/cn";
 
 export const dynamic = "force-dynamic";
@@ -77,7 +77,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
         <div className="laser-frame glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
           <div className="relative">
             {playerSrc && sources ? (
-              <Player
+              <PlayerLoader
                 src={playerSrc}
                 poster={anime.poster}
                 tracks={sources.tracks.map((t) => ({ src: t.file, label: t.label, default: t.default }))}

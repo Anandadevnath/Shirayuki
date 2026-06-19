@@ -11,7 +11,10 @@ const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"]
 const zen = Zen_Kaku_Gothic_New({
   variable: "--font-zen",
   subsets: ["latin"],
-  weight: ["500", "700", "900"],
+  // 500/700 cover all observed usage (medium/bold). Other weights fall back
+  // to browser-synthesised bold via the `--font-zen` stack. Adding 900 saves
+  // a woff2 file (~12KB) since no element uses `font-black`.
+  weight: ["500", "700"],
   display: "swap",
 });
 
@@ -30,6 +33,22 @@ export const metadata: Metadata = {
   },
 };
 
+/**
+ * Warm up TLS to the most common image CDN hosts before the HTML parses
+ * posters, so the first <Image> request skips DNS + TCP + TLS round-trips.
+ * The hosts are the dominant ones returned by the upstream API (anizara
+ * for posters, anipixcdn for banners). DNS-prefetch covers the long tail
+ * of rotating hosts the API may pick for individual titles.
+ */
+const PRECONNECT_HOSTS = [
+  "https://anizara.store",
+  "https://anipixcdn.co",
+];
+const DNS_PREFETCH_HOSTS = [
+  "https://cdn.anizone.tv",
+  "https://asiancdn.com",
+];
+
 export const viewport: Viewport = {
   themeColor: "#0E1116",
   colorScheme: "dark",
@@ -40,6 +59,14 @@ export default function RootLayout({
 }: Readonly<{ children: React.ReactNode }>) {
   return (
     <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${zen.variable}`}>
+      <head>
+        {PRECONNECT_HOSTS.map((href) => (
+          <link key={href} rel="preconnect" href={href} crossOrigin="anonymous" />
+        ))}
+        {DNS_PREFETCH_HOSTS.map((href) => (
+          <link key={href} rel="dns-prefetch" href={href} />
+        ))}
+      </head>
       <body className="min-h-dvh overflow-x-clip antialiased">
         <Ambient />
         <SnowLayer />

@@ -1,5 +1,3 @@
-"use client";
-
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { RailShell } from "@/components/common/RailShell";
 import { AnimeCard } from "./AnimeCard";

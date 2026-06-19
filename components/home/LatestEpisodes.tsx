@@ -3,7 +3,6 @@
 import { memo, useCallback, useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { ChevronLeft, ChevronRight, Play, Star } from "lucide-react";
-import { motion, useReducedMotion } from "framer-motion";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { CinematicHeader } from "@/components/common/SectionHeader";
 import { EpBadges } from "@/components/anime/Badges";
@@ -13,6 +12,23 @@ import { cn } from "@/lib/utils/cn";
 // Auto-advance cadence, ms between steps. Latest Episodes drifts left-to-right
 // (active index decreasing) — deliberately opposite to the Trending marquee.
 const AUTOPLAY_MS = 3200;
+
+/**
+ * Tiny SSR-safe reduced-motion probe — replaces `useReducedMotion` from
+ * framer-motion. Reads once on mount; returns the current matchMedia state
+ * without forcing a framer-motion import.
+ */
+function useReducedMotionSSR(): boolean {
+  const [reduce, setReduce] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    setReduce(mq.matches);
+    const onChange = (e: MediaQueryListEvent) => setReduce(e.matches);
+    mq.addEventListener("change", onChange);
+    return () => mq.removeEventListener("change", onChange);
+  }, []);
+  return reduce;
+}
 
 // ── Coverflow geometry ──────────────────────────────────────────────────────
 // Each card is placed relative to the active one. Its offset (i - active) drives
@@ -217,14 +233,9 @@ const FlowCard = memo(function FlowCard({
           >
             <div className="overflow-hidden">
               <div className="flex items-center gap-2 pt-3">
-                <motion.span
-                  className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-frost to-frost-deep px-3.5 py-1.5 text-xs font-bold text-base shadow-[var(--shadow-neon)]"
-                  whileHover={{ scale: 1.06 }}
-                  whileTap={{ scale: 0.96 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 20 }}
-                >
+                <span className="watch-pill-spring inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-frost to-frost-deep px-3.5 py-1.5 text-xs font-bold text-base shadow-[var(--shadow-neon)]">
                   <Play className="size-3.5 translate-x-px fill-current" /> Watch
-                </motion.span>
+                </span>
                 {anime.type && (
                   <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-snow/90">
                     {anime.type}
@@ -245,7 +256,7 @@ const FlowCard = memo(function FlowCard({
 });
 
 export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
-  const reduce = useReducedMotion();
+  const reduce = useReducedMotionSSR();
   // Open on the middle card so the fan is balanced on both sides at first paint.
   const [active, setActive] = useState(() => Math.floor(((items?.length ?? 1) - 1) / 2));
   // Auto-advance pauses while hovered/focused/dragging.
