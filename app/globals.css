@@ -108,6 +108,11 @@
     -webkit-backdrop-filter: blur(20px) saturate(1.15);
     border: 1px solid color-mix(in oklch, var(--color-frost) 14%, transparent);
   }
+  /* Snappy hover for items inside .glass panels — keeps transition cheap
+     enough that backdrop-filter doesn't have to repaint on every frame. */
+  .hover-snap {
+    transition: background-color 80ms linear, color 80ms linear;
+  }
   .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
   .text-gradient-frost {

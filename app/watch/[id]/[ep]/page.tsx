@@ -195,7 +195,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
                 key={e.episodeId}
                 href={`/watch/${id}/${encodeURIComponent(e.episodeId)}`}
                 className={cn(
-                  "flex items-center gap-3 rounded-md px-2.5 py-2 text-sm transition-colors",
+                  "hover-snap flex items-center gap-3 rounded-md px-2.5 py-2 text-sm",
                   e.episodeId === episodeId
                     ? "bg-frost-soft text-frost"
                     : "text-muted hover:bg-surface-2/70 hover:text-snow",
