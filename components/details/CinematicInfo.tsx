@@ -251,6 +251,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
                     alt={anime.title}
                     fill
                     priority
+                    fetchPriority="high"
                     sizes="(max-width: 768px) 160px, 180px"
                     quality={85}
                     className="object-cover transition-transform duration-700 group-hover/poster:scale-[1.03]"

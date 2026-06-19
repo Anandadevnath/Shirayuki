@@ -2,6 +2,18 @@ import type { NextRequest } from "next/server";
 
 export const runtime = "nodejs";
 
+/** CORS preflight for browsers that preflight cross-origin <track> fetches. */
+export function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Max-Age": "86400",
+    },
+  });
+}
+
 /** Proxy external .vtt subtitle files (CORS) so <track> can load them. */
 export async function GET(req: NextRequest) {
   const target = new URL(req.url).searchParams.get("url");

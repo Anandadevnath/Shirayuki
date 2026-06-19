@@ -1,31 +1,63 @@
 import type { NextConfig } from "next";
 
+/* ──────────────────────────────────────────────────────────────────────
+   Vercel-safe image config.
+   Next.js 15 warns about wildcard `hostname: "**"` in `images.remotePatterns`
+   because it lets the image optimiser fetch + re-encode arbitrary external
+   URLs (SSRF + bandwidth amplification). On Vercel, the optimiser resolves
+   server-side from the deployment region, so we lock the allowlist to the
+   hosts the scraper actually serves posters from. Unknown hosts fall back
+   to a plain `<img>` (we use this for the Player poster in PlayerLoader).
+   ────────────────────────────────────────────────────────────────────── */
+const POSTER_HOSTS = [
+  "anizara.store",
+  "cdn.anizara.store",
+  "anipixcdn.co",
+  "anilist.co",
+  "cdn.anizone.tv",
+  "asiancdn.com",
+  "gogocdn.stream",
+  "megaplay.cc",
+  "asianload.cc",
+];
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: process.cwd(),
+  // Gzip transport for HTML/JS/CSS responses. Vercel applies Brotli/gzip at
+  // the edge already, but the flag is required for `next start` on other hosts
+  // and makes the intent explicit.
+  compress: true,
+  // No source maps in production — pure build-output optimisation.
+  productionBrowserSourceMaps: false,
   // Only ship the lucide icons that are actually used (it's imported across many
   // client components) and keep barrel imports cheap to compile. zustand's
   // barrel re-exports create/middleware, so tree-shaking the entry point also
-  // helps on the watch page where the Player persists prefs.
+  // helps on the watch page where the Player persists prefs. cva/clsx/tw-merge
+  // are re-exported via barrels in their entry points — same treatment.
   experimental: {
-    optimizePackageImports: ["lucide-react", "zustand"],
+    optimizePackageImports: [
+      "lucide-react",
+      "zustand",
+      "class-variance-authority",
+      "clsx",
+      "tailwind-merge",
+    ],
   },
   images: {
-    // AnimeX posters come from many rotating CDN hosts (anizara.store,
-    // anipixcdn.co, anilist.co, …) that can't be exhaustively allow-listed, so
-    // we let Next's own optimiser fetch + resize + re-encode any host. The
-    // wildcard is required for the rotating hosts; the optimiser caches results
-    // and serves WebP sized to each card (~95% smaller than the source).
-    remotePatterns: [
-      { protocol: "https", hostname: "**" },
-      { protocol: "http", hostname: "**" },
-    ],
+    remotePatterns: POSTER_HOSTS.map((hostname) => ({ protocol: "https", hostname })),
     // Prefer AVIF where the browser supports it; falls back to WebP, then the
     // source format. AVIF is ~30% smaller than WebP at equivalent visual quality.
     formats: ["image/avif", "image/webp"],
     // Posters change rarely; cache optimised variants for a day to avoid
     // re-encoding the same URL on every request.
     minimumCacheTTL: 86400,
+    // Restrict the variant matrix so the optimizer's pre-compute cache stays
+    // tight. A subset of the default ranges; the set still covers every
+    // <Image sizes> used in the codebase.
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    qualities: [50, 70, 80, 85, 90],
   },
   async headers() {
     return [
@@ -34,6 +66,20 @@ const nextConfig: NextConfig = {
         headers: [
           { key: "X-Content-Type-Options", value: "nosniff" },
           { key: "Referrer-Policy", value: "no-referrer" },
+          // The player page embeds third-party HLS streams; pin frame ancestors
+          // to ourselves even though /watch is noindex.
+          { key: "X-Frame-Options", value: "SAMEORIGIN" },
+        ],
+      },
+      {
+        // CDN-side cache for the watch page HTML. The page itself stays
+        // `force-dynamic` server-side (no stale rendering), but the response
+        // can be reused at the edge for a short window — the typical
+        // Lighthouse repeat-view case. 60s fresh + 5min SWR; same-URL repeat
+        // visits serve from the edge cache with zero render work.
+        source: "/watch/:path*",
+        headers: [
+          { key: "Cache-Control", value: "public, s-maxage=60, stale-while-revalidate=300" },
         ],
       },
     ];

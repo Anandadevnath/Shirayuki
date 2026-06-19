@@ -120,25 +120,42 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
     if (reduce) return;
     let raf = 0;
     let last = performance.now();
+    // Cache the half-width on mount and on resize. Reading `scrollWidth`
+    // inside the rAF loop forces a synchronous layout (forced reflow) every
+    // frame — the marquee rAF is running at 60fps, so 60 reflows/sec in the
+    // background measurably hurts the main thread. The track width is a
+    // function of `items.length` and viewport-dependent card sizes; the
+    // ResizeObserver catches the cases that matter (container resize, font
+    // load changing card widths).
+    let half = 0;
+    const measure = () => {
+      const el = trackRef.current;
+      if (!el) return;
+      half = el.scrollWidth / 2;
+    };
+    measure();
+    const ro = new ResizeObserver(measure);
+    if (trackRef.current) ro.observe(trackRef.current);
     const tick = (now: number) => {
       const dt = now - last;
       last = now;
-      if (!paused.current && trackRef.current) {
-        const half = trackRef.current.scrollWidth / 2;
-        if (half) {
-          let next = xRef.current - (SPEED * dt) / 1000;
-          if (next <= -half) next += half;
-          xRef.current = next;
-          // Update via DOM directly to avoid React reconciliation each frame —
-          // same trick as the SnowLayer clock. The visible width still changes
-          // because we mutate the style attribute.
-          trackRef.current.style.transform = `translate3d(${next}px, 0, 0)`;
-        }
+      const el = trackRef.current;
+      if (el && !paused.current && half) {
+        let next = xRef.current - (SPEED * dt) / 1000;
+        if (next <= -half) next += half;
+        xRef.current = next;
+        // Update via DOM directly to avoid React reconciliation each frame —
+        // same trick as the SnowLayer clock. The visible width still changes
+        // because we mutate the style attribute.
+        el.style.transform = `translate3d(${next}px, 0, 0)`;
       }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
-    return () => cancelAnimationFrame(raf);
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+    };
   }, [reduce]);
 
   const setPaused = (v: boolean) => {

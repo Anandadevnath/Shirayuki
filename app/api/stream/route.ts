@@ -10,6 +10,21 @@ export const dynamic = "force-dynamic";
  * (The old React app shipped a proxy helper but never wired it — bug #2.)
  */
 
+/** CORS preflight — hls.js fires OPTIONS on cross-origin segment requests in
+ *  some browsers (Safari, Firefox with strict mode). Allow the methods + the
+ *  Range header so segment range requests don't get rejected. */
+export function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Origin": "*",
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Range, Content-Type",
+      "Access-Control-Max-Age": "86400",
+    },
+  });
+}
+
 function proxied(absUrl: string, referer: string, origin: string): string {
   const u = new URL("/api/stream", origin);
   u.searchParams.set("url", absUrl);

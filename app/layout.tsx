@@ -3,7 +3,7 @@ import { Geist, Geist_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
-import { SnowLayer } from "@/components/layout/SnowLayer";
+import { SnowLayerIsland } from "@/components/layout/SnowLayerIsland";
 import { Ambient } from "@/components/layout/Ambient";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"], display: "swap" });
@@ -39,9 +39,16 @@ export const metadata: Metadata = {
  * The hosts are the dominant ones returned by the upstream API (anizara
  * for posters, anipixcdn for banners). DNS-prefetch covers the long tail
  * of rotating hosts the API may pick for individual titles.
+ *
+ * Note: posters are served from `cdn.anizara.store` (the *cdn.* subdomain)
+ * even though the upstream homepage and bulk-cover API live on the bare
+ * `anizara.store` host. Both are preconnect'd so the LCP image fetch skips
+ * the TLS handshake — the handshake is the biggest single LCP cost on a
+ * cold connection (~150-300ms), and the page only needs one of these.
  */
 const PRECONNECT_HOSTS = [
   "https://anizara.store",
+  "https://cdn.anizara.store",
   "https://anipixcdn.co",
 ];
 const DNS_PREFETCH_HOSTS = [
@@ -69,7 +76,7 @@ export default function RootLayout({
       </head>
       <body className="min-h-dvh overflow-x-clip antialiased">
         <Ambient />
-        <SnowLayer />
+        <SnowLayerIsland />
         <Nav />
         <main className="relative mx-auto w-full max-w-[1460px] px-4 pb-24 pt-4 sm:px-6 lg:px-8">
           {children}

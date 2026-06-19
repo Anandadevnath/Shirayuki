@@ -1,0 +1,31 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "regions": ["sin1"],
+  "buildCommand": "next build",
+  "installCommand": "npm ci",
+  "trailingSlash": false,
+  "cleanUrls": true,
+  "functions": {
+    "app/api/stream/route.ts": {
+      "maxDuration": 60,
+      "memory": 1024
+    },
+    "app/api/subtitle/route.ts": {
+      "maxDuration": 30,
+      "memory": 512
+    },
+    "app/api/schedule/route.ts": {
+      "maxDuration": 15,
+      "memory": 512
+    },
+    "app/api/suggest/route.ts": {
+      "maxDuration": 10,
+      "memory": 512
+    },
+    "app/api/search-index/route.ts": {
+      "maxDuration": 10,
+      "memory": 512
+    }
+  }
+}

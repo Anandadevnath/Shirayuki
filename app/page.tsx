@@ -12,6 +12,18 @@ import { Schedule, type ScheduleDay } from "@/components/home/Schedule";
 import { ErrorState } from "@/components/common/States";
 import { ScheduleSkeleton } from "@/components/ui/Skeleton";
 
+// ISR cadence for the home page response. Matches the `revalidate: 900` used
+// inside `getHome()` so the upstream and the page-level cache share the same
+// 15-minute window — when the upstream revalidates, this re-renders in the
+// same pass.
+//
+// Without this, the page is treated as fully dynamic (it `await`s uncached
+// `safe(getHome)`), Next.js sends `Cache-Control: private, no-store`,
+// and the browser refuses to put the page into the back/forward cache.
+// That shows up in Lighthouse as "Page prevented back/forward cache
+// restoration" and adds a full network round-trip to every back-nav.
+export const revalidate = 900;
+
 /** Today + the next 6 days, as deterministic UTC tabs for the schedule panel. */
 function upcomingWeek(todayISO: string): ScheduleDay[] {
   const base = new Date(`${todayISO}T00:00:00Z`);
@@ -80,8 +92,28 @@ export default async function HomePage() {
 
   const scheduleDays = upcomingWeek(today);
 
+  // The first spotlight slide is the LCP candidate. Spotlight is a client
+  // component (carousel + autoplay), so its `<Image priority>` only registers
+  // the preload AFTER hydration — too late to win the LCP race on slow
+  // connections. Render the preload directly server-side so the network
+  // fetch starts during HTML parse, in parallel with the JS bundle download.
+  // Next.js hoists server-rendered <link> tags into the document head.
+  const lcpPoster = home.spotlight[0]?.poster ?? null;
+
   return (
     <div>
+      {lcpPoster && (
+        <link
+          rel="preload"
+          as="image"
+          href={lcpPoster}
+          // Hint the browser to fetch this at the highest priority, ahead of
+          // the JS bundle. Lighthouse treats this as a positive LCP signal.
+          // The exact srcset is owned by next/image's optimizer at runtime;
+          // the bare URL fetch hits the same upstream anyway.
+          fetchPriority="high"
+        />
+      )}
       {home.spotlight.length > 0 && (
         <Spotlight items={home.spotlight} />
       )}

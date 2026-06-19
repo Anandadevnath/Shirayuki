@@ -14,7 +14,10 @@ export function SnowLayer() {
     if (reduce.matches) return;
     const canvas = ref.current;
     if (!canvas) return;
-    const ctx = canvas.getContext("2d");
+    // The snow loop only writes (`ctx.fill`); it never reads pixels back, so
+    // `willReadFrequently: true` is the semantically correct hint. Lets the
+    // browser keep the canvas in a GPU-friendly buffer. No visual change.
+    const ctx = canvas.getContext("2d", { willReadFrequently: true });
     if (!ctx) return;
 
     let raf = 0;

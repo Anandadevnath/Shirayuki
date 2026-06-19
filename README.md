@@ -85,6 +85,40 @@ npm run lint
 | `npm run lint`     | Next.js + ESLint                              |
 | `npm run typecheck`| `tsc --noEmit`                                |
 
+## ✦ Deploy to Vercel
+
+The project is **Vercel-ready out of the box**. `vercel.json` pins the
+deployment region (Singapore by default — change to your nearest), framework
+detection, and per-route function memory + duration for the HLS proxy
+(`/api/stream`) and subtitle proxy (`/api/subtitle`).
+
+**One environment variable is required** in Vercel Project Settings:
+
+| Variable       | Required | Default                                         | Notes                                |
+| -------------- | :------: | ----------------------------------------------- | ------------------------------------ |
+| `API_BASE_URL` |    ✅    | `https://shirayuki-scrapper-api-v2.vercel.app`  | Upstream scraper. See `lib/providers`. |
+
+`NODE_ENV` is set by Vercel automatically.
+
+### How the proxy works on the edge
+
+- `/api/stream` fetches upstream playlists, rewrites segment URIs back
+  through itself, and streams bytes. `Cache-Control: s-maxage=60` lets Vercel's
+  CDN serve rewritten playlists to repeat viewers without re-fetching upstream.
+- `/api/subtitle` is a thin `.vtt` pass-through (CORS wrapper).
+- `/api/suggest`, `/api/search-index`, `/api/schedule` are SSR-cached via
+  Next's Data Cache (revalidate + tags), so Vercel's edge serves them warm.
+
+### Vercel-specific notes
+
+- **Image domains are locked** (`next.config.ts → images.remotePatterns`).
+  Adding a new poster CDN means appending its hostname to `POSTER_HOSTS`.
+- **`/watch/*` is `noindex`** by design (see `app/watch/[id]/[ep]/page.tsx`
+  `generateMetadata`) — `/robots.txt` also disallows `/watch/` and `/api/`.
+- The Player is **`ssr: false`**-loaded via `next/dynamic` in
+  `components/player/PlayerLoader.tsx`, so the watch page never bundles
+  `hls.js` into the initial HTML.
+
 ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄ · ❄
 
 ## ✦ Architecture — the frozen stream
