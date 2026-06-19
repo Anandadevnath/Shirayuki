@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import {
   Star, Tv, Clock, Film, Calendar, Building2, Play, Plus,
-  Share2, Check, Sparkles, Award,
+  Share2, Check, Sparkles, Award, Languages, Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
@@ -303,11 +303,8 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
             className="title-rise flex flex-wrap gap-1.5"
             style={{ ["--reveal-delay" as string]: "260ms" }}
           >
-            <MetaChip icon={Tv}>{episodesValue} EP</MetaChip>
-            <MetaChip icon={Clock}>{durationValue}</MetaChip>
             <MetaChip icon={Film}>{type}</MetaChip>
             <MetaChip icon={Calendar}>{premiered}</MetaChip>
-            <MetaChip icon={Building2}>{studio}</MetaChip>
           </div>
 
           {/* Genres — premium glass pills */}
@@ -384,17 +381,38 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
           />
           <StatCard icon={Tv} label="Episodes" value={episodesValue} />
           <StatCard icon={Clock} label="Duration" value={durationValue} />
-          <StatCard icon={Film} label="Type" value={type} />
-          <StatCard icon={Calendar} label="Season" value={anime.season ?? "—"} />
+          <StatCard
+            icon={Calendar}
+            label="Aired"
+            value={anime.aired ?? "—"}
+          />
+          {anime.status && (
+            <StatCard
+              icon={Activity}
+              label="Status"
+              value={anime.status}
+              accent={
+                /finished|completed|ended/i.test(anime.status)
+                  ? "success"
+                  : /airing|ongoing/i.test(anime.status)
+                    ? "frost"
+                    : "muted"
+              }
+            />
+          )}
+          {anime.jname && (
+            <StatCard
+              icon={Languages}
+              label="Japanese"
+              value={anime.jname}
+            />
+          )}
           <StatCard
             icon={Building2}
             label="Studio"
             value={studio === "—" ? "—" : studio}
             // Compact for long studio names
           />
-          {anime.year != null && (
-            <StatCard icon={Sparkles} label="Year" value={String(anime.year)} />
-          )}
         </div>
       </div>
 

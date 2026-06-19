@@ -6,21 +6,22 @@ import { Play, Flame } from "lucide-react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { RailShell } from "@/components/common/RailShell";
 import { SmartImage } from "@/components/ui/SmartImage";
-import { TypePill } from "@/components/anime/Badges";
+import { EpBadges } from "@/components/anime/Badges";
 import { cn } from "@/lib/utils/cn";
 
 /**
- * Trending rail — portrait 3:4 poster cards matching the Seasons/Franchise
- * chrome (same ring treatment, type pill + eps count row, frost hover). The
- * leading card (lowest rank) gets a "Hot" pill in place of Seasons' "Current"
- * pill so the visual language still differentiates the two rails.
+ * Trending rail — landscape 16:9 cards (matching the Continue Watching
+ * chrome) so the two rails share a visual language for "things in motion".
  *
- * Rendered inside the shared `RailShell` for the same masked snap-scroll
+ * Cards are intentionally smaller than Continue Watching so this rail
+ * stays secondary: a poster + title + "EP X" line, with the chart-top
+ * entry marked by a "Hot" pill. Episode timing is omitted here because
+ * the trending payload doesn't carry per-episode duration (only the
+ * user's watch progress does); we surface `episodeNumber` instead so the
+ * meta line still tells you where in the run the show is.
+ *
+ * Rendered inside the shared `RailShell` for the masked snap-scroll
  * behaviour + chevron controls as every other rail on the home page.
- *
- * TODO: trending payloads don't carry `year` (only `rawDetailAnime` does), so
- * the year badge is omitted. If the upstream provider is updated to include
- * it, add a top-right `bg-base/80` pill here, mirroring SeasonRail.
  */
 export function Trending({ items }: { items: AnimeCardModel[] }) {
   if (!items?.length) return null;
@@ -37,17 +38,17 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
     <RailShell title="Trending" eyebrow="Hot right now">
       {ordered.map((s, i) => {
         const isHot = i === 0;
-        const eps = s.episodes.sub ?? s.episodes.dub;
+        const epNum = typeof s.episodeNumber === "number" ? s.episodeNumber : null;
         return (
           <Link
             key={s.id}
             href={`/anime/${s.id}`}
             style={{ ["--reveal-delay" as string]: `${Math.min(i, 9) * 60}ms` }}
-            className="reveal group block w-[44vw] shrink-0 snap-start sm:w-[24vw] md:w-[200px]"
+            className="reveal group block w-[54vw] shrink-0 snap-start sm:w-[215px] md:w-[240px]"
           >
             <div
               className={cn(
-                "relative aspect-[3/4] overflow-hidden rounded-2xl bg-surface-2 ring-1 transition-all duration-300 ease-out",
+                "relative aspect-video overflow-hidden rounded-md bg-surface-2 ring-1 transition-all duration-300 ease-out",
                 isHot
                   ? "ring-frost shadow-[var(--shadow-frost)]"
                   : "ring-line group-hover:-translate-y-1 group-hover:ring-frost/40 group-hover:shadow-[var(--shadow-frost)]",
@@ -58,15 +59,16 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
                   src={s.poster}
                   alt={s.title}
                   fill
-                  sizes="(max-width:640px) 40vw, (max-width:1024px) 22vw, 180px"
+                  sizes="(max-width:640px) 50vw, (max-width:1024px) 22vw, 220px"
                   className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
                 />
               ) : (
                 <div className="grid h-full place-items-center text-faint">No image</div>
               )}
 
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-base via-base/30 to-base/0" />
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+              {/* Bottom gradient for legible meta over the poster */}
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-base via-base/40 to-transparent" />
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
 
               {isHot && (
                 <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-frost/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-base shadow-[var(--shadow-neon)]">
@@ -82,25 +84,25 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
                 </span>
               )}
 
-              {/* Hover play affordance — same as SeasonRail keeps the rail
-                  family feeling uniform when the user hovers. */}
+              {/* Hover play affordance — same as Continue Watching keeps the
+                  rail family feeling uniform when the user hovers. */}
               <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <span className="grid size-11 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
-                  <Play className="size-5 fill-current" />
+                <span className="grid size-9 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
+                  <Play className="size-4 fill-current" />
                 </span>
               </span>
 
-              <div className="absolute inset-x-0 bottom-0 p-3">
-                <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-snow drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
+              <div className="absolute inset-x-0 bottom-0 p-2.5">
+                <h3 className="line-clamp-1 text-sm font-semibold leading-tight tracking-tight text-snow drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
                   {s.title}
                 </h3>
-                <div className="mt-1.5 flex items-center gap-1.5 text-[10px] font-semibold text-muted">
-                  {s.type && <TypePill type={s.type} />}
-                  {eps != null && (
+                <div className="mt-1 flex items-center gap-1.5 text-[10px] font-semibold text-muted">
+                  {epNum != null && (
                     <span className="rounded-sm bg-base/70 px-1.5 py-0.5 text-snow">
-                      {eps} eps
+                      EP {epNum}
                     </span>
                   )}
+                  <EpBadges sub={s.episodes.sub} dub={s.episodes.dub} />
                 </div>
               </div>
             </div>
