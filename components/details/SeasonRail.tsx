@@ -109,22 +109,22 @@ export function SeasonRail({
                 </span>
               </span>
 
-              {/* Oversized season label + title, baseline-aligned */}
-              <div className="absolute inset-x-0 bottom-0 flex items-end gap-2 p-2.5">
+              {/* Season label (top) + title (bottom), stacked for room */}
+              <div className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 p-2.5">
                 <span
                   className={cn(
-                    "font-display text-4xl font-extrabold leading-[0.78] tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] sm:text-5xl",
+                    "font-display text-xl font-extrabold leading-none tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] sm:text-2xl",
                     isCurrent || top3 ? "text-frost" : "text-snow",
                   )}
                   style={{
                     WebkitTextStroke: isCurrent || top3
-                      ? "1.5px var(--color-frost)"
-                      : "1px rgba(255,255,255,0.55)",
+                      ? "1px var(--color-frost)"
+                      : "0.5px rgba(255,255,255,0.5)",
                   }}
                 >
                   {label}
                 </span>
-                <span className="line-clamp-2 pb-0.5 text-left text-[12px] font-semibold leading-tight text-snow drop-shadow-[0_1px_6px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
+                <span className="line-clamp-2 text-left text-[11px] font-semibold leading-tight text-snow drop-shadow-[0_1px_6px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
                   {s.title}
                 </span>
               </div>
