@@ -1,114 +1,218 @@
 "use client";
 
+import { useRef } from "react";
 import Link from "next/link";
-import { motion } from "framer-motion";
-import { Play, Flame } from "lucide-react";
+import { Play, Flame, ChevronLeft, ChevronRight } from "lucide-react";
+import {
+  motion,
+  useAnimationFrame,
+  useMotionValue,
+  useReducedMotion,
+} from "framer-motion";
 import type { AnimeCardModel } from "@/lib/providers/types";
-import { RailShell } from "@/components/common/RailShell";
 import { SmartImage } from "@/components/ui/SmartImage";
-import { EpBadges } from "@/components/anime/Badges";
 import { cn } from "@/lib/utils/cn";
 
+// Marquee drift speed, px/s. The rail glides right-to-left so it reads as a
+// "train" of posters — deliberately the opposite direction to Latest Episodes.
+const SPEED = 34;
+
+/** One ranked landscape card. Pulled out so the marquee and the reduced-motion
+ *  fallback rail can share the exact same markup. */
+function TrendCard({
+  s,
+  rank,
+  ariaHidden = false,
+}: {
+  s: AnimeCardModel;
+  rank: number;
+  ariaHidden?: boolean;
+}) {
+  const top3 = rank <= 3;
+  return (
+    <Link
+      href={`/anime/${s.id}`}
+      aria-label={s.title}
+      aria-hidden={ariaHidden}
+      tabIndex={ariaHidden ? -1 : undefined}
+      className={cn(
+        "group relative aspect-[3/2] w-44 shrink-0 overflow-hidden rounded-2xl ring-1 transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-frost)] sm:w-52 md:w-56",
+        top3 ? "ring-frost/40 hover:ring-frost" : "ring-line hover:ring-frost/60",
+      )}
+    >
+      {s.poster && (
+        <SmartImage
+          src={s.poster}
+          alt=""
+          fill
+          sizes="224px"
+          className="object-cover brightness-[0.88] transition-[filter] duration-300 group-hover:brightness-110"
+        />
+      )}
+
+      {/* Scrim — deep at the bottom to seat the chart number + title */}
+      <div className="absolute inset-0 bg-gradient-to-t from-base via-base/35 to-transparent" />
+
+      {/* Frost wash on hover — tints the art instead of zooming it */}
+      <div className="absolute inset-0 bg-frost-soft opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+      {/* Hover play affordance */}
+      <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <span className="grid size-11 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
+          <Play className="size-5 fill-current" />
+        </span>
+      </span>
+
+      {/* Oversized chart rank + title, baseline-aligned */}
+      <div className="absolute inset-x-0 bottom-0 flex items-end gap-2 p-2.5">
+        <span
+          className={cn(
+            "font-display text-4xl font-extrabold leading-[0.78] tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] sm:text-5xl",
+            top3 ? "text-frost" : "text-snow",
+          )}
+          style={{
+            WebkitTextStroke: top3
+              ? "1.5px var(--color-frost)"
+              : "1px rgba(255,255,255,0.55)",
+          }}
+        >
+          {rank}
+        </span>
+        <span className="line-clamp-2 pb-0.5 text-left text-[12px] font-semibold leading-tight text-snow drop-shadow-[0_1px_6px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
+          {s.title}
+        </span>
+      </div>
+    </Link>
+  );
+}
+
 /**
- * Trending rail — landscape 16:9 cards (matching the Continue Watching
- * chrome) so the two rails share a visual language for "things in motion".
- *
- * Cards are intentionally smaller than Continue Watching so this rail
- * stays secondary: a poster + title + "EP X" line, with the chart-top
- * entry marked by a "Hot" pill. Episode timing is omitted here because
- * the trending payload doesn't carry per-episode duration (only the
- * user's watch progress does); we surface `episodeNumber` instead so the
- * meta line still tells you where in the run the show is.
- *
- * Rendered inside the shared `RailShell` for the masked snap-scroll
- * behaviour + chevron controls as every other rail on the home page.
+ * Trending rail — ranked landscape cards with oversized chart numbers. The rail
+ * auto-drifts as an endless right-to-left marquee (a doubled track wrapped at
+ * its half-width) and freezes the instant a pointer or touch lands on it.
+ * Reduced-motion users get the original arrow-driven scroll rail instead.
  */
 export function Trending({ items }: { items: AnimeCardModel[] }) {
-  if (!items?.length) return null;
+  const reduce = useReducedMotion();
+  const trackRef = useRef<HTMLDivElement>(null);
+  const railRef = useRef<HTMLDivElement>(null);
+  const x = useMotionValue(0);
+  const paused = useRef(false);
 
-  // Order by provider rank so the chart-top item is always first; nulls go to
-  // the tail so unranked fallbacks still render in the order we received them.
-  const ordered = [...items].sort((a, b) => {
-    const ar = typeof a.rank === "number" ? a.rank : Number.POSITIVE_INFINITY;
-    const br = typeof b.rank === "number" ? b.rank : Number.POSITIVE_INFINITY;
-    return ar - br;
+  // Continuous leftward drift, wrapped seamlessly at half the doubled track.
+  useAnimationFrame((_, delta) => {
+    if (reduce || paused.current || !trackRef.current) return;
+    const half = trackRef.current.scrollWidth / 2;
+    if (!half) return;
+    let next = x.get() - (SPEED * delta) / 1000;
+    if (next <= -half) next += half; // loop back into the first copy
+    x.set(next);
   });
 
+  const setPaused = (v: boolean) => {
+    paused.current = v;
+  };
+
+  // Reduced-motion fallback: manual scroll by ~a viewport-worth.
+  const scrollRail = (dir: 1 | -1) => {
+    const el = railRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: "smooth" });
+  };
+
+  if (!items?.length) return null;
+
+  const rankOf = (s: AnimeCardModel, i: number) =>
+    typeof s.rank === "number" ? s.rank : i + 1;
+
   return (
-    <RailShell title="Trending" eyebrow="Hot right now">
-      {ordered.map((s, i) => {
-        const isHot = i === 0;
-        const epNum = typeof s.episodeNumber === "number" ? s.episodeNumber : null;
-        return (
-          <Link
-            key={s.id}
-            href={`/anime/${s.id}`}
-            style={{ ["--reveal-delay" as string]: `${Math.min(i, 9) * 60}ms` }}
-            className="reveal group block w-[54vw] shrink-0 snap-start sm:w-[215px] md:w-[240px]"
-          >
-            <div
-              className={cn(
-                "relative aspect-video overflow-hidden rounded-md bg-surface-2 ring-1 transition-all duration-300 ease-out",
-                isHot
-                  ? "ring-frost shadow-[var(--shadow-frost)]"
-                  : "ring-line group-hover:-translate-y-1 group-hover:ring-frost/40 group-hover:shadow-[var(--shadow-frost)]",
-              )}
+    <section className="relative">
+      {/* Editorial header — frost accent bar + stacked eyebrow/title, with
+          scroll arrows on the right (reduced-motion only). */}
+      <div className="mb-4 flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <span className="h-9 w-1 shrink-0 rounded-full bg-gradient-to-b from-frost to-frost-deep shadow-[var(--shadow-neon)]" />
+          <div className="min-w-0">
+            <span className="flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-frost">
+              <motion.span
+                aria-hidden
+                animate={reduce ? {} : { rotate: [0, -10, 10, -6, 0], scale: [1, 1.18, 1] }}
+                transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
+                className="inline-flex"
+              >
+                <Flame className="size-3.5 fill-frost/25" />
+              </motion.span>
+              Hot right now
+            </span>
+            <h2 className="font-display text-xl font-extrabold leading-tight tracking-tight sm:text-2xl">
+              Trending
+            </h2>
+          </div>
+        </div>
+
+        {reduce && (
+          <div className="ml-auto hidden shrink-0 gap-1.5 sm:flex">
+            <button
+              onClick={() => scrollRail(-1)}
+              aria-label="Scroll trending left"
+              className="grid size-8 place-items-center rounded-full glass text-muted transition-colors hover:border-frost/40 hover:text-snow"
             >
-              {s.poster ? (
-                <SmartImage
-                  src={s.poster}
-                  alt={s.title}
-                  fill
-                  sizes="(max-width:640px) 50vw, (max-width:1024px) 22vw, 220px"
-                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-[1.05]"
-                />
-              ) : (
-                <div className="grid h-full place-items-center text-faint">No image</div>
-              )}
+              <ChevronLeft className="size-4" />
+            </button>
+            <button
+              onClick={() => scrollRail(1)}
+              aria-label="Scroll trending right"
+              className="grid size-8 place-items-center rounded-full bg-frost text-base shadow-[var(--shadow-neon)] transition-transform hover:scale-105"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+        )}
+      </div>
 
-              {/* Bottom gradient for legible meta over the poster */}
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-base via-base/40 to-transparent" />
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/30 to-transparent" />
-
-              {isHot && (
-                <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-frost/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-base shadow-[var(--shadow-neon)]">
-                  <motion.span
-                    aria-hidden
-                    animate={{ rotate: [0, -10, 10, -6, 0], scale: [1, 1.18, 1] }}
-                    transition={{ duration: 2.6, repeat: Infinity, ease: "easeInOut" }}
-                    className="inline-flex"
-                  >
-                    <Flame className="size-2.5 fill-current" />
-                  </motion.span>
-                  Hot
-                </span>
-              )}
-
-              {/* Hover play affordance — same as Continue Watching keeps the
-                  rail family feeling uniform when the user hovers. */}
-              <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <span className="grid size-9 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
-                  <Play className="size-4 fill-current" />
-                </span>
-              </span>
-
-              <div className="absolute inset-x-0 bottom-0 p-2.5">
-                <h3 className="line-clamp-1 text-sm font-semibold leading-tight tracking-tight text-snow drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
-                  {s.title}
-                </h3>
-                <div className="mt-1 flex items-center gap-1.5 text-[10px] font-semibold text-muted">
-                  {epNum != null && (
-                    <span className="rounded-sm bg-base/70 px-1.5 py-0.5 text-snow">
-                      EP {epNum}
-                    </span>
-                  )}
-                  <EpBadges sub={s.episodes.sub} dub={s.episodes.dub} />
-                </div>
-              </div>
-            </div>
-          </Link>
-        );
-      })}
-    </RailShell>
+      {reduce ? (
+        // Static, manually scrollable rail for reduced-motion users.
+        <div ref={railRef} className="no-scrollbar flex gap-3.5 overflow-x-auto px-0.5 pb-4 pt-3">
+          {items.map((s, idx) => (
+            <TrendCard key={`${s.id}-${idx}`} s={s} rank={rankOf(s, idx)} />
+          ))}
+        </div>
+      ) : (
+        // Auto-drifting marquee — pauses on any pointer/touch interaction.
+        // The container itself is masked on the left/right edges so cards
+        // physically fade into transparency at the rails (no overlay divs, no
+        // scrim layers — the page background shows through wherever the mask
+        // is transparent). Center cards are unaffected; hover/scroll/click
+        // behaviour is preserved.
+        <div
+          className="relative overflow-hidden"
+          style={{
+            WebkitMaskImage:
+              "linear-gradient(to right, transparent 0, black 120px, black calc(100% - 120px), transparent 100%)",
+            maskImage:
+              "linear-gradient(to right, transparent 0, black 120px, black calc(100% - 120px), transparent 100%)",
+          }}
+          onPointerEnter={() => setPaused(true)}
+          onPointerLeave={() => setPaused(false)}
+          onTouchStart={() => setPaused(true)}
+          onTouchEnd={() => setPaused(false)}
+          onTouchCancel={() => setPaused(false)}
+        >
+          <motion.div
+            ref={trackRef}
+            style={{ x }}
+            className="flex w-max gap-3.5 px-0.5 pb-4 pt-3 will-change-transform"
+          >
+            {/* Doubled track: the second copy is decorative (hidden from a11y). */}
+            {items.map((s, idx) => (
+              <TrendCard key={`a-${s.id}-${idx}`} s={s} rank={rankOf(s, idx)} />
+            ))}
+            {items.map((s, idx) => (
+              <TrendCard key={`b-${s.id}-${idx}`} s={s} rank={rankOf(s, idx)} ariaHidden />
+            ))}
+          </motion.div>
+        </div>
+      )}
+    </section>
   );
 }

@@ -326,6 +326,23 @@
 }
 .title-rise { animation: title-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: var(--reveal-delay, 0ms); }
 
+/* Trending "train" marquee — the inner track is rendered twice so a
+   translateX(-50%) loop is seamless. Linear easing keeps the speed
+   constant (no easing artefacts at the join), and we pause on hover so a
+   click can land. motion-reduce:animate-none on the element handles the
+   reduced-motion fallback. */
+@keyframes trend-marquee {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+.trend-track {
+  animation: trend-marquee 40s linear infinite;
+  will-change: transform;
+}
+.trend-track:hover {
+  animation-play-state: paused;
+}
+
 /* Hover-lift preset for cards (transform-only) */
 .hover-lift {
   transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1),
