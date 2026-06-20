@@ -8,27 +8,11 @@ import { CinematicHeader } from "@/components/common/SectionHeader";
 import { EpBadges } from "@/components/anime/Badges";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { cn } from "@/lib/utils/cn";
+import { useReducedMotionSSR } from "@/lib/utils/useReducedMotion";
 
 // Auto-advance cadence, ms between steps. Latest Episodes drifts left-to-right
 // (active index decreasing) — deliberately opposite to the Trending marquee.
 const AUTOPLAY_MS = 3200;
-
-/**
- * Tiny SSR-safe reduced-motion probe — replaces `useReducedMotion` from
- * framer-motion. Reads once on mount; returns the current matchMedia state
- * without forcing a framer-motion import.
- */
-function useReducedMotionSSR(): boolean {
-  const [reduce, setReduce] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduce(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setReduce(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-  return reduce;
-}
 
 // ── Coverflow geometry ──────────────────────────────────────────────────────
 // Each card is placed relative to the active one. Its offset (i - active) drives

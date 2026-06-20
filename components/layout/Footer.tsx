@@ -106,9 +106,9 @@ export async function Footer() {
         </div>
 
         {/* ── Quick links ── */}
-        <nav className="mt-11 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-medium text-muted">
+        <nav className="mt-11 flex flex-wrap justify-center gap-x-6 gap-y-2 text-sm font-medium text-muted" aria-label="Footer quick links">
           {QUICK_LINKS.map((l) => (
-            <Link key={l.href} href={l.href} className="transition-colors hover:text-frost">
+            <Link key={l.href} href={l.href} className="rounded-sm transition-colors duration-200 hover:text-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost">
               {l.label}
             </Link>
           ))}
@@ -128,12 +128,12 @@ export async function Footer() {
         >
           <FooterGenres />
         </Suspense>
-        <div className="mt-6 flex flex-wrap justify-center gap-1.5">
+        <div className="mt-6 flex flex-wrap justify-center gap-1.5" aria-label="Browse A-Z">
           {AZ.map((l) => (
             <Link
               key={l}
               href={`/az/${l}`}
-              className="grid h-8 min-w-8 place-items-center rounded-md border border-line bg-base/40 px-2 text-xs font-semibold text-muted transition-colors hover:border-frost/40 hover:bg-frost-soft hover:text-frost"
+              className="grid h-8 min-w-8 place-items-center rounded-md border border-line bg-base/40 px-2 text-xs font-semibold text-muted transition-colors duration-200 hover:border-frost/40 hover:bg-frost-soft hover:text-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
             >
               {azLabel(l)}
             </Link>
@@ -147,7 +147,7 @@ export async function Footer() {
           </p>
           <div className="flex items-center gap-5 text-xs text-muted">
             {LEGAL.map((l) => (
-              <Link key={l.href} href={l.href} className="transition-colors hover:text-frost">
+              <Link key={l.href} href={l.href} className="rounded-sm transition-colors duration-200 hover:text-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost">
                 {l.label}
               </Link>
             ))}

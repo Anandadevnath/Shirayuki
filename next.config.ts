@@ -33,13 +33,12 @@ const nextConfig: NextConfig = {
   // Only ship the lucide icons that are actually used (it's imported across many
   // client components) and keep barrel imports cheap to compile. zustand's
   // barrel re-exports create/middleware, so tree-shaking the entry point also
-  // helps on the watch page where the Player persists prefs. cva/clsx/tw-merge
+  // helps on the watch page where the Player persists prefs. clsx/tw-merge
   // are re-exported via barrels in their entry points — same treatment.
   experimental: {
     optimizePackageImports: [
       "lucide-react",
       "zustand",
-      "class-variance-authority",
       "clsx",
       "tailwind-merge",
     ],

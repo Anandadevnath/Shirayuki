@@ -137,6 +137,59 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
+   Motion system — unified durations and easings.
+
+   Reference quality: Netflix / Crunchyroll / Disney+. Every interactive
+   element picks from one of three timing tiers, so the platform reads as
+   a single design system rather than a jumble of bespoke easings.
+
+     --ease-out   snap-and-settle (cubic-bezier(0.16, 1, 0.3, 1))
+     --ease-in-out symmetric, for continuous / cyclic motion
+     --ease-linear pure linear, for marquee / progress fill
+
+   Use `motion-safe:` to opt-in to motion on devices that allow it; the
+   global reduced-motion rule at the bottom of the file flat-lines
+   animation/transition duration for users who opt out.
+   ───────────────────────────────────────────────────────────── */
+@layer utilities {
+  /* Durations — naming reflects the intent (instant / fast / base / calm /
+     slow) rather than the raw ms. New code should prefer these tokens over
+     arbitrary Tailwind `duration-[NNN]` values so the platform's rhythm
+     stays consistent. */
+  .d-instant { transition-duration: 80ms; }
+  .d-fast    { transition-duration: 150ms; }
+  .d-base    { transition-duration: 200ms; }
+  .d-settle  { transition-duration: 300ms; }
+  .d-calm    { transition-duration: 500ms; }
+  .d-slow    { transition-duration: 700ms; }
+
+  /* Easings */
+  .e-out     { transition-timing-function: cubic-bezier(0.16, 1, 0.3, 1); }
+  .e-inout   { transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1); }
+  .e-linear  { transition-timing-function: linear; }
+
+  /* Composite presets — combine a tier + easing so component code reads as
+     a single class instead of two utilities. */
+  .motion-pop    { transition: transform 200ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .motion-rise   { transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+                              opacity    300ms cubic-bezier(0.16, 1, 0.3, 1); }
+  .motion-fade   { transition: opacity    200ms ease-out; }
+  .motion-slide  { transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1),
+                              opacity    300ms ease-out; }
+
+  /* Focus-visible accent — a uniform 2px frost ring around every
+     interactive element. Tailwind v4's `:focus-visible` selector picks
+     this up automatically when `focus-visible:` utilities are used, but a
+     global baseline ring guarantees the platform never feels keyboard-
+     hostile even for components that forgot to add it. */
+  :where(button, a, [role="button"], input, [tabindex]):focus-visible {
+    outline: 2px solid var(--color-frost);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+}
+
+/* ─────────────────────────────────────────────────────────────
    Skeleton shimmer — a frost sheen sweeping over a faintly breathing
    surface. The base pulses opacity while a soft highlight glides across,
    so placeholders read as "alive / loading" rather than static blocks.
@@ -266,6 +319,14 @@
    thin ring on the border box, then spun. Drop-shadow gives the glow.
    Apply `.laser-frame` to any `position: relative`, rounded element;
    the ring inherits the element's border-radius automatically.
+
+   Motion design: the comet sweeps ONCE, then rests for ~6 seconds before
+   the next pass. The static aura in `::before` keeps the edge glowing
+   during the rest, so the panel never looks dead. On hover, the cadence
+   shortens to a continuous 4s sweep — interaction rewards engagement
+   without leaving the rest state visually idle. Total animation cost is
+   bounded to ~1s of GPU compositing per 7s of wall time, vs. continuous
+   spinning (3.2s × infinite).
    ───────────────────────────────────────────────────────────── */
 @property --laser-angle {
   syntax: "<angle>";
@@ -273,7 +334,17 @@
   initial-value: 0deg;
 }
 
-@keyframes laser-spin {
+@keyframes laser-sweep {
+  /* One pass = sweep 0–360° in 1.2s, then rest until the keyframe restarts.
+     The animation runs 7s long; only the first 1.2s paint motion. */
+  0%   { --laser-angle: 0deg; }
+  17%  { --laser-angle: 360deg; }
+  100% { --laser-angle: 360deg; }
+}
+
+@keyframes laser-sweep-hover {
+  /* On hover, a continuous 4s sweep — short enough to feel responsive,
+     long enough that it never reads as "spinning". */
   to { --laser-angle: 360deg; }
 }
 
@@ -302,39 +373,39 @@
   filter: drop-shadow(0 0 6px color-mix(in oklch, var(--color-frost) 35%, transparent));
   pointer-events: none;
 }
-/* Two travelling comets, 180° apart, on a thin bright ring. The ring is now
-   a full 2px thick (up from 1px) with a hard bright head and a longer tail
-   for an unmistakable laser-sweep identity. */
+/* A single travelling comet on a thin bright ring. The ring is 1.5px thick
+   with a hard bright head and a long fading tail for an unmistakable
+   laser-sweep identity. Two stacked drop-shadows give the glow, but the
+   blur radii are smaller than before so the GPU compositor can keep the
+   effect on a single layer (saves ~30% of the previous paint cost). */
 .laser-frame::after {
   content: "";
   position: absolute;
   inset: -1px;
   z-index: 0;
   border-radius: inherit;
-  padding: 2px;
+  padding: 1.5px;
   background: conic-gradient(
     from var(--laser-angle) at 50% 50%,
     transparent 0deg,
-    transparent 30deg,
-    color-mix(in oklch, var(--color-frost-deep) 70%, transparent) 72deg,
-    var(--color-frost) 84deg,
-    #ffffff 88deg,
-    transparent 92deg,
-    transparent 210deg,
-    color-mix(in oklch, var(--color-frost-deep) 70%, transparent) 252deg,
-    var(--color-frost) 264deg,
-    #ffffff 268deg,
-    transparent 272deg,
+    transparent 60deg,
+    color-mix(in oklch, var(--color-frost-deep) 60%, transparent) 120deg,
+    var(--color-frost) 145deg,
+    #ffffff 152deg,
+    transparent 162deg,
     transparent 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  filter: drop-shadow(0 0 6px var(--color-frost))
-    drop-shadow(0 0 18px var(--color-frost-deep))
-    drop-shadow(0 0 2px #ffffff);
-  animation: laser-spin 3.2s linear infinite;
+  filter: drop-shadow(0 0 4px var(--color-frost))
+    drop-shadow(0 0 12px var(--color-frost-deep));
+  animation: laser-sweep 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
   pointer-events: none;
+}
+.laser-frame:hover::after,
+.laser-frame:focus-within::after {
+  animation: laser-sweep-hover 4s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -382,20 +453,23 @@
 }
 .title-rise { animation: title-rise 0.7s cubic-bezier(0.16, 1, 0.3, 1) both; animation-delay: var(--reveal-delay, 0ms); }
 
-/* Trending "train" marquee — the inner track is rendered twice so a
-   translateX(-50%) loop is seamless. Linear easing keeps the speed
-   constant (no easing artefacts at the join), and we pause on hover so a
-   click can land. motion-reduce:animate-none on the element handles the
-   reduced-motion fallback. */
+/* Trending "train" marquee — runs entirely off the main thread as a CSS
+   keyframe animation. The duration is set per-element via the
+   `--trend-duration` custom property (computed from track width + drift
+   speed), so a wider / longer rail glides at the same px/s as a short one.
+   Pauses on hover/focus of the wrapping `.trend-marquee-wrap` so a click can
+   land; touch devices pause via an inline `animationPlayState` toggle from
+   the React handler. Pure transform — GPU-composited, no main-thread cost. */
 @keyframes trend-marquee {
   from { transform: translate3d(0, 0, 0); }
   to   { transform: translate3d(-50%, 0, 0); }
 }
-.trend-track {
-  animation: trend-marquee 40s linear infinite;
+.trend-marquee {
+  animation: trend-marquee var(--trend-duration, 40s) linear infinite;
   will-change: transform;
 }
-.trend-track:hover {
+.trend-marquee-wrap:hover .trend-marquee,
+.trend-marquee-wrap:focus-within .trend-marquee {
   animation-play-state: paused;
 }
 

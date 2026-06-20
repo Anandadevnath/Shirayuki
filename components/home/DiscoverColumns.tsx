@@ -53,18 +53,20 @@ function DiscoverColumn({
   if (!items?.length) return null;
 
   return (
-    <section className="glass flex flex-col rounded-lg p-4 sm:p-5">
+    <section className="glass flex flex-col rounded-lg p-4 sm:p-5" aria-label={title}>
       <h3 className="text-gradient-frost mb-1 font-display text-lg font-extrabold">
         {title}
       </h3>
-      <div className="flex flex-1 flex-col">
+      <ul className="flex flex-1 flex-col">
         {items.slice(0, 5).map((a, idx) => (
-          <DiscoverRow key={`${a.id}-${idx}`} anime={a} />
+          <li key={`${a.id}-${idx}`}>
+            <DiscoverRow anime={a} />
+          </li>
         ))}
-      </div>
+      </ul>
       <Link
         href={href}
-        className="mt-3 inline-flex items-center gap-1 text-sm font-medium text-muted transition-colors hover:text-frost"
+        className="mt-3 inline-flex items-center gap-1 rounded-sm text-sm font-medium text-muted transition-colors duration-200 hover:text-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
       >
         View more
         <ChevronRight className="size-4" />

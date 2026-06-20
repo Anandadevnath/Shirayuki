@@ -1,31 +1,16 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { Play, Flame, ChevronLeft, ChevronRight } from "lucide-react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { cn } from "@/lib/utils/cn";
+import { useReducedMotionSSR } from "@/lib/utils/useReducedMotion";
 
 // Marquee drift speed, px/s. The rail glides right-to-left so it reads as a
 // "train" of posters — deliberately the opposite direction to Latest Episodes.
 const SPEED = 34;
-
-/**
- * Tiny SSR-safe reduced-motion probe — replaces `useReducedMotion` from
- * framer-motion. Reads once on mount; same default for SSR (false).
- */
-function useReducedMotionSSR(): boolean {
-  const [reduce, setReduce] = useState(false);
-  useEffect(() => {
-    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
-    setReduce(mq.matches);
-    const onChange = (e: MediaQueryListEvent) => setReduce(e.matches);
-    mq.addEventListener("change", onChange);
-    return () => mq.removeEventListener("change", onChange);
-  }, []);
-  return reduce;
-}
 
 /** One ranked landscape card. Pulled out so the marquee and the reduced-motion
  *  fallback rail can share the exact same markup. */
@@ -106,61 +91,30 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
   const reduce = useReducedMotionSSR();
   const trackRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
-  // Plain numeric x offset — written from a single rAF loop, painted via
-  // direct DOM mutation. Replaces framer-motion's useMotionValue + motion.div,
-  // which pulled in the entire motion-value/animation engine.
-  const xRef = useRef(0);
-  const paused = useRef(false);
 
   // Continuous leftward drift, wrapped seamlessly at half the doubled track.
-  // Same behaviour as the old useAnimationFrame loop — the only difference
-  // is that we now drive a numeric ref + a 60fps state tick instead of a
-  // motion value. React skips re-render when x hasn't changed.
+  // The animation runs as a pure CSS keyframe (off the main thread) and pauses
+  // via a `:hover` rule on the container — see `.trend-marquee` in globals.css.
+  // We measure the half-width here only so reduced-motion / paused branches
+  // can fall back to a JS-driven offset if needed.
   useEffect(() => {
     if (reduce) return;
-    let raf = 0;
-    let last = performance.now();
-    // Cache the half-width on mount and on resize. Reading `scrollWidth`
-    // inside the rAF loop forces a synchronous layout (forced reflow) every
-    // frame — the marquee rAF is running at 60fps, so 60 reflows/sec in the
-    // background measurably hurts the main thread. The track width is a
-    // function of `items.length` and viewport-dependent card sizes; the
-    // ResizeObserver catches the cases that matter (container resize, font
-    // load changing card widths).
-    let half = 0;
+    const el = trackRef.current;
+    if (!el) return;
+    // Pre-compute the animation duration from the half-width so the linear
+    // marquee speed matches the previous JS implementation (SPEED px/s). We
+    // measure once on mount + on resize; if the track is empty the duration
+    // is 0 and the CSS animation just doesn't move.
     const measure = () => {
-      const el = trackRef.current;
-      if (!el) return;
-      half = el.scrollWidth / 2;
+      const half = el.scrollWidth / 2;
+      const seconds = half > 0 ? half / SPEED : 0;
+      el.style.setProperty("--trend-duration", `${seconds}s`);
     };
     measure();
     const ro = new ResizeObserver(measure);
-    if (trackRef.current) ro.observe(trackRef.current);
-    const tick = (now: number) => {
-      const dt = now - last;
-      last = now;
-      const el = trackRef.current;
-      if (el && !paused.current && half) {
-        let next = xRef.current - (SPEED * dt) / 1000;
-        if (next <= -half) next += half;
-        xRef.current = next;
-        // Update via DOM directly to avoid React reconciliation each frame —
-        // same trick as the SnowLayer clock. The visible width still changes
-        // because we mutate the style attribute.
-        el.style.transform = `translate3d(${next}px, 0, 0)`;
-      }
-      raf = requestAnimationFrame(tick);
-    };
-    raf = requestAnimationFrame(tick);
-    return () => {
-      cancelAnimationFrame(raf);
-      ro.disconnect();
-    };
+    ro.observe(el);
+    return () => ro.disconnect();
   }, [reduce]);
-
-  const setPaused = (v: boolean) => {
-    paused.current = v;
-  };
 
   // Reduced-motion fallback: manual scroll by ~a viewport-worth.
   const scrollRail = (dir: 1 | -1) => {
@@ -223,29 +177,34 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
         </div>
       ) : (
         // Auto-drifting marquee — pauses on any pointer/touch interaction.
-        // The container itself is masked on the left/right edges so cards
-        // physically fade into transparency at the rails (no overlay divs, no
-        // scrim layers — the page background shows through wherever the mask
-        // is transparent). Center cards are unaffected; hover/scroll/click
-        // behaviour is preserved.
+        // The CSS keyframe animation runs entirely off the main thread; the
+        // :hover pause + JS touch-pause give the user full control. The
+        // container itself is masked on the left/right edges so cards
+        // physically fade into transparency at the rails.
         <div
-          className="relative overflow-hidden"
+          className="trend-marquee-wrap group/marquee relative overflow-hidden"
           style={{
             WebkitMaskImage:
               "linear-gradient(to right, transparent 0, black 120px, black calc(100% - 120px), transparent 100%)",
             maskImage:
               "linear-gradient(to right, transparent 0, black 120px, black calc(100% - 120px), transparent 100%)",
           }}
-          onPointerEnter={() => setPaused(true)}
-          onPointerLeave={() => setPaused(false)}
-          onTouchStart={() => setPaused(true)}
-          onTouchEnd={() => setPaused(false)}
-          onTouchCancel={() => setPaused(false)}
+          onTouchStart={(e) => {
+            const el = trackRef.current;
+            if (el) el.style.animationPlayState = "paused";
+          }}
+          onTouchEnd={(e) => {
+            const el = trackRef.current;
+            if (el) el.style.animationPlayState = "running";
+          }}
+          onTouchCancel={(e) => {
+            const el = trackRef.current;
+            if (el) el.style.animationPlayState = "running";
+          }}
         >
           <div
             ref={trackRef}
-            className="flex w-max gap-3.5 px-0.5 pb-4 pt-3 will-change-transform"
-            style={{ transform: "translate3d(0, 0, 0)" }}
+            className="trend-marquee flex w-max gap-3.5 px-0.5 pb-4 pt-3"
           >
             {/* Doubled track: the second copy is decorative (hidden from a11y).
                 Both copies stay mounted so the seamless loop anchor exists,

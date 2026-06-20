@@ -85,11 +85,15 @@ export function Nav() {
            state, no per-scroll re-render. The two CSS rules below the
            component toggle the visual class based on the dataset value. */
         data-scrolled="0"
-        className="sticky top-0 z-40 w-full transition-colors duration-300 bg-transparent"
+        className="sticky top-0 z-40 w-full transition-[background-color,backdrop-filter,border-color] duration-300 bg-transparent"
       >
-        <nav className="mx-auto flex h-16 w-full max-w-[1460px] items-center gap-2 px-4 sm:px-6 lg:px-8">
-          <Link href="/" className="flex items-center" aria-label="Shirayuki — Home">
-            <span className="relative h-16 w-14 shrink-0 drop-shadow-[0_4px_16px_rgba(120,180,255,0.25)]">
+        <nav className="mx-auto flex h-16 w-full max-w-[1460px] items-center gap-2 px-4 sm:px-6 lg:px-8" aria-label="Primary">
+          <Link
+            href="/"
+            className="group flex items-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
+            aria-label="Shirayuki — Home"
+          >
+            <span className="relative h-16 w-14 shrink-0 drop-shadow-[0_4px_16px_rgba(120,180,255,0.25)] transition-[filter] duration-300 group-hover:drop-shadow-[0_4px_24px_rgba(120,180,255,0.45)]">
               <Image
                 src="/logos/shirayuki2.png"
                 alt=""
@@ -121,12 +125,25 @@ export function Nav() {
                 <li key={l.href}>
                   <Link
                     href={l.href}
+                    aria-current={active ? "page" : undefined}
                     className={cn(
-                      "rounded-sm px-3 py-2 text-sm font-medium transition-colors",
-                      active ? "text-snow" : "text-muted hover:text-snow",
+                      "relative inline-flex items-center rounded-sm px-3 py-2 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost",
+                      active
+                        ? "text-snow"
+                        : "text-muted hover:text-snow",
                     )}
                   >
                     {l.label}
+                    {/* Active frost underline — draws in via transform-origin
+                        so the animation is GPU-only (no layout). Sits inside
+                        the link's flex flow so it scales with the parent. */}
+                    <span
+                      aria-hidden
+                      className={cn(
+                        "pointer-events-none absolute inset-x-2 -bottom-0.5 h-px origin-left bg-gradient-to-r from-frost via-frost-deep to-frost transition-transform duration-300 ease-out",
+                        active ? "scale-x-100 opacity-100" : "scale-x-0 opacity-0",
+                      )}
+                    />
                   </Link>
                 </li>
               );
@@ -135,10 +152,10 @@ export function Nav() {
 
           <button
             onClick={openPalette}
-            className="group ml-auto flex items-center gap-2 rounded-sm border border-line bg-surface/60 px-3 py-2 text-sm text-faint transition-colors hover:border-frost/40 hover:text-muted"
+            className="group ml-auto flex items-center gap-2 rounded-sm border border-line bg-surface/60 px-3 py-2 text-sm text-faint transition-[border-color,color,background-color] duration-200 ease-out hover:border-frost/50 hover:bg-surface/80 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
             aria-label="Search anime (⌘K)"
           >
-            <Search className="size-4" />
+            <Search className="size-4 transition-colors duration-200 group-hover:text-frost" />
             <span className="hidden lg:inline">Search anime…</span>
             <kbd className="ml-2 hidden rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px] text-faint lg:inline">
               ⌘K

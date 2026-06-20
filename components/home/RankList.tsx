@@ -62,21 +62,24 @@ export function RankList({
   if (!items?.length) return null;
 
   return (
-    <section className={cn("glass rounded-lg p-4 sm:p-5", className)}>
+    <section className={cn("glass rounded-lg p-4 sm:p-5", className)} aria-label={title}>
       <div className="mb-3 flex items-center justify-between gap-3">
         <h2 className="text-base font-bold sm:text-lg">{title}</h2>
         {action ??
           (href && (
-            <Link href={href} className="text-xs text-muted transition-colors hover:text-frost">
+            <Link
+              href={href}
+              className="rounded-sm text-xs text-muted transition-colors duration-200 hover:text-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
+            >
               See all
             </Link>
           ))}
       </div>
-      <div className="flex flex-col">
+      <ol className="flex flex-col" aria-label={`${title} ranked list`}>
         {items.map((a, idx) => (
           <RankRow key={`${a.id}-${idx}`} anime={a} rank={a.rank ?? idx + 1} />
         ))}
-      </div>
+      </ol>
     </section>
   );
 }
