@@ -48,7 +48,18 @@ export function ContinueWatching() {
               >
                 <div className="relative aspect-video bg-surface-2">
                   {e.poster && (
-                    <SmartImage src={e.poster} alt="" fill sizes="320px" className="object-cover" />
+                    /* sizes mirrors the card's responsive width: on small
+                       viewports the card spans 62vw (so 124vw capped at the
+                       viewport), on ≥sm it's a fixed 280px. The sizes hint
+                       picks the smallest variant that still covers the box
+                       at 2x DPR. */
+                    <SmartImage
+                      src={e.poster}
+                      alt=""
+                      fill
+                      sizes="(max-width:640px) 62vw, 280px"
+                      className="object-cover"
+                    />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-base/95 to-transparent" />
                   <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity group-hover:opacity-100">

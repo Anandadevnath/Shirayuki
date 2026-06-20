@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Search } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils/cn";
@@ -29,10 +29,15 @@ const LINKS = [
 
 export function Nav() {
   const pathname = usePathname();
-  const [scrolled, setScrolled] = useState(false);
   const [paletteOpen, setPaletteOpen] = useState(false);
   // Latches true on first open so the lazy chunk mounts once, then stays.
   const [paletteMounted, setPaletteMounted] = useState(false);
+  // The header's "scrolled" state toggles `glass` (backdrop-filter blur).
+  // We mutate a CSS variable directly on the header so the swap happens
+  // without a React re-render on every scroll tick — the threshold is a
+  // single boolean, but a scroll handler firing dozens of times per second
+  // would otherwise cause the Nav subtree to re-render with it.
+  const headerRef = useRef<HTMLElement>(null);
 
   const openPalette = useCallback(() => {
     setPaletteMounted(true);
@@ -40,7 +45,15 @@ export function Nav() {
   }, []);
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > 8);
+    const el = headerRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const scrolled = window.scrollY > 8;
+      // Single DOM write per scroll tick — no React reconciliation, no
+      // subtree re-render. The CSS transition on the header still gives
+      // the same 300ms color/glass cross-fade as before.
+      el.dataset.scrolled = scrolled ? "1" : "0";
+    };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
@@ -67,10 +80,12 @@ export function Nav() {
   return (
     <>
       <header
-        className={cn(
-          "sticky top-0 z-40 w-full transition-colors duration-300",
-          scrolled ? "glass" : "bg-transparent",
-        )}
+        ref={headerRef}
+        /* `data-scrolled` is flipped from the scroll handler above — no React
+           state, no per-scroll re-render. The two CSS rules below the
+           component toggle the visual class based on the dataset value. */
+        data-scrolled="0"
+        className="sticky top-0 z-40 w-full transition-colors duration-300 bg-transparent"
       >
         <nav className="mx-auto flex h-16 w-full max-w-[1460px] items-center gap-2 px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center" aria-label="Shirayuki — Home">
@@ -91,7 +106,10 @@ export function Nav() {
                 fill
                 sizes="240px"
                 className="object-contain object-left"
-                priority
+                /* The text logo is a non-critical chrome asset: deferring it
+                   keeps the LCP image's preload slot free, so the spot­light
+                   poster starts downloading a frame earlier. The image still
+                   paints once it lands — just after the hero. */
               />
             </span>
           </Link>

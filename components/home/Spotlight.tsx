@@ -213,9 +213,9 @@ export function Spotlight({
                     src={s.poster}
                     alt=""
                     fill
-                    priority={idx === 0}
                     sizes="100vw"
                     className="object-cover object-[center_22%] brightness-[0.82]"
+                    priority={idx === 0}
                   />
                 ) : (
                   /* Skeleton-grade placeholder for unseen slides; matches the

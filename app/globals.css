@@ -125,6 +125,15 @@
     scroll-snap-type: x mandatory;
   }
   .snap-start { scroll-snap-align: start; }
+  /* Sticky nav scrolled state — toggled via dataset write from the scroll
+     handler (no React state, no per-scroll re-render). Visual is identical
+     to the previous className toggle. */
+  [data-scrolled="1"] {
+    background-color: color-mix(in oklch, var(--color-base) 35%, transparent);
+    backdrop-filter: blur(20px) saturate(1.15);
+    -webkit-backdrop-filter: blur(20px) saturate(1.15);
+    border-bottom: 1px solid color-mix(in oklch, var(--color-frost) 14%, transparent);
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -187,7 +196,9 @@
 .reveal {
   animation: reveal-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
   animation-delay: var(--reveal-delay, 0ms);
-  will-change: transform, opacity;
+  /* No `will-change` here: with 60+ cards on the page, a permanent GPU
+     layer per element doubles paint memory and slows the first scroll.
+     The keyframe compositor promotes on its own during the 0.6s run. */
 }
 .reveal-fade {
   animation: reveal-fade 0.5s ease-out both;
@@ -204,21 +215,31 @@
   will-change: transform, opacity;
 }
 
-/* Image blur-up — runs once on mount. Starts at a hair of scale + blur + 0
-   opacity, settles to crisp full-opacity. Pure CSS, no React state, so the
-   parent (SmartImage) stays a Server Component. The shimmer placeholder
-   sits in the same absolute box and cross-fades out as the keyframe lands
-   via its own .shimmer fade. */
+/* Image reveal — runs once on mount. Starts at a hair of scale + 0 opacity,
+   settles to crisp full-opacity. Pure CSS, no React state, so the parent
+   (SmartImage) stays a Server Component. The shimmer placeholder sits in
+   the same absolute box and cross-fades out as the keyframe lands via its
+   own .shimmer fade.
+
+   Perf note: earlier revisions animated `filter: blur(8px → 0)` for a
+   "blur-up" feel, but filter transitions force the browser into a slow
+   compositing path (especially with `object-cover` posters which already
+   require a rasterization pass). The opacity+scale cross-fade reads
+   identically to the eye once the shimmer placeholder is fading out from
+   underneath — the shimmer itself is the visual carrier of "appearing". */
 @keyframes image-stack-in {
-  from { opacity: 0; transform: scale(1.04); filter: blur(8px); }
-  to   { opacity: 1; transform: scale(1);    filter: blur(0); }
+  from { opacity: 0; transform: scale(1.03); }
+  to   { opacity: 1; transform: scale(1); }
 }
 .image-stack {
-  animation: image-stack-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity, filter;
+  animation: image-stack-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* will-change kept only on the brief mount animation; the browser drops
+     the layer once the keyframe completes (long-running layers are the
+     #1 source of paint-memory bloat on heavy image pages). */
+  will-change: transform, opacity;
 }
 @media (prefers-reduced-motion: reduce) {
-  .image-stack { animation: none; filter: none; }
+  .image-stack { animation: none; }
 }
 /* Shimmer placeholder that sits behind `.image-stack` and fades out as the
    image lands. The animation runs once, ending at opacity 0, so the
@@ -229,8 +250,11 @@
   100% { opacity: 0; }
 }
 .shimmer-stack {
-  animation: shimmer-stack-out 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: opacity;
+  animation: shimmer-stack-out 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
+  /* No `will-change`: this is a one-shot opacity animation. The browser
+     promotes the layer briefly during the run and drops it when done,
+     which is what we want — leaving it would double paint-memory pressure
+     for every image on the page. */
 }
 @media (prefers-reduced-motion: reduce) {
   .shimmer-stack { animation: none; opacity: 0; }

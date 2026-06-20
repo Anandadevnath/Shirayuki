@@ -98,6 +98,13 @@ export default async function HomePage() {
   // connections. Render the preload directly server-side so the network
   // fetch starts during HTML parse, in parallel with the JS bundle download.
   // Next.js hoists server-rendered <link> tags into the document head.
+  //
+  // Note on URL: we point the preload at the raw upstream CDN URL (not the
+  // next/image optimizer URL) because we don't know the optimized variant
+  // at SSR time without making an extra request. The two responses share
+  // the upstream cache, so even if the browser later swaps in an optimized
+  // variant, the raw bytes from the preload are reused for the same source
+  // image — no double download on the LCP path.
   const lcpPoster = home.spotlight[0]?.poster ?? null;
 
   return (

@@ -247,7 +247,13 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
             className="flex w-max gap-3.5 px-0.5 pb-4 pt-3 will-change-transform"
             style={{ transform: "translate3d(0, 0, 0)" }}
           >
-            {/* Doubled track: the second copy is decorative (hidden from a11y). */}
+            {/* Doubled track: the second copy is decorative (hidden from a11y).
+                Both copies stay mounted so the seamless loop anchor exists,
+                but every SmartImage below is rendered with `loading="lazy"`
+                (the next/image default). The decorative copy starts ~50%
+                off-screen left — modern browsers only fetch its posters as
+                they translate into the viewport, so the LCP/INP path never
+                pays for them upfront. */}
             {items.map((s, idx) => (
               <TrendCard key={`a-${s.id}-${idx}`} s={s} rank={rankOf(s, idx)} />
             ))}

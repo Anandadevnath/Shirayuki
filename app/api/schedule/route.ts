@@ -11,5 +11,16 @@ export async function GET(request: Request) {
   }
   const res = await safe(() => getSchedule(date));
   if (!res.ok) return NextResponse.json({ items: [] });
-  return NextResponse.json({ items: res.data });
+  // Edge cache: per-day airing lists are stable for the day. Underlying
+  // provider call is Data-Cache cached (revalidate 600), so the upstream
+  // hop is a no-op within the window. The 24h s-maxage covers the
+  // practical lifetime of a "today" view.
+  return NextResponse.json(
+    { items: res.data },
+    {
+      headers: {
+        "Cache-Control": "public, s-maxage=300, stale-while-revalidate=900",
+      },
+    },
+  );
 }

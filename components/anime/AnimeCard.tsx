@@ -83,8 +83,10 @@ export const AnimeCard = memo(function AnimeCard({
       {/* Lift wrapper carries the only transform on the card body. The two
           shadow layers live here (outside the frame's overflow clip) and
           cross-fade via opacity — far cheaper than re-rasterising a blurred
-          box-shadow every frame. */}
-      <div className="relative transform-gpu transition-transform duration-300 ease-out will-change-transform group-hover:-translate-y-1.5">
+          box-shadow every frame. transform-gpu is enough to keep the lift
+          on the compositor; a permanent `will-change` on every card adds
+          up to hundreds of layers on the home page. */}
+      <div className="relative transform-gpu transition-transform duration-300 ease-out group-hover:-translate-y-1.5">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-[1.25rem] shadow-[var(--shadow-soft)]"
@@ -94,9 +96,19 @@ export const AnimeCard = memo(function AnimeCard({
           className="pointer-events-none absolute inset-0 rounded-[1.25rem] opacity-0 shadow-[var(--shadow-frost)] transition-opacity duration-300 ease-out group-hover:opacity-100"
         />
 
-        <div className="relative aspect-[3/4] overflow-hidden rounded-[1.25rem] bg-surface-2 ring-1 ring-line/80 transition-[box-shadow] duration-300 ease-out group-hover:ring-frost/50">
+        {/* Frame: static `ring-1 ring-line` so the resting state is identical
+            to before, plus a sibling overlay that paints the frosted hover
+            ring at opacity-0 → 100%. Avoids the box-shadow transition
+            (which forces a full repaint of the card body on every hover
+            frame) while preserving the visual. */}
+        <div className="relative aspect-[3/4] overflow-hidden rounded-[1.25rem] bg-surface-2 ring-1 ring-line/80">
+          {/* Frosted hover ring — opacity cross-fade, GPU-composited */}
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 rounded-[1.25rem] ring-1 ring-frost/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100"
+          />
           {/* Poster — gentle cinematic push-in on hover */}
-          <div className="absolute inset-0 transform-gpu transition-transform duration-300 ease-out will-change-transform group-hover:scale-[1.06]">
+          <div className="absolute inset-0 transform-gpu transition-transform duration-300 ease-out group-hover:scale-[1.06]">
             {poster}
           </div>
 
@@ -137,7 +149,7 @@ export const AnimeCard = memo(function AnimeCard({
                 up. Both opacity and transform are GPU-composited — no layout
                 invalidation of the parent's backdrop-filter, so hover stays
                 smooth inside glass panels like QuickLists. */}
-            <div className="flex translate-y-1 transform-gpu items-center gap-2 pt-2.5 opacity-0 transition-[transform,opacity] duration-300 ease-out will-change-[transform,opacity] group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100">
+            <div className="flex translate-y-1 transform-gpu items-center gap-2 pt-2.5 opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-frost to-frost-deep px-3 py-1 text-[11px] font-bold text-base shadow-[var(--shadow-neon)]">
                 <Play className="size-3 translate-x-px fill-current" /> Watch
               </span>

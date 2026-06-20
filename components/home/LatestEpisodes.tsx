@@ -120,7 +120,7 @@ const FlowCard = memo(function FlowCard({
       }}
       className={cn(
         "group absolute left-1/2 top-1/2 aspect-[3/4] h-full origin-center transform-gpu",
-        "transition-[transform,opacity] duration-500 ease-out will-change-transform",
+        "transition-[transform,opacity] duration-500 ease-out",
         "cursor-pointer [backface-visibility:hidden] motion-reduce:transition-none",
         hidden && "pointer-events-none",
       )}
@@ -135,17 +135,34 @@ const FlowCard = memo(function FlowCard({
         )}
       />
 
-      {/* The poster frame */}
+      {/* Active hero's extra frost halo + deep drop — cross-faded via opacity
+          so the rest → active change is a single paint instead of a 500ms
+          box-shadow interpolation. Lives outside the inner overflow-clip so
+          the glow can spill past the card frame, matching the original look. */}
+      <div
+        aria-hidden
+        className={cn(
+          "pointer-events-none absolute -inset-4 -z-[5] rounded-[2rem] transition-opacity duration-500",
+          active ? "opacity-100" : "opacity-0",
+        )}
+        style={{ boxShadow: "0 40px 80px -24px rgba(0,0,0,0.9), var(--shadow-frost)" }}
+      />
+
+      {/* The poster frame — split into a static base + a hover-only shadow
+          overlay so neither shadow ever needs to "transition" (which forces
+          a paint every frame). The recede blur (--blur) is also dropped
+          from the transition list so the filter value snaps to the new
+          card position in a single frame. */}
       <div
         className={cn(
-          "relative h-full w-full overflow-hidden rounded-[1.5rem] bg-surface-2 ring-1 transition-[box-shadow,filter] duration-500 ease-out",
+          "relative h-full w-full overflow-hidden rounded-[1.5rem] bg-surface-2 ring-1",
           // Only the receding side cards get the blur filter. Applying any
           // `filter` (even blur(0)) to the active hero forces a compositor layer
           // that hi-DPI browsers rasterize at 1× and upscale — softening the
           // poster. The hero's blur is always 0, so we simply omit the filter.
           !active && "[filter:blur(var(--blur))]",
           active
-            ? "ring-frost/60 shadow-[0_40px_80px_-24px_rgba(0,0,0,0.9),var(--shadow-frost)]"
+            ? "ring-frost/60 shadow-[var(--shadow-soft)]"
             : "ring-line/70 shadow-[var(--shadow-soft)]",
         )}
       >
@@ -276,6 +293,18 @@ export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
     [items, active, len],
   );
 
+  // Stable per-index click handlers — a fresh inline `() => setActive(i)` on
+  // every render would defeat FlowCard's memo (the prop would always be a new
+  // function reference). Cache one handler per index in a useMemo so each
+  // FlowCard receives a stable callback across re-renders. Recomputed only
+  // when the list length changes (not on every active flip).
+  const selectHandlers = useMemo(
+    () => items.map((_, i) => () => setActive(i)),
+    // setActive is stable across renders, so an empty dep array is correct.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [len],
+  );
+
   // Auto-advance LEFT-TO-RIGHT — posters slide in from the left, so the active
   // index steps backward (-1). Opposite to Trending's right-to-left drift.
   const auto = !interacting && !reduce && len > 1;
@@ -353,7 +382,7 @@ export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
             p={poses[i]}
             active={i === active}
             hidden={Math.abs(wrapOffset(i - active, len)) > VISIBLE}
-            onSelect={() => setActive(i)}
+            onSelect={selectHandlers[i]}
           />
         ))}
 
