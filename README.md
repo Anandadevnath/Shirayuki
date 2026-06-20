@@ -1,71 +1,107 @@
-<!-- Top banner: GitHub renders <img> tags inside <picture> and supports
-     the #gh-light-mode-only / #gh-dark-mode-only fragment trick. -->
+<!-- ═══════════════════════════════════════════════════════════════════════════════
+     SHIRAYUKI · README
+     Cold. Calm. Precise.
+     ════════════════════════════════════════════════════════════════════════════ -->
 
-<p align="center">
-  <em>「 白い雪の姫 」 — the white-snow princess</em><br/>
-  <strong>A dark-first, performance-obsessed anime streaming client.</strong><br/>
-  Forged in frost. One player. One card. One nav. No stack traces.
+<div align="center">
+
+<!-- HERO ──────────────────────────────────────────────────────────────────── -->
+<img src="public/logos/shirayuki2.png" alt="Shirayuki" width="120" />
+
+# ❄ Shirayuki
+
+<em>白い雪の姫 — the white-snow princess.</em>
+
+A **dark-first, performance-obsessed** anime streaming client.<br/>
+Forged in frost. One player. One card. One nav. No stack traces.
+
+<!-- BADGES ────────────────────────────────────────────────────────────────── -->
+<p>
+  <img alt="Next.js 15" src="https://img.shields.io/badge/Next.js-15-000?logo=nextdotjs&style=for-the-badge" />
+  <img alt="React 19" src="https://img.shields.io/badge/React-19-149eca?logo=react&style=for-the-badge" />
+  <img alt="Tailwind v4" src="https://img.shields.io/badge/Tailwind-v4-38bdf8&logo=tailwindcss&style=for-the-badge" />
+  <img alt="TypeScript" src="https://img.shields.io/badge/TypeScript-5.7_strict-3178c6&logo=typescript&style=for-the-badge" />
+  <img alt="Vercel" src="https://img.shields.io/badge/Vercel-ready-000?logo=vercel&style=for-the-badge" />
+  <img alt="License" src="https://img.shields.io/badge/license-MIT-22d3ee?style=for-the-badge" />
 </p>
 
-<p align="center">
-  <a href="#-run"><img src="https://img.shields.io/badge/Next.js-15-000?logo=nextdotjs&style=for-the-badge" alt="Next.js 15" /></a>
-  <a href="#-run"><img src="https://img.shields.io/badge/React-19-149eca?logo=react&style=for-the-badge" alt="React 19" /></a>
-  <a href="#-run"><img src="https://img.shields.io/badge/Tailwind-v4-38bdf8?logo=tailwindcss&style=for-the-badge" alt="Tailwind v4" /></a>
-  <a href="#-run"><img src="https://img.shields.io/badge/TypeScript-5.7_strict-3178c6?logo=typescript&style=for-the-badge" alt="TypeScript" /></a>
-  <a href="#-deploy-to-vercel"><img src="https://img.shields.io/badge/Vercel-ready-000?logo=vercel&style=for-the-badge" alt="Vercel" /></a>
+<p>
+  <a href="#-quick-start"><b>Quick start</b></a> ·
+  <a href="#-deploy"><b>Deploy</b></a> ·
+  <a href="#-architecture"><b>Architecture</b></a> ·
+  <a href="#-features"><b>Features</b></a> ·
+  <a href="#-roadmap"><b>Roadmap</b></a>
 </p>
+
+</div>
 
 ---
 
-## ❄ What is this?
+<!-- TABLE OF CONTENTS ───────────────────────────────────────────────────── -->
+## 📑 Contents
 
-**Shirayuki** is a dark-first, performance-obsessed anime streaming client. It
-replaces a fragmented legacy app with **one player**, **one card**, **one nav**
-— and a typed, validated, swappable data layer that never lets a flaky upstream
-crash a page.
-
-The aesthetic is deliberate: **OKLCH frost tokens**, Geist + Zen Kaku Gothic,
-a drifting snow layer, glass utilities, motion that respects
-`prefers-reduced-motion`. Cold. Calm. Precise.
-
-<details>
-<summary><b>❄ Stack at a glance</b></summary>
-
-| Layer        | Tech                                                |
-| ------------ | --------------------------------------------------- |
-| Framework    | Next.js 15 (App Router · RSC · streaming SSR)       |
-| Language     | TypeScript 5.7 (strict)                             |
-| UI           | React 19 · Tailwind v4 · `class-variance-authority` |
-| Motion       | `framer-motion` — respects `prefers-reduced-motion` |
-| Streaming    | `hls.js` + native HLS (Safari) · first-party proxy  |
-| State        | `zustand` (prefs) · local-first progress            |
-| Validation   | `zod` (raw provider → normalized model)             |
-| Icons        | `lucide-react`                                      |
-| Theming      | OKLCH frost tokens · custom snow layer              |
-
-</details>
+- [❄ What is Shirayuki?](#-what-is-shirayuki)
+- [❄ Quick start](#-quick-start)
+- [❄ Deploy to Vercel](#-deploy-to-vercel)
+- [❄ Architecture](#-architecture)
+- [❄ Features](#-features)
+- [❄ Project structure](#-project-structure)
+- [❄ Design tenets](#-design-tenets)
+- [❄ Tech stack](#-tech-stack)
+- [❄ Caveats](#-caveats)
+- [❄ Roadmap](#-roadmap)
+- [❄ Contributing](#-contributing)
+- [❄ License](#-license)
 
 ---
 
-## ❄ Run
+<!-- WHAT IS THIS ────────────────────────────────────────────────────────── -->
+## ❄ What is Shirayuki?
+
+**Shirayuki** is a dark-first, performance-obsessed anime streaming client built
+on Next.js 15. It replaces a fragmented legacy app with **one player**, **one
+card**, **one nav** — and a typed, validated, swappable data layer that never
+lets a flaky upstream crash a page.
+
+The aesthetic is deliberate:
+
+> **OKLCH frost tokens** · Geist + Zen Kaku Gothic · drifting snow layer · glass utilities · motion that respects `prefers-reduced-motion`.
+> Cold. Calm. Precise.
+
+```text
+   ❄  cold                ❄  calm                ❄  precise
+   ────────                ────────                ───────────
+   dark-first              motion with             one card ·
+   OKLCH tokens            restraint               one nav ·
+                                                  one player
+```
+
+---
+
+<!-- QUICK START ─────────────────────────────────────────────────────────── -->
+## ❄ Quick start
+
+**Prerequisites:** Node.js 20.x · npm / pnpm / yarn.
 
 ```bash
 # 1. install
 npm install
 
-# 2. env (server-side only)
+# 2. env (server-side only — never prefix with VITE_)
 echo "API_BASE_URL=https://your-scraper.example" > .env.local
 
 # 3. dev
 npm run dev          # → http://localhost:3000
 
-# prod
+# production
 npm run build && npm start
 
 # sanity
 npm run typecheck
 npm run lint
 ```
+
+### NPM scripts
 
 | Command             | What it does                |
 | ------------------- | --------------------------- |
@@ -77,6 +113,7 @@ npm run lint
 
 ---
 
+<!-- DEPLOY ──────────────────────────────────────────────────────────────── -->
 ## ❄ Deploy to Vercel
 
 The project is **Vercel-ready out of the box**. `vercel.json` pins the
@@ -116,6 +153,7 @@ detection, and per-route function memory + duration for the HLS proxy
 
 ---
 
+<!-- ARCHITECTURE ────────────────────────────────────────────────────────── -->
 ## ❄ Architecture — the frozen stream
 
 ```
@@ -140,7 +178,8 @@ upstream is hostile.
 
 ---
 
-## ❄ Feature matrix
+<!-- FEATURES ────────────────────────────────────────────────────────────── -->
+## ❄ Features
 
 | Capability                            | Status | Where                              |
 | ------------------------------------- | :----: | ---------------------------------- |
@@ -166,14 +205,15 @@ upstream is hostile.
 
 ---
 
-## ❄ Project shape
+<!-- PROJECT STRUCTURE ───────────────────────────────────────────────────── -->
+## ❄ Project structure
 
 ```
-shirayuki-next/
+shirayuki/
 ├─ app/                   ← routes (App Router · RSC)
 │  ├─ (browse)/           ← grouped: anime · search · schedule · …
 │  ├─ api/stream/         ← HLS proxy (Referer + URI rewrite)
-│  ├─ watch/[episodeId]/  ← the player
+│  ├─ watch/[id]/[ep]/    ← the player
 │  ├─ layout.tsx          ← fonts · theme · snow layer
 │  ├─ globals.css         ← OKLCH frost tokens · glass · motion
 │  ├─ manifest.ts · robots.ts
@@ -199,6 +239,7 @@ shirayuki-next/
 
 ---
 
+<!-- DESIGN TENETS ───────────────────────────────────────────────────────── -->
 ## ❄ Design tenets
 
 - **One of each.** One card. One nav. One player. Variants, not duplicates.
@@ -215,6 +256,24 @@ shirayuki-next/
 
 ---
 
+<!-- TECH STACK ──────────────────────────────────────────────────────────── -->
+## ❄ Tech stack
+
+| Layer        | Tech                                                |
+| ------------ | --------------------------------------------------- |
+| Framework    | Next.js 15 (App Router · RSC · streaming SSR)       |
+| Language     | TypeScript 5.7 (strict)                             |
+| UI           | React 19 · Tailwind v4 · `class-variance-authority` |
+| Motion       | `framer-motion` — respects `prefers-reduced-motion` |
+| Streaming    | `hls.js` + native HLS (Safari) · first-party proxy  |
+| State        | `zustand` (prefs) · local-first progress            |
+| Validation   | `zod` (raw provider → normalized model)             |
+| Icons        | `lucide-react`                                      |
+| Theming      | OKLCH frost tokens · custom snow layer              |
+
+---
+
+<!-- CAVEATS ─────────────────────────────────────────────────────────────── -->
 ## ❄ Caveats (read these)
 
 - The default upstream provider (`hianime.ad` mirror) is **fragile** and
@@ -227,6 +286,7 @@ shirayuki-next/
 
 ---
 
+<!-- ROADMAP ─────────────────────────────────────────────────────────────── -->
 ## ❄ Roadmap
 
 | Phase | Theme                                                              |
@@ -240,10 +300,38 @@ Full plan: [`docs/`](./docs).
 
 ---
 
-<p align="center">
-  <img src="public/logos/shirayuki2.png" alt="shirayuki" width="80" />
-  <br/><br/>
-  <sub><em>white. pure. precise.</em></sub>
-  <br/>
-  <sub>Built with ❄ in the cold.</sub>
-</p>
+<!-- CONTRIBUTING ────────────────────────────────────────────────────────── -->
+## ❄ Contributing
+
+PRs welcome. Keep it small and focused.
+
+```bash
+git checkout -b feat/your-thing
+npm install
+npm run dev
+# make it good
+npm run lint && npm run typecheck
+git commit -m "feat: your thing"
+git push origin feat/your-thing
+```
+
+---
+
+<!-- LICENSE ─────────────────────────────────────────────────────────────── -->
+## ❄ License
+
+[MIT](./LICENSE) © Shirayuki contributors.
+
+---
+
+<div align="center">
+
+<img src="public/logos/shirayuki2.png" alt="shirayuki" width="64" />
+
+<br/><br/>
+
+<sub><em>white. pure. precise.</em></sub>
+<br/>
+<sub>Built with ❄ in the cold.</sub>
+
+</div>
