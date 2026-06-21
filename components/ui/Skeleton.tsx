@@ -268,13 +268,13 @@ export function WatchSkeleton() {
           <Skeleton className="aspect-video w-full rounded-t-md" />
 
           {/* Title strip */}
-          <div className="border-t border-line/60 bg-surface/30 px-5 py-4 backdrop-blur-md sm:px-6">
+          <div className="border-t border-line/60 bg-surface/60 px-5 py-4 sm:px-6">
             <Skeleton className="h-6 w-2/3 rounded-md" />
             <Skeleton className="mt-2 h-3.5 w-1/3 rounded" />
           </div>
 
           {/* Server switcher strip */}
-          <div className="space-y-3 border-t border-line/60 bg-surface/20 px-5 py-4 backdrop-blur-md sm:px-6">
+          <div className="space-y-3 border-t border-line/60 bg-surface/50 px-5 py-4 sm:px-6">
             <div className="flex flex-wrap items-center gap-3">
               <Skeleton className="h-3 w-28 rounded" />
               <div className="flex gap-1">
@@ -295,7 +295,7 @@ export function WatchSkeleton() {
 
         {/* Episode sidebar */}
         <aside className="laser-frame glass flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md">
-          <div className="flex items-center justify-between border-b border-line/60 bg-surface/30 px-5 py-4 backdrop-blur-md">
+          <div className="flex items-center justify-between border-b border-line/60 bg-surface/60 px-5 py-4">
             <Skeleton className="h-4 w-28 rounded" />
             <Skeleton className="h-3 w-8 rounded" />
           </div>

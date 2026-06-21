@@ -423,7 +423,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
             gradient + backdrop-blur keep rows legible as they scroll
             underneath. No layout reservation, so the last row is never
             clipped by it. */}
-        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-gradient-to-t from-base/80 via-base/45 to-transparent px-5 py-2.5 text-[11px] text-faint backdrop-blur-[6px]">
+        <div className="pointer-events-none absolute inset-x-0 bottom-0 flex items-center justify-center gap-2 bg-gradient-to-t from-base/95 via-base/70 to-transparent px-5 py-2.5 text-[11px] text-faint">
           <button
             onClick={submitSearch}
             className="pointer-events-auto group inline-flex items-center gap-2 rounded-sm border border-frost/40 bg-base/40 px-3 py-1 font-mono text-[11px] font-semibold uppercase tracking-wider text-frost transition-colors hover:border-frost/70 hover:text-snow"

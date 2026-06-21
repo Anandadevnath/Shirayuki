@@ -107,7 +107,7 @@ function StatCard({
   return (
     <div
       className={cn(
-        "group relative overflow-hidden rounded-md border border-line/60 bg-surface/30 p-3 backdrop-blur-md",
+        "group relative overflow-hidden rounded-md border border-line/60 bg-surface/60 p-3",
         "hover-lift hover:border-frost/30 hover:bg-surface-2/60",
       )}
     >
@@ -353,14 +353,14 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
             </button>
             <button
               type="button"
-              className="group inline-flex items-center gap-1.5 rounded-md border border-line/60 bg-surface/40 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-muted backdrop-blur-md transition-all duration-300 hover:border-frost/30 hover:bg-surface-2/60 hover:text-snow"
+              className="group inline-flex items-center gap-1.5 rounded-md border border-line/60 bg-surface/60 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-muted transition-all duration-300 hover:border-frost/30 hover:bg-surface-2/60 hover:text-snow"
             >
               <Share2 className="size-3.5" />
               Share
             </button>
             <button
               type="button"
-              className="group inline-flex items-center gap-1.5 rounded-md border border-line/60 bg-surface/40 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-muted backdrop-blur-md transition-all duration-300 hover:border-success/40 hover:bg-success/10 hover:text-success"
+              className="group inline-flex items-center gap-1.5 rounded-md border border-line/60 bg-surface/60 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-muted transition-all duration-300 hover:border-success/40 hover:bg-success/10 hover:text-success"
             >
               <Check className="size-3.5" />
               Completed
@@ -437,7 +437,7 @@ function MetaChip({
   children: React.ReactNode;
 }) {
   return (
-    <span className="inline-flex items-center gap-1.5 rounded-md border border-line/50 bg-surface/30 px-2.5 py-1.5 text-[12px] font-medium text-snow backdrop-blur-md transition-colors hover:border-frost/30 hover:bg-surface-2/50">
+    <span className="inline-flex items-center gap-1.5 rounded-md border border-line/50 bg-surface/60 px-2.5 py-1.5 text-[12px] font-medium text-snow transition-colors hover:border-frost/30 hover:bg-surface-2/50">
       <Icon className="size-3.5 text-frost" />
       {children}
     </span>

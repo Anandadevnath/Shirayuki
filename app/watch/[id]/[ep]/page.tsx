@@ -126,7 +126,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
           </div>
 
           {/* ── Title strip ─────────────────────────────────────────── */}
-          <div className="border-t border-line/60 bg-surface/30 px-5 py-4 backdrop-blur-md sm:px-6">
+          <div className="border-t border-line/60 bg-surface/60 px-5 py-4 sm:px-6">
             <h1 className="text-xl font-bold text-snow sm:text-2xl">{anime.title}</h1>
             <p className="mt-0.5 text-sm text-muted">
               Episode {epNum}
@@ -135,7 +135,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
           </div>
 
           {/* ── Server switcher (transparent + glassy) ──────────────── */}
-          <div className="space-y-3 border-t border-line/60 bg-surface/20 px-5 py-4 backdrop-blur-md sm:px-6">
+          <div className="space-y-3 border-t border-line/60 bg-surface/50 px-5 py-4 sm:px-6">
             <div className="flex flex-wrap items-center gap-3">
               <span className="flex items-center gap-1.5 text-xs text-faint">
                 <Captions className="size-3.5" /> Subtitles / Dub
@@ -198,7 +198,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
 
         {/* ── Episode Sidebar (height syncs with player) ──────────── */}
         <aside className="laser-frame glass flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md">
-          <div className="flex items-center justify-between border-b border-line/60 bg-surface/30 px-5 py-4 backdrop-blur-md">
+          <div className="flex items-center justify-between border-b border-line/60 bg-surface/60 px-5 py-4">
             <h2 className="text-sm font-semibold text-snow">
               Episodes <span className="text-faint">({episodes.length})</span>
             </h2>
