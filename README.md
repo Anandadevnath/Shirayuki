@@ -6,11 +6,10 @@
 <div align="center">
 
 <!-- HERO ──────────────────────────────────────────────────────────────────── -->
-<img src="public/logos/shirayuki2.png" alt="Shirayuki" width="120" />
+<img src="public/logos/readme-mark.png" alt="Shirayuki" width="140" /><br/>
+<img src="public/logos/readme-wordmark.png" alt="Shirayuki" width="300" />
 
-# ❄ Shirayuki
-
-<em>白い雪の姫 — the white-snow princess.</em>
+<em>❄ 白い雪の姫 — the white-snow princess.</em>
 
 A **dark-first, performance-obsessed** anime streaming client.<br/>
 Forged in frost. One player. One card. One nav. No stack traces.
