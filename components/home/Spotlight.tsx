@@ -281,7 +281,7 @@ export function Spotlight({
         <div className="relative z-10 flex flex-1 items-center">
           <div className="mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
             <div className="flex max-w-xl flex-col gap-4">
-              <h1 className="font-display text-3xl font-extrabold leading-[1.04] drop-shadow-[0_2px_28px_rgba(0,0,0,0.8)] sm:text-4xl md:text-5xl">
+              <h1 className="font-display text-3xl font-extrabold leading-[1.04] [text-shadow:0_2px_28px_rgba(0,0,0,0.8)] sm:text-4xl md:text-5xl">
                 <span className="line-clamp-2">{a.title}</span>
               </h1>
 

@@ -137,7 +137,7 @@ export const AnimeCard = memo(function AnimeCard({
 
           {/* Bottom content */}
           <div className="absolute inset-x-0 bottom-0 p-3.5">
-            <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-snow drop-shadow-[0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
+            <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-snow [text-shadow:0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
               {anime.title}
             </h3>
 
