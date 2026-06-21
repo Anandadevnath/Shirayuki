@@ -449,8 +449,9 @@
    `--trend-duration` custom property (computed from track width + drift
    speed), so a wider / longer rail glides at the same px/s as a short one.
    Pauses on hover/focus of the wrapping `.trend-marquee-wrap` so a click can
-   land; touch devices pause via an inline `animationPlayState` toggle from
-   the React handler. Pure transform — GPU-composited, no main-thread cost. */
+   land; on touch the React handler stops the animation outright (sets
+   `animation: none`) and drives the transform directly while the finger is
+   down. Pure transform — GPU-composited, no main-thread cost. */
 @keyframes trend-marquee {
   from { transform: translate3d(0, 0, 0); }
   to   { transform: translate3d(-50%, 0, 0); }

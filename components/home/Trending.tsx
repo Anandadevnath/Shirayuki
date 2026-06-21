@@ -109,6 +109,9 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
   // that hands control back to the auto-drift once the user stops clicking.
   const offsetRef = useRef(0);
   const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  // Active flick-inertia rAF (null when idle). Held in a ref so both the touch
+  // handler and the arrow nudge can cancel an in-flight glide before taking over.
+  const momentumRef = useRef<number | null>(null);
 
   // Continuous leftward drift, wrapped seamlessly at half the doubled track.
   // The animation runs as a pure CSS keyframe (off the main thread) and pauses
@@ -151,7 +154,11 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
     el.style.transform = "";
     el.style.animation = "";
     el.style.animationDelay = `${offsetRef.current / SPEED}s`;
-    el.style.animationPlayState = "running";
+    // Clear (don't force "running"): an inline play-state would override the
+    // `.trend-marquee-wrap:hover` pause rule in globals.css, so hovering would
+    // stop pausing the rail after the first interaction. Cleared, the class's
+    // default running state applies and CSS hover/focus pause works again.
+    el.style.animationPlayState = "";
   };
 
   // Touch-drag: let the rail follow the finger on mobile. The marquee is a
@@ -175,13 +182,30 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
     let startY = 0;
     let startOffset = 0;
     let half = 0;
+    // Velocity tracking for the release fling, in px/ms (sign = drag direction).
+    let lastX = 0;
+    let lastT = 0;
+    let velocity = 0;
+
+    // Ambient drift velocity (leftward) the CSS keyframe runs at, in px/ms. The
+    // fling decays toward this — not toward zero — so inertia melts straight
+    // into the marquee with no perceptible stop-and-restart.
+    const DRIFT_V = -SPEED / 1000;
 
     // Normalise any translateX into (−half, 0] so both copies of the doubled
     // track stay full — drag as far as you like, the rail never shows a gap.
     const norm = (x: number) => (half <= 0 ? x : (((x % half) + half) % half) - half);
 
+    const stopMomentum = () => {
+      if (momentumRef.current !== null) {
+        cancelAnimationFrame(momentumRef.current);
+        momentumRef.current = null;
+      }
+    };
+
     const onStart = (e: TouchEvent) => {
       if (e.touches.length !== 1) return;
+      stopMomentum();
       half = track.scrollWidth / 2;
       if (idleRef.current) clearTimeout(idleRef.current);
       active = true;
@@ -191,6 +215,9 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
       startY = e.touches[0].clientY;
       startOffset = norm(readTranslateX(track));
       offsetRef.current = startOffset;
+      lastX = startX;
+      lastT = performance.now();
+      velocity = 0;
       track.style.animation = "none";
       track.style.transition = "none";
       track.style.transform = `translate3d(${startOffset}px, 0, 0)`;
@@ -198,7 +225,8 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
 
     const onMove = (e: TouchEvent) => {
       if (!active) return;
-      const dx = e.touches[0].clientX - startX;
+      const x = e.touches[0].clientX;
+      const dx = x - startX;
       const dy = e.touches[0].clientY - startY;
       if (!decided) {
         // Wait for a few px of travel before committing to an axis, so a tap
@@ -209,6 +237,15 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
       }
       if (!dragging) return; // vertical → let the page scroll
       e.preventDefault();
+      // Exponentially-smoothed pointer velocity, so one jittery sample doesn't
+      // throw the fling off.
+      const now = performance.now();
+      const dt = now - lastT;
+      if (dt > 0) {
+        velocity = velocity * 0.7 + ((x - lastX) / dt) * 0.3;
+        lastX = x;
+        lastT = now;
+      }
       const offset = norm(startOffset + dx);
       offsetRef.current = offset;
       track.style.transform = `translate3d(${offset}px, 0, 0)`;
@@ -217,10 +254,38 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
     const onEnd = () => {
       if (!active) return;
       active = false;
-      if (idleRef.current) clearTimeout(idleRef.current);
-      // Longer pause after an intentional drag so the user can read; a quick
-      // resume after a tap/vertical swipe that never moved the rail.
-      idleRef.current = setTimeout(resumeDrift, dragging ? 2200 : 500);
+      if (!dragging) {
+        // Tap / vertical swipe that never moved the rail → resume drift shortly.
+        if (idleRef.current) clearTimeout(idleRef.current);
+        idleRef.current = setTimeout(resumeDrift, 500);
+        return;
+      }
+      // Flick inertia: a short, firmly-damped coast that eases the release
+      // velocity toward the ambient drift, then hands the exact position back to
+      // the CSS keyframe. Tuned for a controlled, "professional" deceleration
+      // (~250ms) rather than a long floaty glide:
+      //   FRICTION  — per-ms decay; lower = snappier stop.
+      //   MAX_V     — clamp so a hard flick can't launch the rail across itself.
+      //   SETTLE    — velocity gap at which we stop and hand back to drift.
+      const FRICTION = 0.98;
+      const MAX_V = 2.2;
+      const SETTLE = 0.01;
+      let v = Math.max(-MAX_V, Math.min(MAX_V, velocity));
+      let prev = performance.now();
+      const step = (now: number) => {
+        const dt = Math.min(now - prev, 32); // clamp stalls (tab blur, GC)
+        prev = now;
+        v = DRIFT_V + (v - DRIFT_V) * Math.pow(FRICTION, dt);
+        offsetRef.current = norm(offsetRef.current + v * dt);
+        track.style.transform = `translate3d(${offsetRef.current}px, 0, 0)`;
+        if (Math.abs(v - DRIFT_V) > SETTLE) {
+          momentumRef.current = requestAnimationFrame(step);
+        } else {
+          momentumRef.current = null;
+          resumeDrift();
+        }
+      };
+      momentumRef.current = requestAnimationFrame(step);
     };
 
     wrap.addEventListener("touchstart", onStart, { passive: true });
@@ -228,6 +293,7 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
     wrap.addEventListener("touchend", onEnd);
     wrap.addEventListener("touchcancel", onEnd);
     return () => {
+      stopMomentum();
       wrap.removeEventListener("touchstart", onStart);
       wrap.removeEventListener("touchmove", onMove);
       wrap.removeEventListener("touchend", onEnd);
@@ -242,6 +308,11 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
   const nudgeMarquee = (dir: 1 | -1) => {
     const el = trackRef.current;
     if (!el) return;
+    // Cancel any in-flight touch-fling so it doesn't fight the arrow transform.
+    if (momentumRef.current !== null) {
+      cancelAnimationFrame(momentumRef.current);
+      momentumRef.current = null;
+    }
     const half = el.scrollWidth / 2;
     const view = el.parentElement?.clientWidth ?? 0;
     if (half <= 0 || view <= 0) return;
@@ -269,9 +340,10 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
   const onArrow = (dir: 1 | -1) =>
     reduce ? scrollRail(dir) : nudgeMarquee(dir);
 
-  // Drop the resume timer if we unmount mid-nudge.
+  // Drop the resume timer / in-flight fling if we unmount mid-interaction.
   useEffect(() => () => {
     if (idleRef.current) clearTimeout(idleRef.current);
+    if (momentumRef.current !== null) cancelAnimationFrame(momentumRef.current);
   }, []);
 
   if (!items?.length) return null;
