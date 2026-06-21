@@ -43,52 +43,75 @@ function TrendCard({
       aria-label={s.title}
       aria-hidden={ariaHidden}
       tabIndex={ariaHidden ? -1 : undefined}
-      className={cn(
-        "group relative aspect-[3/2] w-44 shrink-0 overflow-hidden rounded-2xl ring-1 transition-all duration-300 hover:-translate-y-1 hover:shadow-[var(--shadow-frost)] sm:w-52 md:w-56",
-        top3 ? "ring-frost/40 hover:ring-frost" : "ring-line hover:ring-frost/60",
-      )}
+      className="group relative aspect-[3/2] w-44 shrink-0 transform-gpu transition-transform duration-300 hover:-translate-y-1 sm:w-52 md:w-56"
     >
-      {s.poster && (
-        <SmartImage
-          src={s.poster}
-          alt=""
-          fill
-          sizes="224px"
-          className="object-cover brightness-[0.88] transition-[filter] duration-300 group-hover:brightness-110"
-        />
-      )}
+      {/* Frost lift shadow — opacity-crossfaded sibling on the unclipped outer
+          wrapper, never a transitioned box-shadow (which would repaint the
+          card body every hover frame). */}
+      <span
+        aria-hidden
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 shadow-[var(--shadow-frost)] transition-opacity duration-300 group-hover:opacity-100"
+      />
 
-      {/* Scrim — deep at the bottom to seat the chart number + title */}
-      <div className="absolute inset-0 bg-gradient-to-t from-base via-base/35 to-transparent" />
-
-      {/* Frost wash on hover — tints the art instead of zooming it */}
-      <div className="absolute inset-0 bg-frost-soft opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-      {/* Hover play affordance */}
-      <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-        <span className="grid size-11 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
-          <Play className="size-5 fill-current" />
-        </span>
-      </span>
-
-      {/* Oversized chart rank + title, baseline-aligned */}
-      <div className="absolute inset-x-0 bottom-0 flex items-end gap-2 p-2.5">
+      {/* Clipped frame — the ring crossfades frost on hover via a sibling
+          overlay (ring on the frame stays static, no box-shadow repaint). */}
+      <div
+        className={cn(
+          "relative h-full w-full overflow-hidden rounded-2xl ring-1",
+          top3 ? "ring-frost/40" : "ring-line",
+        )}
+      >
         <span
+          aria-hidden
           className={cn(
-            "font-display text-4xl font-extrabold leading-[0.78] tracking-tight drop-shadow-[0_2px_10px_rgba(0,0,0,0.8)] sm:text-5xl",
-            top3 ? "text-frost" : "text-snow",
+            "pointer-events-none absolute inset-0 z-10 rounded-2xl ring-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
+            top3 ? "ring-frost" : "ring-frost/60",
           )}
-          style={{
-            WebkitTextStroke: top3
-              ? "1.5px var(--color-frost)"
-              : "1px rgba(255,255,255,0.55)",
-          }}
-        >
-          {rank}
+        />
+
+        {s.poster && (
+          <SmartImage
+            src={s.poster}
+            alt=""
+            fill
+            sizes="224px"
+            className="object-cover brightness-[0.88]"
+          />
+        )}
+
+        {/* Scrim — deep at the bottom to seat the chart number + title */}
+        <div className="absolute inset-0 bg-gradient-to-t from-base via-base/35 to-transparent" />
+
+        {/* Frost wash on hover — tints the art instead of a slow `filter`
+            transition on the poster. */}
+        <div className="absolute inset-0 bg-frost-soft opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+
+        {/* Hover play affordance */}
+        <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          <span className="grid size-11 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
+            <Play className="size-5 fill-current" />
+          </span>
         </span>
-        <span className="line-clamp-2 pb-0.5 text-left text-[12px] font-semibold leading-tight text-snow drop-shadow-[0_1px_6px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
-          {s.title}
-        </span>
+
+        {/* Oversized chart rank + title, baseline-aligned */}
+        <div className="absolute inset-x-0 bottom-0 flex items-end gap-2 p-2.5">
+          <span
+            className={cn(
+              "font-display text-4xl font-extrabold leading-[0.78] tracking-tight [text-shadow:0_2px_10px_rgba(0,0,0,0.8)] sm:text-5xl",
+              top3 ? "text-frost" : "text-snow",
+            )}
+            style={{
+              WebkitTextStroke: top3
+                ? "1.5px var(--color-frost)"
+                : "1px rgba(255,255,255,0.55)",
+            }}
+          >
+            {rank}
+          </span>
+          <span className="line-clamp-2 pb-0.5 text-left text-[12px] font-semibold leading-tight text-snow [text-shadow:0_1px_6px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
+            {s.title}
+          </span>
+        </div>
       </div>
     </Link>
   );

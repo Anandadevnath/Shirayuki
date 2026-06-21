@@ -44,8 +44,13 @@ export function ContinueWatching() {
             >
               <Link
                 href={`/watch/${e.animeId}/${encodeURIComponent(e.episodeId)}`}
-                className="block overflow-hidden rounded-md ring-1 ring-line transition-all hover:ring-frost/40"
+                className="relative block overflow-hidden rounded-md ring-1 ring-line"
               >
+                {/* Frost ring on hover — opacity crossfade, no box-shadow repaint */}
+                <span
+                  aria-hidden
+                  className="pointer-events-none absolute inset-0 z-10 rounded-md ring-1 ring-frost/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                />
                 <div className="relative aspect-video bg-surface-2">
                   {e.poster && (
                     /* sizes mirrors the card's responsive width: on small

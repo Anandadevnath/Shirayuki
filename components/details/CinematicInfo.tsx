@@ -127,11 +127,6 @@ function StatCard({
           <p className="truncate text-sm font-semibold text-snow">{value}</p>
         </div>
       </div>
-      {/* Subtle shine on hover */}
-      <div
-        aria-hidden
-        className="pointer-events-none absolute inset-0 -translate-x-full bg-gradient-to-r from-transparent via-white/[0.04] to-transparent transition-transform duration-700 group-hover:translate-x-full"
-      />
     </div>
   );
 }
@@ -159,7 +154,7 @@ function ReadMore({ text }: { text: string }) {
     <div className="space-y-1.5">
       <p
         className={cn(
-          "text-[13.5px] leading-relaxed text-muted/90 transition-all duration-500 ease-out",
+          "text-[13.5px] leading-relaxed text-muted/90",
           expanded ? "" : "overflow-hidden",
         )}
         style={
@@ -346,21 +341,21 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
           >
             <button
               type="button"
-              className="group inline-flex items-center gap-1.5 rounded-md border border-frost/40 bg-gradient-to-br from-frost/20 to-frost/5 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-frost shadow-[0_4px_18px_-6px_rgba(124,58,237,0.6),inset_0_1px_0_0_rgba(255,255,255,0.1)] transition-all duration-300 hover:border-frost/70 hover:from-frost/30 hover:to-frost/10 hover:shadow-[0_6px_24px_-6px_rgba(124,58,237,0.8)]"
+              className="group inline-flex items-center gap-1.5 rounded-md border border-frost/40 bg-gradient-to-br from-frost/20 to-frost/5 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-frost shadow-[var(--shadow-frost),inset_0_1px_0_0_rgba(255,255,255,0.1)] transition-[border-color,color] duration-300 hover:border-frost/70 hover:from-frost/30 hover:to-frost/10"
             >
               <Plus className="size-3.5 transition-transform group-hover:rotate-90" />
               Watchlist
             </button>
             <button
               type="button"
-              className="group inline-flex items-center gap-1.5 rounded-md border border-line/60 bg-surface/60 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-muted transition-all duration-300 hover:border-frost/30 hover:bg-surface-2/60 hover:text-snow"
+              className="group inline-flex items-center gap-1.5 rounded-md border border-line/60 bg-surface/60 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-muted transition-[border-color,background-color,color] duration-300 hover:border-frost/30 hover:bg-surface-2/60 hover:text-snow"
             >
               <Share2 className="size-3.5" />
               Share
             </button>
             <button
               type="button"
-              className="group inline-flex items-center gap-1.5 rounded-md border border-line/60 bg-surface/60 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-muted transition-all duration-300 hover:border-success/40 hover:bg-success/10 hover:text-success"
+              className="group inline-flex items-center gap-1.5 rounded-md border border-line/60 bg-surface/60 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-muted transition-[border-color,background-color,color] duration-300 hover:border-success/40 hover:bg-success/10 hover:text-success"
             >
               <Check className="size-3.5" />
               Completed

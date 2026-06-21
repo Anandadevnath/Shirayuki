@@ -13,7 +13,7 @@ export function GenreCloud({ genres }: { genres: GenreModel[] }) {
           <Link
             key={g.slug}
             href={`/genre/${g.slug}`}
-            className="rounded-sm border border-line bg-base/40 px-3 py-1.5 text-sm text-muted transition-all hover:-translate-y-0.5 hover:border-frost/40 hover:bg-frost-soft hover:text-frost"
+            className="rounded-sm border border-line bg-base/40 px-3 py-1.5 text-sm text-muted transition-[transform,border-color,background-color,color] hover:-translate-y-0.5 hover:border-frost/40 hover:bg-frost-soft hover:text-frost"
           >
             {g.name}
           </Link>

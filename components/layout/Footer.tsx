@@ -28,7 +28,7 @@ function Social({ href, label, children }: { href: string; label: string; childr
       aria-label={label}
       target="_blank"
       rel="noreferrer"
-      className="grid size-9 place-items-center rounded-full glass text-muted transition-all hover:-translate-y-0.5 hover:border-frost/40 hover:text-frost"
+      className="grid size-9 place-items-center rounded-full glass text-muted transition-[transform,border-color,color] hover:-translate-y-0.5 hover:border-frost/40 hover:text-frost"
     >
       {children}
     </a>

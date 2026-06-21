@@ -466,10 +466,10 @@
   animation-play-state: paused;
 }
 
-/* Hover-lift preset for cards (transform-only) */
+/* Hover-lift preset for cards. transform + border-color only — never
+   box-shadow (a shadow transition repaints the whole card body per frame). */
 .hover-lift {
   transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 350ms cubic-bezier(0.16, 1, 0.3, 1),
               border-color 350ms ease;
   will-change: transform;
 }
@@ -477,12 +477,12 @@
   transform: translate3d(0, -2px, 0);
 }
 
-/* Genre pill interactive */
+/* Genre pill interactive. transform + cheap color props only; any hover glow
+   is a static box-shadow that snaps (never transitioned). */
 .genre-pill {
   transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
               background-color 250ms ease,
-              border-color 250ms ease,
-              box-shadow 250ms ease;
+              border-color 250ms ease;
   will-change: transform;
 }
 .genre-pill:hover {

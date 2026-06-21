@@ -93,7 +93,7 @@ export function Nav() {
            state, no per-scroll re-render. The two CSS rules below the
            component toggle the visual class based on the dataset value. */
         data-scrolled="0"
-        className="sticky top-0 z-40 w-full transition-[background-color,backdrop-filter,border-color] duration-300 bg-transparent"
+        className="sticky top-0 z-40 w-full transition-[background-color,border-color] duration-300 bg-transparent"
       >
         <nav className="mx-auto flex h-16 w-full max-w-[1460px] items-center gap-2 px-4 sm:px-6 lg:px-8" aria-label="Primary">
           <Link
@@ -101,7 +101,7 @@ export function Nav() {
             className="group flex items-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
             aria-label="Shirayuki — Home"
           >
-            <span className="relative h-16 w-14 shrink-0 drop-shadow-[0_4px_16px_rgba(120,180,255,0.25)] transition-[filter] duration-300 group-hover:drop-shadow-[0_4px_24px_rgba(120,180,255,0.45)]">
+            <span className="relative h-16 w-14 shrink-0 drop-shadow-[0_4px_16px_rgba(120,180,255,0.25)]">
               <Image
                 src="/logos/shirayuki2.png"
                 alt=""

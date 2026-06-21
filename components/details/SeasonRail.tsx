@@ -59,74 +59,97 @@ export function SeasonRail({
           >
             <div
               className={cn(
-                "relative aspect-[3/2] overflow-hidden rounded-2xl bg-surface-2 ring-1 transition-all duration-300 ease-out",
-                isCurrent
-                  ? "ring-frost shadow-[var(--shadow-frost)]"
-                  : top3
-                    ? "ring-frost/40 group-hover:-translate-y-1 group-hover:ring-frost group-hover:shadow-[var(--shadow-frost)]"
-                    : "ring-line group-hover:-translate-y-1 group-hover:ring-frost/60 group-hover:shadow-[var(--shadow-frost)]",
+                "relative aspect-[3/2] transform-gpu rounded-2xl transition-transform duration-300 ease-out",
+                isCurrent ? "" : "group-hover:-translate-y-1",
               )}
             >
-              {s.poster ? (
-                <SmartImage
-                  src={s.poster}
-                  alt={s.title}
-                  fill
-                  sizes="(max-width:640px) 44vw, (max-width:1024px) 24vw, 224px"
-                  className="object-cover brightness-[0.88] transition-[filter] duration-300 group-hover:brightness-110"
-                />
-              ) : (
-                <div className="grid h-full place-items-center text-faint">No image</div>
-              )}
+              {/* Frost lift shadow — opacity-crossfaded sibling on the unclipped
+                  wrapper. Never a transitioned box-shadow. The current season
+                  shows it always; others fade it in on hover. */}
+              <span
+                aria-hidden
+                className={cn(
+                  "pointer-events-none absolute inset-0 rounded-2xl shadow-[var(--shadow-frost)] transition-opacity duration-300",
+                  isCurrent ? "opacity-100" : "opacity-0 group-hover:opacity-100",
+                )}
+              />
+              <div
+                className={cn(
+                  "relative h-full w-full overflow-hidden rounded-2xl bg-surface-2 ring-1",
+                  isCurrent ? "ring-frost" : top3 ? "ring-frost/40" : "ring-line",
+                )}
+              >
+                {/* Hover ring crossfade — frost edge without a box-shadow repaint */}
+                {!isCurrent && (
+                  <span
+                    aria-hidden
+                    className={cn(
+                      "pointer-events-none absolute inset-0 z-10 rounded-2xl ring-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
+                      top3 ? "ring-frost" : "ring-frost/60",
+                    )}
+                  />
+                )}
+                {s.poster ? (
+                  <SmartImage
+                    src={s.poster}
+                    alt={s.title}
+                    fill
+                    sizes="(max-width:640px) 44vw, (max-width:1024px) 24vw, 224px"
+                    className="object-cover brightness-[0.88]"
+                  />
+                ) : (
+                  <div className="grid h-full place-items-center text-faint">No image</div>
+                )}
 
-              {/* Deep bottom scrim — seats the oversized number + title */}
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-base via-base/35 to-transparent" />
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
+                {/* Deep bottom scrim — seats the oversized number + title */}
+                <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-base via-base/35 to-transparent" />
+                <div className="pointer-events-none absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-white/35 to-transparent" />
 
-              {/* Hover frost wash — tints the art instead of zooming it */}
-              <div className="pointer-events-none absolute inset-0 bg-frost-soft opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
+                {/* Hover frost wash — tints the art instead of zooming it */}
+                <div className="pointer-events-none absolute inset-0 bg-frost-soft opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
 
-              {/* Year pill (top-right) — keeps the chronology legible at a
-                  glance, same role as before but repositioned to match the
-                  larger layout. */}
-              {s.year && (
-                <span className="absolute right-2 top-2 rounded-md bg-base/80 px-1.5 py-0.5 text-[10px] font-bold text-snow backdrop-blur">
-                  {s.year}
+                {/* Year pill (top-right) — keeps the chronology legible at a
+                    glance, same role as before but repositioned to match the
+                    larger layout. */}
+                {s.year && (
+                  <span className="absolute right-2 top-2 rounded-md bg-base/80 px-1.5 py-0.5 text-[10px] font-bold text-snow backdrop-blur">
+                    {s.year}
+                  </span>
+                )}
+
+                {/* Current season pill (top-left) — mirrors Trending's "Hot" */}
+                {isCurrent && (
+                  <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-frost/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-base shadow-[var(--shadow-neon)]">
+                    <Play className="size-2.5 fill-current" /> Current
+                  </span>
+                )}
+
+                {/* Hover play affordance */}
+                <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+                  <span className="grid size-11 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
+                    <Play className="size-5 fill-current" />
+                  </span>
                 </span>
-              )}
 
-              {/* Current season pill (top-left) — mirrors Trending's "Hot" */}
-              {isCurrent && (
-                <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-frost/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-base shadow-[var(--shadow-neon)]">
-                  <Play className="size-2.5 fill-current" /> Current
-                </span>
-              )}
-
-              {/* Hover play affordance */}
-              <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <span className="grid size-11 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
-                  <Play className="size-5 fill-current" />
-                </span>
-              </span>
-
-              {/* Season label (top) + title (bottom), stacked for room */}
-              <div className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 p-2.5">
-                <span
-                  className={cn(
-                    "font-display text-xl font-extrabold leading-none tracking-tight drop-shadow-[0_2px_8px_rgba(0,0,0,0.85)] sm:text-2xl",
-                    isCurrent || top3 ? "text-frost" : "text-snow",
-                  )}
-                  style={{
-                    WebkitTextStroke: isCurrent || top3
-                      ? "1px var(--color-frost)"
-                      : "0.5px rgba(255,255,255,0.5)",
-                  }}
-                >
-                  {label}
-                </span>
-                <span className="line-clamp-2 text-left text-[11px] font-semibold leading-tight text-snow drop-shadow-[0_1px_6px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
-                  {s.title}
-                </span>
+                {/* Season label (top) + title (bottom), stacked for room */}
+                <div className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 p-2.5">
+                  <span
+                    className={cn(
+                      "font-display text-xl font-extrabold leading-none tracking-tight [text-shadow:0_2px_8px_rgba(0,0,0,0.85)] sm:text-2xl",
+                      isCurrent || top3 ? "text-frost" : "text-snow",
+                    )}
+                    style={{
+                      WebkitTextStroke: isCurrent || top3
+                        ? "1px var(--color-frost)"
+                        : "0.5px rgba(255,255,255,0.5)",
+                    }}
+                  >
+                    {label}
+                  </span>
+                  <span className="line-clamp-2 text-left text-[11px] font-semibold leading-tight text-snow [text-shadow:0_1px_6px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
+                    {s.title}
+                  </span>
+                </div>
               </div>
             </div>
           </Link>

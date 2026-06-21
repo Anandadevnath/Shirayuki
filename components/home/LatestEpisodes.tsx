@@ -219,7 +219,7 @@ const FlowCard = memo(function FlowCard({
         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
           <h3
             className={cn(
-              "line-clamp-2 font-semibold leading-snug tracking-tight text-snow drop-shadow-[0_1px_10px_rgba(0,0,0,0.95)] transition-all duration-500",
+              "line-clamp-2 font-semibold leading-snug tracking-tight text-snow [text-shadow:0_1px_10px_rgba(0,0,0,0.95)] transition-opacity duration-500",
               active ? "text-base sm:text-lg" : "text-sm opacity-0",
             )}
           >

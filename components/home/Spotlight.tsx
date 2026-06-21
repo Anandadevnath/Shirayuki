@@ -265,7 +265,7 @@ export function Spotlight({
               >
                 <Diamond
                   className={cn(
-                    "transition-all",
+                    "transition-[color,fill]",
                     idx === active
                       ? "size-3.5 fill-frost text-frost drop-shadow-[var(--shadow-neon)]"
                       : "size-2.5 fill-snow/25 text-snow/25 group-hover:fill-snow/60 group-hover:text-snow/60",
