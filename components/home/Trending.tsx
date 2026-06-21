@@ -12,6 +12,19 @@ import { useReducedMotionSSR } from "@/lib/utils/useReducedMotion";
 // "train" of posters — deliberately the opposite direction to Latest Episodes.
 const SPEED = 34;
 
+/** Read the live translateX of an element — works mid-animation, where the
+ *  computed `transform` is an interpolated matrix. Used to freeze the marquee
+ *  exactly where it is the instant an arrow is pressed. */
+function readTranslateX(el: HTMLElement): number {
+  const t = getComputedStyle(el).transform;
+  if (!t || t === "none") return 0;
+  try {
+    return new DOMMatrixReadOnly(t).m41;
+  } catch {
+    return 0;
+  }
+}
+
 /** One ranked landscape card. Pulled out so the marquee and the reduced-motion
  *  fallback rail can share the exact same markup. */
 function TrendCard({
@@ -91,6 +104,10 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
   const reduce = useReducedMotionSSR();
   const trackRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
+  // Current eased offset of the manually-nudged marquee (px, ≤ 0) and the timer
+  // that hands control back to the auto-drift once the user stops clicking.
+  const offsetRef = useRef(0);
+  const idleRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Continuous leftward drift, wrapped seamlessly at half the doubled track.
   // The animation runs as a pure CSS keyframe (off the main thread) and pauses
@@ -123,6 +140,58 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
     el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: "smooth" });
   };
 
+  // Hand the marquee back to its endless CSS drift, picking up exactly where the
+  // manual nudge left off: a negative `animation-delay` of offset/SPEED seeks
+  // the keyframe (0 → −half over half/SPEED s) to the matching frame.
+  const resumeDrift = () => {
+    const el = trackRef.current;
+    if (!el) return;
+    el.style.transition = "none";
+    el.style.transform = "";
+    el.style.animation = "";
+    el.style.animationDelay = `${offsetRef.current / SPEED}s`;
+    el.style.animationPlayState = "running";
+  };
+
+  // Arrow-driven nudge for the live marquee. Freezes the drift at its current
+  // position, then eases one viewport-worth in `dir`. The track is doubled, so
+  // we normalise into a single content-set and shift by whole sets (invisible)
+  // to keep both edges full — no blank rails however far you click.
+  const nudgeMarquee = (dir: 1 | -1) => {
+    const el = trackRef.current;
+    if (!el) return;
+    const half = el.scrollWidth / 2;
+    const view = el.parentElement?.clientWidth ?? 0;
+    if (half <= 0 || view <= 0) return;
+
+    let from = ((readTranslateX(el) % half) + half) % half - half; // (−half, 0]
+    let to = from - dir * view * 0.85;
+    while (to > 0) { from -= half; to -= half; }
+    while (to < -half) { from += half; to += half; }
+
+    if (idleRef.current) clearTimeout(idleRef.current);
+
+    // Take over from the CSS keyframe with an eased manual transform.
+    el.style.animation = "none";
+    el.style.transition = "none";
+    el.style.transform = `translate3d(${from}px, 0, 0)`;
+    void el.offsetWidth; // commit the start frame before transitioning
+    requestAnimationFrame(() => {
+      el.style.transition = "transform 650ms cubic-bezier(0.22, 0.61, 0.36, 1)";
+      el.style.transform = `translate3d(${to}px, 0, 0)`;
+    });
+    offsetRef.current = to;
+    idleRef.current = setTimeout(resumeDrift, 2600);
+  };
+
+  const onArrow = (dir: 1 | -1) =>
+    reduce ? scrollRail(dir) : nudgeMarquee(dir);
+
+  // Drop the resume timer if we unmount mid-nudge.
+  useEffect(() => () => {
+    if (idleRef.current) clearTimeout(idleRef.current);
+  }, []);
+
   if (!items?.length) return null;
 
   const rankOf = (s: AnimeCardModel, i: number) =>
@@ -148,24 +217,25 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
           </div>
         </div>
 
-        {reduce && (
-          <div className="ml-auto hidden shrink-0 gap-1.5 sm:flex">
-            <button
-              onClick={() => scrollRail(-1)}
-              aria-label="Scroll trending left"
-              className="grid size-8 place-items-center rounded-full glass text-muted transition-colors hover:border-frost/40 hover:text-snow"
-            >
-              <ChevronLeft className="size-4" />
-            </button>
-            <button
-              onClick={() => scrollRail(1)}
-              aria-label="Scroll trending right"
-              className="grid size-8 place-items-center rounded-full bg-frost text-base shadow-[var(--shadow-neon)] transition-transform hover:scale-105"
-            >
-              <ChevronRight className="size-4" />
-            </button>
-          </div>
-        )}
+        {/* Manual nudge arrows — frost-glass back / frost-filled forward, the
+            same pairing the rest of the site uses. They drive the live marquee
+            (or the reduced-motion rail) by ~a viewport per press. */}
+        <div className="ml-auto hidden shrink-0 gap-1.5 sm:flex">
+          <button
+            onClick={() => onArrow(-1)}
+            aria-label="Scroll trending left"
+            className="grid size-8 place-items-center rounded-full glass text-muted transition-[color,border-color,transform] duration-200 hover:border-frost/40 hover:text-snow active:scale-90"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <button
+            onClick={() => onArrow(1)}
+            aria-label="Scroll trending right"
+            className="grid size-8 place-items-center rounded-full bg-frost text-base shadow-[var(--shadow-neon)] transition-transform duration-200 hover:scale-105 active:scale-90"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
       </div>
 
       {reduce ? (

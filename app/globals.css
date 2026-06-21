@@ -335,22 +335,19 @@
 }
 
 @keyframes laser-sweep {
-  /* One pass = sweep 0–360° in 1.2s, then rest until the keyframe restarts.
-     The animation runs 7s long; only the first 1.2s paint motion. */
-  0%   { --laser-angle: 0deg; }
-  17%  { --laser-angle: 360deg; }
-  100% { --laser-angle: 360deg; }
-}
-
-@keyframes laser-sweep-hover {
-  /* On hover, a continuous 4s sweep — short enough to feel responsive,
-     long enough that it never reads as "spinning". */
+  /* The original frost comet: a continuous, constant-speed lap of the conic
+     sweep (0–360°). Linear timing + a single keyframe target keeps it gliding
+     at one steady pace with no hover speed-up and no restart jump. */
   to { --laser-angle: 360deg; }
 }
 
 .laser-frame {
   position: relative;
   isolation: isolate;
+  /* Hide the `.glass` 1px border on laser panels so the laser ring is the only
+     edge line — otherwise the glass border + the ring (inset -1px) read as two
+     parallel hairlines. */
+  border-color: transparent;
 }
 /* Soft static aura so the edge always glows a little, even between sweeps. */
 .laser-frame::before {
@@ -375,9 +372,7 @@
 }
 /* A single travelling comet on a thin bright ring. The ring is 1.5px thick
    with a hard bright head and a long fading tail for an unmistakable
-   laser-sweep identity. Two stacked drop-shadows give the glow, but the
-   blur radii are smaller than before so the GPU compositor can keep the
-   effect on a single layer (saves ~30% of the previous paint cost). */
+   laser-sweep identity. Two stacked drop-shadows give the glow. */
 .laser-frame::after {
   content: "";
   position: absolute;
@@ -400,12 +395,8 @@
           mask-composite: exclude;
   filter: drop-shadow(0 0 4px var(--color-frost))
     drop-shadow(0 0 12px var(--color-frost-deep));
-  animation: laser-sweep 7s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  animation: laser-sweep 7s linear infinite;
   pointer-events: none;
-}
-.laser-frame:hover::after,
-.laser-frame:focus-within::after {
-  animation: laser-sweep-hover 4s linear infinite;
 }
 
 @media (prefers-reduced-motion: reduce) {

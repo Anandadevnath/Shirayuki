@@ -274,7 +274,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
             onChange={(e) => setQ(e.target.value)}
             onKeyDown={onKeyDown}
             placeholder="Search anime…"
-            className="h-14 w-full bg-transparent text-base text-snow outline-none placeholder:text-faint/80"
+            className="h-14 w-full bg-transparent text-base text-snow outline-none focus-visible:outline-none placeholder:text-faint/80"
             aria-label="Search anime"
             autoComplete="off"
             spellCheck={false}

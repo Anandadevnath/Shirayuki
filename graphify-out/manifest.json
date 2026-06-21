@@ -1,0 +1,427 @@
+{
+  "/home/raccoon/Project/Shirayuki/.puku-cli/settings.local.json": {
+    "mtime": 1781817015.4580035,
+    "ast_hash": "1a13b3dc9a7b275c5244d37bbc17840d",
+    "semantic_hash": "1a13b3dc9a7b275c5244d37bbc17840d"
+  },
+  "/home/raccoon/Project/Shirayuki/.puku/config.json": {
+    "mtime": 1781815813.6705532,
+    "ast_hash": "a8ab2a72da16326df8b329bd05d095a3",
+    "semantic_hash": "a8ab2a72da16326df8b329bd05d095a3"
+  },
+  "/home/raccoon/Project/Shirayuki/app/(browse)/az/[letter]/page.tsx": {
+    "mtime": 1781815813.7126062,
+    "ast_hash": "f8b6a82be45b7db867b84d482dafb306",
+    "semantic_hash": "f8b6a82be45b7db867b84d482dafb306"
+  },
+  "/home/raccoon/Project/Shirayuki/app/(browse)/category/[id]/page.tsx": {
+    "mtime": 1781815813.7128525,
+    "ast_hash": "bcac8e3c3452be342f5f39e78f04c93c",
+    "semantic_hash": "bcac8e3c3452be342f5f39e78f04c93c"
+  },
+  "/home/raccoon/Project/Shirayuki/app/(browse)/genre/[id]/page.tsx": {
+    "mtime": 1781815813.7131739,
+    "ast_hash": "540f2c5e8ba458d354d59d9563fbfe73",
+    "semantic_hash": "540f2c5e8ba458d354d59d9563fbfe73"
+  },
+  "/home/raccoon/Project/Shirayuki/app/(browse)/loading.tsx": {
+    "mtime": 1781816365.0314724,
+    "ast_hash": "b6a742c83c3ea248507abaa46077da30",
+    "semantic_hash": "b6a742c83c3ea248507abaa46077da30"
+  },
+  "/home/raccoon/Project/Shirayuki/app/(browse)/schedule/loading.tsx": {
+    "mtime": 1781816365.0314724,
+    "ast_hash": "8d81c8f55b70c8bc1337c5624c0c5616",
+    "semantic_hash": "8d81c8f55b70c8bc1337c5624c0c5616"
+  },
+  "/home/raccoon/Project/Shirayuki/app/(browse)/schedule/page.tsx": {
+    "mtime": 1781815813.713919,
+    "ast_hash": "ca0d18413af48d14fa902a3c382470e7",
+    "semantic_hash": "ca0d18413af48d14fa902a3c382470e7"
+  },
+  "/home/raccoon/Project/Shirayuki/app/(browse)/search/page.tsx": {
+    "mtime": 1781815813.7143345,
+    "ast_hash": "529e94b3e6929397a6388d1fd4bdd2f3",
+    "semantic_hash": "529e94b3e6929397a6388d1fd4bdd2f3"
+  },
+  "/home/raccoon/Project/Shirayuki/app/anime/[id]/page.tsx": {
+    "mtime": 1781875771.7652726,
+    "ast_hash": "d7c495337e922915af5833d0ac577412",
+    "semantic_hash": "d7c495337e922915af5833d0ac577412"
+  },
+  "/home/raccoon/Project/Shirayuki/app/api/schedule/route.ts": {
+    "mtime": 1781964294.5131278,
+    "ast_hash": "79375ff54d14e663b4f1948483e84a44",
+    "semantic_hash": "79375ff54d14e663b4f1948483e84a44"
+  },
+  "/home/raccoon/Project/Shirayuki/app/api/search-index/route.ts": {
+    "mtime": 1781821993.7344701,
+    "ast_hash": "c4da23d264e4ae6baa4b76d116aff4c5",
+    "semantic_hash": "c4da23d264e4ae6baa4b76d116aff4c5"
+  },
+  "/home/raccoon/Project/Shirayuki/app/api/stream/route.ts": {
+    "mtime": 1781964294.5131278,
+    "ast_hash": "aa14ff18a41682c9b89413a4162ceb64",
+    "semantic_hash": "aa14ff18a41682c9b89413a4162ceb64"
+  },
+  "/home/raccoon/Project/Shirayuki/app/api/subtitle/route.ts": {
+    "mtime": 1781964294.5131278,
+    "ast_hash": "f4015b4fec9bb508c8396f1e3927bca7",
+    "semantic_hash": "f4015b4fec9bb508c8396f1e3927bca7"
+  },
+  "/home/raccoon/Project/Shirayuki/app/api/suggest/route.ts": {
+    "mtime": 1781964294.5131278,
+    "ast_hash": "86e7175a7cdeaa956274c98e41b9dd4a",
+    "semantic_hash": "86e7175a7cdeaa956274c98e41b9dd4a"
+  },
+  "/home/raccoon/Project/Shirayuki/app/error.tsx": {
+    "mtime": 1781815813.7153368,
+    "ast_hash": "dcd57b6e9f0e2fbdd06634dc9f22c78a",
+    "semantic_hash": "dcd57b6e9f0e2fbdd06634dc9f22c78a"
+  },
+  "/home/raccoon/Project/Shirayuki/app/layout.tsx": {
+    "mtime": 1781964294.514719,
+    "ast_hash": "89ef9ef82ab19d007f377845331d01c9",
+    "semantic_hash": "89ef9ef82ab19d007f377845331d01c9"
+  },
+  "/home/raccoon/Project/Shirayuki/app/loading.tsx": {
+    "mtime": 1781816365.0334725,
+    "ast_hash": "6d8878e7f5a6a1ec85b0e3daf7c42b18",
+    "semantic_hash": "6d8878e7f5a6a1ec85b0e3daf7c42b18"
+  },
+  "/home/raccoon/Project/Shirayuki/app/manifest.ts": {
+    "mtime": 1781815813.7170875,
+    "ast_hash": "2c4efd6d06201c5d0ee33c03f2799824",
+    "semantic_hash": "2c4efd6d06201c5d0ee33c03f2799824"
+  },
+  "/home/raccoon/Project/Shirayuki/app/not-found.tsx": {
+    "mtime": 1781815813.7170875,
+    "ast_hash": "a1134b7db0fa95128dfe99fa82a3b25c",
+    "semantic_hash": "a1134b7db0fa95128dfe99fa82a3b25c"
+  },
+  "/home/raccoon/Project/Shirayuki/app/page.tsx": {
+    "mtime": 1781964294.5149422,
+    "ast_hash": "842b5fde5b026725e9a91aadb992f10b",
+    "semantic_hash": "842b5fde5b026725e9a91aadb992f10b"
+  },
+  "/home/raccoon/Project/Shirayuki/app/robots.ts": {
+    "mtime": 1781815813.7173345,
+    "ast_hash": "c871d5f52475f01fffcb13f47f492ca3",
+    "semantic_hash": "c871d5f52475f01fffcb13f47f492ca3"
+  },
+  "/home/raccoon/Project/Shirayuki/app/watch/[id]/[ep]/loading.tsx": {
+    "mtime": 1781875771.7682679,
+    "ast_hash": "8b86b8b26c63a226aad5255e4cf96c2d",
+    "semantic_hash": "8b86b8b26c63a226aad5255e4cf96c2d"
+  },
+  "/home/raccoon/Project/Shirayuki/app/watch/[id]/[ep]/page.tsx": {
+    "mtime": 1782049388.7432697,
+    "ast_hash": "a157856bdd2c749df09e2583f88a72f8",
+    "semantic_hash": "a157856bdd2c749df09e2583f88a72f8"
+  },
+  "/home/raccoon/Project/Shirayuki/app/watch/[id]/page.tsx": {
+    "mtime": 1781815813.7178462,
+    "ast_hash": "661f2dad8a0279d733e04bf1ee2b86da",
+    "semantic_hash": "661f2dad8a0279d733e04bf1ee2b86da"
+  },
+  "/home/raccoon/Project/Shirayuki/components/anime/AnimeCard.tsx": {
+    "mtime": 1781964294.5154295,
+    "ast_hash": "34c7969133253387f723922d01ddd4ab",
+    "semantic_hash": "34c7969133253387f723922d01ddd4ab"
+  },
+  "/home/raccoon/Project/Shirayuki/components/anime/Badges.tsx": {
+    "mtime": 1781821993.7354703,
+    "ast_hash": "d5df72fb1654fa3a0760c0ec048b707d",
+    "semantic_hash": "d5df72fb1654fa3a0760c0ec048b707d"
+  },
+  "/home/raccoon/Project/Shirayuki/components/anime/Grid.tsx": {
+    "mtime": 1781816365.0354724,
+    "ast_hash": "b6a78897961cc7712ade93ff085ff085",
+    "semantic_hash": "b6a78897961cc7712ade93ff085ff085"
+  },
+  "/home/raccoon/Project/Shirayuki/components/anime/Rail.tsx": {
+    "mtime": 1781964294.5154295,
+    "ast_hash": "4e489381a7208819ceee7ef20e5a5f48",
+    "semantic_hash": "4e489381a7208819ceee7ef20e5a5f48"
+  },
+  "/home/raccoon/Project/Shirayuki/components/common/Pagination.tsx": {
+    "mtime": 1781815813.718821,
+    "ast_hash": "a7b60661177cf4edc17d1ddc1ca0c0fb",
+    "semantic_hash": "a7b60661177cf4edc17d1ddc1ca0c0fb"
+  },
+  "/home/raccoon/Project/Shirayuki/components/common/RailShell.tsx": {
+    "mtime": 1781875771.7702677,
+    "ast_hash": "052504a284339f7a2882eb2a574189e1",
+    "semantic_hash": "052504a284339f7a2882eb2a574189e1"
+  },
+  "/home/raccoon/Project/Shirayuki/components/common/SectionHeader.tsx": {
+    "mtime": 1781815813.719515,
+    "ast_hash": "b43cf3169668f16ec2fd6d10543f1c51",
+    "semantic_hash": "b43cf3169668f16ec2fd6d10543f1c51"
+  },
+  "/home/raccoon/Project/Shirayuki/components/common/States.tsx": {
+    "mtime": 1781815813.719515,
+    "ast_hash": "3f309e9475113c000a73fe3d34dcf3f4",
+    "semantic_hash": "3f309e9475113c000a73fe3d34dcf3f4"
+  },
+  "/home/raccoon/Project/Shirayuki/components/details/CinematicInfo.tsx": {
+    "mtime": 1781964294.5159116,
+    "ast_hash": "a98a41dd88e50e97da7ece167bf05c43",
+    "semantic_hash": "a98a41dd88e50e97da7ece167bf05c43"
+  },
+  "/home/raccoon/Project/Shirayuki/components/details/EpisodeList.tsx": {
+    "mtime": 1781875771.7722678,
+    "ast_hash": "d02c2cd48e5851728917ab60dc26ccd8",
+    "semantic_hash": "d02c2cd48e5851728917ab60dc26ccd8"
+  },
+  "/home/raccoon/Project/Shirayuki/components/details/SeasonRail.tsx": {
+    "mtime": 1781875771.7722678,
+    "ast_hash": "63aec3db774d3cac08af6478f71f6cea",
+    "semantic_hash": "63aec3db774d3cac08af6478f71f6cea"
+  },
+  "/home/raccoon/Project/Shirayuki/components/home/ContinueWatching.tsx": {
+    "mtime": 1781964294.5159116,
+    "ast_hash": "0642e1236a40cf78688a9e505b3f6f32",
+    "semantic_hash": "0642e1236a40cf78688a9e505b3f6f32"
+  },
+  "/home/raccoon/Project/Shirayuki/components/home/DiscoverColumns.tsx": {
+    "mtime": 1781964294.5159116,
+    "ast_hash": "cad86c25ea4db80c281e61d8c6098cb4",
+    "semantic_hash": "cad86c25ea4db80c281e61d8c6098cb4"
+  },
+  "/home/raccoon/Project/Shirayuki/components/home/GenreCloud.tsx": {
+    "mtime": 1781815813.7203345,
+    "ast_hash": "d50bddc9daeae504d72ba676b7f1599e",
+    "semantic_hash": "d50bddc9daeae504d72ba676b7f1599e"
+  },
+  "/home/raccoon/Project/Shirayuki/components/home/LatestEpisodes.tsx": {
+    "mtime": 1781964294.5169115,
+    "ast_hash": "96ddd7bb361ab728c0e08eb315dee921",
+    "semantic_hash": "96ddd7bb361ab728c0e08eb315dee921"
+  },
+  "/home/raccoon/Project/Shirayuki/components/home/QuickLists.tsx": {
+    "mtime": 1781875771.7762678,
+    "ast_hash": "91082a4810370e37409375b844bb2134",
+    "semantic_hash": "91082a4810370e37409375b844bb2134"
+  },
+  "/home/raccoon/Project/Shirayuki/components/home/RankList.tsx": {
+    "mtime": 1781964294.5169115,
+    "ast_hash": "a0059d00c8eb2e281f94f56165fcc8a8",
+    "semantic_hash": "a0059d00c8eb2e281f94f56165fcc8a8"
+  },
+  "/home/raccoon/Project/Shirayuki/components/home/Schedule.tsx": {
+    "mtime": 1781964294.5169115,
+    "ast_hash": "cded8ee7dd4d79d7e26e53fb4168f5a4",
+    "semantic_hash": "cded8ee7dd4d79d7e26e53fb4168f5a4"
+  },
+  "/home/raccoon/Project/Shirayuki/components/home/Spotlight.tsx": {
+    "mtime": 1781964294.5179117,
+    "ast_hash": "3133957dfcf3d8e1bf495b7ace360537",
+    "semantic_hash": "3133957dfcf3d8e1bf495b7ace360537"
+  },
+  "/home/raccoon/Project/Shirayuki/components/home/Top10Tabs.tsx": {
+    "mtime": 1781875771.7830222,
+    "ast_hash": "df9c55c457a651440a14aea826834cef",
+    "semantic_hash": "df9c55c457a651440a14aea826834cef"
+  },
+  "/home/raccoon/Project/Shirayuki/components/home/Trending.tsx": {
+    "mtime": 1782044693.772806,
+    "ast_hash": "5af972c35291f1033ab31acee2bd1b88",
+    "semantic_hash": "5af972c35291f1033ab31acee2bd1b88"
+  },
+  "/home/raccoon/Project/Shirayuki/components/layout/Ambient.tsx": {
+    "mtime": 1781815813.722964,
+    "ast_hash": "43c1b55e34b358acc3fea43c429c3d1f",
+    "semantic_hash": "43c1b55e34b358acc3fea43c429c3d1f"
+  },
+  "/home/raccoon/Project/Shirayuki/components/layout/Footer.tsx": {
+    "mtime": 1781964294.5179117,
+    "ast_hash": "4781aaa1f8d248aa0ee3a98184130ed1",
+    "semantic_hash": "4781aaa1f8d248aa0ee3a98184130ed1"
+  },
+  "/home/raccoon/Project/Shirayuki/components/layout/Nav.tsx": {
+    "mtime": 1781964294.5189116,
+    "ast_hash": "600089ce9f2815c698e9fb9be458daa8",
+    "semantic_hash": "600089ce9f2815c698e9fb9be458daa8"
+  },
+  "/home/raccoon/Project/Shirayuki/components/layout/SnowLayer.tsx": {
+    "mtime": 1781964294.5189116,
+    "ast_hash": "b5dd5aa0a472ac33f78adc28221575cf",
+    "semantic_hash": "b5dd5aa0a472ac33f78adc28221575cf"
+  },
+  "/home/raccoon/Project/Shirayuki/components/layout/SnowLayerIsland.tsx": {
+    "mtime": 1781964294.5189116,
+    "ast_hash": "d54ad1af7147848a570cef78f7fabef9",
+    "semantic_hash": "d54ad1af7147848a570cef78f7fabef9"
+  },
+  "/home/raccoon/Project/Shirayuki/components/player/Player.tsx": {
+    "mtime": 1781964294.5199115,
+    "ast_hash": "a40880bbbceeafe1e3c3b1319aee889f",
+    "semantic_hash": "a40880bbbceeafe1e3c3b1319aee889f"
+  },
+  "/home/raccoon/Project/Shirayuki/components/player/PlayerLoader.tsx": {
+    "mtime": 1781964294.5199115,
+    "ast_hash": "fa75d22dbadae43ed540d4af173fa127",
+    "semantic_hash": "fa75d22dbadae43ed540d4af173fa127"
+  },
+  "/home/raccoon/Project/Shirayuki/components/search/CommandPalette.tsx": {
+    "mtime": 1782046158.5461466,
+    "ast_hash": "9e6d7cbaecc033e225c5978c54e43f73",
+    "semantic_hash": "9e6d7cbaecc033e225c5978c54e43f73"
+  },
+  "/home/raccoon/Project/Shirayuki/components/ui/Skeleton.tsx": {
+    "mtime": 1782049431.0093236,
+    "ast_hash": "63922c335cd3c29ebcd421ed7a78ad5d",
+    "semantic_hash": "63922c335cd3c29ebcd421ed7a78ad5d"
+  },
+  "/home/raccoon/Project/Shirayuki/components/ui/SmartImage.tsx": {
+    "mtime": 1781964294.5199115,
+    "ast_hash": "df5247759abc5457b6aacebc06ff93dc",
+    "semantic_hash": "df5247759abc5457b6aacebc06ff93dc"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/api/index.ts": {
+    "mtime": 1781815813.7276087,
+    "ast_hash": "24441cd74b1096d6800163f91d4d68cd",
+    "semantic_hash": "24441cd74b1096d6800163f91d4d68cd"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/progress/local.ts": {
+    "mtime": 1781815813.7278202,
+    "ast_hash": "5ab14234343c9cfb029f664b05a2a703",
+    "semantic_hash": "5ab14234343c9cfb029f664b05a2a703"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/providers/animex/client.ts": {
+    "mtime": 1781815813.7283344,
+    "ast_hash": "1b73548a528f032a659c29539d36ec47",
+    "semantic_hash": "1b73548a528f032a659c29539d36ec47"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/providers/animex/index.ts": {
+    "mtime": 1781815813.728649,
+    "ast_hash": "36dcf06e71b90a8492eadd06003ca4c9",
+    "semantic_hash": "36dcf06e71b90a8492eadd06003ca4c9"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/providers/animex/mappers.ts": {
+    "mtime": 1781875771.7892675,
+    "ast_hash": "e35b1606c6d2c75422249c5ba6293e99",
+    "semantic_hash": "e35b1606c6d2c75422249c5ba6293e99"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/providers/animex/schemas.ts": {
+    "mtime": 1781815813.728649,
+    "ast_hash": "ee87c797bf77a6e6ce1503efd2d96808",
+    "semantic_hash": "ee87c797bf77a6e6ce1503efd2d96808"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/providers/hianime/client.ts": {
+    "mtime": 1781815813.728649,
+    "ast_hash": "cb4d97ac341f7db1cc941994128682e6",
+    "semantic_hash": "cb4d97ac341f7db1cc941994128682e6"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/providers/hianime/index.ts": {
+    "mtime": 1781964294.5209115,
+    "ast_hash": "6d2354aaf6f1cb8ab6f170078e34e4dd",
+    "semantic_hash": "6d2354aaf6f1cb8ab6f170078e34e4dd"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/providers/hianime/mappers.ts": {
+    "mtime": 1781875771.7892675,
+    "ast_hash": "bb719977ee06797b638c9d1a6f417ac7",
+    "semantic_hash": "bb719977ee06797b638c9d1a6f417ac7"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/providers/hianime/schemas.ts": {
+    "mtime": 1781875771.790801,
+    "ast_hash": "83e250a3dba4ecfca9e7aa8cf2925ca3",
+    "semantic_hash": "83e250a3dba4ecfca9e7aa8cf2925ca3"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/providers/types.ts": {
+    "mtime": 1781875771.7912674,
+    "ast_hash": "1d2030a74bd31750861a47234018be31",
+    "semantic_hash": "1d2030a74bd31750861a47234018be31"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/stores/prefs.ts": {
+    "mtime": 1781815813.7302868,
+    "ast_hash": "b8b376d59af52676da63b304bd35705e",
+    "semantic_hash": "b8b376d59af52676da63b304bd35705e"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/utils/cn.ts": {
+    "mtime": 1781815813.7303345,
+    "ast_hash": "d9837f38cc05303254571985e3164050",
+    "semantic_hash": "d9837f38cc05303254571985e3164050"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/utils/format.ts": {
+    "mtime": 1781815813.7306406,
+    "ast_hash": "950b1ce44f6c662c779bc9b8a2863da2",
+    "semantic_hash": "950b1ce44f6c662c779bc9b8a2863da2"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/utils/id.ts": {
+    "mtime": 1781815813.7308304,
+    "ast_hash": "b74177f9e6221c3a34f912265d4ff298",
+    "semantic_hash": "b74177f9e6221c3a34f912265d4ff298"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/utils/useReducedMotion.ts": {
+    "mtime": 1781964294.5209115,
+    "ast_hash": "9afb24428ad7d7370d1c9c01d4577cb5",
+    "semantic_hash": "9afb24428ad7d7370d1c9c01d4577cb5"
+  },
+  "/home/raccoon/Project/Shirayuki/lib/watchlist/local.ts": {
+    "mtime": 1781815813.731042,
+    "ast_hash": "68c10e9c1a49a09cf35aaba15432312d",
+    "semantic_hash": "68c10e9c1a49a09cf35aaba15432312d"
+  },
+  "/home/raccoon/Project/Shirayuki/next.config.ts": {
+    "mtime": 1781964294.5209115,
+    "ast_hash": "b12ea73195c0bb8de981f2cf86f65d1f",
+    "semantic_hash": "b12ea73195c0bb8de981f2cf86f65d1f"
+  },
+  "/home/raccoon/Project/Shirayuki/package.json": {
+    "mtime": 1781964294.5209115,
+    "ast_hash": "dbdbfad761d1fe68fbc1815c3e8cc944",
+    "semantic_hash": "dbdbfad761d1fe68fbc1815c3e8cc944"
+  },
+  "/home/raccoon/Project/Shirayuki/postcss.config.mjs": {
+    "mtime": 1781815813.7313344,
+    "ast_hash": "239f3ebf717465dc636818a1a619398d",
+    "semantic_hash": "239f3ebf717465dc636818a1a619398d"
+  },
+  "/home/raccoon/Project/Shirayuki/skills-lock.json": {
+    "mtime": 1782049652.1833405,
+    "ast_hash": "ea4ced54c545e60bb1914846696486e7",
+    "semantic_hash": "ea4ced54c545e60bb1914846696486e7"
+  },
+  "/home/raccoon/Project/Shirayuki/tsconfig.json": {
+    "mtime": 1781815813.7800612,
+    "ast_hash": "2944c1bb75d8f3a4e37b37584d064d7c",
+    "semantic_hash": "2944c1bb75d8f3a4e37b37584d064d7c"
+  },
+  "/home/raccoon/Project/Shirayuki/README.md": {
+    "mtime": 1781964294.5131278,
+    "ast_hash": "dad8f54a73b5bd48515607115c937ee1",
+    "semantic_hash": "dad8f54a73b5bd48515607115c937ee1"
+  },
+  "/home/raccoon/Project/Shirayuki/docs/00-overview.md": {
+    "mtime": 1781815813.7255423,
+    "ast_hash": "474c93d99492cdb30270229d5d721934",
+    "semantic_hash": "474c93d99492cdb30270229d5d721934"
+  },
+  "/home/raccoon/Project/Shirayuki/docs/01-react-audit.md": {
+    "mtime": 1781815813.7259147,
+    "ast_hash": "c16c8984d09c563b672c4067d492a3ba",
+    "semantic_hash": "c16c8984d09c563b672c4067d492a3ba"
+  },
+  "/home/raccoon/Project/Shirayuki/docs/02-market-research.md": {
+    "mtime": 1781815813.7263277,
+    "ast_hash": "f39e7210230c0bc772cdca7fa565e781",
+    "semantic_hash": "f39e7210230c0bc772cdca7fa565e781"
+  },
+  "/home/raccoon/Project/Shirayuki/docs/03-api-architecture.md": {
+    "mtime": 1781815813.7266927,
+    "ast_hash": "9781a3ee39d271f8ccb2e6434577d018",
+    "semantic_hash": "9781a3ee39d271f8ccb2e6434577d018"
+  },
+  "/home/raccoon/Project/Shirayuki/docs/04-design-system.md": {
+    "mtime": 1781815813.7270098,
+    "ast_hash": "49948a2554c4a24eca06fd4f964970a3",
+    "semantic_hash": "49948a2554c4a24eca06fd4f964970a3"
+  },
+  "/home/raccoon/Project/Shirayuki/docs/05-roadmap.md": {
+    "mtime": 1781815813.7273345,
+    "ast_hash": "91d41793518363b69ec5a42fde5ed030",
+    "semantic_hash": "91d41793518363b69ec5a42fde5ed030"
+  }
+}
