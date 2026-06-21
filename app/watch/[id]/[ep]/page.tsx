@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Captions, Mic, ServerCog } from "lucide-react";
 import { getAnime, getEpisodes, getServers, getSources, safe } from "@/lib/api";
-import type { ServerModel } from "@/lib/providers/types";
+import type { ServerModel, SourcesModel } from "@/lib/providers/types";
 import { ErrorState } from "@/components/common/States";
 import CinematicInfo from "@/components/details/CinematicInfo";
 import { PlayerLoader } from "@/components/player/PlayerLoader";
@@ -49,16 +49,33 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const category: "sub" | "dub" =
     cat === "dub" && servers.dub.length ? "dub" : "sub";
   const pool: ServerModel[] = category === "dub" ? servers.dub : servers.sub;
-  const chosen = pool.find((s) => s.nameId === server) ?? pool[0] ?? null;
+  const preferred = pool.find((s) => s.nameId === server) ?? pool[0] ?? null;
 
   const currentIdx = episodes.findIndex((e) => e.episodeId === episodeId);
   const nextEp = currentIdx >= 0 ? episodes[currentIdx + 1] : undefined;
   const nextHref = nextEp ? `/watch/${id}/${encodeURIComponent(nextEp.episodeId)}` : null;
 
-  const sourcesRes = chosen
-    ? await safe(() => getSources(episodeId, epNum, chosen.nameId, category))
-    : null;
-  const sources = sourcesRes && sourcesRes.ok ? sourcesRes.data : null;
+  // Transparent server failover: individual HiAnime extractors frequently return
+  // HTTP 500 / no source while others in the same category work. Try the
+  // preferred server first, then fall back through the rest of the pool so one
+  // dead server doesn't dead-end the page. `chosen` ends up reflecting the
+  // server that actually played (so the switcher highlights it), or the
+  // preferred one if every server failed.
+  const ordered = preferred
+    ? [preferred, ...pool.filter((s) => s.nameId !== preferred.nameId)]
+    : [];
+  let chosen: ServerModel | null = preferred;
+  let sources: SourcesModel | null = null;
+  for (const candidate of ordered) {
+    const res = await safe(() =>
+      getSources(episodeId, epNum, candidate.nameId, category),
+    );
+    if (res.ok && res.data) {
+      chosen = candidate;
+      sources = res.data;
+      break;
+    }
+  }
 
   const playerSrc = sources
     ? `/api/stream?url=${encodeURIComponent(sources.m3u8)}${

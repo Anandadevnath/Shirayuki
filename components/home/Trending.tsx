@@ -103,6 +103,7 @@ function TrendCard({
 export function Trending({ items }: { items: AnimeCardModel[] }) {
   const reduce = useReducedMotionSSR();
   const trackRef = useRef<HTMLDivElement>(null);
+  const wrapRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
   // Current eased offset of the manually-nudged marquee (px, ≤ 0) and the timer
   // that hands control back to the auto-drift once the user stops clicking.
@@ -152,6 +153,87 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
     el.style.animationDelay = `${offsetRef.current / SPEED}s`;
     el.style.animationPlayState = "running";
   };
+
+  // Touch-drag: let the rail follow the finger on mobile. The marquee is a
+  // transform animation inside an overflow-hidden box (not a native scroller),
+  // so we drive `transform` directly. We attach the listeners natively because
+  // the horizontal-drag branch must `preventDefault()` to stop the page from
+  // scrolling — React's onTouchMove is passive and can't. `touch-action: pan-y`
+  // on the wrapper tells the browser vertical pans are still its job, so a
+  // vertical swipe scrolls the page normally and only horizontal swipes grab
+  // the rail. On release we re-hand control to the CSS drift after a short idle.
+  useEffect(() => {
+    if (reduce) return;
+    const wrap = wrapRef.current;
+    const track = trackRef.current;
+    if (!wrap || !track) return;
+
+    let active = false; // a touch is down (onStart fired, onEnd hasn't)
+    let dragging = false; // gesture resolved as a horizontal drag
+    let decided = false; // axis lock (horizontal vs vertical) settled
+    let startX = 0;
+    let startY = 0;
+    let startOffset = 0;
+    let half = 0;
+
+    // Normalise any translateX into (−half, 0] so both copies of the doubled
+    // track stay full — drag as far as you like, the rail never shows a gap.
+    const norm = (x: number) => (half <= 0 ? x : (((x % half) + half) % half) - half);
+
+    const onStart = (e: TouchEvent) => {
+      if (e.touches.length !== 1) return;
+      half = track.scrollWidth / 2;
+      if (idleRef.current) clearTimeout(idleRef.current);
+      active = true;
+      dragging = false;
+      decided = false;
+      startX = e.touches[0].clientX;
+      startY = e.touches[0].clientY;
+      startOffset = norm(readTranslateX(track));
+      offsetRef.current = startOffset;
+      track.style.animation = "none";
+      track.style.transition = "none";
+      track.style.transform = `translate3d(${startOffset}px, 0, 0)`;
+    };
+
+    const onMove = (e: TouchEvent) => {
+      if (!active) return;
+      const dx = e.touches[0].clientX - startX;
+      const dy = e.touches[0].clientY - startY;
+      if (!decided) {
+        // Wait for a few px of travel before committing to an axis, so a tap
+        // (to open a card) or a vertical scroll isn't hijacked.
+        if (Math.abs(dx) < 8 && Math.abs(dy) < 8) return;
+        decided = true;
+        dragging = Math.abs(dx) > Math.abs(dy);
+      }
+      if (!dragging) return; // vertical → let the page scroll
+      e.preventDefault();
+      const offset = norm(startOffset + dx);
+      offsetRef.current = offset;
+      track.style.transform = `translate3d(${offset}px, 0, 0)`;
+    };
+
+    const onEnd = () => {
+      if (!active) return;
+      active = false;
+      if (idleRef.current) clearTimeout(idleRef.current);
+      // Longer pause after an intentional drag so the user can read; a quick
+      // resume after a tap/vertical swipe that never moved the rail.
+      idleRef.current = setTimeout(resumeDrift, dragging ? 2200 : 500);
+    };
+
+    wrap.addEventListener("touchstart", onStart, { passive: true });
+    wrap.addEventListener("touchmove", onMove, { passive: false });
+    wrap.addEventListener("touchend", onEnd);
+    wrap.addEventListener("touchcancel", onEnd);
+    return () => {
+      wrap.removeEventListener("touchstart", onStart);
+      wrap.removeEventListener("touchmove", onMove);
+      wrap.removeEventListener("touchend", onEnd);
+      wrap.removeEventListener("touchcancel", onEnd);
+    };
+  }, [reduce]);
 
   // Arrow-driven nudge for the live marquee. Freezes the drift at its current
   // position, then eases one viewport-worth in `dir`. The track is doubled, so
@@ -220,7 +302,7 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
         {/* Manual nudge arrows — frost-glass back / frost-filled forward, the
             same pairing the rest of the site uses. They drive the live marquee
             (or the reduced-motion rail) by ~a viewport per press. */}
-        <div className="ml-auto hidden shrink-0 gap-1.5 sm:flex">
+        <div className="ml-auto flex shrink-0 gap-1.5">
           <button
             onClick={() => onArrow(-1)}
             aria-label="Scroll trending left"
@@ -252,24 +334,16 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
         // container itself is masked on the left/right edges so cards
         // physically fade into transparency at the rails.
         <div
+          ref={wrapRef}
           className="trend-marquee-wrap group/marquee relative overflow-hidden"
           style={{
+            // `pan-y`: vertical swipes scroll the page, horizontal swipes are
+            // captured by the touch-drag handler (see the touch effect above).
+            touchAction: "pan-y",
             WebkitMaskImage:
               "linear-gradient(to right, transparent 0, black 120px, black calc(100% - 120px), transparent 100%)",
             maskImage:
               "linear-gradient(to right, transparent 0, black 120px, black calc(100% - 120px), transparent 100%)",
-          }}
-          onTouchStart={(e) => {
-            const el = trackRef.current;
-            if (el) el.style.animationPlayState = "paused";
-          }}
-          onTouchEnd={(e) => {
-            const el = trackRef.current;
-            if (el) el.style.animationPlayState = "running";
-          }}
-          onTouchCancel={(e) => {
-            const el = trackRef.current;
-            if (el) el.style.animationPlayState = "running";
           }}
         >
           <div

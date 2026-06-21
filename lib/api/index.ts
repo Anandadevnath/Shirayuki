@@ -12,7 +12,7 @@ export async function safe<T>(fn: () => Promise<T>): Promise<Result<T>> {
     return { ok: true, data: await fn() };
   } catch (err) {
     const error = err instanceof Error ? err.message : "Unknown error";
-    if (process.env.NODE_ENV !== "production") console.error("[api]", error);
+    if (process.env.NODE_ENV !== "production") console.warn("[api]", error);
     return { ok: false, error };
   }
 }

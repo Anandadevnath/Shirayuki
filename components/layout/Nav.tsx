@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
+import { Menu, Search, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils/cn";
 // `prefetchSearchIndex` is a tiny, side-effect-free function — imported
@@ -30,6 +30,7 @@ const LINKS = [
 export function Nav() {
   const pathname = usePathname();
   const [paletteOpen, setPaletteOpen] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
   // Latches true on first open so the lazy chunk mounts once, then stays.
   const [paletteMounted, setPaletteMounted] = useState(false);
   // The header's "scrolled" state toggles `glass` (backdrop-filter blur).
@@ -72,10 +73,17 @@ export function Nav() {
         e.preventDefault();
         openPalette();
       }
+      if (e.key === "Escape") setMenuOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [openPalette]);
+
+  // Close the mobile menu whenever navigation lands on a new route — the
+  // panel links push to a new pathname, so this doubles as "close on select".
+  useEffect(() => {
+    setMenuOpen(false);
+  }, [pathname]);
 
   return (
     <>
@@ -161,7 +169,58 @@ export function Nav() {
               ⌘K
             </kbd>
           </button>
+
+          {/* Mobile-only menu toggle — the primary links are hidden below md,
+              so this is the only way to reach Popular / Airing / Schedule /
+              Browse on a phone. */}
+          <button
+            onClick={() => setMenuOpen((v) => !v)}
+            className="group flex items-center rounded-sm border border-line bg-surface/60 p-2 text-faint transition-[border-color,color,background-color] duration-200 ease-out hover:border-frost/50 hover:bg-surface/80 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost md:hidden"
+            aria-label={menuOpen ? "Close menu" : "Open menu"}
+            aria-expanded={menuOpen}
+            aria-controls="mobile-nav"
+          >
+            {menuOpen ? (
+              <X className="size-5 transition-colors duration-200 group-hover:text-frost" />
+            ) : (
+              <Menu className="size-5 transition-colors duration-200 group-hover:text-frost" />
+            )}
+          </button>
         </nav>
+
+        {/* Mobile navigation drawer. Kept mounted so open/close cross-fades
+            via CSS rather than a remount; `pointer-events-none` when closed so
+            it never traps taps. Hidden entirely at md+ where the inline links
+            return. */}
+        <div
+          id="mobile-nav"
+          data-open={menuOpen ? "1" : "0"}
+          className="glass overflow-hidden border-line/60 transition-[max-height,opacity] duration-300 ease-out data-[open=0]:max-h-0 data-[open=0]:opacity-0 data-[open=1]:max-h-96 data-[open=1]:border-t data-[open=1]:opacity-100 md:hidden"
+          aria-hidden={!menuOpen}
+        >
+          <ul className="mx-auto flex w-full max-w-[1460px] flex-col gap-1 px-4 py-3 sm:px-6">
+            {LINKS.map((l) => {
+              const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
+              return (
+                <li key={l.href}>
+                  <Link
+                    href={l.href}
+                    aria-current={active ? "page" : undefined}
+                    tabIndex={menuOpen ? undefined : -1}
+                    className={cn(
+                      "block rounded-sm px-3 py-2.5 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost",
+                      active
+                        ? "bg-frost-soft text-frost"
+                        : "text-muted hover:bg-surface-2/70 hover:text-snow",
+                    )}
+                  >
+                    {l.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
       </header>
 
       {paletteMounted && (
