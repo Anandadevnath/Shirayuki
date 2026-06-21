@@ -239,7 +239,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
           <div className="group/poster relative w-[180px]">
             {/* Glass frame with poster inside */}
             <div className="poster-float relative">
-              <div className="relative aspect-[2/3] w-full overflow-hidden rounded-md border border-line/60 bg-surface/40 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)] ring-1 ring-white/5 transition-transform duration-500 group-hover/poster:-translate-y-1 group-hover/poster:shadow-[0_30px_80px_-20px_rgba(124,58,237,0.4)]">
+              <div className="relative aspect-[2/3] w-full overflow-hidden rounded-md border border-line/60 bg-surface/40 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)] ring-1 ring-white/5 transition-transform duration-500 group-hover/poster:-translate-y-1 group-hover/poster:shadow-[0_30px_80px_-20px_color-mix(in_oklch,var(--color-frost-deep)_40%,transparent)]">
                 {anime.poster ? (
                   <Image
                     src={anime.poster}
@@ -316,7 +316,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
                 <button
                   key={g}
                   type="button"
-                  className="genre-pill rounded-full border border-frost/25 bg-gradient-to-br from-frost/15 to-frost/5 px-3 py-1 text-[11.5px] font-semibold uppercase tracking-wider text-frost shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] hover:border-frost/60 hover:from-frost/25 hover:to-frost/10 hover:shadow-[0_4px_16px_-4px_rgba(124,58,237,0.5)]"
+                  className="genre-pill rounded-full border border-frost/25 bg-gradient-to-br from-frost/15 to-frost/5 px-3 py-1 text-[11.5px] font-semibold uppercase tracking-wider text-frost shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] hover:border-frost/60 hover:from-frost/25 hover:to-frost/10 hover:shadow-[0_4px_16px_-4px_color-mix(in_oklch,var(--color-frost-deep)_50%,transparent)]"
                 >
                   {g}
                 </button>
