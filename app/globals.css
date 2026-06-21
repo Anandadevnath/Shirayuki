@@ -265,7 +265,9 @@
 }
 .media-in {
   animation: media-in 0.7s cubic-bezier(0.16, 1, 0.3, 1) both;
-  will-change: transform, opacity;
+  /* No permanent will-change: a one-shot mount keyframe self-promotes to a
+     compositor layer for its 0.7s run, then the browser drops it. A standing
+     will-change here would pin a GPU layer forever, per element. */
 }
 
 /* Image reveal — runs once on mount. Starts at a hair of scale + 0 opacity,
@@ -286,10 +288,11 @@
 }
 .image-stack {
   animation: image-stack-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
-  /* will-change kept only on the brief mount animation; the browser drops
-     the layer once the keyframe completes (long-running layers are the
-     #1 source of paint-memory bloat on heavy image pages). */
-  will-change: transform, opacity;
+  /* No permanent will-change. A one-shot keyframe already promotes its element
+     to a compositor layer for the 0.55s run and the browser drops it on
+     completion; a standing `will-change` (contrary to the old comment) is NOT
+     dropped — it would pin a GPU layer per image forever, and on a grid of
+     60+ posters that is the #1 source of paint-memory bloat. */
 }
 @media (prefers-reduced-motion: reduce) {
   .image-stack { animation: none; }
@@ -372,8 +375,14 @@
 }
 /* A single travelling comet on a thin bright ring. The ring is 1.5px thick
    with a hard bright head and a long fading tail for an unmistakable
-   laser-sweep identity. Two stacked drop-shadows give the glow. */
-.laser-frame::after {
+   laser-sweep identity. A single drop-shadow gives the glow (one filter on a
+   spinning conic is meaningfully cheaper than two stacked ones).
+
+   The comet is GATED behind `.laser-live`: only one element per viewport gets
+   the spinning comet, while every `.laser-frame` keeps the static frost aura
+   (`::before`) so the frost-edge identity is unchanged at rest. Stacking >1
+   spinning conic+filter in a viewport was a top paint cost on scroll. */
+.laser-frame.laser-live::after {
   content: "";
   position: absolute;
   inset: -1px;
@@ -393,8 +402,7 @@
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  filter: drop-shadow(0 0 4px var(--color-frost))
-    drop-shadow(0 0 12px var(--color-frost-deep));
+  filter: drop-shadow(0 0 8px color-mix(in oklch, var(--color-frost) 55%, transparent));
   animation: laser-sweep 7s linear infinite;
   pointer-events: none;
 }
@@ -422,13 +430,6 @@
   50%      { transform: translate3d(0, -4px, 0) scale(1.005); }
 }
 .poster-float { animation: poster-float 6s ease-in-out infinite; }
-
-/* Soft ambient glow breathing behind the poster */
-@keyframes ambient-pulse {
-  0%, 100% { opacity: 0.55; transform: scale(1); }
-  50%      { opacity: 0.85; transform: scale(1.06); }
-}
-.ambient-pulse { animation: ambient-pulse 5s ease-in-out infinite; }
 
 /* Banner slow zoom-in (one-shot, on mount) */
 @keyframes banner-reveal {
@@ -510,14 +511,6 @@
 }
 .watch-pill-spring:hover { transform: scale(1.06); }
 .watch-pill-spring:active { transform: scale(0.96); }
-
-/* Flame icon wobble — replaces the framer-motion motion.span in Trending.
-   Same keyframe pattern (rotate + scale loop) at 2.6s, GPU-only. */
-@keyframes flame-wobble {
-  0%, 100% { transform: rotate(0deg)   scale(1); }
-  50%      { transform: rotate(-8deg)  scale(1.18); }
-}
-.flame-wobble { animation: flame-wobble 2.6s ease-in-out infinite; }
 
 /* Frost underline accent (used in title eyebrow) */
 .frost-eyebrow {

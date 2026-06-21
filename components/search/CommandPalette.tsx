@@ -258,7 +258,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
           gives the panel real presence; vertically centred on screen. The
           custom `rounded-[3px]` is deliberately sharp — a tech/HUD vibe,
           not a friendly bubble. */}
-      <div className="laser-frame glass relative w-full max-w-2xl overflow-hidden rounded-[3px] shadow-[var(--shadow-frost)]">
+      <div className="laser-frame laser-live glass relative w-full max-w-2xl overflow-hidden rounded-[3px] shadow-[var(--shadow-frost)]">
         {/* Input row — taller (h-14) and roomier (px-5) so the search
             field reads as the primary control, not a thin strip. */}
         <div className="relative flex items-center gap-3 px-5">

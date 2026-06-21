@@ -91,7 +91,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
       {/* ============== Row 1: Player + Episode Sidebar (synced height) ============== */}
       <div className="grid items-stretch gap-6 lg:grid-cols-[1fr_360px]">
         {/* ── Player container ──────────────────────────────────────── */}
-        <div className="laser-frame glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
+        <div className="laser-frame laser-live glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
           <div className="relative">
             {playerSrc && sources ? (
               <PlayerLoader

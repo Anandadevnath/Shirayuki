@@ -29,7 +29,7 @@ export function SmartImage({
         {...props}
         className={cn(
           "image-stack",
-          "transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)] will-change-[opacity,transform]",
+          "transition-[opacity,transform] duration-700 ease-[cubic-bezier(0.16,1,0.3,1)]",
           "scale-100 opacity-100",
           className,
         )}

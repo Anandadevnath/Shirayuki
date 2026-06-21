@@ -25,7 +25,7 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
   const items = buckets[active] ?? [];
 
   return (
-    <section className="laser-frame glass flex flex-col rounded-lg p-4 sm:p-5">
+    <section className="laser-frame laser-live glass flex flex-col rounded-lg p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <h2 className="text-gradient-frost font-display text-xl font-extrabold tracking-tight sm:text-2xl">

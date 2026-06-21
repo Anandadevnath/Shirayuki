@@ -360,7 +360,7 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
           <span className="h-9 w-1 shrink-0 rounded-full bg-gradient-to-b from-frost to-frost-deep shadow-[var(--shadow-neon)]" />
           <div className="min-w-0">
             <span className="flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-frost">
-              <span aria-hidden className="flame-wobble inline-flex">
+              <span aria-hidden className="inline-flex">
                 <Flame className="size-3.5 fill-frost/25" />
               </span>
               Hot right now
