@@ -280,7 +280,13 @@ header[data-scrolled="1"] {
   position: relative;
   overflow: hidden;
   isolation: isolate;
-  animation: skeleton-pulse 2s ease-in-out infinite;
+  /* `1 forwards` instead of `infinite` — once the image has decoded and
+     `.shimmer-stack` (the wrapper) cross-faded to opacity 0, this element
+     is invisible but the animation kept ticking against the compositor.
+     One cycle + freeze stops the keyframe re-rasterisation entirely. The
+     cross-fade duration is 0.55s, well within the first 1.8s shimmer
+     sweep, so the placeholder is still visibly alive while it shows. */
+  animation: skeleton-pulse 1.8s ease-in-out 1 forwards;
 }
 .shimmer::after {
   content: "";
@@ -295,8 +301,7 @@ header[data-scrolled="1"] {
     color-mix(in oklch, var(--color-frost) 12%, transparent) 55%,
     transparent
   );
-  animation: shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
-  will-change: transform;
+  animation: shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) 1 forwards;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -535,11 +540,13 @@ header[data-scrolled="1"] {
 }
 
 /* Hover-lift preset for cards. transform + border-color only — never
-   box-shadow (a shadow transition repaints the whole card body per frame). */
+   box-shadow (a shadow transition repaints the whole card body per frame).
+   No `will-change`: a permanent GPU layer per stat-card / button on dense
+   pages adds up to dozens of pinned layers. The transform-on-hover is
+   small enough that the browser promotes and drops the layer on its own. */
 .hover-lift {
   transition: transform 350ms cubic-bezier(0.16, 1, 0.3, 1),
               border-color 350ms ease;
-  will-change: transform;
 }
 .hover-lift:hover {
   transform: translate3d(0, -2px, 0);
@@ -551,7 +558,6 @@ header[data-scrolled="1"] {
   transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
               background-color 250ms ease,
               border-color 250ms ease;
-  will-change: transform;
 }
 .genre-pill:hover {
   transform: translate3d(0, -1px, 0) scale(1.04);

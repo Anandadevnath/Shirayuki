@@ -253,12 +253,17 @@ export function CommandPalette({ open, onOpenChange }: Props) {
         onClick={() => onOpenChange(false)}
       />
 
-      {/* Panel — laser-frame gives the moving frost comet edges (same identity
-          as the home glass panels), glass gives the frosted body. max-w-2xl
-          gives the panel real presence; vertically centred on screen. The
-          custom `rounded-[3px]` is deliberately sharp — a tech/HUD vibe,
-          not a friendly bubble. */}
-      <div className="laser-frame laser-live glass relative w-full max-w-2xl overflow-hidden rounded-[3px] shadow-[var(--shadow-frost)]">
+      {/* Panel — laser-frame gives the static frost aura edge (the
+          `.laser-frame::before` rule paints a stationary diagonal gradient
+          even when no `.laser-live` modifier is present). The comet itself
+          is intentionally omitted: this overlay sits on top of a fullscreen
+          `backdrop-blur-2xl` already, and stacking a rotating conic+drop-
+          shadow filter would dominate the open-frame cost on every ⌘K. The
+          static aura is enough to keep the panel's identity consistent with
+          the rest of the glass surfaces. max-w-2xl gives the panel real
+          presence; vertically centred on screen. The custom `rounded-[3px]`
+          is deliberately sharp — a tech/HUD vibe, not a friendly bubble. */}
+      <div className="laser-frame glass relative w-full max-w-2xl overflow-hidden rounded-[3px] shadow-[var(--shadow-frost)]">
         {/* Input row — taller (h-14) and roomier (px-5) so the search
             field reads as the primary control, not a thin strip. */}
         <div className="relative flex items-center gap-3 px-5">

@@ -109,28 +109,36 @@ const FlowCard = memo(function FlowCard({
         hidden && "pointer-events-none",
       )}
     >
-      {/* Frost floor-glow — only blooms beneath the centred hero */}
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -inset-5 -z-10 rounded-[2.4rem] blur-2xl transition-opacity duration-500",
-          "bg-[radial-gradient(60%_60%_at_50%_45%,var(--color-frost)_0%,var(--color-frost-deep)_40%,transparent_72%)]",
-          active ? "opacity-30" : "opacity-0",
-        )}
-      />
+      {/* Frost floor-glow — only blooms beneath the centred hero. Off-stage
+          cards (`hidden` true) skip the layer entirely so their compositor
+          footprint is just the card itself. */}
+      {!hidden && (
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute -inset-5 -z-10 rounded-[2.4rem] blur-2xl transition-opacity duration-500",
+            "bg-[radial-gradient(60%_60%_at_50%_45%,var(--color-frost)_0%,var(--color-frost-deep)_40%,transparent_72%)]",
+            active ? "opacity-30" : "opacity-0",
+          )}
+        />
+      )}
 
       {/* Active hero's extra frost halo + deep drop — cross-faded via opacity
           so the rest → active change is a single paint instead of a 500ms
           box-shadow interpolation. Lives outside the inner overflow-clip so
-          the glow can spill past the card frame, matching the original look. */}
-      <div
-        aria-hidden
-        className={cn(
-          "pointer-events-none absolute -inset-4 -z-[5] rounded-[2rem] transition-opacity duration-500",
-          active ? "opacity-100" : "opacity-0",
-        )}
-        style={{ boxShadow: "0 40px 80px -24px rgba(0,0,0,0.9), var(--shadow-frost)" }}
-      />
+          the glow can spill past the card frame, matching the original look.
+          Off-stage cards skip it; visible-but-not-active cards keep it for
+          the cross-fade. */}
+      {!hidden && (
+        <div
+          aria-hidden
+          className={cn(
+            "pointer-events-none absolute -inset-4 -z-[5] rounded-[2rem] transition-opacity duration-500",
+            active ? "opacity-100" : "opacity-0",
+          )}
+          style={{ boxShadow: "0 40px 80px -24px rgba(0,0,0,0.9), var(--shadow-frost)" }}
+        />
+      )}
 
       {/* The poster frame — split into a static base + a hover-only shadow
           overlay so neither shadow ever needs to "transition" (which forces
@@ -157,20 +165,30 @@ const FlowCard = memo(function FlowCard({
               active && "scale-[1.04] group-hover:scale-[1.08]",
             )}
           >
-            <SmartImage
-              src={anime.poster}
-              alt={anime.title}
-              fill
-              // Posters are 16:9 "big_cover" banners shown in a 3:4 portrait box
-              // via object-cover, so the image is scaled up until its HEIGHT fills
-              // the card — the width-based candidate must be large enough that the
-              // derived height still covers ~296px @2dpr (~1080px wide). A 320px
-              // sizes hint fetched a 640px variant and upscaled it vertically ~1.6×,
-              // which read as blur. These values keep the centred hero crisp.
-              sizes="(max-width:640px) 80vw, (max-width:1024px) 60vw, 600px"
-              quality={90}
-              className="object-cover"
-            />
+            {/* Hidden cards (more than VISIBLE positions away) skip the
+                <SmartImage> entirely — the receding opacity-0 wrapper
+                already means the poster can't be seen, but the Image's
+                network request + decode + compositor layer were still
+                paid for. Off-stage cards render a flat surface-2 fill
+                that costs nothing. Same pixels at every visible slot. */}
+            {hidden ? (
+              <div className="absolute inset-0 bg-surface-2" />
+            ) : (
+              <SmartImage
+                src={anime.poster}
+                alt={anime.title}
+                fill
+                // Posters are 16:9 "big_cover" banners shown in a 3:4 portrait box
+                // via object-cover, so the image is scaled up until its HEIGHT fills
+                // the card — the width-based candidate must be large enough that the
+                // derived height still covers ~296px @2dpr (~1080px wide). A 320px
+                // sizes hint fetched a 640px variant and upscaled it vertically ~1.6×,
+                // which read as blur. These values keep the centred hero crisp.
+                sizes="(max-width:640px) 80vw, (max-width:1024px) 60vw, 600px"
+                quality={90}
+                className="object-cover"
+              />
+            )}
           </div>
         ) : (
           <div className="grid h-full place-items-center text-faint">No image</div>

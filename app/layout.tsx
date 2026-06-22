@@ -3,8 +3,7 @@ import { Geist, Geist_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
-import { SnowLayerIsland } from "@/components/layout/SnowLayerIsland";
-import { Ambient } from "@/components/layout/Ambient";
+import { RootEffects } from "@/components/layout/RootEffects";
 
 const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"], display: "swap" });
 const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"], display: "swap" });
@@ -75,8 +74,7 @@ export default function RootLayout({
         ))}
       </head>
       <body className="min-h-dvh overflow-x-clip antialiased">
-        <Ambient />
-        <SnowLayerIsland />
+        <RootEffects />
         <Nav />
         <main className="relative mx-auto w-full max-w-[1460px] px-4 pb-24 pt-4 sm:px-6 lg:px-8">
           {children}

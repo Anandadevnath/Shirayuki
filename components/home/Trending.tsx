@@ -157,7 +157,30 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
     measure();
     const ro = new ResizeObserver(measure);
     ro.observe(el);
-    return () => ro.disconnect();
+
+    // Off-screen pause: when the marquee container scrolls out of view, set
+    // `animation-play-state: paused` on the track so the keyframe stops
+    // re-rasterising a compositor layer the user can't see. The CSS `:hover`
+    // pause in globals.css still works while in-view because clearing
+    // play-state restores the default running state.
+    const wrap = wrapRef.current;
+    let io: IntersectionObserver | null = null;
+    if (wrap && "IntersectionObserver" in window) {
+      io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            el.style.animationPlayState = e.isIntersecting ? "" : "paused";
+          }
+        },
+        { rootMargin: "100px 0px" },
+      );
+      io.observe(wrap);
+    }
+
+    return () => {
+      ro.disconnect();
+      io?.disconnect();
+    };
   }, [reduce]);
 
   // Reduced-motion fallback: manual scroll by ~a viewport-worth.

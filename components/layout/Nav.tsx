@@ -63,9 +63,24 @@ export function Nav() {
   // Pre-warm the local search index in the background so the first ⌘K
   // resolves instantly from a synchronous in-memory scan rather than waiting
   // on the network. The endpoint is server-cached so this is cheap.
+  //
+  // The fetch is deferred via `requestIdleCallback` (with a setTimeout
+  // fallback) so it never competes with the LCP image fetch on the home /
+  // detail / watch routes — the index bytes can arrive a few seconds later
+  // and the user's first ⌘K still lands on a warm cache. We also skip the
+  // prefetch entirely on `/watch/*`, where the user is focused on the
+  // player and won't open the palette mid-session.
   useEffect(() => {
-    prefetchSearchIndex();
-  }, []);
+    if (pathname.startsWith("/watch/")) return;
+    const ric = (cb: () => void, timeout: number) => {
+      if (typeof (window as unknown as { requestIdleCallback?: (c: () => void, opts?: { timeout: number }) => number }).requestIdleCallback === "function") {
+        (window as unknown as { requestIdleCallback: (c: () => void, opts?: { timeout: number }) => number }).requestIdleCallback(cb, { timeout });
+      } else {
+        setTimeout(cb, timeout);
+      }
+    };
+    ric(() => prefetchSearchIndex(), 1500);
+  }, [pathname]);
 
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
