@@ -229,10 +229,16 @@ export function Spotlight({
         </div>
 
         {/* Cinematic scrims — a gentle vignette so the art reads as one calm
-            scene: darker at the edges and base, lighter through the middle. */}
+            scene: darker at the edges and base, lighter through the middle. The
+            top scrim extends well above the hero's visible top (h-56 / 14rem)
+            and starts at full opacity, so the navbar region feels like part of
+            the same downward-fading gradient rather than a separate "header
+            zone". The leading edge sits at the absolute top of the section,
+            so the navbar (which overlaps the section via -mt-24) blends into
+            the gradient instead of clipping it. */}
         <div className="absolute inset-0 bg-gradient-to-r from-base/95 via-base/45 to-base/70" />
         <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-base from-6% via-base/25 via-42% to-transparent" />
-        <div className="absolute inset-x-0 top-0 h-32 bg-gradient-to-b from-base/85 via-base/25 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/85 via-base/55 via-35% via-base/25 to-transparent" />
 
         {/* ── Left vertical "featured" strip ── */}
         <div className="pointer-events-none absolute left-6 top-1/2 z-10 hidden -translate-y-1/2 flex-col items-center gap-4 lg:flex">

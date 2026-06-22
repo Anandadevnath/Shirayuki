@@ -127,29 +127,68 @@
   .snap-start { scroll-snap-align: start; }
 }
 
-/* Sticky nav scrolled state — toggled via dataset write from the scroll
-   handler (no React state, no per-scroll re-render). Visual is identical
-   to the previous className toggle. Kept OUTSIDE @layer utilities so it
-   outranks Tailwind's `bg-transparent` / `backdrop-*` utilities that ship
-   inside the same cascade layer — otherwise the layered selector loses
-   specificity and the glass effect silently drops in production. */
-/* Sticky nav scrolled state — glass blur surfaces on scroll. At scroll=0 the
-   navbar uses Tailwind utility classes (`bg-black/85` + the
-   `supports-[backdrop-filter]:bg-black/40` companion) so the hero never
-   bleeds through the chrome. The earlier `supports-[backdrop-filter]:bg-transparent`
-   utility was the source of the deploy-only transparency bug: it overrode
-   the base color in production, and only `[data-scrolled="1"]` reapplied a
-   backdrop — leaving a fully see-through navbar at scroll-top. */
+/* Nav glass system — fully unlayered so it always outranks Tailwind's
+   `bg-*` and `backdrop-*` utilities (which ship inside `@layer utilities`).
+   Layered selectors lose the cascade battle and the glass effect silently
+   drops in production builds.
+
+   `.nav-glass` is always present on the <header> for the unscrollled
+   baseline, but at scroll=0 the header is essentially INVISIBLE as a
+   container — no background, no border, no edge cue. The hero image
+   bleeds straight through so the navbar reads as text floating inside
+   the hero rather than a separate header layer.
+
+   `header[data-scrolled="1"]` then layers on a soft dark tint + blur once
+   the page has scrolled past the hero, so the header reasserts itself
+   as a self-contained container only when it's no longer overlapping
+   hero content. */
 .nav-glass {
-  background-image: linear-gradient(
-    to bottom,
-    transparent 0%,
-    transparent 70%,
-    rgba(0, 0, 0, 0.45) 90%,
-    rgba(0, 0, 0, 0.85) 100%
-  );
-  backdrop-filter: blur(6px);
-  -webkit-backdrop-filter: blur(6px);
+  /* At scroll=0 the navbar is intentionally invisible as a container —
+     no background, no border, no saturate, and no backdrop-filter. The
+     hero image bleeds straight through pixel-for-pixel, so the navbar
+     reads as navigation text floating *inside* the hero rather than as a
+     separate header layer stacked on top of one. The scroll handler
+     below is what adds any glass effect, and only once the hero has
+     scrolled out from under it. */
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  background-color: transparent;
+  background-image: none;
+  border-bottom-color: transparent;
+}
+
+/* Soft text-shadow on nav links at scroll=0 — guarantees readability on
+   any hero region without painting a "glass rectangle" background. The
+   shadow is a single 1px halo in deep black with a 12px blur, which reads
+   as a subtle type lift rather than a glow. As soon as the navbar enters
+   its scrolled state (and gets its dark glass backdrop), the shadow fades
+   out so the link doesn't sit on a doubled-up dark surface. */
+.nav-link-glow {
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.85);
+  transition: text-shadow 300ms ease-out;
+}
+header[data-scrolled="1"] .nav-link-glow {
+  text-shadow: none;
+}
+
+/* CTA buttons (search trigger, mobile menu) inherit the navbar's
+   invisible-when-over-hero treatment. At scroll=0 they have no surface
+   fill, no shadow — just a faint 1px hairline border to read as tappable.
+   Once the page scrolls and the navbar gets its glass backdrop, the
+   buttons pick up a soft surface tint and the same blur so they read as
+   part of the navbar's glass surface. */
+.nav-cta-glass {
+  background-color: transparent;
+  -webkit-backdrop-filter: none;
+  backdrop-filter: none;
+  transition: background-color 300ms ease-out,
+              backdrop-filter 300ms ease-out,
+              -webkit-backdrop-filter 300ms ease-out;
+}
+header[data-scrolled="1"] .nav-cta-glass {
+  background-color: rgba(0, 0, 0, 0.28);
+  -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
 }
 
 header[data-scrolled="1"] {
@@ -160,8 +199,8 @@ header[data-scrolled="1"] {
     rgba(0, 0, 0, 0.2) 60%,
     transparent 100%
   );
-  backdrop-filter: blur(14px) saturate(1.1);
   -webkit-backdrop-filter: blur(14px) saturate(1.1);
+  backdrop-filter: blur(14px) saturate(1.1);
   border-bottom: 1px solid color-mix(in oklch, var(--color-frost) 8%, transparent);
 }
 

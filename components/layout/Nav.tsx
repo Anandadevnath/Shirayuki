@@ -90,10 +90,14 @@ export function Nav() {
       <header
         ref={headerRef}
         /* `data-scrolled` is flipped from the scroll handler above — no React
-           state, no per-scroll re-render. The two CSS rules below the
-           component toggle the visual class based on the dataset value. */
+           state, no per-scroll re-render. The two CSS rules in globals.css
+           (`.nav-glass` baseline + `header[data-scrolled="1"]` enhancement)
+           toggle the visual based on the dataset value. Both rules are
+           unlayered so they always outrank Tailwind's `bg-*` utilities that
+           ship inside `@layer utilities` — the previous `bg-transparent`
+           utility was the source of the deploy-only blur regression. */
         data-scrolled="0"
-        className="sticky top-0 z-40 w-full transition-[background-color,backdrop-filter,-webkit-backdrop-filter,border-color] duration-300 bg-transparent"
+        className="nav-glass sticky top-0 z-40 w-full transition-[background-color,backdrop-filter,-webkit-backdrop-filter,border-color] duration-300"
       >
         <nav className="mx-auto flex h-16 w-full max-w-[1460px] items-center gap-2 px-4 sm:px-6 lg:px-8" aria-label="Primary">
           <Link
@@ -136,6 +140,7 @@ export function Nav() {
                     aria-current={active ? "page" : undefined}
                     className={cn(
                       "relative inline-flex items-center rounded-sm px-3 py-2 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost",
+                      "nav-link-glow",
                       active
                         ? "text-snow"
                         : "text-muted hover:text-snow",
@@ -160,7 +165,7 @@ export function Nav() {
 
           <button
             onClick={openPalette}
-            className="group ml-auto flex items-center gap-2 rounded-sm border border-line bg-surface/60 px-3 py-2 text-sm text-faint transition-[border-color,color,background-color] duration-200 ease-out hover:border-frost/50 hover:bg-surface/80 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
+            className="nav-cta-glass group ml-auto flex items-center gap-2 rounded-sm border border-line/70 px-3 py-2 text-sm text-faint transition-[border-color,color,background-color,backdrop-filter] duration-200 ease-out hover:border-frost/50 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
             aria-label="Search anime (⌘K)"
           >
             <Search className="size-4 transition-colors duration-200 group-hover:text-frost" />
@@ -175,7 +180,7 @@ export function Nav() {
               Browse on a phone. */}
           <button
             onClick={() => setMenuOpen((v) => !v)}
-            className="group flex items-center rounded-sm border border-line bg-surface/60 p-2 text-faint transition-[border-color,color,background-color] duration-200 ease-out hover:border-frost/50 hover:bg-surface/80 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost md:hidden"
+            className="nav-cta-glass group flex items-center rounded-sm border border-line/70 p-2 text-faint transition-[border-color,color,background-color,backdrop-filter] duration-200 ease-out hover:border-frost/50 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost md:hidden"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
             aria-controls="mobile-nav"
