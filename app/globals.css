@@ -125,15 +125,19 @@
     scroll-snap-type: x mandatory;
   }
   .snap-start { scroll-snap-align: start; }
-  /* Sticky nav scrolled state — toggled via dataset write from the scroll
-     handler (no React state, no per-scroll re-render). Visual is identical
-     to the previous className toggle. */
-  [data-scrolled="1"] {
-    background-color: color-mix(in oklch, var(--color-base) 35%, transparent);
-    backdrop-filter: blur(20px) saturate(1.15);
-    -webkit-backdrop-filter: blur(20px) saturate(1.15);
-    border-bottom: 1px solid color-mix(in oklch, var(--color-frost) 14%, transparent);
-  }
+}
+
+/* Sticky nav scrolled state — toggled via dataset write from the scroll
+   handler (no React state, no per-scroll re-render). Visual is identical
+   to the previous className toggle. Kept OUTSIDE @layer utilities so it
+   outranks Tailwind's `bg-transparent` / `backdrop-*` utilities that ship
+   inside the same cascade layer — otherwise the layered selector loses
+   specificity and the glass effect silently drops in production. */
+[data-scrolled="1"] {
+  background-color: color-mix(in oklch, var(--color-base) 35%, transparent);
+  backdrop-filter: blur(20px) saturate(1.15);
+  -webkit-backdrop-filter: blur(20px) saturate(1.15);
+  border-bottom: 1px solid color-mix(in oklch, var(--color-frost) 14%, transparent);
 }
 
 /* ─────────────────────────────────────────────────────────────
