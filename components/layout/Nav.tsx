@@ -181,7 +181,10 @@ export function Nav() {
           <button
             onClick={openPalette}
             className="nav-cta-glass group ml-auto flex items-center gap-2 rounded-sm border border-line/70 px-3 py-2 text-sm text-faint transition-[border-color,color,background-color,backdrop-filter] duration-200 ease-out hover:border-frost/50 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
-            aria-label="Search anime (⌘K)"
+            aria-label="Search anime"
+            // A7 fix: expose the keyboard shortcut as a structured attribute
+            // so screen readers can announce it consistently.
+            aria-keyshortcuts="Meta+K Control+K"
           >
             <Search className="size-4 transition-colors duration-200 group-hover:text-frost" />
             <span className="hidden lg:inline">Search anime…</span>
@@ -198,7 +201,11 @@ export function Nav() {
             className="nav-cta-glass group flex items-center rounded-sm border border-line/70 p-2 text-faint transition-[border-color,color,background-color,backdrop-filter] duration-200 ease-out hover:border-frost/50 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost md:hidden"
             aria-label={menuOpen ? "Close menu" : "Open menu"}
             aria-expanded={menuOpen}
-            aria-controls="mobile-nav"
+            /* No `aria-controls` — the drawer is a sibling that's `md:hidden`
+               (not in the layout tree above the breakpoint), so referencing
+               it from a button that's visible at every breakpoint creates a
+               dangling ARIA relationship on md+ viewports. The drawer keeps
+               its `id="mobile-nav"` for in-page anchor targeting. */
           >
             {menuOpen ? (
               <X className="size-5 transition-colors duration-200 group-hover:text-frost" />

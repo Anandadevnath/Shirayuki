@@ -112,14 +112,22 @@ export function Schedule({
         </div>
 
         {/* ── Day strip ── */}
-        <div className="no-scrollbar relative mb-6 flex gap-2.5 overflow-x-auto pb-1">
+        <div
+          role="tablist"
+          aria-label="Broadcast day"
+          className="no-scrollbar relative mb-6 flex gap-2.5 overflow-x-auto pb-1"
+        >
           {days.map((d) => {
             const active = d.iso === selected;
             return (
               <button
                 key={d.iso}
+                role="tab"
+                type="button"
                 onClick={() => select(d.iso)}
-                aria-pressed={active}
+                aria-selected={active}
+                aria-controls={`schedule-panel-${d.iso}`}
+                tabIndex={active ? 0 : -1}
                 className={cn(
                   "group relative flex min-w-[6.5rem] shrink-0 flex-col items-center gap-0.5 rounded-md border px-4 py-3 transition-colors duration-300",
                   active
@@ -142,7 +150,12 @@ export function Schedule({
         </div>
 
         {/* ── Broadcast list ── */}
-        <div className="relative min-h-[14rem]">
+        <div
+          id={`schedule-panel-${selected}`}
+          role="tabpanel"
+          aria-label={`Broadcasts on ${selected}`}
+          className="relative min-h-[14rem]"
+        >
           {items.length === 0 ? (
             <div className="grid place-items-center py-16 text-center">
               <CalendarDays className="mb-3 size-8 text-faint" />

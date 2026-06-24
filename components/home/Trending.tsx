@@ -40,7 +40,9 @@ function TrendCard({
   return (
     <Link
       href={`/anime/${s.id}`}
-      aria-label={s.title}
+      // A11 fix: include the rank in the aria-label so screen readers
+      // announce "Trending #1: Naruto" instead of just the title.
+      aria-label={`Trending #${rank}: ${s.title}`}
       aria-hidden={ariaHidden}
       tabIndex={ariaHidden ? -1 : undefined}
       className="group relative aspect-[3/2] w-44 shrink-0 transform-gpu transition-transform duration-300 hover:-translate-y-1 sm:w-52 md:w-56"

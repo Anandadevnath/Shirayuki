@@ -5,8 +5,24 @@ import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { RootEffects } from "@/components/layout/RootEffects";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"], display: "swap" });
-const geistMono = Geist_Mono({ variable: "--font-geist-mono", subsets: ["latin"], display: "swap" });
+// Font weights are constrained to the set actually used in the codebase
+// (400 normal default, 500 medium, 600 semibold, 700 bold, 800 extrabold,
+// 900 black). next/font auto-preloads every weight it returns from Google —
+// without an explicit `weight` array it ships ~188 woff2 files in the
+// document head, which crushes the initial network budget. 900 is included
+// because one element uses `font-black`.
+const geistSans = Geist({
+  variable: "--font-geist-sans",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
+});
+const geistMono = Geist_Mono({
+  variable: "--font-geist-mono",
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
 const zen = Zen_Kaku_Gothic_New({
   variable: "--font-zen",
   subsets: ["latin"],

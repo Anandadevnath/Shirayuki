@@ -125,6 +125,13 @@ export default async function HomePage() {
         <Spotlight items={home.spotlight} />
       )}
 
+      {/* Document-level <h1> for the home page. The spotlight carousel
+          surfaces an <h2> per slide (the anime title); screen readers and
+          crawlers need a stable page-level heading that summarises the
+          page rather than the currently-active slide. Visually hidden so
+          the hero art stays uncluttered. */}
+      <h1 className="sr-only">Browse, discover and watch anime — Sode no Shirayuki</h1>
+
       <div className="relative">
         <div
           aria-hidden

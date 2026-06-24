@@ -83,8 +83,14 @@ export default async function WatchPage({ params, searchParams }: Props) {
       }`
     : null;
 
-  const swHref = (c: string, s: string) =>
-    `/watch/${id}/${encodeURIComponent(episodeId)}?cat=${c}&server=${s}`;
+  // M4 fix: when switching SUB/DUB, preserve the user's current server
+  // selection *if* the new category has it. If not, fall back to the
+  // first server in that category. Pure URL-level change — no API call.
+  const swHref = (c: "sub" | "dub", s?: string) => {
+    const newPool = c === "sub" ? servers.sub : servers.dub;
+    const target = (s && newPool.find((x) => x.nameId === s)?.nameId) || newPool[0]?.nameId || "";
+    return `/watch/${id}/${encodeURIComponent(episodeId)}?cat=${c}&server=${target}`;
+  };
 
   return (
     <>
@@ -143,7 +149,10 @@ export default async function WatchPage({ params, searchParams }: Props) {
               <div className="flex gap-1">
                 {servers.sub.length > 0 && (
                   <Link
-                    href={swHref("sub", servers.sub[0].nameId)}
+                    // M4 fix: pass the currently-selected server if it
+                    // exists in the SUB pool, so the SUB tab preserves
+                    // the user's server choice across category switches.
+                    href={swHref("sub", preferred?.nameId)}
                     className={cn(
                       "flex items-center gap-1 rounded-sm px-3 py-1 text-xs transition-colors",
                       category === "sub"
@@ -156,7 +165,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
                 )}
                 {servers.dub.length > 0 && (
                   <Link
-                    href={swHref("dub", servers.dub[0].nameId)}
+                    href={swHref("dub", preferred?.nameId)}
                     className={cn(
                       "flex items-center gap-1 rounded-sm px-3 py-1 text-xs transition-colors",
                       category === "dub"
@@ -206,7 +215,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
               {category.toUpperCase()}
             </span>
           </div>
-          <div className="no-scrollbar scroll-frost max-h-[640px] flex-1 space-y-1 overflow-y-auto p-2">
+          <div className="no-scrollbar scroll-frost max-h-[640px] flex-1 space-y-1 overflow-y-auto p-2 sm:max-h-[640px] max-sm:max-h-[420px]">
             {episodes.map((e) => (
               <Link
                 key={e.episodeId}

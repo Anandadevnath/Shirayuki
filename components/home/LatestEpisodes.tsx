@@ -8,7 +8,6 @@ import { CinematicHeader } from "@/components/common/SectionHeader";
 import { EpBadges } from "@/components/anime/Badges";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { cn } from "@/lib/utils/cn";
-import { useReducedMotionSSR } from "@/lib/utils/useReducedMotion";
 
 // Auto-advance cadence, ms between steps. Latest Episodes drifts left-to-right
 // (active index decreasing) — deliberately opposite to the Trending marquee.
@@ -275,7 +274,6 @@ const FlowCard = memo(function FlowCard({
 });
 
 export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
-  const reduce = useReducedMotionSSR();
   // Open on the middle card so the fan is balanced on both sides at first paint.
   const [active, setActive] = useState(() => Math.floor(((items?.length ?? 1) - 1) / 2));
   // Auto-advance pauses while hovered/focused/dragging.
@@ -309,7 +307,22 @@ export function LatestEpisodes({ items }: { items: AnimeCardModel[] }) {
 
   // Auto-advance LEFT-TO-RIGHT — posters slide in from the left, so the active
   // index steps backward (-1). Opposite to Trending's right-to-left drift.
-  const auto = !interacting && !reduce && len > 1;
+  //
+  // `motionOk` is an explicit client-side guard: stays false during SSR + the
+  // first effect tick, flips true on mount only if the user has NOT requested
+  // reduced motion. This way a reduced-motion user never sees a transient
+  // autoplay interval start (the global CSS rule squashes transition-duration
+  // to 0.001ms but the JS interval would still call setActive on a 3.2s
+  // cadence — annoying for a user who has explicitly opted out of motion).
+  const [motionOk, setMotionOk] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const apply = () => setMotionOk(!mq.matches);
+    apply();
+    mq.addEventListener("change", apply);
+    return () => mq.removeEventListener("change", apply);
+  }, []);
+  const auto = !interacting && motionOk && len > 1;
   useEffect(() => {
     if (!auto) return;
     const id = window.setInterval(() => go(-1), AUTOPLAY_MS);

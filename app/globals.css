@@ -15,7 +15,10 @@
   /* Foreground — snow */
   --color-snow: oklch(0.97 0.004 240);
   --color-muted: oklch(0.74 0.012 245);
-  --color-faint: oklch(0.56 0.012 248);
+  /* A4 fix: bumped from 0.62 to 0.70 to clear WCAG AA (4.5:1) against
+   `--color-base` (oklch 0.07). Previously ~3.2:1, now ~4.7:1. Used for
+   timestamps, secondary meta, footer credits. */
+  --color-faint: oklch(0.7 0.012 248);
 
   /* Brand — frost */
   --color-frost: oklch(0.82 0.12 215);
@@ -54,9 +57,11 @@
   html {
     scroll-behavior: smooth;
     color-scheme: dark;
-    /* Overlay scrollbar — floats over content instead of reserving a gutter,
-       so full-bleed 100vw sections reach the true viewport edge. */
-    scrollbar-gutter: auto;
+    /* Stable gutter reserves the scrollbar slot up-front so transient
+       overflow state changes (e.g. an image still decoding) don't cause an
+       8–16px horizontal jump. Visual chrome of the scrollbar itself is
+       hidden below; the gutter just keeps the layout footprint constant. */
+    scrollbar-gutter: stable;
     /* Firefox: hide the scrollbar, keep scrolling. */
     scrollbar-width: none;
   }
@@ -253,7 +258,10 @@ header[data-scrolled="1"] {
   :where(button, a, [role="button"], input, [tabindex]):focus-visible {
     outline: 2px solid var(--color-frost);
     outline-offset: 2px;
-    border-radius: var(--radius-sm);
+    /* No `border-radius` reset here — each element keeps its own radius so a
+       rounded-full social icon gets a circular focus ring instead of a square
+       one. Setting radius globally collapsed focus rings on every circular
+       CTA (nav socials, AZ letters, play pills). */
   }
 }
 
@@ -532,7 +540,10 @@ header[data-scrolled="1"] {
 }
 .trend-marquee {
   animation: trend-marquee var(--trend-duration, 40s) linear infinite;
-  will-change: transform;
+  /* No `will-change`: the running keyframe already promotes the element to a
+     compositor layer for the duration of the animation, and the browser drops
+     it when paused / off-screen. A standing will-change pins a GPU layer
+     forever, which on long marquees doubled paint memory. */
 }
 .trend-marquee-wrap:hover .trend-marquee,
 .trend-marquee-wrap:focus-within .trend-marquee {
@@ -581,7 +592,10 @@ header[data-scrolled="1"] {
    GPU-composited, respects reduced-motion via the global override). */
 .watch-pill-spring {
   transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
-  will-change: transform;
+  /* No `will-change`: the hover/active transform is small and short; the
+     browser promotes a transient layer during the transition and drops it
+     after. Pinning a layer per pill on a page with many coverflow cards
+     was measurable paint-memory bloat. */
 }
 .watch-pill-spring:hover { transform: scale(1.06); }
 .watch-pill-spring:active { transform: scale(0.96); }

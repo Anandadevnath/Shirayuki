@@ -17,8 +17,12 @@ export function Pagination({
   if (totalPages <= 1) return null;
 
   const href = (p: number) => {
-    const params = new URLSearchParams({ ...query, page: String(p) });
-    return `${basePath}?${params.toString()}`;
+    // M5 fix: drop `?page=1` from the URL. Page 1 is the implicit default;
+    // emitting it pollutes analytics and breaks canonical-link checks.
+    const params = new URLSearchParams({ ...query });
+    if (p !== 1) params.set("page", String(p));
+    const qs = params.toString();
+    return qs ? `${basePath}?${qs}` : basePath;
   };
 
   const windowSize = 5;

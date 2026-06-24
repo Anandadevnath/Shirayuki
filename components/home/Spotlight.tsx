@@ -11,6 +11,8 @@ import {
   Film,
   Flame,
   Diamond,
+  ChevronLeft,
+  ChevronRight,
 } from "lucide-react";
 import type { AnimeCardModel, SpotlightModel } from "@/lib/providers/types";
 import { EpBadges } from "@/components/anime/Badges";
@@ -40,6 +42,7 @@ function MyListButton({ anime }: { anime: SpotlightModel }) {
         toggleList({ id: anime.id, title: anime.title, poster: anime.poster, type: anime.type })
       }
       aria-pressed={added}
+      aria-label={`${added ? "Remove from" : "Add to"} My List: ${anime.title}`}
       className={cn(
         "flex items-center gap-2 rounded-2xl border px-6 py-3 text-sm font-semibold backdrop-blur-md transition-colors",
         added
@@ -183,10 +186,11 @@ export function Spotlight({
     >
       <div className="relative flex h-[82svh] min-h-[600px] max-h-[1000px] w-full flex-col">
         {/* ── Background depth: a single sharp key art (priority on slide 0)
-            sits over a CSS-only blurred backdrop painted from the same poster
-            URL. The backdrop uses `background-image` (browser cache hit, no
-            second `<Image>` pipeline / no extra optimizer pass), so the hero
-            makes ONE network request per slide instead of two. Slides that
+            sits over a blurred backdrop painted from the same poster URL. The
+            backdrop is a SECOND <Image> at quality={50} so it goes through
+            the optimizer (AVIF/WebP, srcset) — the previous CSS
+            background-image variant fetched the raw upstream bytes (no AVIF,
+            no srcset, bypassed the remotePatterns allowlist). Slides that
             haven't been seen yet keep their shimmer placeholder visible. ── */}
         <div className="absolute inset-0">
           {list.map((s, idx) =>
@@ -198,14 +202,19 @@ export function Spotlight({
                   idx === active ? "opacity-100" : "opacity-0",
                 )}
               >
-                {/* CSS-only blurred fill — same URL, browser-cached by the time
-                    the sharp <Image> finishes decoding, painted with a single
-                    GPU-composited background. */}
+                {/* Blurred fill — same URL, AVIF/WebP via next/image, paints
+                    underneath the sharp key art. quality=50 is small enough
+                    to keep the blurred backdrop cheap; the 2.4x scale + blur
+                    hides any softness. */}
                 {seen.has(idx) && (
-                  <div
+                  <Image
+                    src={s.poster}
+                    alt=""
                     aria-hidden
-                    style={{ backgroundImage: `url(${s.poster})` }}
-                    className="absolute inset-0 scale-110 bg-cover bg-center opacity-60 blur-2xl"
+                    fill
+                    sizes="100vw"
+                    quality={50}
+                    className="scale-110 object-cover opacity-60 blur-2xl"
                   />
                 )}
                 {seen.has(idx) ? (
@@ -282,14 +291,40 @@ export function Spotlight({
           </div>
         )}
 
+        {/* ── Prev / next glass buttons — keyboard-accessible carousel nav.
+            The diamond facets stay for direct-slide jumps; these buttons
+            satisfy WCAG 2.1.1 (keyboard) and 2.4.7 (focus visible) by giving
+            sighted keyboard users a visible prev/next affordance. Anchored
+            to the left edge to mirror the right-edge diamond column. ── */}
+        {n > 1 && (
+          <>
+            <button
+              type="button"
+              onClick={() => step(-1)}
+              aria-label="Previous slide"
+              className="absolute left-5 top-1/2 z-20 hidden -translate-y-1/2 grid size-10 place-items-center rounded-full glass text-snow transition-[transform,border-color,color,background-color] hover:-translate-y-1/2 hover:scale-105 hover:border-frost/50 hover:text-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost sm:left-7 sm:flex"
+            >
+              <ChevronLeft className="size-5" />
+            </button>
+            <button
+              type="button"
+              onClick={() => step(1)}
+              aria-label="Next slide"
+              className="absolute right-5 top-1/2 z-20 hidden -translate-y-1/2 grid size-10 place-items-center rounded-full glass text-snow transition-[transform,border-color,color,background-color] hover:-translate-y-1/2 hover:scale-105 hover:border-frost/50 hover:text-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost sm:right-7 sm:flex"
+            >
+              <ChevronRight className="size-5" />
+            </button>
+          </>
+        )}
+
         {/* ── Copy + CTAs, anchored to the upper-left so the lower band stays
             clear for the Trending rail that tucks up beneath the hero. ── */}
         <div className="relative z-10 flex flex-1 items-center">
           <div className="mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
             <div className="flex max-w-xl flex-col gap-4">
-              <h1 className="font-display text-3xl font-extrabold leading-[1.04] [text-shadow:0_2px_28px_rgba(0,0,0,0.8)] sm:text-4xl md:text-5xl">
+              <h2 className="font-display text-3xl font-extrabold leading-[1.04] [text-shadow:0_2px_28px_rgba(0,0,0,0.8)] sm:text-4xl md:text-5xl">
                 <span className="line-clamp-2">{a.title}</span>
-              </h1>
+              </h2>
 
               {/* Metadata row — real fields only */}
               <div className="flex flex-wrap items-center gap-2 text-xs text-muted sm:text-sm">

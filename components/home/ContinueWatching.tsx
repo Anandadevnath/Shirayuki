@@ -78,7 +78,7 @@ export function ContinueWatching() {
                       EP {e.episodeNumber} · {formatTime(e.seconds)} / {formatTime(e.duration)}
                     </p>
                   </div>
-                  <div className="absolute inset-x-0 bottom-0 h-1 bg-base/60">
+                  <div className="absolute inset-x-0 bottom-0 h-1.5 bg-base/70">
                     <div className="h-full bg-frost" style={{ width: `${pct}%` }} />
                   </div>
                 </div>
@@ -86,7 +86,8 @@ export function ContinueWatching() {
               <button
                 onClick={() => drop(e.animeId)}
                 aria-label={`Remove ${e.title} from continue watching`}
-                className="absolute right-2 top-2 grid size-7 place-items-center rounded-full glass text-snow opacity-0 transition-opacity group-hover:opacity-100"
+                // H14 fix: always visible on touch devices (no hover), hover-only on devices that support it. The [@media(hover:none)] query targets touch.
+                className="absolute right-2 top-2 grid size-7 place-items-center rounded-full glass text-snow opacity-0 transition-opacity group-hover:opacity-100 [@media(hover:none)]:opacity-100"
               >
                 <X className="size-4" />
               </button>

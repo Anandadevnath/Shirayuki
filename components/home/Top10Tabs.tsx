@@ -33,10 +33,19 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
           </h2>
           <span className="hidden h-px w-12 bg-gradient-to-r from-frost/60 to-transparent sm:block" />
         </div>
-        <div className="flex shrink-0 items-center gap-4 text-sm font-semibold">
+        <div
+          role="tablist"
+          aria-label="Top 10 period"
+          className="flex shrink-0 items-center gap-4 text-sm font-semibold"
+        >
           {available.map((p) => (
             <button
               key={p.key}
+              role="tab"
+              type="button"
+              aria-selected={active === p.key}
+              aria-controls={`top10-panel-${p.key}`}
+              tabIndex={active === p.key ? 0 : -1}
               onClick={() => setActive(p.key)}
               className={cn(
                 "relative pb-0.5 transition-colors",
@@ -51,7 +60,12 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
           ))}
         </div>
       </div>
-      <div className="mt-3 flex flex-col gap-1">
+      <div
+        id={`top10-panel-${active}`}
+        role="tabpanel"
+        aria-label={`Top 10 ${active}`}
+        className="mt-3 flex flex-col gap-1"
+      >
         {items.map((a, idx) => (
           <RankRow key={`${a.id}-${idx}`} anime={a} rank={a.rank ?? idx + 1} />
         ))}

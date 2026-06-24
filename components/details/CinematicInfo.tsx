@@ -1,12 +1,13 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   Star, Tv, Clock, Film, Calendar, Building2, Play, Plus,
   Share2, Check, Sparkles, Award, Languages, Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { isInList as isInListLocal, toggleList, WATCHLIST_EVENT } from "@/lib/watchlist/local";
 
 interface CinematicInfoProps {
   anime: {
@@ -334,33 +335,11 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
             </div>
           )}
 
-          {/* Action buttons */}
-          <div
-            className="title-rise flex flex-wrap gap-2 pt-1"
-            style={{ ["--reveal-delay" as string]: "440ms" }}
-          >
-            <button
-              type="button"
-              className="group inline-flex items-center gap-1.5 rounded-md border border-frost/40 bg-gradient-to-br from-frost/20 to-frost/5 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-frost shadow-[var(--shadow-frost),inset_0_1px_0_0_rgba(255,255,255,0.1)] transition-[border-color,color] duration-300 hover:border-frost/70 hover:from-frost/30 hover:to-frost/10"
-            >
-              <Plus className="size-3.5 transition-transform group-hover:rotate-90" />
-              Watchlist
-            </button>
-            <button
-              type="button"
-              className="group inline-flex items-center gap-1.5 rounded-md border border-line/60 bg-surface/60 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-muted transition-[border-color,background-color,color] duration-300 hover:border-frost/30 hover:bg-surface-2/60 hover:text-snow"
-            >
-              <Share2 className="size-3.5" />
-              Share
-            </button>
-            <button
-              type="button"
-              className="group inline-flex items-center gap-1.5 rounded-md border border-line/60 bg-surface/60 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-muted transition-[border-color,background-color,color] duration-300 hover:border-success/40 hover:bg-success/10 hover:text-success"
-            >
-              <Check className="size-3.5" />
-              Completed
-            </button>
-          </div>
+          {/* Action buttons — H6 fix: now actually wired. Watchlist calls
+           toggleList(), Share copies the URL (with a toast), Completed
+           marks the title done in localStorage. State syncs via the
+           same `WATCHLIST_EVENT` the Spotlight MyListButton listens to. */}
+          <ActionButtons anime={anime} />
         </div>
 
         {/* ── RIGHT: Floating stat rail ────────────────────── */}
@@ -436,5 +415,164 @@ function MetaChip({
       <Icon className="size-3.5 text-frost" />
       {children}
     </span>
+  );
+}
+
+/* ── Action buttons (H6 fix) ─────────────────────────────────────────────── */
+
+const COMPLETED_KEY = "shirayuki:completed:v1";
+const COMPLETED_EVENT = "shirayuki:completed";
+
+function isCompleted(id: string): boolean {
+  if (typeof window === "undefined") return false;
+  try {
+    const map: Record<string, true> = JSON.parse(
+      localStorage.getItem(COMPLETED_KEY) || "{}",
+    );
+    return !!map[id];
+  } catch {
+    return false;
+  }
+}
+
+function setCompleted(id: string, done: boolean) {
+  if (typeof window === "undefined") return;
+  try {
+    const map: Record<string, true> = JSON.parse(
+      localStorage.getItem(COMPLETED_KEY) || "{}",
+    );
+    if (done) map[id] = true;
+    else delete map[id];
+    localStorage.setItem(COMPLETED_KEY, JSON.stringify(map));
+    window.dispatchEvent(new CustomEvent(COMPLETED_EVENT));
+  } catch {
+    /* quota / private mode */
+  }
+}
+
+function ActionButtons({
+  anime,
+}: {
+  anime: {
+    id: string;
+    title: string;
+    poster?: string | null;
+    type?: string | null;
+  };
+}) {
+  // H6 fix: wire up the Watchlist / Share / Completed buttons. The same
+  // toggleList utility the Spotlight MyListButton uses; sync via the
+  // existing WATCHLIST_EVENT so the two stay consistent.
+  const [inList, setInList] = useState(false);
+  const [done, setDone] = useState(false);
+  const [toast, setToast] = useState<string | null>(null);
+
+  useEffect(() => {
+    const sync = () => {
+      setInList(isInListLocal(anime.id));
+      setDone(isCompleted(anime.id));
+    };
+    sync();
+    window.addEventListener(WATCHLIST_EVENT, sync);
+    window.addEventListener(COMPLETED_EVENT, sync);
+    return () => {
+      window.removeEventListener(WATCHLIST_EVENT, sync);
+      window.removeEventListener(COMPLETED_EVENT, sync);
+    };
+  }, [anime.id]);
+
+  const flashToast = (msg: string) => {
+    setToast(msg);
+    setTimeout(() => setToast(null), 1800);
+  };
+
+  return (
+    <>
+      <div
+        className="title-rise flex flex-wrap gap-2 pt-1"
+        style={{ ["--reveal-delay" as string]: "440ms" }}
+      >
+        <button
+          type="button"
+          onClick={() => {
+            const added = toggleList({
+              id: anime.id,
+              title: anime.title,
+              poster: anime.poster ?? null,
+              type: anime.type ?? null,
+            });
+            flashToast(added ? "Added to Watchlist" : "Removed from Watchlist");
+          }}
+          aria-pressed={inList}
+          className={cn(
+            "group inline-flex items-center gap-1.5 rounded-md border px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider transition-[border-color,color,background-color] duration-300",
+            inList
+              ? "border-frost/70 bg-frost/30 text-snow"
+              : "border-frost/40 bg-gradient-to-br from-frost/20 to-frost/5 text-frost hover:border-frost/70 hover:from-frost/30 hover:to-frost/10",
+          )}
+        >
+          {inList ? <Check className="size-3.5" /> : <Plus className="size-3.5 transition-transform group-hover:rotate-90" />}
+          {inList ? "In Watchlist" : "Watchlist"}
+        </button>
+        <button
+          type="button"
+          onClick={async () => {
+            const url =
+              typeof window !== "undefined"
+                ? `${window.location.origin}/anime/${anime.id}`
+                : `/anime/${anime.id}`;
+            try {
+              if (typeof navigator !== "undefined" && navigator.share) {
+                await navigator.share({ title: anime.title, url });
+                return;
+              }
+            } catch {
+              /* user cancelled */
+            }
+            try {
+              await navigator.clipboard.writeText(url);
+              flashToast("Link copied");
+            } catch {
+              flashToast("Couldn't copy link");
+            }
+          }}
+          className="group inline-flex items-center gap-1.5 rounded-md border border-line/60 bg-surface/60 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-muted transition-[border-color,background-color,color] duration-300 hover:border-frost/30 hover:bg-surface-2/60 hover:text-snow"
+        >
+          <Share2 className="size-3.5" />
+          Share
+        </button>
+        <button
+          type="button"
+          onClick={() => {
+            const next = !done;
+            setCompleted(anime.id, next);
+            setDone(next);
+            flashToast(next ? "Marked as completed" : "Marked as in progress");
+          }}
+          aria-pressed={done}
+          className={cn(
+            "group inline-flex items-center gap-1.5 rounded-md border px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider transition-[border-color,background-color,color] duration-300",
+            done
+              ? "border-success/50 bg-success/15 text-success"
+              : "border-line/60 bg-surface/60 text-muted hover:border-success/40 hover:bg-success/10 hover:text-success",
+          )}
+        >
+          <Check className="size-3.5" />
+          {done ? "Completed" : "Mark complete"}
+        </button>
+      </div>
+      {/* Tiny toast — sits below the buttons, fades out. Pure UI, no API
+       call. Reuses the existing frost palette so the design stays
+       consistent. */}
+      {toast && (
+        <div
+          role="status"
+          aria-live="polite"
+          className="title-rise mt-2 inline-flex items-center gap-2 rounded-sm border border-frost/40 bg-frost-soft px-3 py-1.5 text-xs font-semibold text-frost"
+        >
+          {toast}
+        </div>
+      )}
+    </>
   );
 }
