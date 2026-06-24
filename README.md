@@ -115,10 +115,10 @@ npm run lint
 <!-- DEPLOY ──────────────────────────────────────────────────────────────── -->
 ## ❄ Deploy to Vercel
 
-The project is **Vercel-ready out of the box**. `vercel.json` pins the
-deployment region (Singapore by default — change to your nearest), framework
-detection, and per-route function memory + duration for the HLS proxy
-(`/api/stream`) and subtitle proxy (`/api/subtitle`).
+The project is **Vercel-ready out of the box**. `next.config.ts` pins
+the deployment region (Singapore by default — change to your nearest),
+framework detection, and per-route function memory + duration for the HLS
+proxy (`/api/stream`) and subtitle proxy (`/api/subtitle`).
 
 **One environment variable is required** in Vercel Project Settings:
 
@@ -223,10 +223,11 @@ shirayuki/
 │  └─  → ONE AnimeCard · ONE Nav · ONE Player
 │
 ├─ lib/
-│  ├─ providers/          ← swappable · Zod-validated · normalized
+│  ├─ providers/          ← swappable · Zod-validated · normalized (animex · hianime)
 │  ├─ api/                ← fetch wrapper · cache tags · retry · timeout
 │  ├─ progress/           ← local-first Continue Watching
 │  ├─ stores/             ← zustand: prefs
+│  ├─ subtitle/           ← .vtt helpers
 │  ├─ utils/ · watchlist/
 │  └─ (never crashes a page — Result<T,E> wrapper)
 │
@@ -319,7 +320,7 @@ git push origin feat/your-thing
 <!-- LICENSE ─────────────────────────────────────────────────────────────── -->
 ## ❄ License
 
-[MIT](./LICENSE) © Shirayuki contributors.
+[MIT](./LICENSE.md) © Shirayuki contributors.
 
 ---
 
