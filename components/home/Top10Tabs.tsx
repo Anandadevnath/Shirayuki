@@ -13,15 +13,19 @@ const PERIODS = [
 
 type PeriodKey = (typeof PERIODS)[number]["key"];
 
-/** Top 10 glass panel with Day/Week/Month tabs. Only non-empty periods show. */
+/** Top 10 glass panel with Today/Week/Month tabs. Every period always shows;
+ *  an empty period gets a friendly placeholder instead of vanishing, so the
+ *  "Today" tab is never missing even when the upstream returns no day list. */
 export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
-  const available = useMemo(
-    () => PERIODS.filter((p) => buckets[p.key]?.length > 0),
+  const counts = useMemo(
+    () =>
+      PERIODS.map((p) => ({ ...p, count: buckets[p.key]?.length ?? 0 })),
     [buckets],
   );
-  const [active, setActive] = useState<PeriodKey | null>(available[0]?.key ?? null);
+  const [active, setActive] = useState<PeriodKey>(
+    counts.find((c) => c.count > 0)?.key ?? "day",
+  );
 
-  if (!available.length || !active) return null;
   const items = buckets[active] ?? [];
 
   return (
@@ -38,7 +42,7 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
           aria-label="Top 10 period"
           className="flex shrink-0 items-center gap-4 text-sm font-semibold"
         >
-          {available.map((p) => (
+          {counts.map((p) => (
             <button
               key={p.key}
               role="tab"
@@ -66,9 +70,15 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
         aria-label={`Top 10 ${active}`}
         className="mt-3 flex flex-col gap-1"
       >
-        {items.map((a, idx) => (
-          <RankRow key={`${a.id}-${idx}`} anime={a} rank={a.rank ?? idx + 1} />
-        ))}
+        {items.length > 0 ? (
+          items.map((a, idx) => (
+            <RankRow key={`${a.id}-${idx}`} anime={a} rank={a.rank ?? idx + 1} />
+          ))
+        ) : (
+          <p className="py-6 text-center text-sm text-muted">
+            Nothing ranked yet — check back soon.
+          </p>
+        )}
       </div>
     </section>
   );
