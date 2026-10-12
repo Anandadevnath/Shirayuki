@@ -220,7 +220,7 @@ shirayuki/
 │  └─  → ONE AnimeCard · ONE Nav · ONE Player
 │
 ├─ lib/
-│  ├─ providers/          ← swappable · Zod-validated · normalized (animex · hianime)
+│  ├─ providers/          ← swappable · Zod-validated · normalized (hianime)
 │  ├─ api/                ← fetch wrapper · cache tags · retry · timeout
 │  ├─ progress/           ← local-first Continue Watching
 │  ├─ stores/             ← zustand: prefs

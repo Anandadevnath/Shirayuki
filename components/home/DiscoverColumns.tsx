@@ -94,8 +94,8 @@ export function DiscoverColumns({
   const columns = [
     { title: "Top Airing", items: topAiring, href: "/category/top-airing" },
     { title: "Most Popular", items: mostPopular, href: "/category/most-popular" },
-    { title: "New Releases", items: newReleases, href: "/category/recently-added" },
-    { title: "Completed", items: completed, href: "/category/completed" },
+    { title: "New Releases", items: newReleases, href: "/category/new-anime" },
+    { title: "Completed", items: completed, href: "/category/latest-completed" },
   ].filter((c) => c.items.length > 0);
 
   if (!columns.length) return null;

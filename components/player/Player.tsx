@@ -64,6 +64,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref }: Pl
   const [upNextVisible, setUpNextVisible] = useState(false);
   const [upNextCountdown, setUpNextCountdown] = useState(10);
   const hideTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const lastUINudgeRef = useRef(0);
   // Throttle marker for the `timeupdate` listener. Native fires ~4Hz on most
   // browsers; we coalesce to ~8Hz (120ms) before re-rendering the scrubber.
   const lastTickRef = useRef(0);
@@ -395,12 +396,21 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref }: Pl
   }, []);
 
   const nudgeUI = () => {
-    setShowUI(true);
+    if (!showUI) setShowUI(true);
+    const now = performance.now();
+    // Mousemove can fire at 60-120Hz; rescheduling the hide timeout at that
+    // rate is unnecessary churn. Refresh at most every 200ms while moving.
+    if (now - lastUINudgeRef.current < 200) return;
+    lastUINudgeRef.current = now;
     if (hideTimer.current) clearTimeout(hideTimer.current);
     hideTimer.current = setTimeout(() => {
       if (!videoRef.current?.paused) setShowUI(false);
     }, 2800);
   };
+
+  useEffect(() => () => {
+    if (hideTimer.current) clearTimeout(hideTimer.current);
+  }, []);
 
   // ── Skip intro/outro from API timings (free from the API) ───────────
   const inIntro = intro && current >= intro.start && current < intro.end;

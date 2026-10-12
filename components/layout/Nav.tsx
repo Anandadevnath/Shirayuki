@@ -7,10 +7,9 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { Menu, Search, X } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils/cn";
-// `prefetchSearchIndex` is a tiny, side-effect-free function — imported
-// eagerly so the Nav can warm the local search index on mount. The palette
-// component itself stays in the lazy chunk.
-import { prefetchSearchIndex } from "@/components/search/CommandPalette";
+// Eagerly import only the tiny prefetch helper; the full CommandPalette stays
+// in a lazy chunk and no longer inflates the initial Nav bundle.
+import { prefetchSearchIndex } from "@/lib/search";
 
 // The search palette is only revealed on ⌘K / click, so keep it out of the
 // initial JS bundle and mount it lazily the first time it's opened.
@@ -23,7 +22,6 @@ const LINKS = [
   { href: "/", label: "Home" },
   { href: "/category/most-popular", label: "Popular" },
   { href: "/category/top-airing", label: "Airing" },
-  { href: "/schedule", label: "Schedule" },
   { href: "/az/all", label: "Browse" },
 ];
 
@@ -194,7 +192,7 @@ export function Nav() {
           </button>
 
           {/* Mobile-only menu toggle — the primary links are hidden below md,
-              so this is the only way to reach Popular / Airing / Schedule /
+              so this is the only way to reach Popular / Airing /
               Browse on a phone. */}
           <button
             onClick={() => setMenuOpen((v) => !v)}

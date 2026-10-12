@@ -80,7 +80,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${geistSans.variable} ${geistMono.variable} ${zen.variable}`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${geistSans.variable} ${geistMono.variable} ${zen.variable}`}>
       <head>
         {PRECONNECT_HOSTS.map((href) => (
           <link key={href} rel="preconnect" href={href} crossOrigin="anonymous" />

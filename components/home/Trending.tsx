@@ -10,7 +10,7 @@ import { useReducedMotionSSR } from "@/lib/utils/useReducedMotion";
 
 // Marquee drift speed, px/s. The rail glides right-to-left so it reads as a
 // "train" of posters — deliberately the opposite direction to Latest Episodes.
-const SPEED = 34;
+const SPEED = 42;
 
 /** Read the live translateX of an element — works mid-animation, where the
  *  computed `transform` is an interpolated matrix. Used to freeze the marquee

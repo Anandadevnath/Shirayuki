@@ -1,8 +1,8 @@
 import type { Result } from "../providers/types";
 
-// Primary provider: HiAnime (hianime.ad). Swappable — every page consumes the
-// normalized models, not the provider. AnimeX kept under ../providers/animex as
-// a fallback. See docs/03-api-architecture.md.
+// Every page consumes the normalized models via THIS facade — primary provider
+// is HiAnime (/api/v2/hianime on the Ruby API). The provider set lives under
+// ../providers (hianime covers every surface; animex/anikoto are not used).
 export * from "../providers/hianime";
 export type * from "../providers/types";
 

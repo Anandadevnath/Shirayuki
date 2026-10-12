@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 /**
- * Schemas for RAW provider responses. Kept permissive on purpose — the API is
+ * Schemas for RAW v2 provider responses. Kept permissive on purpose — the API is
  * heavily nullable and shape-drifting. We validate the envelope + the fields we
  * actually consume, and let unknown keys pass through.
  */
@@ -9,185 +9,150 @@ import { z } from "zod";
 const num = z.number().nullable().optional();
 const str = z.string().nullable().optional();
 
+/** A card from any browse surface (.flw-item / ranked item / spotlight slide). */
 export const rawCard = z
   .object({
-    id: z.string(),
+    id: str,
     title: str,
-    name: str,
     jname: str,
-    ename: str,
     poster: str,
+    banner: str,
     type: str,
+    duration: str,
     rank: num,
     quality: str,
     description: str,
-    airingTime: str,
+    releaseDate: str,
     episodeNumber: num,
-    episode: num,
     episodes: z
-      .object({ sub: num, dub: num })
+      .object({ total: num, sub: num, dub: num })
       .partial()
       .nullable()
       .optional(),
+    url: str,
   })
   .passthrough();
 export type RawCard = z.infer<typeof rawCard>;
 
+/** Home payload: keyed buckets instead of the old flat rails. */
 export const homeData = z
   .object({
     spotlight: z.array(rawCard).default([]),
     trending: z.array(rawCard).default([]),
-    topAiring: z.array(rawCard).default([]),
-    latestEpisodes: z.array(rawCard).default([]),
-    mostPopular: z.array(rawCard).default([]),
-    // HiAnime returns top10 ranked by period, not a flat array.
-    top10: z
-      .object({
-        day: z.array(rawCard).default([]),
-        week: z.array(rawCard).default([]),
-        month: z.array(rawCard).default([]),
-      })
-      .partial()
-      .nullable()
-      .optional(),
-    quickLists: z
-      .object({
-        newReleases: z.array(rawCard).default([]),
-        upcoming: z.array(rawCard).default([]),
-        completed: z.array(rawCard).default([]),
-      })
-      .partial()
-      .nullable()
-      .optional(),
-    genres: z
-      .array(
-        z.object({ name: z.string(), slug: z.string() }).passthrough(),
-      )
-      .default([]),
+    // Record e.g. { "Top Airing": [...], "Most Popular": [...], "Most Favorite": [...], "Latest Completed": [...] }
+    featured: z.record(z.array(rawCard)).default({}),
+    // Record e.g. { day: [...], week: [...], month: [...] } — ranked top-viewed lists.
+    topViewed: z.record(z.array(rawCard)).default({}),
+    // Record e.g. { "Latest Episode": [...], "New On HiAnime": [...], "Top Upcoming": [...] }
+    sections: z.record(z.array(rawCard)).default({}),
   })
   .passthrough();
-
-/** Season entry — sibling titles in the same franchise (e.g. "Season 2",
- *  "Season 3 part 2"). Field shape is fixed by HiAnime, but permissive here
- *  so an upstream tweak doesn't break parsing. */
-export const rawSeason = z
-  .object({
-    order: z.number().optional(),
-    id: z.string(),
-    title: str,
-    jname: str,
-    ename: str,
-    href: str,
-    url: str,
-    poster: str,
-    type: str,
-    duration: str,
-    episode: num,
-    episodes: z
-      .object({ sub: num, dub: num })
-      .partial()
-      .nullable()
-      .optional(),
-    isCurrent: z.boolean().optional(),
-    season: z.number().optional(),
-    part: z.number().optional(),
-  })
-  .passthrough();
-export type RawSeason = z.infer<typeof rawSeason>;
+export type HomeData = z.infer<typeof homeData>;
 
 export const detailData = z
   .object({
-    id: z.string(),
+    id: str,
+    slug: str,
     title: str,
     jname: str,
-    ename: str,
-    description: str,
+    alias: str,
     poster: str,
-    cover: str,
-    stats: z
-      .object({ pg: str, type: str, year: num, sub: num, dub: num })
+    description: str,
+    type: str,
+    rating: num,
+    quality: str,
+    episodes: z
+      .object({ total: num, sub: num, dub: num })
       .partial()
       .nullable()
       .optional(),
-    info: z.record(z.unknown()).nullable().optional(),
-    recommended: z.array(rawCard).default([]),
-    // Provider returns the same trending rail embedded on detail pages; keep
-    // it default-empty so older responses don't 500.
-    trending: z.array(rawCard).default([]),
-    // Sibling seasons (prequels / sequels / "part 2" splits).
-    seasons: z.array(rawSeason).default([]),
+    genres: z.array(z.string()).default([]),
+    studios: z.array(z.string()).default([]),
+    producers: z.array(z.string()).default([]),
+    premiered: str,
+    aired: str,
+    status: str,
+    duration: str,
+    malScore: num,
+    // Sibling titles in the same franchise (prequel / sequel / movie).
+    relations: z.array(rawCard).default([]),
   })
   .passthrough();
+export type DetailData = z.infer<typeof detailData>;
 
 export const episodesData = z
   .object({
-    animeId: z.string().optional(),
+    id: str,
+    slug: str,
+    title: str,
     totalEpisodes: z.number().default(0),
-    ranges: z.array(z.string()).default([]),
     episodes: z
       .array(
         z
           .object({
-            number: z.number(),
+            episode: z.number(),
+            episodeId: str,
             title: str,
-            episodeId: z.string(),
-            isFiller: z.boolean().optional(),
+            url: str,
           })
           .passthrough(),
       )
       .default([]),
   })
   .passthrough();
+export type EpisodesData = z.infer<typeof episodesData>;
 
 const rawServer = z
-  .object({ name: z.string(), nameId: z.string() })
+  .object({ name: str, serverId: str, category: str, embed: str, hash: str })
   .passthrough();
 
 export const serversData = z
   .object({
-    animeId: z.string().optional(),
-    episode: z.number().default(0),
+    episodeId: str,
+    episode: num,
     servers: z
-      .object({
-        sub: z.array(rawServer).default([]),
-        dub: z.array(rawServer).default([]),
-        hsub: z.array(rawServer).default([]),
-      })
+      .object({ sub: z.array(rawServer).default([]), dub: z.array(rawServer).default([]) })
       .partial(),
+  })
+  .passthrough();
+export type ServersData = z.infer<typeof serversData>;
+
+const rawTrack = z
+  .object({
+    file: str,
+    label: str,
+    kind: str,
+    default: z.boolean().optional(),
+  })
+  .passthrough();
+
+const rawSource = z
+  .object({
+    url: str,
+    type: str,
+    quality: str,
+    proxyM3u8: str,
+    embeddedUrl: str,
   })
   .passthrough();
 
 export const sourcesData = z
   .object({
-    sources: z
-      .array(
-        z
-          .object({
-            m3u8: z.string(),
-            referer: str,
-            server: str,
-            category: str,
-            quality: str,
-          })
-          .passthrough(),
-      )
-      .default([]),
-    tracks: z
-      .array(
-        z
-          .object({
-            file: z.string(),
-            label: str,
-            kind: str,
-            default: z.boolean().optional(),
-          })
-          .passthrough(),
-      )
-      .default([]),
+    episodeId: str,
+    category: str,
+    server: str,
+    embed: str,
+    streamResolved: z.boolean().optional(),
+    reason: str,
+    note: str,
+    link: str,
+    tracks: z.array(rawTrack).default([]),
     intro: z.object({ start: z.number(), end: z.number() }).nullable().optional(),
     outro: z.object({ start: z.number(), end: z.number() }).nullable().optional(),
+    sources: z.array(rawSource).default([]),
   })
   .passthrough();
+export type SourcesData = z.infer<typeof sourcesData>;
 
 export const paginationData = z
   .object({
@@ -199,35 +164,17 @@ export const paginationData = z
 
 export const listData = z
   .object({
+    heading: str,
     pagination: paginationData.optional(),
     results: z.array(rawCard).default([]),
   })
   .passthrough();
+export type ListData = z.infer<typeof listData>;
 
 export const suggestionData = z
   .object({
+    query: str,
     suggestions: z.array(rawCard).default([]),
-  })
-  .passthrough();
-
-export const scheduleData = z
-  .object({
-    date: str,
-    results: z
-      .array(
-        z
-          .object({
-            id: z.string(),
-            title: str,
-            jname: str,
-            ename: str,
-            episodeNumber: num,
-            airingTime: str,
-            time: str,
-          })
-          .passthrough(),
-      )
-      .default([]),
   })
   .passthrough();
 

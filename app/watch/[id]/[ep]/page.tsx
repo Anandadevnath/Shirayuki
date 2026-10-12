@@ -42,6 +42,9 @@ export default async function WatchPage({ params, searchParams }: Props) {
   if (!detailRes.ok || !detailRes.data) notFound();
   const anime = detailRes.data;
   const episodes = epsRes.ok ? epsRes.data.episodes : [];
+  // New v2 episodeIds are opaque hashes — resolve the real episode number
+  // from the episode list instead of trusting a regex on the id.
+  const displayEp = episodes.find((e) => e.episodeId === episodeId)?.number ?? epNum;
   const servers = serversRes.ok
     ? serversRes.data
     : { sub: [], dub: [], hsub: [], animeId: id, episode: epNum };
@@ -55,12 +58,6 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const nextEp = currentIdx >= 0 ? episodes[currentIdx + 1] : undefined;
   const nextHref = nextEp ? `/watch/${id}/${encodeURIComponent(nextEp.episodeId)}` : null;
 
-  // Transparent server failover: individual HiAnime extractors frequently return
-  // HTTP 500 / no source while others in the same category work. Try the
-  // preferred server first, then fall back through the rest of the pool so one
-  // dead server doesn't dead-end the page. `chosen` ends up reflecting the
-  // server that actually played (so the switcher highlights it), or the
-  // preferred one if every server failed.
   const ordered = preferred
     ? [preferred, ...pool.filter((s) => s.nameId !== preferred.nameId)]
     : [];
@@ -252,7 +249,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
       </div>
 
       {/* ============== Row 2: Full-width Anime Details (Cinematic) ============== */}
-      <CinematicInfo anime={anime} category={category} epNum={epNum} />
+      <CinematicInfo anime={anime} category={category} epNum={displayEp} />
     </>
   );
 }

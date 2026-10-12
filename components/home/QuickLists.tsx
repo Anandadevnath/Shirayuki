@@ -15,7 +15,7 @@ export function QuickLists({ completed }: { completed: AnimeCardModel[] }) {
     <section className="laser-frame glass flex min-w-0 flex-col rounded-lg p-4 sm:p-5">
       <CinematicHeader title="Latest Completed" eyebrow="Finished">
         <Link
-          href="/category/completed"
+          href="/category/latest-completed"
           className="text-sm text-muted transition-colors hover:text-frost"
         >
           View more

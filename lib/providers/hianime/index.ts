@@ -15,45 +15,139 @@ import type {
 const HOME_REVALIDATE = 900;
 const LIST_REVALIDATE = 900;
 const DETAIL_REVALIDATE = 3600;
-const GENRES_REVALIDATE = 3600;
+
+// The v2 API does not expose a genre list; the taxonomy is static (mirrors the
+// hianime.at sidebar genre chips). Used by the footer + HomeModel.genres.
+const GENRES: { name: string; slug: string }[] = [
+  ["Action", "action"],
+  ["Action & Adventure", "action-adventure"],
+  ["Adventure", "adventure"],
+  ["Animation", "animation"],
+  ["Anthropomorphic", "anthropomorphic"],
+  ["Avant Garde", "avant-garde"],
+  ["Award Winning", "award-winning"],
+  ["Boys Love", "boys-love"],
+  ["Cars", "cars"],
+  ["CGDCT", "cgdct"],
+  ["Childcare", "childcare"],
+  ["Combat Sports", "combat-sports"],
+  ["Comedy", "comedy"],
+  ["Crossdressing", "crossdressing"],
+  ["Delinquents", "delinquents"],
+  ["Dementia", "dementia"],
+  ["Demons", "demons"],
+  ["Detective", "detective"],
+  ["Drama", "drama"],
+  ["Ecchi", "ecchi"],
+  ["Educational", "educational"],
+  ["Erotica", "erotica"],
+  ["Fantasy", "fantasy"],
+  ["Gag Humor", "gag-humor"],
+  ["Game", "game"],
+  ["Girls Love", "girls-love"],
+  ["Gore", "gore"],
+  ["Gourmet", "gourmet"],
+  ["Harem", "harem"],
+  ["Hentai", "hentai"],
+  ["High Stakes Game", "high-stakes-game"],
+  ["Historical", "historical"],
+  ["Horror", "horror"],
+  ["Idols (Female)", "idols-female"],
+  ["Idols (Male)", "idols-male"],
+  ["Isekai", "isekai"],
+  ["Iyashikei", "iyashikei"],
+  ["Josei", "josei"],
+  ["Kids", "kids"],
+  ["Love Polygon", "love-polygon"],
+  ["Love Status Quo", "love-status-quo"],
+  ["Magic", "magic"],
+  ["Magical Sex Shift", "magical-sex-shift"],
+  ["Mahou Shoujo", "mahou-shoujo"],
+  ["Martial Arts", "martial-arts"],
+  ["Mecha", "mecha"],
+  ["Medical", "medical"],
+  ["Military", "military"],
+  ["Music", "music"],
+  ["Mystery", "mystery"],
+  ["Mythology", "mythology"],
+  ["Organized Crime", "organized-crime"],
+  ["Otaku Culture", "otaku-culture"],
+  ["Parody", "parody"],
+  ["Performing Arts", "performing-arts"],
+  ["Pets", "pets"],
+  ["Police", "police"],
+  ["Psychological", "psychological"],
+  ["Racing", "racing"],
+  ["Reincarnation", "reincarnation"],
+  ["Reverse Harem", "reverse-harem"],
+  ["Romance", "romance"],
+  ["Samurai", "samurai"],
+  ["School", "school"],
+  ["Sci-Fi", "sci-fi"],
+  ["Sci-Fi & Fantasy", "sci-fi-fantasy"],
+  ["Seinen", "seinen"],
+  ["Shoujo", "shoujo"],
+  ["Shoujo Ai", "shoujo-ai"],
+  ["Shounen", "shounen"],
+  ["Shounen Ai", "shounen-ai"],
+  ["Showbiz", "showbiz"],
+  ["Slice of Life", "slice-of-life"],
+  ["Space", "space"],
+  ["Sports", "sports"],
+  ["Strategy Game", "strategy-game"],
+  ["Supernatural", "supernatural"],
+  ["Super Power", "super-power"],
+  ["Survival", "survival"],
+  ["Suspense", "suspense"],
+  ["Team Sports", "team-sports"],
+  ["Thriller", "thriller"],
+  ["Time Travel", "time-travel"],
+  ["Urban Fantasy", "urban-fantasy"],
+  ["Vampire", "vampire"],
+  ["Video Game", "video-game"],
+  ["Villainess", "villainess"],
+  ["Visual Arts", "visual-arts"],
+  ["Workplace", "workplace"],
+].map(([name, slug]) => ({ name, slug }));
 
 export async function getHome(): Promise<HomeModel> {
-  const { data } = await apiFetch(`${V2}/home`, S.envelope(S.homeData), {
-    revalidate: HOME_REVALIDATE,
-    tags: ["home"],
-  });
-  const ql = data.quickLists;
+  const { data } = await apiFetch(
+    // Home is served at the router ROOT (not /home).
+    V2,
+    S.envelope(S.homeData),
+    { revalidate: HOME_REVALIDATE, tags: ["home"] },
+  );
+  const featured = data.featured ?? {};
+  const sections = data.sections ?? {};
+  const topViewed = data.topViewed ?? {};
+  const feature = (name: string) => featured[name] ?? [];
+  const section = (name: string) => sections[name] ?? [];
+
   return {
     spotlight: data.spotlight.map(M.toSpotlight),
     trending: data.trending.map(M.toCard),
-    topAiring: data.topAiring.map(M.toCard),
-    mostPopular: data.mostPopular.map(M.toCard),
-    latestEpisodes: data.latestEpisodes.map(M.toCard),
-    newReleases: (ql?.newReleases ?? []).map(M.toCard),
-    completed: (ql?.completed ?? []).map(M.toCard),
-    upcoming: (ql?.upcoming ?? []).map(M.toCard),
+    topAiring: feature("Top Airing").map(M.toCard),
+    mostPopular: feature("Most Popular").map(M.toCard),
+    latestEpisodes: section("Latest Episode").map(M.toCard),
+    newReleases: section("New On HiAnime").map(M.toCard),
+    completed: feature("Latest Completed").map(M.toCard),
+    upcoming: section("Top Upcoming").map(M.toCard),
     top10: {
-      day: (data.top10?.day ?? []).map(M.toCard),
-      week: (data.top10?.week ?? []).map(M.toCard),
-      month: (data.top10?.month ?? []).map(M.toCard),
+      day: (topViewed.day ?? []).map(M.toCard),
+      week: (topViewed.week ?? []).map(M.toCard),
+      month: (topViewed.month ?? []).map(M.toCard),
     },
-    genres: (data.genres ?? []).map((g) => ({ name: g.name, slug: g.slug })),
+    genres: GENRES,
   };
 }
 
 /**
- * Lightweight genres-only fetch for chrome (footer, etc.) that doesn't need
- * the rest of the home payload. The upstream exposes genres only on `/home`,
- * so this shares the data cache entry with getHome() — the upstream call is
- * deduped, only the in-memory mapping is new. Tag-isolated for fine-grained
- * revalidation.
+ * Lightweight genres-only fetch for chrome (footer). The v2 API has no genre
+ * endpoint, so this returns the static taxonomy — kept async for call-site
+ * stability (Suspense + safe()).
  */
 export async function getGenres(): Promise<{ name: string; slug: string }[]> {
-  const { data } = await apiFetch(`${V2}/home`, S.envelope(S.homeData), {
-    revalidate: GENRES_REVALIDATE,
-    tags: ["genres"],
-  });
-  return (data.genres ?? []).map((g) => ({ name: g.name, slug: g.slug }));
+  return GENRES;
 }
 
 export async function getAnime(id: string): Promise<AnimeDetail | null> {
@@ -73,14 +167,14 @@ export async function getEpisodes(id: string): Promise<EpisodesModel> {
     { revalidate: DETAIL_REVALIDATE, tags: [`anime:${id}`] },
   );
   return {
-    animeId: data.animeId ?? id,
+    animeId: data.id ?? id,
     totalEpisodes: data.totalEpisodes,
-    ranges: data.ranges,
+    ranges: [],
     episodes: data.episodes.map((e) => ({
-      number: e.number,
+      number: e.episode,
       title: e.title ?? null,
-      episodeId: e.episodeId,
-      isFiller: e.isFiller ?? false,
+      episodeId: e.episodeId ?? `__ep-${e.episode}`,
+      isFiller: false,
     })),
   };
 }
@@ -99,26 +193,22 @@ async function getList(path: string, tag: string): Promise<Paginated<AnimeCardMo
 }
 
 export function search(q: string, page = 1) {
-  return getList(
-    `${V2}/search?q=${encodeURIComponent(q)}&page=${page}`,
-    `search:${q}`,
-  );
+  return getList(`${V2}/search?q=${encodeURIComponent(q)}&page=${page}`, `search:${q}`);
 }
 
 export function getGenre(id: string, page = 1) {
-  return getList(`${V2}/genre/${id}?page=${page}`, `genre:${id}`);
+  return getList(`${V2}/genre/${encodeURIComponent(id)}?page=${page}`, `genre:${id}`);
 }
 
 export function getCategory(id: string, page = 1) {
-  return getList(`${V2}/category/${id}?page=${page}`, `category:${id}`);
+  return getList(`${V2}/browse/${encodeURIComponent(id)}?page=${page}`, `category:${id}`);
 }
 
-export function getProducer(id: string, page = 1) {
-  return getList(`${V2}/producer/${id}?page=${page}`, `producer:${id}`);
-}
-
+/** A–Z browse. The v2 API has one `/browse/az-list` surface (letters are not
+ *  first-class routes), so the letter arg is accepted for call-site stability
+ *  but the full alphabetical directory is returned regardless. */
 export function getAZ(letter: string, page = 1) {
-  return getList(`${V2}/azlist/${letter}?page=${page}`, `az:${letter}`);
+  return getList(`${V2}/browse/az-list?page=${page}`, `az:${letter}`);
 }
 
 export async function suggest(q: string): Promise<AnimeCardModel[]> {
@@ -130,81 +220,76 @@ export async function suggest(q: string): Promise<AnimeCardModel[]> {
   return data.suggestions.map(M.toCard);
 }
 
-export interface ScheduleItem {
-  id: string;
-  title: string;
-  episodeNumber: number | null;
-  airingTime: string | null;
-  time: string | null;
-}
-
-export async function getSchedule(date: string, timezone = "UTC"): Promise<ScheduleItem[]> {
-  const { data } = await apiFetch(
-    `${V2}/schedule?date=${date}&timezone=${encodeURIComponent(timezone)}`,
-    S.envelope(S.scheduleData),
-    { revalidate: 600, tags: [`schedule:${date}`] },
-  );
-  return data.results.map((r) => ({
-    id: r.id,
-    title: r.title ?? r.ename ?? "Untitled",
-    episodeNumber: r.episodeNumber ?? null,
-    airingTime: r.airingTime ?? null,
-    time: r.time ?? null,
-  }));
-}
-
 /** Servers + sources are NEVER cached long — links expire. */
 export async function getServers(
-  animeEpisodeId: string,
+  episodeId: string,
   ep: number,
 ): Promise<ServersModel> {
-  const path = `${V2}/episode/servers?animeEpisodeId=${encodeURIComponent(
-    animeEpisodeId,
-  )}&ep=${ep}`;
-  const { data } = await apiFetch(path, S.envelope(S.serversData), {
-    noStore: true,
-  });
-  // HiAnime can list the same server twice in a category (e.g. dub →
-  // hd-2, hd-2, doodstream, doodstream); dedupe by nameId, keep first.
-  const map = (arr: { name: string; nameId: string }[], category: ServerCategory) => {
+  const path = `${V2}/episode/servers?episodeId=${encodeURIComponent(episodeId)}`;
+  const { data } = await apiFetch(path, S.envelope(S.serversData), { noStore: true });
+
+  const map = (arr: { name?: string | null; serverId?: string | null }[], category: ServerCategory) => {
     const seen = new Set<string>();
     return arr
-      .filter((s) => (seen.has(s.nameId) ? false : (seen.add(s.nameId), true)))
-      .map((s) => ({ name: s.name, nameId: s.nameId, category }));
+      .filter((s) => (seen.has(s.serverId ?? s.name ?? "") ? false : (seen.add(s.serverId ?? s.name ?? ""), true)))
+      .map((s) => ({ name: s.name ?? "Server", nameId: s.serverId ?? s.name ?? "", category }));
   };
   return {
-    animeId: data.animeId ?? "",
-    episode: data.episode,
-    sub: map(data.servers.sub ?? [], "sub"),
-    dub: map(data.servers.dub ?? [], "dub"),
-    hsub: map(data.servers.hsub ?? [], "hsub"),
+    animeId: episodeId,
+    episode: data.episode ?? ep ?? 1,
+    sub: map(data.servers?.sub ?? [], "sub"),
+    dub: map(data.servers?.dub ?? [], "dub"),
+    hsub: [],
   };
+}
+
+/** Derive the upstream Referer needed by the CDN from the provider payload.
+ *  The API's `sources[].embeddedUrl` carries the exact `ref` its own proxy
+ *  uses (e.g. https://megaplay.buzz/); fall back to the embed origin. */
+function deriveReferer(data: S.SourcesData): string | null {
+  const embedded = data.sources?.[0]?.embeddedUrl;
+  if (embedded) {
+    try {
+      const ref = new URLSearchParams(String(embedded).split("?")[1] ?? "").get("ref");
+      if (ref) return ref;
+    } catch {
+      /* continue */
+    }
+  }
+  const embed = data.embed;
+  if (embed) {
+    try {
+      return new URL(embed).origin + "/";
+    } catch {
+      /* continue */
+    }
+  }
+  return null;
 }
 
 export async function getSources(
-  animeEpisodeId: string,
+  episodeId: string,
   ep: number,
   server: string,
   category: string,
 ): Promise<SourcesModel | null> {
-  const path = `${V2}/episode/sources?animeEpisodeId=${encodeURIComponent(
-    animeEpisodeId,
-  )}&ep=${ep}&server=${server}&category=${category}`;
-  const { data } = await apiFetch(path, S.envelope(S.sourcesData), {
-    noStore: true,
-  });
-  const first = data.sources[0];
-  if (!first) return null;
+  const path = `${V2}/episode/sources?episodeId=${encodeURIComponent(
+    episodeId,
+  )}&server=${encodeURIComponent(server)}&category=${encodeURIComponent(category)}`;
+  const { data } = await apiFetch(path, S.envelope(S.sourcesData), { noStore: true });
+  if (!data.link) return null;
   return {
-    m3u8: first.m3u8,
-    referer: first.referer ?? null,
-    server: first.server ?? server,
-    category: first.category ?? category,
-    tracks: data.tracks.map((t) => ({
-      file: t.file,
-      label: t.label ?? "Subtitle",
-      default: t.default ?? false,
-    })),
+    m3u8: data.link,
+    referer: deriveReferer(data),
+    server: data.server ?? server,
+    category: data.category ?? category,
+    tracks: data.tracks
+      .filter((t): t is typeof t & { file: string } => !!t.file)
+      .map((t) => ({
+        file: t.file,
+        label: t.label ?? "Subtitle",
+        default: t.default ?? false,
+      })),
     intro: data.intro ?? null,
     outro: data.outro ?? null,
   };

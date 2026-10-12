@@ -198,7 +198,7 @@ export function Spotlight({
               <div
                 key={s.id}
                 className={cn(
-                  "absolute inset-0 transition-opacity duration-[1100ms] ease-out",
+                  "absolute inset-0 transition-opacity duration-700 ease-out",
                   idx === active ? "opacity-100" : "opacity-0",
                 )}
               >

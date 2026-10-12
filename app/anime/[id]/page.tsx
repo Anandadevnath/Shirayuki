@@ -88,7 +88,7 @@ export default async function AnimePage({ params }: Params) {
       <nav className="mb-6 flex items-center gap-1.5 text-xs text-muted">
         <Link href="/" className="transition-colors hover:text-snow">Home</Link>
         <span>·</span>
-        <Link href="/tv" className="transition-colors hover:text-snow">TV</Link>
+        <Link href="/category/tv" className="transition-colors hover:text-snow">TV</Link>
         <span>·</span>
         <span className="truncate text-snow">{a.title}</span>
       </nav>

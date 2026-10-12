@@ -508,9 +508,9 @@ header[data-scrolled="1"] {
 /* Poster slow-float idle motion (transform-only) */
 @keyframes poster-float {
   0%, 100% { transform: translate3d(0, 0, 0) scale(1); }
-  50%      { transform: translate3d(0, -4px, 0) scale(1.005); }
+  50%      { transform: translate3d(0, -2px, 0) scale(1.002); }
 }
-.poster-float { animation: poster-float 6s ease-in-out infinite; }
+.poster-float { animation: poster-float 10s ease-in-out infinite; }
 
 /* Banner slow zoom-in (one-shot, on mount) */
 @keyframes banner-reveal {

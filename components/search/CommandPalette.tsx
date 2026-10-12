@@ -11,60 +11,25 @@ import {
 } from "lucide-react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { cn } from "@/lib/utils/cn";
+import {
+  hasSearchIndexCache,
+  loadSearchIndex,
+  type SearchIndexEntry,
+} from "@/lib/search";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-/**
- * The minimal card shape the local index needs — kept narrow so the index
- * route can stay tiny and the fuzzy match stays fast in memory.
- */
-type IndexEntry = Pick<
-  AnimeCardModel,
-  "id" | "title" | "jname" | "poster" | "type" | "episodes" | "score"
->;
-
-/** Module-level cache so the index is fetched at most once per page load
- *  and is reused across palette open/close cycles. */
-let indexPromise: Promise<IndexEntry[]> | null = null;
-let indexEntries: IndexEntry[] | null = null;
-
-function loadIndex(): Promise<IndexEntry[]> {
-  if (indexEntries) return Promise.resolve(indexEntries);
-  if (indexPromise) return indexPromise;
-  indexPromise = fetch("/api/search-index")
-    .then((r) => r.json() as Promise<{ results: IndexEntry[] }>)
-    .then((j) => {
-      indexEntries = j.results ?? [];
-      return indexEntries;
-    })
-    .catch(() => {
-      indexEntries = [];
-      indexPromise = null;
-      return [];
-    });
-  return indexPromise;
-}
-
-/** Pre-warm the local index — call from Nav on mount so the first ⌘K is instant. */
-export function prefetchSearchIndex() {
-  void loadIndex();
-}
-
 interface IndexedHit {
-  entry: IndexEntry;
+  entry: SearchIndexEntry;
   /** Higher = better. Used to sort local results. */
   score: number;
 }
 
-/**
- * Tokenize the query into lowercase terms; each term must match somewhere in
- * the title or jname. Scoring: exact > startsWith > word-boundary > substring.
- * Runs synchronously over ~80 entries — sub-millisecond.
- */
-function searchLocal(entries: IndexEntry[], raw: string, limit = 8): IndexedHit[] {
+
+function searchLocal(entries: SearchIndexEntry[], raw: string, limit = 8): IndexedHit[] {
   const q = raw.trim().toLowerCase();
   if (!q) return [];
   const terms = q.split(/\s+/).filter(Boolean);
@@ -119,11 +84,11 @@ export function CommandPalette({ open, onOpenChange }: Props) {
   const router = useRouter();
   const inputRef = useRef<HTMLInputElement>(null);
   const [q, setQ] = useState("");
-  const [localResults, setLocalResults] = useState<IndexEntry[]>([]);
+  const [localResults, setLocalResults] = useState<SearchIndexEntry[]>([]);
   const [netResults, setNetResults] = useState<AnimeCardModel[]>([]);
   const [loading, setLoading] = useState(false);
   const [active, setActive] = useState(0);
-  const [indexReady, setIndexReady] = useState(indexEntries != null);
+  const [indexReady, setIndexReady] = useState(hasSearchIndexCache());
   const netCache = useRef(new Map<string, AnimeCardModel[]>());
   const networkSeq = useRef(0);
 
@@ -136,7 +101,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
       setActive(0);
       requestAnimationFrame(() => inputRef.current?.focus());
       // If the prefetch hasn't finished yet, wait for it. Otherwise no-op.
-      loadIndex().then((entries) => {
+      loadSearchIndex().then((entries) => {
         setIndexReady(true);
         setLocalResults(entries.slice(0, 6));
       });
@@ -147,13 +112,15 @@ export function CommandPalette({ open, onOpenChange }: Props) {
   useEffect(() => {
     if (!open) return;
     const term = q.trim();
-    if (!indexEntries || !term) {
-      // Show featured picks when empty — first 6 of the local index.
-      setLocalResults(indexEntries ? indexEntries.slice(0, 6) : []);
-      return;
-    }
-    setLocalResults(searchLocal(indexEntries, term).map((h) => h.entry));
-    setActive(0);
+    void loadSearchIndex().then((entries) => {
+      if (!open) return;
+      if (!term) {
+        setLocalResults(entries.slice(0, 6));
+        return;
+      }
+      setLocalResults(searchLocal(entries, term).map((h) => h.entry));
+      setActive(0);
+    });
   }, [q, open]);
 
   // Debounced network suggest — broader catalogue, cached per-query.
