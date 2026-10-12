@@ -5,13 +5,23 @@ import { EpBadges } from "@/components/anime/Badges";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { cn } from "@/lib/utils/cn";
 
-/** A single row in the Top 10 panel — poster, title, then sub/dub + type. */
-export function RankRow({ anime }: { anime: AnimeCardModel; rank?: number }) {
+/** A single row in the Top 10 panel — rank number, poster, title, then sub/dub + type. */
+export function RankRow({ anime, rank }: { anime: AnimeCardModel; rank?: number }) {
   return (
     <Link
       href={`/anime/${anime.id}`}
       className="group -mx-2 flex items-center gap-4 rounded-none px-2 py-3 transition-colors hover:bg-white/[0.015]"
     >
+      {/* Rank number — muted oversized figure leading the poster, like "1 One Piece" */}
+      {rank != null && (
+        <span
+          aria-hidden
+          className="w-6 shrink-0 text-right font-display text-xl font-extrabold leading-none text-gradient-frost/60 transition-colors group-hover:text-gradient-frost"
+        >
+          {rank}
+        </span>
+      )}
+
       {/* Poster — softly rounded, full-bleed image */}
       <span className="relative h-20 w-14 shrink-0 overflow-hidden rounded-sm bg-surface-2">
         {anime.poster && (
