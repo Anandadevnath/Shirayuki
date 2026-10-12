@@ -1,6 +1,4 @@
-import { Suspense } from "react";
-import { getHome, getCategory, getSchedule, safe } from "@/lib/api";
-import type { ScheduleItem } from "@/lib/providers/hianime";
+import { getHome, safe } from "@/lib/api";
 import { Spotlight } from "@/components/home/Spotlight";
 import { ContinueWatching } from "@/components/home/ContinueWatching";
 import { Trending } from "@/components/home/Trending";
@@ -8,72 +6,29 @@ import { LatestEpisodes } from "@/components/home/LatestEpisodes";
 import { QuickLists } from "@/components/home/QuickLists";
 import { DiscoverColumns } from "@/components/home/DiscoverColumns";
 import { Top10Tabs } from "@/components/home/Top10Tabs";
-import { Schedule, type ScheduleDay } from "@/components/home/Schedule";
 import { ErrorState } from "@/components/common/States";
-import { ScheduleSkeleton } from "@/components/ui/Skeleton";
 
-// ISR cadence for the home page response. Matches the `revalidate: 900` used
-// inside `getHome()` so the upstream and the page-level cache share the same
-// 15-minute window — when the upstream revalidates, this re-renders in the
-// same pass.
+// Home is rendered dynamically (not statically prerendered) on purpose.
 //
-// Without this, the page is treated as fully dynamic (it `await`s uncached
-// `safe(getHome)`), Next.js sends `Cache-Control: private, no-store`,
-// and the browser refuses to put the page into the back/forward cache.
-// That shows up in Lighthouse as "Page prevented back/forward cache
-// restoration" and adds a full network round-trip to every back-nav.
-export const revalidate = 900;
-
-/** Today + the next 6 days, as deterministic UTC tabs for the schedule panel. */
-function upcomingWeek(todayISO: string): ScheduleDay[] {
-  const base = new Date(`${todayISO}T00:00:00Z`);
-  return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(base);
-    d.setUTCDate(base.getUTCDate() + i);
-    return {
-      iso: d.toISOString().slice(0, 10),
-      label: d.toLocaleDateString("en-US", { weekday: "short", timeZone: "UTC" }),
-      day: d.getUTCDate(),
-      month: d.toLocaleDateString("en-US", { month: "short", timeZone: "UTC" }),
-    };
-  });
-}
-
-/**
- * Schedule streams independently: the main board never blocks on the schedule
- * endpoint. Suspense shows ScheduleSkeleton until this resolves, then swaps it
- * in with no layout shift (the skeleton matches the panel's footprint).
- *
- * All 7 days are pre-fetched server-side in parallel — each `/api/schedule`
- * hit shares the data cache, so the upstream call is a single deduped read
- * for the whole week. Tab switching on the client is then instant (no HTTP).
- */
-async function ScheduleSection({ days, today }: { days: ScheduleDay[]; today: string }) {
-  const results = await Promise.all(
-    days.map((d) => safe(() => getSchedule(d.iso))),
-  );
-  const initialByDay: Record<string, ScheduleItem[]> = {};
-  days.forEach((d, i) => {
-    initialByDay[d.iso] = results[i].ok ? results[i].data : [];
-  });
-  return (
-    <Schedule
-      days={days}
-      initialByDay={initialByDay}
-      initialIso={today}
-    />
-  );
-}
+// Data caching lives in the provider's `getHome()` which fetches with
+// `revalidate: 900` + `tags: ["home"]` — Next's data-layer fetch cache is what
+// keeps this fast across visits. The ROUTE itself is dynamic so a build-time
+// fetch outcome is never baked into a static page.
+//
+// Why: hianime.at is a fragile upstream and intermittently responds 402
+// ("Payment required" bot-gate) to the API's scrapes. With `revalidate = 900`
+// at the route level, a single bad response at build time was frozen into the
+// ISR page for a full 15-minute window — every build during a flaky spell baked
+// an ErrorState home. Dynamic rendering means a failed fetch simply
+// falls through to the next request and self-heals the moment the API recovers.
+// Trade-off: the page no longer participates in route-level HTTP caching /
+// back-forward cache, since the provider fetch cache carries the 15-min window.
+export const dynamic = "force-dynamic";
 
 export default async function HomePage() {
-  // The home payload's `completed` list is tiny (~5), which leaves the Latest
-  // Completed panel mostly empty. Pull a fuller page from the category endpoint
-  // and cap it so the grid fills out to roughly the Top 10 panel's height.
-  const today = new Date().toISOString().slice(0, 10);
-  const [res, completedRes] = await Promise.all([
-    safe(getHome),
-    safe(() => getCategory("completed")),
-  ]);
+  // The v2 home payload's featured["Latest Completed"] fetches a full 50-title
+  // list, so we cap it so the grid fills out to roughly the Top 10 panel's height.
+  const res = await safe(getHome);
 
   if (!res.ok) {
     return (
@@ -84,13 +39,7 @@ export default async function HomePage() {
   }
 
   const home = res.data;
-  const completed = (
-    completedRes.ok && completedRes.data.results.length
-      ? completedRes.data.results
-      : home.completed
-  ).slice(0, 15);
-
-  const scheduleDays = upcomingWeek(today);
+  const completed = home.completed.slice(0, 15);
 
   // The first spotlight slide is the LCP candidate. Spotlight is a client
   // component (carousel + autoplay), so its `<Image priority>` only registers
@@ -141,7 +90,7 @@ export default async function HomePage() {
         {/* Section-level cascade — each board section fades up in sequence as
             the page paints, so nothing snaps in. Pure-CSS, runs once on mount
             (no scroll observer, so content is never gated behind hydration). */}
-        <div className="relative z-10 flex flex-col gap-12 -translate-y-[8vh] sm:-translate-y-[14vh]">
+        <div className="relative z-10 flex flex-col gap-12 -translate-y-[5vh] sm:-translate-y-[9vh]">
           <div className="reveal" style={{ ["--reveal-delay" as string]: "0ms" }}>
             <ContinueWatching />
           </div>
@@ -177,12 +126,6 @@ export default async function HomePage() {
 
             <Top10Tabs buckets={home.top10} />
           </div>
-
-          {/* Estimated airing schedule — streamed independently so it never
-              blocks the board above; shows its own skeleton until ready. */}
-          <Suspense fallback={<ScheduleSkeleton />}>
-            <ScheduleSection days={scheduleDays} today={today} />
-          </Suspense>
         </div>
       </div>
     </div>

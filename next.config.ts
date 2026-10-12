@@ -19,6 +19,10 @@ const POSTER_HOSTS = [
   "gogocdn.stream",
   "megaplay.cc",
   "asianload.cc",
+  // The Ruby API serves every poster/backdrop from hianime.at's own storage.
+  // Missing from the allowlist earlier → runtime "next-image-unconfigured-host"
+  // exception on the home Spotlight slide 0 + any card using `<Image>`.
+  "hianime.at",
 ];
 
 const nextConfig: NextConfig = {
@@ -44,7 +48,15 @@ const nextConfig: NextConfig = {
     ],
   },
   images: {
-    remotePatterns: POSTER_HOSTS.map((hostname) => ({ protocol: "https", hostname })),
+    // Each allowlisted host gets BOTH an exact pattern and a `**.`-wildcard
+    // subdomain pattern. The scraper's poster URLs use `cdn.anipixcdn.co`,
+    // `cdn.anizara.store`, etc. and earlier exact-only matching threw
+    // "next-image-unconfigured-host" at runtime for those. The wildcard is
+    // bounded to the known CDN families below, so it stays SSRF-safe.
+    remotePatterns: POSTER_HOSTS.flatMap((hostname) => [
+      { protocol: "https", hostname },
+      { protocol: "https", hostname: `**.${hostname}` },
+    ]),
     // Prefer AVIF where the browser supports it; falls back to WebP, then the
     // source format. AVIF is ~30% smaller than WebP at equivalent visual quality.
     formats: ["image/avif", "image/webp"],

@@ -121,7 +121,7 @@ proxy (`/api/stream`) and subtitle proxy (`/api/subtitle`).
 
 | Variable       | Required | Default                                        | Notes                                  |
 | -------------- | :------: | ---------------------------------------------- | -------------------------------------- |
-| `API_BASE_URL` |    ✅    | `https://shirayuki-scrapper-api-v2.vercel.app` | Upstream scraper. See `lib/providers`. |
+| `API_BASE_URL` |    ✅    | `https://shirayuki-anime-api-ruby.vercel.app` | Upstream scraper. See `lib/providers`. |
 
 `NODE_ENV` is set by Vercel automatically.
 

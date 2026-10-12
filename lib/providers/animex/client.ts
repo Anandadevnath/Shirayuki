@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 const API_BASE_URL =
-  process.env.API_BASE_URL ?? "https://shirayuki-scrapper-api-v2.vercel.app";
+  process.env.API_BASE_URL ?? "https://shirayuki-anime-api-ruby.vercel.app";
 
 export const V2 = "/api/v2/animex";
 
