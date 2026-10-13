@@ -11,8 +11,6 @@ import {
   Film,
   Flame,
   Diamond,
-  ChevronLeft,
-  ChevronRight,
 } from "lucide-react";
 import type { AnimeCardModel, SpotlightModel } from "@/lib/providers/types";
 import { EpBadges } from "@/components/anime/Badges";
@@ -291,31 +289,9 @@ export function Spotlight({
           </div>
         )}
 
-        {/* ── Prev / next glass buttons — keyboard-accessible carousel nav.
-            The diamond facets stay for direct-slide jumps; these buttons
-            satisfy WCAG 2.1.1 (keyboard) and 2.4.7 (focus visible) by giving
-            sighted keyboard users a visible prev/next affordance. Anchored
-            to the left edge to mirror the right-edge diamond column. ── */}
-        {n > 1 && (
-          <>
-            <button
-              type="button"
-              onClick={() => step(-1)}
-              aria-label="Previous slide"
-              className="absolute left-5 top-1/2 z-20 hidden -translate-y-1/2 grid size-10 place-items-center rounded-full glass text-snow transition-[transform,border-color,color,background-color] hover:-translate-y-1/2 hover:scale-105 hover:border-frost/50 hover:text-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost sm:left-7 sm:flex"
-            >
-              <ChevronLeft className="size-5" />
-            </button>
-            <button
-              type="button"
-              onClick={() => step(1)}
-              aria-label="Next slide"
-              className="absolute right-5 top-1/2 z-20 hidden -translate-y-1/2 grid size-10 place-items-center rounded-full glass text-snow transition-[transform,border-color,color,background-color] hover:-translate-y-1/2 hover:scale-105 hover:border-frost/50 hover:text-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost sm:right-7 sm:flex"
-            >
-              <ChevronRight className="size-5" />
-            </button>
-          </>
-        )}
+        {/* ── Carousel nav happens via the right-edge diamond facets (direct-slide
+            jumps), keyboard arrows and drag-to-swipe. The old prev / next arrow
+            buttons were removed for a clean, chrome-free banner. ── */}
 
         {/* ── Copy + CTAs, anchored to the upper-left so the lower band stays
             clear for the Trending rail that tucks up beneath the hero. ── */}

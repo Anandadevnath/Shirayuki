@@ -71,8 +71,8 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
         className="mt-3 flex flex-col gap-1"
       >
         {items.length > 0 ? (
-          items.map((a, idx) => (
-            <RankRow key={`${a.id}-${idx}`} anime={a} rank={a.rank ?? idx + 1} />
+          items.map((a) => (
+            <RankRow key={a.id} anime={a} />
           ))
         ) : (
           <p className="py-6 text-center text-sm text-muted">

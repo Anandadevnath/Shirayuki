@@ -1,5 +1,5 @@
 import type { Metadata, Viewport } from "next";
-import { Geist, Geist_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
+import { Inter, Geist_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
@@ -11,8 +11,13 @@ import { RootEffects } from "@/components/layout/RootEffects";
 // without an explicit `weight` array it ships ~188 woff2 files in the
 // document head, which crushes the initial network budget. 900 is included
 // because one element uses `font-black`.
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+//
+// Inter is the primary UI/display face — a modern, premium-looking grotesque
+// with excellent hinting, tight letter-spacing and strong tabular figures for
+// stats. Zen Kaku Gothic New stays loaded as a CJK fallback inside the display
+// stack so Japanese anime titles still render with deliberate, elegant glyphs.
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
   display: "swap",
@@ -80,7 +85,7 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${geistSans.variable} ${geistMono.variable} ${zen.variable}`}>
+    <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${geistMono.variable} ${zen.variable}`}>
       <head>
         {PRECONNECT_HOSTS.map((href) => (
           <link key={href} rel="preconnect" href={href} crossOrigin="anonymous" />
