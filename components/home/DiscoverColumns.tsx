@@ -76,32 +76,36 @@ function DiscoverColumn({
 }
 
 /**
- * Four compact discovery columns — Top Airing / Most Popular / New Releases /
- * Completed — laid out side by side on desktop and stacking down on mobile.
- * Dense counterpart to the poster rails above; each column hides when empty.
+ * Five compact discovery columns — Top Airing / Most Popular / Most Favorite /
+ * Recently Added / Latest Completed — laid out side by side on desktop and
+ * stacking down on mobile. Dense counterpart to the poster rails above; each
+ * column hides when empty.
  */
 export function DiscoverColumns({
   topAiring,
   mostPopular,
+  mostFavorite,
   newReleases,
   completed,
 }: {
   topAiring: AnimeCardModel[];
   mostPopular: AnimeCardModel[];
+  mostFavorite: AnimeCardModel[];
   newReleases: AnimeCardModel[];
   completed: AnimeCardModel[];
 }) {
   const columns = [
     { title: "Top Airing", items: topAiring, href: "/category/top-airing" },
     { title: "Most Popular", items: mostPopular, href: "/category/most-popular" },
-    { title: "New Releases", items: newReleases, href: "/category/new-anime" },
+    { title: "Most Favorite", items: mostFavorite, href: "/category/most-favorite" },
+    { title: "Recently Added", items: newReleases, href: "/category/new-anime" },
     { title: "Completed", items: completed, href: "/category/latest-completed" },
   ].filter((c) => c.items.length > 0);
 
   if (!columns.length) return null;
 
   return (
-    <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+    <section className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5">
       {columns.map((c) => (
         <DiscoverColumn key={c.title} title={c.title} items={c.items} href={c.href} />
       ))}

@@ -1,9 +1,11 @@
 import type { z } from "zod";
-import type { DetailData, rawCard } from "./schemas";
+import type { DetailData, ScheduleData, rawCard } from "./schemas";
 import type {
   AnimeCardModel,
   AnimeDetail,
   EpisodeCount,
+  ScheduleItem,
+  ScheduleModel,
   SeasonModel,
   SpotlightModel,
 } from "../types";
@@ -117,4 +119,37 @@ export function toDetail(d: DetailData): AnimeDetail {
 /** A detail payload is "empty" (invalid id) when core fields are all null. */
 export function isEmptyDetail(d: { title?: string | null; poster?: string | null }): boolean {
   return !d.title && !d.poster;
+}
+
+type RawScheduleItem = ScheduleData["week"][number]["items"][number];
+
+function toScheduleItem(r: RawScheduleItem): ScheduleItem {
+  return {
+    id: r.id ?? "",
+    title: r.title ?? r.jname ?? "Untitled",
+    jname: r.jname ?? null,
+    poster: r.poster ?? null,
+    type: r.type ?? null,
+    status: cleanStr(r.status),
+    aired: cleanStr(r.aired),
+    premiereDate: r.premiereDate ?? null,
+    weekday: r.weekday ?? null,
+    isUpcoming: r.isUpcoming ?? false,
+  };
+}
+
+export function toSchedule(d: ScheduleData): ScheduleModel {
+  return {
+    source: cleanStr(d.source),
+    updatedAt: cleanStr(d.updatedAt),
+    counted: {
+      airing: d.counted?.airing ?? 0,
+      upcoming: d.counted?.upcoming ?? 0,
+      premieres: d.counted?.premieres ?? 0,
+      tbd: d.counted?.tbd ?? 0,
+    },
+    week: (d.week ?? []).map((w) => ({ day: w.day ?? "", items: (w.items ?? []).map(toScheduleItem) })),
+    airing: (d.airing ?? []).map(toScheduleItem),
+    upcoming: (d.upcoming ?? []).map(toScheduleItem),
+  };
 }

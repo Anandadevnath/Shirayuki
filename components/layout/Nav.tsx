@@ -22,6 +22,7 @@ const LINKS = [
   { href: "/", label: "Home" },
   { href: "/category/most-popular", label: "Popular" },
   { href: "/category/top-airing", label: "Airing" },
+  { href: "/schedule", label: "Schedule" },
   { href: "/az/all", label: "Browse" },
 ];
 

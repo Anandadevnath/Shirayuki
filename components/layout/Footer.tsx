@@ -7,6 +7,7 @@ import { getGenres, safe } from "@/lib/api";
 const QUICK_LINKS = [
   { href: "/category/most-popular", label: "Popular" },
   { href: "/category/top-airing", label: "Airing" },
+  { href: "/schedule", label: "Release Schedule" },
   { href: "/az/all", label: "Browse A–Z" },
 ];
 

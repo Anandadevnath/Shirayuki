@@ -178,6 +178,41 @@ export const suggestionData = z
   })
   .passthrough();
 
+/** Schedule payload — premiere-derived calendar + airing/upcoming lists.
+ *  Self-contained (not reusing rawCard) because schedule items add
+ *  detail-page fields (status / aired / premiereDate / weekday / isUpcoming)
+ *  that have different nullability than card surfaces. */
+const scheduleItem = z
+  .object({
+    id: str,
+    title: str,
+    jname: str,
+    poster: str,
+    type: str,
+    status: str,
+    aired: str,
+    premiereDate: str,
+    weekday: str,
+    isUpcoming: z.boolean().optional(),
+  })
+  .passthrough();
+
+export const scheduleData = z
+  .object({
+    source: str,
+    updatedAt: str,
+    counted: z
+      .object({ airing: z.number(), upcoming: z.number(), premieres: z.number(), tbd: z.number() })
+      .partial(),
+    week: z
+      .array(z.object({ day: str, items: z.array(scheduleItem).default([]) }).passthrough())
+      .default([]),
+    airing: z.array(scheduleItem).default([]),
+    upcoming: z.array(scheduleItem).default([]),
+  })
+  .passthrough();
+export type ScheduleData = z.infer<typeof scheduleData>;
+
 /** Standard envelope: { success, data } */
 export const envelope = <T extends z.ZodTypeAny>(data: T) =>
   z.object({ success: z.boolean().optional(), data });

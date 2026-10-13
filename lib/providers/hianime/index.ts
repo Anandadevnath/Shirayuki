@@ -7,6 +7,7 @@ import type {
   HomeModel,
   Paginated,
   AnimeCardModel,
+  ScheduleModel,
   ServerCategory,
   ServersModel,
   SourcesModel,
@@ -15,6 +16,10 @@ import type {
 const HOME_REVALIDATE = 900;
 const LIST_REVALIDATE = 900;
 const DETAIL_REVALIDATE = 3600;
+// Schedule is heavy (scrape deadline ~22s on a cold API cache); the API
+// refreshes it internally, so the frontend reuses the cached snapshot and
+// only re-fetches when the API's own TTL rolls over.
+const SCHEDULE_REVALIDATE = 1800;
 
 // The v2 API does not expose a genre list; the taxonomy is static (mirrors the
 // hianime.at sidebar genre chips). Used by the footer + HomeModel.genres.
@@ -128,6 +133,7 @@ export async function getHome(): Promise<HomeModel> {
     trending: data.trending.map(M.toCard),
     topAiring: feature("Top Airing").map(M.toCard),
     mostPopular: feature("Most Popular").map(M.toCard),
+    mostFavorite: feature("Most Favorite").map(M.toCard),
     latestEpisodes: section("Latest Episode").map(M.toCard),
     newReleases: section("New On HiAnime").map(M.toCard),
     completed: feature("Latest Completed").map(M.toCard),
@@ -209,6 +215,14 @@ export function getCategory(id: string, page = 1) {
  *  but the full alphabetical directory is returned regardless. */
 export function getAZ(letter: string, page = 1) {
   return getList(`${V2}/browse/az-list?page=${page}`, `az:${letter}`);
+}
+
+export async function getSchedule(): Promise<ScheduleModel> {
+  const { data } = await apiFetch(`${V2}/schedule`, S.envelope(S.scheduleData), {
+    revalidate: SCHEDULE_REVALIDATE,
+    tags: ["schedule"],
+  });
+  return M.toSchedule(data);
 }
 
 export async function suggest(q: string): Promise<AnimeCardModel[]> {

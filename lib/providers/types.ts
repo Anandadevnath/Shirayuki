@@ -45,6 +45,7 @@ export interface HomeModel {
   trending: AnimeCardModel[];
   topAiring: AnimeCardModel[];
   mostPopular: AnimeCardModel[];
+  mostFavorite: AnimeCardModel[];
   latestEpisodes: AnimeCardModel[];
   newReleases: AnimeCardModel[];
   completed: AnimeCardModel[];
@@ -167,3 +168,51 @@ export interface Paginated<T> {
 export type Result<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
+
+/** One title in the release schedule — premiere-derived fields only. The
+ *  schedule is fact-limited: not-yet-aired titles can carry a premiere date +
+ *  weekday, currently-airing titles usually cannot (upstream exposes no
+ *  broadcast slot), so `premiereDate` / `weekday` are nullable by design. */
+export interface ScheduleItem {
+  id: string;
+  title: string;
+  jname: string | null;
+  poster: string | null;
+  type: string | null;
+  status: string | null;
+  /** Raw upstream Aired window, e.g. "Sep 7, 2026 to ?". */
+  aired: string | null;
+  /** ISO "YYYY-MM-DD" of the premiere, when derivable from `aired`. */
+  premiereDate: string | null;
+  /** Weekday name of the premiere, when derivable (e.g. "Saturday"). */
+  weekday: string | null;
+  /** True when the title has not premiered yet (Provider "Not yet aired"). */
+  isUpcoming: boolean;
+}
+
+/** One weekday bucket in the weekly calendar. */
+export interface ScheduleWeekday {
+  day: string;
+  items: ScheduleItem[];
+}
+
+export interface ScheduleModel {
+  /** Upstream page the schedule was scraped from. */
+  source: string | null;
+  updatedAt: string | null;
+  counted: {
+    airing: number;
+    upcoming: number;
+    /** Upcoming titles with a derivable premiere date. */
+    premieres: number;
+    /** Upcoming titles without a derivable date (TBD). */
+    tbd: number;
+  };
+  /** Premiere-dated upcoming titles grouped by weekday (Monday..Sunday,
+   *  only days that have items). Every item here also appears in `upcoming`. */
+  week: ScheduleWeekday[];
+  /** Currently-airing titles (no weekday available from upstream). */
+  airing: ScheduleItem[];
+  /** Upcoming titles, sorted by premiere date (TBD last). */
+  upcoming: ScheduleItem[];
+}
