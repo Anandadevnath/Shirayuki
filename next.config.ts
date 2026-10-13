@@ -23,6 +23,11 @@ const POSTER_HOSTS = [
   // Missing from the allowlist earlier → runtime "next-image-unconfigured-host"
   // exception on the home Spotlight slide 0 + any card using `<Image>`.
   "hianime.at",
+  // Schedule detail-page posters sometimes resolve to MAL's CDN (the release
+  // calendar enriches airing titles from their own pages, which occasionally
+  // point at myanimelist artwork). Without this, those calendar cards throw
+  // "next-image-unconfigured-host" and render broken.
+  "myanimelist.net",
 ];
 
 const nextConfig: NextConfig = {
