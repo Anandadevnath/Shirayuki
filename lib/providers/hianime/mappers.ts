@@ -134,6 +134,8 @@ function toScheduleItem(r: RawScheduleItem): ScheduleItem {
     aired: cleanStr(r.aired),
     premiereDate: r.premiereDate ?? null,
     weekday: r.weekday ?? null,
+    airTime: cleanStr(r.airTime),
+    episodeNumber: cleanStr(r.episodeNumber),
     isUpcoming: r.isUpcoming ?? false,
   };
 }

@@ -193,6 +193,9 @@ const scheduleItem = z
     aired: str,
     premiereDate: str,
     weekday: str,
+    // Present on the real theme "Estimated Schedule" day payloads.
+    airTime: str,
+    episodeNumber: str,
     isUpcoming: z.boolean().optional(),
   })
   .passthrough();

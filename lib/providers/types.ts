@@ -169,10 +169,10 @@ export type Result<T> =
   | { ok: true; data: T }
   | { ok: false; error: string };
 
-/** One title in the release schedule — premiere-derived fields only. The
- *  schedule is fact-limited: not-yet-aired titles can carry a premiere date +
- *  weekday, currently-airing titles usually cannot (upstream exposes no
- *  broadcast slot), so `premiereDate` / `weekday` are nullable by design. */
+/** One title in the release schedule. `airTime` / `episodeNumber` come from the
+ *  real theme "Estimated Schedule" widget payloads; `premiereDate` / `weekday`
+ *  are the premiere-derived fields kept from the fallback week. All exhibit
+ *  provider nullability, so every display field stays nullable by design. */
 export interface ScheduleItem {
   id: string;
   title: string;
@@ -182,10 +182,14 @@ export interface ScheduleItem {
   status: string | null;
   /** Raw upstream Aired window, e.g. "Sep 7, 2026 to ?". */
   aired: string | null;
-  /** ISO "YYYY-MM-DD" of the premiere, when derivable from `aired`. */
+  /** ISO "YYYY-MM-DD" of the air date, when known. */
   premiereDate: string | null;
-  /** Weekday name of the premiere, when derivable (e.g. "Saturday"). */
+  /** Weekday name (e.g. "Saturday"), alumni of `premiereDate`. */
   weekday: string | null;
+  /** Scheduled air time from the theme schedule widget, e.g. "23:30". */
+  airTime?: string | null;
+  /** Scheduled episode label, e.g. "Episode 2". */
+  episodeNumber?: string | null;
   /** True when the title has not premiered yet (Provider "Not yet aired"). */
   isUpcoming: boolean;
 }
