@@ -1,11 +1,12 @@
 import { CalendarDays } from "lucide-react";
 import type { Metadata } from "next";
 import { getSchedule, safe } from "@/lib/api";
-import type { AnimeCardModel, ScheduleItem } from "@/lib/providers/types";
+import type { AnimeCardModel, ScheduleItem, ScheduleWeekday } from "@/lib/providers/types";
 import { Grid } from "@/components/anime/Grid";
 import { ErrorState } from "@/components/common/States";
 import { SectionHeader } from "@/components/common/SectionHeader";
-import { ScheduleDayColumn, ScheduleItemRow } from "@/components/schedule/ScheduleCalendar";
+import { ScheduleCalendar, ScheduleItemRow } from "@/components/schedule/ScheduleCalendar";
+import { WEEK_ORDER } from "@/lib/utils/schedule";
 
 export const dynamic = "force-dynamic";
 
@@ -47,6 +48,15 @@ export default async function SchedulePage() {
   const hasUpcoming = s.upcoming.length > 0;
   const hasAiring = s.airing.length > 0;
 
+  // Present the calendar in canonical Sat→Fri order (the provider does not
+  // guarantee bucket ordering), filling any missing weekday with an empty
+  // bucket so the marquee loop is always complete and balanced.
+  const byDay = new Map(s.week.map((b) => [b.day, b.items]));
+  const orderedWeek: ScheduleWeekday[] = WEEK_ORDER.map((day) => ({
+    day,
+    items: byDay.get(day) ?? [],
+  }));
+
   if (!hasWeek && !hasUpcoming && !hasAiring) {
     return (
       <div className="pt-10">
@@ -80,11 +90,7 @@ export default async function SchedulePage() {
       {hasWeek && (
         <section className="mb-12">
           <SectionHeader eyebrow="Weekly" title="Premieres by weekday" />
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {s.week.map((b) => (
-              <ScheduleDayColumn key={b.day} day={b.day} items={b.items} />
-            ))}
-          </div>
+          <ScheduleCalendar days={orderedWeek} />
         </section>
       )}
 
