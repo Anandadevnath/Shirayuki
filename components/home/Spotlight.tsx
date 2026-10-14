@@ -243,16 +243,16 @@ export function Spotlight({
             zone". The leading edge sits at the absolute top of the section,
             so the navbar (which overlaps the section via -mt-24) blends into
             the gradient instead of clipping it. */}
-        <div className="absolute inset-0 bg-gradient-to-r from-base/95 via-base/45 to-base/70" />
+        <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/35 to-base/60" />
         {/* Bottom scrim — a tall, feathered cinematic fade so the key art melts
-            into the dark page instead of ending in a hard band. The darkest
-            portion (solid base) hugs the very bottom edge and blends seamlessly
-            into the page background, a soft mid-tone sits low (~30% up the
-            band), then a long transparent tail feathers out before mid-hero.
-            Stop %s are relative to this band, which spans the bottom ~34% of
-            the hero — darkness stays at the hero's bottom, and nothing spills
-            onto the Trending heading/cards that now sit naturally below. */}
-        <div className="absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-base from-4% via-base/40 via-30% to-transparent" />
+            into the dark page instead of ending in a hard band. Kept lighter
+            and airier than before: the darkness stays seated near the very
+            bottom edge (via sits at ~32% with a soft /30 tone), and the long
+            transparent tail feathers out through the middle of the hero. So
+            the art glows through the whole band, the Trending section below
+            reads clearly, and the transition into the next section stays
+            smooth — no dense pocket of darkness to trip the eye. */}
+        <div className="absolute inset-x-0 bottom-0 h-[36%] bg-gradient-to-t from-base/85 from-6% via-base/30 via-32% to-transparent" />
         <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/85 via-base/55 via-35% via-base/25 to-transparent" />
 
         {/* ── Left vertical "featured" strip ── */}

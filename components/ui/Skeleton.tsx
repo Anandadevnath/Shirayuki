@@ -98,8 +98,8 @@ export function SpotlightSkeleton() {
       <div className="relative flex h-[94svh] min-h-[680px] max-h-[1120px] w-full flex-col">
         <div className="absolute inset-0 bg-surface-2 shimmer" />
         {/* Match the hero scrims so the skeleton sits in the same light. */}
-        <div className="absolute inset-0 bg-gradient-to-r from-base/95 via-base/45 to-base/70" />
-        <div className="absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-base from-4% via-base/40 via-30% to-transparent" />
+        <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/35 to-base/60" />
+        <div className="absolute inset-x-0 bottom-0 h-[36%] bg-gradient-to-t from-base/85 from-6% via-base/30 via-32% to-transparent" />
         <div className="relative z-10 flex flex-1 items-center pb-[8vh]">
           <div className="mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
             <div className="flex max-w-xl flex-col gap-5 reveal">

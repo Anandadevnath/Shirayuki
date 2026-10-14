@@ -77,12 +77,14 @@ function TrendCard({
             alt=""
             fill
             sizes="224px"
-            className="object-cover brightness-[0.88]"
+            className="object-cover brightness-[0.97]"
           />
         )}
 
-        {/* Scrim — deep at the bottom to seat the chart number + title */}
-        <div className="absolute inset-0 bg-gradient-to-t from-base via-base/35 to-transparent" />
+        {/* Scrim — a light bottom anchor to seat the chart number + title.
+            Softer than before so the artwork stays clearly visible; the
+            rank/title carry their own text-shadow for legibility. */}
+        <div className="absolute inset-0 bg-gradient-to-t from-base/90 via-base/20 to-transparent" />
 
         {/* Frost wash on hover — tints the art instead of a slow `filter`
             transition on the poster. */}
