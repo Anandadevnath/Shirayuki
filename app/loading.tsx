@@ -16,7 +16,10 @@ export default function Loading() {
     <div>
       <SpotlightSkeleton />
       <div className="relative">
-        <div className="relative z-10 flex flex-col gap-12 -translate-y-[8vh] sm:-translate-y-[14vh]">
+        {/* Matches page.tsx: the real page's section stack sits in normal flow
+            below the hero (no translate), so the skeleton must too — otherwise
+            the skeleton→content swap jumps vertically. */}
+        <div className="relative z-10 flex flex-col gap-12">
           <TrendingSkeleton />
           <LatestEpisodesSkeleton />
 

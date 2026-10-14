@@ -95,12 +95,12 @@ export function GridSkeleton({ count = 18 }: { count?: number }) {
 export function SpotlightSkeleton() {
   return (
     <section className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-hidden">
-      <div className="relative flex h-[82svh] min-h-[600px] max-h-[1000px] w-full flex-col">
+      <div className="relative flex h-[94svh] min-h-[680px] max-h-[1120px] w-full flex-col">
         <div className="absolute inset-0 bg-surface-2 shimmer" />
         {/* Match the hero scrims so the skeleton sits in the same light. */}
         <div className="absolute inset-0 bg-gradient-to-r from-base/95 via-base/45 to-base/70" />
-        <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-base from-6% via-base/25 via-42% to-transparent" />
-        <div className="relative z-10 flex flex-1 items-center">
+        <div className="absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-base from-4% via-base/40 via-30% to-transparent" />
+        <div className="relative z-10 flex flex-1 items-center pb-[8vh]">
           <div className="mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
             <div className="flex max-w-xl flex-col gap-5 reveal">
               <Skeleton className="h-10 w-3/4 rounded-lg sm:h-14" />

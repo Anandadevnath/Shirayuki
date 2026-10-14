@@ -182,7 +182,7 @@ export function Spotlight({
       onFocus={() => setInteracting(true)}
       onBlur={() => setInteracting(false)}
     >
-      <div className="relative flex h-[82svh] min-h-[600px] max-h-[1000px] w-full flex-col">
+      <div className="relative flex h-[94svh] min-h-[680px] max-h-[1120px] w-full flex-col">
         {/* ── Background depth: a single sharp key art (priority on slide 0)
             sits over a blurred backdrop painted from the same poster URL. The
             backdrop is a SECOND <Image> at quality={50} so it goes through
@@ -244,7 +244,15 @@ export function Spotlight({
             so the navbar (which overlaps the section via -mt-24) blends into
             the gradient instead of clipping it. */}
         <div className="absolute inset-0 bg-gradient-to-r from-base/95 via-base/45 to-base/70" />
-        <div className="absolute inset-x-0 bottom-0 h-[58%] bg-gradient-to-t from-base from-6% via-base/25 via-42% to-transparent" />
+        {/* Bottom scrim — a tall, feathered cinematic fade so the key art melts
+            into the dark page instead of ending in a hard band. The darkest
+            portion (solid base) hugs the very bottom edge and blends seamlessly
+            into the page background, a soft mid-tone sits low (~30% up the
+            band), then a long transparent tail feathers out before mid-hero.
+            Stop %s are relative to this band, which spans the bottom ~34% of
+            the hero — darkness stays at the hero's bottom, and nothing spills
+            onto the Trending heading/cards that now sit naturally below. */}
+        <div className="absolute inset-x-0 bottom-0 h-[34%] bg-gradient-to-t from-base from-4% via-base/40 via-30% to-transparent" />
         <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/85 via-base/55 via-35% via-base/25 to-transparent" />
 
         {/* ── Left vertical "featured" strip ── */}
@@ -293,9 +301,10 @@ export function Spotlight({
             jumps), keyboard arrows and drag-to-swipe. The old prev / next arrow
             buttons were removed for a clean, chrome-free banner. ── */}
 
-        {/* ── Copy + CTAs, anchored to the upper-left so the lower band stays
-            clear for the Trending rail that tucks up beneath the hero. ── */}
-        <div className="relative z-10 flex flex-1 items-center">
+        {/* ── Copy + CTAs, centred in the full-height hero with a slight
+            upward bias (pb-[8vh]) so the block sits comfortably above the
+            bottom fade — balanced composition, nothing tucks under the hero. */}
+        <div className="relative z-10 flex flex-1 items-center pb-[8vh]">
           <div className="mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
             <div className="flex max-w-xl flex-col gap-4">
               <h2 className="font-display text-3xl font-extrabold leading-[1.04] [text-shadow:0_2px_28px_rgba(0,0,0,0.8)] sm:text-4xl md:text-5xl">

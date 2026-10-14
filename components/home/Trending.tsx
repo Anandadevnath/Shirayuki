@@ -400,7 +400,7 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
     typeof s.rank === "number" ? s.rank : i + 1;
 
   return (
-    <section className="relative">
+    <section className="relative -mt-48">
       {/* Editorial header — frost accent bar + stacked eyebrow/title, with
           scroll arrows on the right (reduced-motion only). */}
       <div className="mb-4 flex items-center gap-4">

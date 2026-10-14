@@ -38,7 +38,7 @@ export function ReleaseSchedule({ data }: { data: ScheduleModel }) {
         href="/schedule"
         seeAllLabel="Full schedule"
       />
-      <ScheduleCalendar days={days} />
+      <ScheduleCalendar days={days} autoRotate />
     </section>
   );
 }

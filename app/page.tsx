@@ -91,16 +91,13 @@ export default async function HomePage() {
           the hero art stays uncluttered. */}
       <h1 className="sr-only">Browse, discover and watch anime — Sode no Shirayuki</h1>
 
-      <div className="relative">
-        <div
-          aria-hidden
-          className="pointer-events-none absolute left-1/2 top-0 h-72 w-screen -translate-x-1/2 bg-gradient-to-b from-base from-5% via-base/55 via-45% to-transparent"
-        />
-
-        {/* Section-level cascade — each board section fades up in sequence as
-            the page paints, so nothing snaps in. Pure-CSS, runs once on mount
-            (no scroll observer, so content is never gated behind hydration). */}
-        <div className="relative z-10 flex flex-col gap-12 -translate-y-[5vh] sm:-translate-y-[9vh]">
+      {/* Section-level cascade — each board section fades up in sequence as
+          the page paints, so nothing snaps in. Pure-CSS, runs once on mount
+          (no scroll observer, so content is never gated behind hydration).
+          The stack sits in normal document flow below the full-bleed hero, so
+          sections follow a clean top-to-bottom rhythm — no artificial pull-up
+          that would overlap the hero's bottom and clip card edges. */}
+      <div className="relative z-10 flex flex-col gap-12">
           <div className="reveal" style={{ ["--reveal-delay" as string]: "0ms" }}>
             <ContinueWatching />
           </div>
@@ -155,7 +152,6 @@ export default async function HomePage() {
             <Top10Tabs buckets={home.top10} />
           </div>
         </div>
-      </div>
     </div>
   );
 }

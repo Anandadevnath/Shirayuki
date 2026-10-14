@@ -1,13 +1,14 @@
 "use client";
 
 import Link from "next/link";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import type { ScheduleItem, ScheduleWeekday } from "@/lib/providers/types";
 import { SmartImage } from "@/components/ui/SmartImage";
 import { TypePill } from "@/components/anime/Badges";
 import { RAIL_FADE } from "@/components/common/RailShell";
 import { cn } from "@/lib/utils/cn";
+import { useReducedMotionSSR } from "@/lib/utils/useReducedMotion";
 
 /**
  * Shared release-calendar pieces. Used by both the full /schedule page and the
@@ -152,9 +153,15 @@ export function ScheduleItemCard({ it }: { it: ScheduleItem }) {
 export function ScheduleCalendar({
   days,
   className,
+  autoRotate = false,
 }: {
   days: ScheduleWeekday[];
   className?: string;
+  /** Home-marquee mode: auto-advance the active weekday on a timer, sweeping
+   *  each day's rail forward before looping. Never runs under
+   *  prefers-reduced-motion and freezes while hovered / focused / touched
+   *  (mirrors the Trending marquee's pause behavior). */
+  autoRotate?: boolean;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   // Default to the first weekday that actually has releases (Saturday in the
@@ -164,26 +171,72 @@ export function ScheduleCalendar({
     return first === -1 ? 0 : first;
   });
 
+  const reduce = useReducedMotionSSR();
+
   const select = (i: number) => {
     setActive(i);
     // Day changed → return the rail to the start so the first card is visible.
     const scroller = scrollerRef.current;
     if (!scroller) return;
-    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
     scroller.scrollTo({ left: 0, behavior: reduce ? "auto" : "smooth" });
   };
 
   const nudge = (dir: 1 | -1) => {
     const scroller = scrollerRef.current;
     if (!scroller) return;
-    scroller.scrollBy({ left: dir * scroller.clientWidth * 0.85, behavior: "smooth" });
+    scroller.scrollBy({
+      left: dir * scroller.clientWidth * 0.85,
+      behavior: reduce ? "auto" : "smooth",
+    });
   };
+
+  // Auto-rotate marquee (home teaser): sweep the active day's rail forward in
+  // viewport steps, then advance the weekday tab and loop. Skipped entirely
+  // under prefers-reduced-motion (the calendar stays a plain manual widget)
+  // and paused while hovered / focused / touched so an interaction can land.
+  const pausedRef = useRef(false);
+  useEffect(() => {
+    if (!autoRotate || reduce) return;
+    // ms between timer steps — the sweep cadence (also the dwell once a day
+    // has been swept to its end).
+    const STEP = 3200;
+    let timer: number;
+    const step = () => {
+      const scroller = scrollerRef.current;
+      const atEnd = scroller
+        ? scroller.scrollLeft + scroller.clientWidth >= scroller.scrollWidth - 4
+        : true;
+      if (!pausedRef.current && atEnd) {
+        // Day swept → reset the rail and advance the weekday, looping Sat→Fri.
+        scroller?.scrollTo({ left: 0 });
+        setActive((a) => (a + 1) % days.length);
+      } else if (!pausedRef.current) {
+        // Still releases off-screen → sweep the rail on by ~a viewport.
+        scroller?.scrollBy({ left: scroller.clientWidth * 0.85, behavior: "smooth" });
+      }
+      // Paused (pausedRef.current) → re-arm without acting; the loop resumes
+      // the moment hover / focus / touch ends.
+      timer = window.setTimeout(step, STEP);
+    };
+    timer = window.setTimeout(step, STEP);
+    return () => window.clearTimeout(timer);
+  }, [autoRotate, reduce, days.length]);
 
   const day = days[active];
   const isEmpty = day.items.length === 0;
 
   return (
-    <div className={cn(className)}>
+    <div
+      className={cn(className)}
+      // Freeze the auto-rotate while the user is hovering / focused / touching
+      // the calendar so a tab or card click always lands before the next step.
+      onPointerEnter={() => { pausedRef.current = true; }}
+      onPointerLeave={() => { pausedRef.current = false; }}
+      onFocus={() => { pausedRef.current = true; }}
+      onBlur={() => { pausedRef.current = false; }}
+      onTouchStart={() => { pausedRef.current = true; }}
+      onTouchEnd={() => { pausedRef.current = false; }}
+    >
       {/* Weekday nav (Sat → Fri) with release counts — clicking a day swaps the
           rail below to that day's releases. Scroll chevrons sit at the end. */}
       <div className="mb-3 flex items-center gap-2">
