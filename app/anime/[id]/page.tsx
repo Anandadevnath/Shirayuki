@@ -7,7 +7,6 @@ import { getAnime, getEpisodes, getHome, getAnimeSeasons, getAnimeArt, safe } fr
 import { SeasonRail } from "@/components/details/SeasonRail";
 import { ArtGallery } from "@/components/details/ArtGallery";
 import { CastSection } from "@/components/details/CastSection";
-import { ArtistsSection } from "@/components/details/ArtistsSection";
 import { Rail } from "@/components/anime/Rail";
 import { EpBadges } from "@/components/anime/Badges";
 import { truncate } from "@/lib/utils/format";
@@ -253,12 +252,6 @@ export default async function AnimePage({ params }: Params) {
       {art && art.characters.length > 0 && (
         <div className="mt-12">
           <CastSection characters={art.characters} charactersTotal={art.charactersTotal} />
-        </div>
-      )}
-
-      {art && (art.artists.length > 0 || art.company) && (
-        <div className="mt-12">
-          <ArtistsSection artists={art.artists} company={art.company} />
         </div>
       )}
 
