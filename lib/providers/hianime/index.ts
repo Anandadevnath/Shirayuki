@@ -177,7 +177,6 @@ export async function getEpisodes(id: string): Promise<EpisodesModel> {
   return {
     animeId: data.id ?? id,
     totalEpisodes: data.totalEpisodes,
-    ranges: [],
     episodes: data.episodes.map((e) => ({
       number: e.episode,
       title: e.title ?? null,
@@ -255,7 +254,6 @@ export async function getServers(
     episode: data.episode ?? ep ?? 1,
     sub: map(data.servers?.sub ?? [], "sub"),
     dub: map(data.servers?.dub ?? [], "dub"),
-    hsub: [],
   };
 }
 
@@ -321,7 +319,7 @@ export async function getAnimeSeasons(id: string): Promise<SeasonModel[] | null>
   return (data.seasons ?? []).map(M.toSeasonItem);
 }
 
-/** /art bundle — franchise posters + artists + cast + lead company. */
+/** /art bundle — franchise posters + cast (voice actors). */
 export async function getAnimeArt(id: string): Promise<AnimeArtBundle | null> {
   const { data } = await apiFetch(
     `${V2}/anime/${encodeURIComponent(id)}/art`,

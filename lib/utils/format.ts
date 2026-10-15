@@ -21,3 +21,16 @@ export function truncate(text: string, max = 180): string {
   if (text.length <= max) return text;
   return text.slice(0, max).trimEnd() + "…";
 }
+
+/** "top-airing" → "Top Airing" (URL slug → human label). Pure, SSR/client-safe. */
+export function titleize(s: string): string {
+  return s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+}
+
+/** Any display string → kebab-case URL slug, e.g. "Sci-Fi & Fantasy" → "sci-fi-fantasy". */
+export function slugify(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}

@@ -47,7 +47,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
   const displayEp = episodes.find((e) => e.episodeId === episodeId)?.number ?? epNum;
   const servers = serversRes.ok
     ? serversRes.data
-    : { sub: [], dub: [], hsub: [], animeId: id, episode: epNum };
+    : { sub: [], dub: [], animeId: id, episode: epNum };
 
   const category: "sub" | "dub" =
     cat === "dub" && servers.dub.length ? "dub" : "sub";

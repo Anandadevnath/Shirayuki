@@ -7,6 +7,7 @@ import {
   Share2, Check, Sparkles, Award, Languages, Activity,
 } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
+import { revealDelay } from "@/lib/utils/reveal";
 import { isInList as isInListLocal, toggleList, WATCHLIST_EVENT } from "@/lib/watchlist/local";
 
 interface CinematicInfoProps {
@@ -236,7 +237,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
       {/* ── Main grid: poster / content / stat rail ────────────── */}
       <div className="grid grid-cols-1 gap-6 p-5 sm:p-6 md:grid-cols-[180px_1fr_220px] md:gap-7">
         {/* ── LEFT: Premium poster ───────────────────────────── */}
-        <div className="reveal flex justify-center md:justify-start" style={{ ["--reveal-delay" as string]: "60ms" }}>
+        <div className="reveal flex justify-center md:justify-start" style={revealDelay(60)}>
           <div className="group/poster relative w-[180px]">
             {/* Glass frame with poster inside */}
             <div className="poster-float relative">
@@ -270,7 +271,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
         <div className="flex min-w-0 flex-col gap-3.5">
           {/* Eyebrow + title + alt + rating badge */}
           <div className="space-y-1.5">
-            <div className="title-rise" style={{ ["--reveal-delay" as string]: "120ms" }}>
+            <div className="title-rise" style={revealDelay(120)}>
               <span className="frost-eyebrow mb-2">
                 <Award className="size-3" />
                 {type} · {premiered}
@@ -287,7 +288,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
 
             <div
               className="title-rise flex flex-wrap items-center gap-2 pt-1"
-              style={{ ["--reveal-delay" as string]: "200ms" }}
+              style={revealDelay(200)}
             >
               <RatingBadge score={anime.score} malScore={anime.malScore} />
               {anime.rating && (
@@ -301,7 +302,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
           {/* Quick metadata chip strip */}
           <div
             className="title-rise flex flex-wrap gap-1.5"
-            style={{ ["--reveal-delay" as string]: "260ms" }}
+            style={revealDelay(260)}
           >
             <MetaChip icon={Film}>{type}</MetaChip>
             <MetaChip icon={Calendar}>{premiered}</MetaChip>
@@ -311,7 +312,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
           {genres.length > 0 && (
             <div
               className="title-rise flex flex-wrap gap-1.5"
-              style={{ ["--reveal-delay" as string]: "320ms" }}
+              style={revealDelay(320)}
             >
               {genres.map((g) => (
                 <button
@@ -329,7 +330,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
           {anime.description && (
             <div
               className="title-rise"
-              style={{ ["--reveal-delay" as string]: "380ms" }}
+              style={revealDelay(380)}
             >
               <ReadMore text={anime.description} />
             </div>
@@ -345,7 +346,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
         {/* ── RIGHT: Floating stat rail ────────────────────── */}
         <div
           className="title-rise flex flex-col gap-2"
-          style={{ ["--reveal-delay" as string]: "180ms" }}
+          style={revealDelay(180)}
         >
           <StatCard
             icon={Star}
@@ -490,7 +491,7 @@ function ActionButtons({
     <>
       <div
         className="title-rise flex flex-wrap gap-2 pt-1"
-        style={{ ["--reveal-delay" as string]: "440ms" }}
+        style={revealDelay(440)}
       >
         <button
           type="button"

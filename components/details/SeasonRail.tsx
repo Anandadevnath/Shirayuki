@@ -3,6 +3,7 @@ import { Play } from "lucide-react";
 import type { SeasonModel } from "@/lib/providers/types";
 import { RailShell } from "@/components/common/RailShell";
 import { SmartImage } from "@/components/ui/SmartImage";
+import { revealDelay } from "@/lib/utils/reveal";
 import { cn } from "@/lib/utils/cn";
 
 /**
@@ -54,7 +55,7 @@ export function SeasonRail({
           <Link
             key={s.id}
             href={`/anime/${s.id}`}
-            style={{ ["--reveal-delay" as string]: `${Math.min(i, 9) * 60}ms` }}
+            style={revealDelay(Math.min(i, 9) * 60)}
             className="reveal group block w-44 shrink-0 snap-start sm:w-52 md:w-56"
           >
             <div

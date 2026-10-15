@@ -1,4 +1,5 @@
 import type { AnimeCardModel } from "@/lib/providers/types";
+import { revealDelay } from "@/lib/utils/reveal";
 import { AnimeCard } from "./AnimeCard";
 
 export function Grid({ items }: { items: AnimeCardModel[] }) {
@@ -13,7 +14,7 @@ export function Grid({ items }: { items: AnimeCardModel[] }) {
         <div
           key={a.id}
           className="reveal"
-          style={{ ["--reveal-delay" as string]: `${Math.min(i, 11) * 28}ms` }}
+          style={revealDelay(Math.min(i, 11) * 28)}
         >
           <AnimeCard anime={a} />
         </div>

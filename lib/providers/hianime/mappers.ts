@@ -5,7 +5,6 @@ import type {
   rawCard,
   SeasonData,
   ArtData,
-  ArtistItemData,
   CharacterItemData,
 } from "./schemas";
 import type {
@@ -17,7 +16,6 @@ import type {
   SeasonModel,
   SpotlightModel,
   AnimeArtBundle,
-  ArtistModel,
   CharacterModel,
 } from "../types";
 
@@ -170,15 +168,6 @@ export function toSchedule(d: ScheduleData): ScheduleModel {
 
 /* ── /art bundle mappers ──────────────────────────────────────────────────── */
 
-function toArtist(r: ArtistItemData): ArtistModel {
-  return {
-    name: r.name ?? "Unknown",
-    slug: r.slug ?? null,
-    kind: r.kind === "producer" ? "producer" : "studio",
-    url: r.url ?? null,
-  };
-}
-
 function toCharacter(r: CharacterItemData): CharacterModel {
   const va = r.voiceActor;
   return {
@@ -202,7 +191,6 @@ function toCharacter(r: CharacterItemData): CharacterModel {
 }
 
 export function toArtBundle(d: ArtData): AnimeArtBundle {
-  const companyRaw = d.company;
   return {
     source: cleanStr(d.source),
     anime: {
@@ -219,18 +207,7 @@ export function toArtBundle(d: ArtData): AnimeArtBundle {
       poster: a.poster ?? null,
       title: a.title ?? null,
     })),
-    artists: (d.artists ?? []).map(toArtist),
     characters: (d.characters ?? []).map(toCharacter),
     charactersTotal: d.charactersTotal ?? (d.characters?.length ?? 0),
-    company: companyRaw
-      ? {
-          name: companyRaw.name ?? "Unknown",
-          slug: companyRaw.slug ?? null,
-          kind: companyRaw.kind === "producer" ? "producer" : "studio",
-          url: companyRaw.url ?? null,
-          logo: companyRaw.logo ?? null,
-          logoColor: companyRaw.logoColor ?? null,
-        }
-      : null,
   };
 }

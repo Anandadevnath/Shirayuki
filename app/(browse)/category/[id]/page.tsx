@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { getCategory, safe } from "@/lib/api";
+import { titleize } from "@/lib/utils/format";
 import { Grid } from "@/components/anime/Grid";
 import { Pagination } from "@/components/common/Pagination";
 import { EmptyState, ErrorState } from "@/components/common/States";
@@ -9,12 +10,9 @@ type Props = {
   searchParams: Promise<{ page?: string }>;
 };
 
-const pretty = (s: string) =>
-  s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
-
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id } = await params;
-  return { title: pretty(id) };
+  return { title: titleize(id) };
 }
 
 export default async function CategoryPage({ params, searchParams }: Props) {
@@ -25,7 +23,7 @@ export default async function CategoryPage({ params, searchParams }: Props) {
 
   return (
     <div className="pt-4">
-      <h1 className="mb-6 text-2xl font-bold">{pretty(id)}</h1>
+      <h1 className="mb-6 text-2xl font-bold">{titleize(id)}</h1>
       {!res.ok ? (
         <ErrorState retryHref={`/category/${id}`} />
       ) : !res.data.results.length ? (

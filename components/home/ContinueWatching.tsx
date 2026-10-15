@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Play, X } from "lucide-react";
 import { listProgress, removeProgress, type WatchEntry } from "@/lib/progress/local";
 import { formatTime } from "@/lib/utils/format";
+import { revealDelay } from "@/lib/utils/reveal";
 import { SectionHeader } from "@/components/common/SectionHeader";
 import { SmartImage } from "@/components/ui/SmartImage";
 
@@ -39,7 +40,7 @@ export function ContinueWatching() {
           return (
             <div
               key={e.animeId}
-              style={{ ["--reveal-delay" as string]: `${i * 70}ms` }}
+              style={revealDelay(i * 70)}
               className="reveal group relative w-[62vw] shrink-0 sm:w-[280px]"
             >
               <Link

@@ -5,6 +5,7 @@ import {
   PanelSkeleton,
   ScheduleSkeleton,
 } from "@/components/ui/Skeleton";
+import { revealDelay } from "@/lib/utils/reveal";
 
 /**
  * Home route skeleton. Mirrors page.tsx's section order and spacing exactly so
@@ -42,7 +43,7 @@ export default function Loading() {
                   <div
                     key={i}
                     className="reveal"
-                    style={{ ["--reveal-delay" as string]: `${Math.min(i, 9) * 45}ms` }}
+                    style={revealDelay(Math.min(i, 9) * 45)}
                   >
                     <div className="aspect-[3/4] w-full rounded-[1.25rem] bg-surface-2 shimmer" />
                   </div>

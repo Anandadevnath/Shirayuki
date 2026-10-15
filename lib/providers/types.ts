@@ -118,7 +118,6 @@ export interface EpisodeModel {
 export interface EpisodesModel {
   animeId: string;
   totalEpisodes: number;
-  ranges: string[];
   episodes: EpisodeModel[];
 }
 
@@ -135,7 +134,6 @@ export interface ServersModel {
   episode: number;
   sub: ServerModel[];
   dub: ServerModel[];
-  hsub: ServerModel[];
 }
 
 export interface SubtitleTrack {
@@ -223,7 +221,7 @@ export interface ScheduleModel {
   upcoming: ScheduleItem[];
 }
 
-/* ── art / artists / cast bundles (from /art and /artists) ─────────────────── */
+/* ── art / cast bundle (from /art) ─────────────────────────────────────────── */
 
 /** One franchise poster in the art gallery (detail poster + siblings). */
 export interface ArtItem {
@@ -231,21 +229,6 @@ export interface ArtItem {
   slug: string | null;
   poster: string | null;
   title: string | null;
-}
-
-export interface ArtistModel {
-  name: string;
-  slug: string | null;
-  /** studio | producer — how the title credits the company. */
-  kind: "studio" | "producer";
-  url: string | null;
-}
-
-export interface CompanyModel extends ArtistModel {
-  /** logo URL when the provider resolved one; otherwise null. */
-  logo: string | null;
-  /** server-derived fallback swatch for the absent logo. */
-  logoColor: string | null;
 }
 
 export interface VoiceActorModel {
@@ -269,7 +252,7 @@ export interface CharacterModel {
   voiceActor: VoiceActorModel | null;
 }
 
-/** The full /art bundle — franchise posters, artists, cast and company. */
+/** The full /art bundle — franchise posters and cast. */
 export interface AnimeArtBundle {
   source: string | null;
   anime: {
@@ -281,8 +264,6 @@ export interface AnimeArtBundle {
     description: string | null;
   };
   art: ArtItem[];
-  artists: ArtistModel[];
   characters: CharacterModel[];
   charactersTotal: number;
-  company: CompanyModel | null;
 }

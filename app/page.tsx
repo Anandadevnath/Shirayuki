@@ -1,4 +1,5 @@
 import { getHome, getSchedule, safe } from "@/lib/api";
+import { revealDelay } from "@/lib/utils/reveal";
 import { Spotlight } from "@/components/home/Spotlight";
 import { ContinueWatching } from "@/components/home/ContinueWatching";
 import { Trending } from "@/components/home/Trending";
@@ -103,21 +104,21 @@ export default async function HomePage() {
               when Continue Watching has no items it returns null and Trending
               simply rides below the hero — when it does have items, Continue
               Watching renders AFTER Trending so Trending never shifts. */}
-          <div className="reveal" style={{ ["--reveal-delay" as string]: "0ms" }}>
+          <div className="reveal" style={revealDelay(0)}>
             <Trending items={home.trending} />
           </div>
 
-          <div className="reveal" style={{ ["--reveal-delay" as string]: "80ms" }}>
+          <div className="reveal" style={revealDelay(80)}>
             <ContinueWatching />
           </div>
 
           {/* Card rails first — posters get room to breathe. Latest Episodes
               gets the cinematic 3D treatment (pointer-tilt floating posters). */}
-          <div className="reveal" style={{ ["--reveal-delay" as string]: "160ms" }}>
+          <div className="reveal" style={revealDelay(160)}>
             <LatestEpisodes items={home.latestEpisodes} />
           </div>
 
-          <div className="reveal" style={{ ["--reveal-delay" as string]: "240ms" }}>
+          <div className="reveal" style={revealDelay(240)}>
             <DiscoverColumns
               topAiring={home.topAiring}
               mostPopular={home.mostPopular}
@@ -131,7 +132,7 @@ export default async function HomePage() {
               between the discovery columns and the Latest Completed / Top 10
               pair, mirroring hianime's own section order. No "See all" link:
               the upstream hianime.at has no dedicated /upcoming listing page. */}
-          <div className="reveal" style={{ ["--reveal-delay" as string]: "280ms" }}>
+          <div className="reveal" style={revealDelay(280)}>
             <Rail title="Top Upcoming" eyebrow="Premieres" items={home.upcoming} />
           </div>
 
@@ -139,7 +140,7 @@ export default async function HomePage() {
               Renders only when the schedule endpoint succeeded; a failure
               silently drops this section (see scheduleRes gate above). */}
           {scheduleRes.ok && (
-            <div className="reveal" style={{ ["--reveal-delay" as string]: "320ms" }}>
+            <div className="reveal" style={revealDelay(320)}>
               <ReleaseSchedule data={scheduleRes.data} />
             </div>
           )}
@@ -150,7 +151,7 @@ export default async function HomePage() {
               fill, so neither panel is left with dead space. Stacks on mobile. */}
           <div
             className="reveal grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]"
-            style={{ ["--reveal-delay" as string]: "360ms" }}
+            style={revealDelay(360)}
           >
             <QuickLists completed={completed} />
 

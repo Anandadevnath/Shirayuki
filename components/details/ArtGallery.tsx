@@ -3,6 +3,7 @@ import { Images } from "lucide-react";
 import type { ArtItem } from "@/lib/providers/types";
 import { RailShell } from "@/components/common/RailShell";
 import { SmartImage } from "@/components/ui/SmartImage";
+import { revealDelay } from "@/lib/utils/reveal";
 import { cn } from "@/lib/utils/cn";
 
 /**
@@ -32,7 +33,7 @@ export function ArtGallery({
         <Link
           key={`${a.id}-${i}`}
           href={`/anime/${a.id}`}
-          style={{ ["--reveal-delay" as string]: `${Math.min(i, 9) * 60}ms` }}
+          style={revealDelay(Math.min(i, 9) * 60)}
           className="reveal group block w-36 shrink-0 snap-start sm:w-40 md:w-44"
         >
           <div

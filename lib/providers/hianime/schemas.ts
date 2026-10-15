@@ -254,12 +254,6 @@ export type SeasonsData = z.infer<typeof seasonsData>;
 
 const artItemData = z.object({ id: str, slug: str, poster: str, title: str }).passthrough();
 
-const artistItemData = z.object({ name: str, slug: str, kind: str, url: str }).passthrough();
-
-const companyItemData = z
-  .object({ name: str, slug: str, kind: str, url: str, logo: str, logoColor: str })
-  .passthrough();
-
 const voiceActorData = z
   .object({ id: str, slug: str, name: str, poster: str, language: str, url: str })
   .passthrough();
@@ -285,16 +279,12 @@ export const artData = z
     source: str,
     anime: animeArtSummary,
     art: z.array(artItemData).default([]),
-    artists: z.array(artistItemData).default([]),
     characters: z.array(characterItemData).default([]),
     charactersTotal: z.number().default(0),
-    company: companyItemData.nullable().optional(),
   })
   .passthrough();
 export type ArtData = z.infer<typeof artData>;
 export type ArtItemData = z.infer<typeof artItemData>;
-export type ArtistItemData = z.infer<typeof artistItemData>;
-export type CompanyItemData = z.infer<typeof companyItemData>;
 export type CharacterItemData = z.infer<typeof characterItemData>;
 export type VoiceActorItemData = z.infer<typeof voiceActorData>;
 export type AnimeArtSummaryData = z.infer<typeof animeArtSummary>;

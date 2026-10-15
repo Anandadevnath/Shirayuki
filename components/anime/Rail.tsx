@@ -1,4 +1,5 @@
 import type { AnimeCardModel } from "@/lib/providers/types";
+import { revealDelay } from "@/lib/utils/reveal";
 import { RailShell } from "@/components/common/RailShell";
 import { AnimeCard } from "./AnimeCard";
 
@@ -21,7 +22,7 @@ export function Rail({
         <AnimeCard
           key={`${a.id}-${a.episodeNumber ?? ""}`}
           anime={a}
-          style={{ ["--reveal-delay" as string]: `${Math.min(i, 9) * 60}ms` }}
+          style={revealDelay(Math.min(i, 9) * 60)}
           className="reveal w-[44vw] shrink-0 sm:w-[24vw] md:w-[200px]"
         />
       ))}

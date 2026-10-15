@@ -9,7 +9,7 @@ import { ArtGallery } from "@/components/details/ArtGallery";
 import { CastSection } from "@/components/details/CastSection";
 import { Rail } from "@/components/anime/Rail";
 import { EpBadges } from "@/components/anime/Badges";
-import { truncate } from "@/lib/utils/format";
+import { truncate, slugify } from "@/lib/utils/format";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -45,7 +45,7 @@ export default async function AnimePage({ params }: Params) {
   const firstEp = episodes[0]?.episodeId;
 
   // Seasons + interleaved movies (provider timeline) and the /art bundle
-  // (franchise posters, artists, cast, lead company). Optional — every block
+  // (franchise posters, cast). Optional — every block
   // below guards on presence so a partial failure degrades gracefully.
   const seasons = seasonsRes.ok ? seasonsRes.data?.filter(Boolean) ?? [] : [];
   const art = artRes.ok && artRes.data ? artRes.data : null;
@@ -216,7 +216,7 @@ export default async function AnimePage({ params }: Params) {
                 {a.genres.map((g) => (
                   <Link
                     key={g}
-                    href={`/genre/${g.toLowerCase().replace(/\s+/g, "-")}`}
+                    href={`/genre/${slugify(g)}`}
                     className="rounded-sm border border-line bg-surface/50 px-2 py-0.5 text-[11px] text-muted transition-colors hover:border-frost/40 hover:text-frost"
                   >
                     {g}

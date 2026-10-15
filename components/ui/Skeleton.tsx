@@ -1,4 +1,5 @@
 import { cn } from "@/lib/utils/cn";
+import { revealDelay } from "@/lib/utils/reveal";
 
 /**
  * Premium skeleton primitives — frost-sheened placeholders that mirror the real
@@ -25,7 +26,7 @@ function Stagger({
         <div
           key={i}
           className="reveal-fade"
-          style={{ ["--reveal-delay" as string]: `${i * 60}ms` }}
+          style={revealDelay(i * 60)}
         >
           {children(i)}
         </div>
@@ -68,7 +69,7 @@ export function RailSkeleton({ cards = 7 }: { cards?: number }) {
           <CardSkeleton
             key={i}
             className="reveal w-[44vw] shrink-0 sm:w-[24vw] md:w-[200px]"
-            style={{ ["--reveal-delay" as string]: `${i * 70}ms` }}
+            style={revealDelay(i * 70)}
           />
         ))}
       </div>
@@ -84,7 +85,7 @@ export function GridSkeleton({ count = 18 }: { count?: number }) {
         <CardSkeleton
           key={i}
           className="reveal"
-          style={{ ["--reveal-delay" as string]: `${Math.min(i, 11) * 45}ms` }}
+          style={revealDelay(Math.min(i, 11) * 45)}
         />
       ))}
     </div>
@@ -140,7 +141,7 @@ export function TrendingSkeleton({ cards = 6 }: { cards?: number }) {
           <div
             key={i}
             className="reveal w-44 shrink-0 sm:w-52 md:w-56"
-            style={{ ["--reveal-delay" as string]: `${i * 70}ms` }}
+            style={revealDelay(i * 70)}
           >
             <Skeleton className="aspect-[3/2] w-full rounded-2xl" />
           </div>
@@ -170,7 +171,7 @@ export function LatestEpisodesSkeleton() {
                 transform: `translateX(${off * 78}%) scale(${1 - abs * 0.12}) rotateY(${-Math.sign(off) * Math.min(abs, 2) * 28}deg)`,
                 opacity: 1 - abs * 0.22,
                 zIndex: 10 - abs,
-                ["--reveal-delay" as string]: `${abs * 80}ms`,
+                ...revealDelay(abs * 80),
               }}
             >
               <Skeleton
