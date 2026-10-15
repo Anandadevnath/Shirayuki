@@ -21,6 +21,10 @@ export interface PlayerProps {
   outro: { start: number; end: number } | null;
   meta: Omit<WatchEntry, "seconds" | "duration" | "updatedAt">;
   nextHref: string | null;
+  /** Upstream Referer the subtitle CDN requires (propagated to
+   *  /api/subtitle so the .vtt fetch doesn't 403). Mirrors `src`'s
+   *  /api/stream referer handling. */
+  referer?: string | null;
 }
 
 interface Level { height: number; index: number }
@@ -31,7 +35,7 @@ interface Level { height: number; index: number }
 // reconciliation passes per second.
 const TICK_MS = 120;
 
-export function Player({ src, poster, tracks, intro, outro, meta, nextHref }: PlayerProps) {
+export function Player({ src, poster, tracks, intro, outro, meta, nextHref, referer }: PlayerProps) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
@@ -527,7 +531,9 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref }: Pl
         videoRef={videoRef}
         src={
           captionsOn && trackIdx >= 0 && tracks[trackIdx]
-            ? `/api/subtitle?url=${encodeURIComponent(tracks[trackIdx]!.src)}`
+            ? `/api/subtitle?url=${encodeURIComponent(
+                tracks[trackIdx]!.src,
+              )}${referer ? `&referer=${encodeURIComponent(referer)}` : ""}`
             : null
         }
         visible={captionsOn}

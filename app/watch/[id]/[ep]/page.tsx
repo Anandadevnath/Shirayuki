@@ -104,6 +104,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
                 intro={sources.intro}
                 outro={sources.outro}
                 nextHref={nextHref}
+                referer={sources.referer}
                 meta={{
                   animeId: id,
                   title: anime.title,
