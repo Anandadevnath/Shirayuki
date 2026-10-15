@@ -98,12 +98,17 @@ export default async function HomePage() {
           sections follow a clean top-to-bottom rhythm — no artificial pull-up
           that would overlap the hero's bottom and clip card edges. */}
       <div className="relative z-10 flex flex-col gap-12">
+          {/* Trending keeps its hero-overlap position (v0 layout) so the home
+              page stays stable whether or not the user has watch history:
+              when Continue Watching has no items it returns null and Trending
+              simply rides below the hero — when it does have items, Continue
+              Watching renders AFTER Trending so Trending never shifts. */}
           <div className="reveal" style={{ ["--reveal-delay" as string]: "0ms" }}>
-            <ContinueWatching />
+            <Trending items={home.trending} />
           </div>
 
           <div className="reveal" style={{ ["--reveal-delay" as string]: "80ms" }}>
-            <Trending items={home.trending} />
+            <ContinueWatching />
           </div>
 
           {/* Card rails first — posters get room to breathe. Latest Episodes
