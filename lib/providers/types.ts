@@ -102,6 +102,8 @@ export interface SeasonModel {
   episodes: EpisodeCount;
   order: number | null;
   isCurrent: boolean;
+  /** true when the entry is a franchise MOVIE interleaved with the seasons. */
+  isMovie?: boolean;
   season: number | null;
   part: number | null;
 }
@@ -219,4 +221,68 @@ export interface ScheduleModel {
   airing: ScheduleItem[];
   /** Upcoming titles, sorted by premiere date (TBD last). */
   upcoming: ScheduleItem[];
+}
+
+/* ── art / artists / cast bundles (from /art and /artists) ─────────────────── */
+
+/** One franchise poster in the art gallery (detail poster + siblings). */
+export interface ArtItem {
+  id: string;
+  slug: string | null;
+  poster: string | null;
+  title: string | null;
+}
+
+export interface ArtistModel {
+  name: string;
+  slug: string | null;
+  /** studio | producer — how the title credits the company. */
+  kind: "studio" | "producer";
+  url: string | null;
+}
+
+export interface CompanyModel extends ArtistModel {
+  /** logo URL when the provider resolved one; otherwise null. */
+  logo: string | null;
+  /** server-derived fallback swatch for the absent logo. */
+  logoColor: string | null;
+}
+
+export interface VoiceActorModel {
+  id: string | null;
+  slug: string | null;
+  name: string | null;
+  poster: string | null;
+  /** dub language, e.g. \"Japanese\". */
+  language: string | null;
+  url: string | null;
+}
+
+export interface CharacterModel {
+  id: string | null;
+  slug: string | null;
+  name: string | null;
+  poster: string | null;
+  /** billed role on this title, e.g. \"Main\". */
+  role: string | null;
+  url: string | null;
+  voiceActor: VoiceActorModel | null;
+}
+
+/** The full /art bundle — franchise posters, artists, cast and company. */
+export interface AnimeArtBundle {
+  source: string | null;
+  anime: {
+    id: string | null;
+    slug: string | null;
+    title: string | null;
+    jname: string | null;
+    poster: string | null;
+    description: string | null;
+  };
+  art: ArtItem[];
+  artists: ArtistModel[];
+  characters: CharacterModel[];
+  charactersTotal: number;
+  company: CompanyModel | null;
 }

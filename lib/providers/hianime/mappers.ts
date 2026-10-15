@@ -1,5 +1,13 @@
 import type { z } from "zod";
-import type { DetailData, ScheduleData, rawCard } from "./schemas";
+import type {
+  DetailData,
+  ScheduleData,
+  rawCard,
+  SeasonData,
+  ArtData,
+  ArtistItemData,
+  CharacterItemData,
+} from "./schemas";
 import type {
   AnimeCardModel,
   AnimeDetail,
@@ -8,6 +16,9 @@ import type {
   ScheduleModel,
   SeasonModel,
   SpotlightModel,
+  AnimeArtBundle,
+  ArtistModel,
+  CharacterModel,
 } from "../types";
 
 type Raw = z.infer<typeof rawCard>;
@@ -61,20 +72,21 @@ function cleanStr(v: unknown): string | null {
   return typeof v === "string" && v.trim() ? v.trim() : null;
 }
 
-function toSeason(r: Raw): SeasonModel {
+export function toSeasonItem(r: SeasonData): SeasonModel {
   const eps = r.episodes ?? {};
   return {
-    id: slugId(r) ?? r.id ?? "",
+    id: r.id ?? "",
     title: r.title ?? r.jname ?? "Untitled",
     jname: r.jname ?? null,
-    poster: r.poster ?? r.banner ?? null,
+    poster: r.poster ?? null,
     type: r.type ?? null,
-    year: r.duration ?? null,
+    year: r.year ?? null,
     episodes: { sub: eps.sub ?? null, dub: eps.dub ?? null },
-    order: null,
-    isCurrent: false,
-    season: null,
-    part: null,
+    order: r.order ?? null,
+    isCurrent: r.isCurrent ?? false,
+    isMovie: r.isMovie ?? false,
+    season: r.season ?? null,
+    part: r.part ?? null,
   };
 }
 
@@ -153,5 +165,72 @@ export function toSchedule(d: ScheduleData): ScheduleModel {
     week: (d.week ?? []).map((w) => ({ day: w.day ?? "", items: (w.items ?? []).map(toScheduleItem) })),
     airing: (d.airing ?? []).map(toScheduleItem),
     upcoming: (d.upcoming ?? []).map(toScheduleItem),
+  };
+}
+
+/* ── /art bundle mappers ──────────────────────────────────────────────────── */
+
+function toArtist(r: ArtistItemData): ArtistModel {
+  return {
+    name: r.name ?? "Unknown",
+    slug: r.slug ?? null,
+    kind: r.kind === "producer" ? "producer" : "studio",
+    url: r.url ?? null,
+  };
+}
+
+function toCharacter(r: CharacterItemData): CharacterModel {
+  const va = r.voiceActor;
+  return {
+    id: r.id ?? null,
+    slug: r.slug ?? null,
+    name: r.name ?? "Unknown",
+    poster: r.poster ?? null,
+    role: cleanStr(r.role),
+    url: r.url ?? null,
+    voiceActor: va
+      ? {
+          id: va.id ?? null,
+          slug: va.slug ?? null,
+          name: va.name ?? "Unknown",
+          poster: va.poster ?? null,
+          language: cleanStr(va.language),
+          url: va.url ?? null,
+        }
+      : null,
+  };
+}
+
+export function toArtBundle(d: ArtData): AnimeArtBundle {
+  const companyRaw = d.company;
+  return {
+    source: cleanStr(d.source),
+    anime: {
+      id: d.anime?.id ?? null,
+      slug: d.anime?.slug ?? null,
+      title: d.anime?.title ?? null,
+      jname: d.anime?.jname ?? null,
+      poster: d.anime?.poster ?? null,
+      description: cleanStr(d.anime?.description),
+    },
+    art: (d.art ?? []).map((a) => ({
+      id: a.id ?? "",
+      slug: a.slug ?? null,
+      poster: a.poster ?? null,
+      title: a.title ?? null,
+    })),
+    artists: (d.artists ?? []).map(toArtist),
+    characters: (d.characters ?? []).map(toCharacter),
+    charactersTotal: d.charactersTotal ?? (d.characters?.length ?? 0),
+    company: companyRaw
+      ? {
+          name: companyRaw.name ?? "Unknown",
+          slug: companyRaw.slug ?? null,
+          kind: companyRaw.kind === "producer" ? "producer" : "studio",
+          url: companyRaw.url ?? null,
+          logo: companyRaw.logo ?? null,
+          logoColor: companyRaw.logoColor ?? null,
+        }
+      : null,
   };
 }

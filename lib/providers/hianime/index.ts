@@ -11,6 +11,8 @@ import type {
   ServerCategory,
   ServersModel,
   SourcesModel,
+  SeasonModel,
+  AnimeArtBundle,
 } from "../types";
 
 const HOME_REVALIDATE = 900;
@@ -308,3 +310,24 @@ export async function getSources(
     outro: data.outro ?? null,
   };
 }
+
+/** Franchise timeline — seasons AND interleaved movies, chronologically. */
+export async function getAnimeSeasons(id: string): Promise<SeasonModel[] | null> {
+  const { data } = await apiFetch(
+    `${V2}/anime/${encodeURIComponent(id)}/seasons`,
+    S.envelope(S.seasonsData),
+    { revalidate: DETAIL_REVALIDATE, tags: [`seasons:${id}`] },
+  );
+  return (data.seasons ?? []).map(M.toSeasonItem);
+}
+
+/** /art bundle — franchise posters + artists + cast + lead company. */
+export async function getAnimeArt(id: string): Promise<AnimeArtBundle | null> {
+  const { data } = await apiFetch(
+    `${V2}/anime/${encodeURIComponent(id)}/art`,
+    S.envelope(S.artData),
+    { revalidate: DETAIL_REVALIDATE, tags: [`art:${id}`] },
+  );
+  return M.toArtBundle(data);
+}
+

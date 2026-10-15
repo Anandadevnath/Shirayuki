@@ -3,8 +3,11 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Play, Film, Clapperboard } from "lucide-react";
-import { getAnime, getEpisodes, safe } from "@/lib/api";
+import { getAnime, getEpisodes, getHome, getAnimeSeasons, getAnimeArt, safe } from "@/lib/api";
 import { SeasonRail } from "@/components/details/SeasonRail";
+import { ArtGallery } from "@/components/details/ArtGallery";
+import { CastSection } from "@/components/details/CastSection";
+import { ArtistsSection } from "@/components/details/ArtistsSection";
 import { Rail } from "@/components/anime/Rail";
 import { EpBadges } from "@/components/anime/Badges";
 import { truncate } from "@/lib/utils/format";
@@ -29,15 +32,25 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function AnimePage({ params }: Params) {
   const { id } = await params;
-  const [detailRes, epRes] = await Promise.all([
+  const [detailRes, epRes, seasonsRes, artRes, homeRes] = await Promise.all([
     safe(() => getAnime(id)),
     safe(() => getEpisodes(id)),
+    safe(() => getAnimeSeasons(id)),
+    safe(() => getAnimeArt(id)),
+    safe(() => getHome()),
   ]);
 
   if (!detailRes.ok || !detailRes.data) notFound();
   const a = detailRes.data;
   const episodes = epRes.ok ? epRes.data.episodes : [];
   const firstEp = episodes[0]?.episodeId;
+
+  // Seasons + interleaved movies (provider timeline) and the /art bundle
+  // (franchise posters, artists, cast, lead company). Optional — every block
+  // below guards on presence so a partial failure degrades gracefully.
+  const seasons = seasonsRes.ok ? seasonsRes.data?.filter(Boolean) ?? [] : [];
+  const art = artRes.ok && artRes.data ? artRes.data : null;
+  const upcoming = homeRes.ok ? homeRes.data.upcoming : [];
 
   const japanese = a.jname;
   const aired = a.aired;
@@ -225,21 +238,39 @@ export default async function AnimePage({ params }: Params) {
         </aside>
       </div>
 
-      {a.seasons.length > 0 && (
+      {seasons.length > 0 && (
         <div className="mt-10">
-          <SeasonRail items={a.seasons} currentId={a.id} />
+          <SeasonRail items={seasons} currentId={id} />
         </div>
       )}
 
-      {a.trending.length > 0 && (
+      {art && art.art.length > 0 && (
         <div className="mt-10">
-          <Rail title="Trending" items={a.trending} />
+          <ArtGallery items={art.art} currentId={id} />
+        </div>
+      )}
+
+      {art && art.characters.length > 0 && (
+        <div className="mt-12">
+          <CastSection characters={art.characters} charactersTotal={art.charactersTotal} />
+        </div>
+      )}
+
+      {art && (art.artists.length > 0 || art.company) && (
+        <div className="mt-12">
+          <ArtistsSection artists={art.artists} company={art.company} />
         </div>
       )}
 
       {a.recommended.length > 0 && (
         <div className="mt-10">
-          <Rail title="Recommended" items={a.recommended} />
+          <Rail title="Related" items={a.recommended} />
+        </div>
+      )}
+
+      {upcoming.length > 0 && (
+        <div className="mt-10">
+          <Rail title="Upcoming" eyebrow="Fresh Premieres" items={upcoming} href="/schedule" />
         </div>
       )}
     </div>

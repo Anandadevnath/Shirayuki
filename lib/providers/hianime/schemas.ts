@@ -219,3 +219,82 @@ export type ScheduleData = z.infer<typeof scheduleData>;
 /** Standard envelope: { success, data } */
 export const envelope = <T extends z.ZodTypeAny>(data: T) =>
   z.object({ success: z.boolean().optional(), data });
+
+/** One entry in the franchise timeline (seasons + movies). */
+export const seasonData = z
+  .object({
+    id: str,
+    title: str,
+    jname: str,
+    poster: str,
+    type: str,
+    episodes: z.object({ total: num, sub: num, dub: num }).partial().nullable().optional(),
+    year: str,
+    isCurrent: z.boolean().optional(),
+    isMovie: z.boolean().optional(),
+    season: num,
+    part: num,
+    order: num,
+  })
+  .passthrough();
+export type SeasonData = z.infer<typeof seasonData>;
+
+export const seasonsData = z
+  .object({
+    source: str,
+    keyword: str,
+    base: str,
+    total: z.number().default(0),
+    seasons: z.array(seasonData).default([]),
+  })
+  .passthrough();
+export type SeasonsData = z.infer<typeof seasonsData>;
+
+/* ── /art bundle ─────────────────────────────────────────────────────────── */
+
+const artItemData = z.object({ id: str, slug: str, poster: str, title: str }).passthrough();
+
+const artistItemData = z.object({ name: str, slug: str, kind: str, url: str }).passthrough();
+
+const companyItemData = z
+  .object({ name: str, slug: str, kind: str, url: str, logo: str, logoColor: str })
+  .passthrough();
+
+const voiceActorData = z
+  .object({ id: str, slug: str, name: str, poster: str, language: str, url: str })
+  .passthrough();
+
+const characterItemData = z
+  .object({
+    id: str,
+    slug: str,
+    name: str,
+    poster: str,
+    role: str,
+    url: str,
+    voiceActor: voiceActorData.nullable().optional(),
+  })
+  .passthrough();
+
+const animeArtSummary = z
+  .object({ id: str, slug: str, title: str, jname: str, poster: str, description: str })
+  .passthrough();
+
+export const artData = z
+  .object({
+    source: str,
+    anime: animeArtSummary,
+    art: z.array(artItemData).default([]),
+    artists: z.array(artistItemData).default([]),
+    characters: z.array(characterItemData).default([]),
+    charactersTotal: z.number().default(0),
+    company: companyItemData.nullable().optional(),
+  })
+  .passthrough();
+export type ArtData = z.infer<typeof artData>;
+export type ArtItemData = z.infer<typeof artItemData>;
+export type ArtistItemData = z.infer<typeof artistItemData>;
+export type CompanyItemData = z.infer<typeof companyItemData>;
+export type CharacterItemData = z.infer<typeof characterItemData>;
+export type VoiceActorItemData = z.infer<typeof voiceActorData>;
+export type AnimeArtSummaryData = z.infer<typeof animeArtSummary>;
