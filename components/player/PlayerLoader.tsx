@@ -17,7 +17,7 @@ export const PlayerLoader = dynamic(
       // P9 fix: shimmer instead of a flat black box. The aspect-video
       // wrapper keeps the layout footprint identical so there is no shift
       // when the player chunk hydrates.
-      <div className="aspect-video w-full rounded-t-md bg-surface-2 shimmer" aria-hidden />
+      <div className="aspect-video w-full rounded-t-md bg-surface-2 shimmer-loop" aria-hidden />
     ),
   },
 );

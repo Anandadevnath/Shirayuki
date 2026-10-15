@@ -228,7 +228,7 @@ export function Spotlight({
                   /* Skeleton-grade placeholder for unseen slides; matches the
                      exact dimensions of the sharp <Image> so when it swaps in
                      there's zero layout shift. */
-                  <div className="absolute inset-0 bg-surface-2 shimmer" />
+                  <div className="absolute inset-0 bg-surface-2 shimmer-loop" />
                 )}
               </div>
             ) : null,

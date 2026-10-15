@@ -4,10 +4,12 @@ import { revealDelay } from "@/lib/utils/reveal";
 /**
  * Premium skeleton primitives — frost-sheened placeholders that mirror the real
  * content's geometry so that when data arrives the swap causes zero layout shift.
- * The shimmer (frost sweep + soft pulse) lives in globals.css `.shimmer`.
+ * The shimmer (frost sweep + soft pulse) lives in globals.css: `.shimmer-loop`
+ * loops for placeholders that persist until data arrives; `.shimmer` is the
+ * one-shot variant reserved for SmartImage's cross-fade stack.
  */
 export function Skeleton({ className }: { className?: string }) {
-  return <div className={cn("rounded-md bg-surface-2 shimmer", className)} />;
+  return <div className={cn("rounded-md bg-surface-2 shimmer-loop", className)} />;
 }
 
 /** Staggered fade-in wrapper for skeleton groups so placeholders cascade in. */
@@ -45,7 +47,7 @@ export function CardSkeleton({
 }) {
   return (
     <div className={className} style={style}>
-      <Skeleton className="aspect-[3/4] w-full rounded-[1.25rem]" />
+      <Skeleton className="aspect-[3/4] w-full rounded-[1.25rem] ring-1 ring-line/80" />
     </div>
   );
 }
@@ -64,7 +66,7 @@ export function RailSkeleton({ cards = 7 }: { cards?: number }) {
           <Skeleton className="size-8 rounded-full" />
         </div>
       </div>
-      <div className="flex gap-4 overflow-hidden px-1">
+      <div className="flex gap-4 overflow-hidden px-1 pb-4 pt-3">
         {Array.from({ length: cards }).map((_, i) => (
           <CardSkeleton
             key={i}
@@ -97,7 +99,7 @@ export function SpotlightSkeleton() {
   return (
     <section className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-hidden">
       <div className="relative flex h-[94svh] min-h-[680px] max-h-[1120px] w-full flex-col">
-        <div className="absolute inset-0 bg-surface-2 shimmer" />
+        <div className="absolute inset-0 bg-surface-2 shimmer-loop" />
         {/* Match the hero scrims so the skeleton sits in the same light. */}
         <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/35 to-base/60" />
         <div className="absolute inset-x-0 bottom-0 h-[36%] bg-gradient-to-t from-base/85 from-6% via-base/30 via-32% to-transparent" />
@@ -189,9 +191,17 @@ export function LatestEpisodesSkeleton() {
 }
 
 // ── Dense list row (poster + 2 lines), used in rank/discover panels ───────────
-function ListRowSkeleton({ posterClass }: { posterClass: string }) {
+function ListRowSkeleton({
+  posterClass,
+  rank = false,
+}: {
+  posterClass: string;
+  rank?: boolean;
+}) {
   return (
     <div className="flex items-center gap-3 py-3">
+      {/* Rank numeral slot — mirrors RankList's reserved `w-6` column. */}
+      {rank && <Skeleton className="h-7 w-6 shrink-0 rounded-sm" />}
       <Skeleton className={cn("shrink-0 rounded-sm", posterClass)} />
       <div className="min-w-0 flex-1 space-y-2">
         <Skeleton className="h-3.5 w-4/5 rounded" />
@@ -205,17 +215,20 @@ function ListRowSkeleton({ posterClass }: { posterClass: string }) {
 export function PanelSkeleton({
   rows = 5,
   posterClass = "h-16 w-12",
+  rank = false,
   className,
 }: {
   rows?: number;
   posterClass?: string;
+  /** Render rank numeral placeholders (Top 10 style rows). */
+  rank?: boolean;
   className?: string;
 }) {
   return (
     <section className={cn("glass flex flex-col rounded-lg p-4 sm:p-5", className)}>
       <Skeleton className="mb-3 h-6 w-36 rounded-md" />
       <Stagger count={rows} className="flex flex-col divide-y divide-line/40">
-        {() => <ListRowSkeleton posterClass={posterClass} />}
+        {() => <ListRowSkeleton posterClass={posterClass} rank={rank} />}
       </Stagger>
     </section>
   );
@@ -308,7 +321,7 @@ export function WatchSkeleton() {
               >
                 <Skeleton className="size-7 shrink-0 rounded-sm" />
                 <div
-                  className="h-3.5 rounded bg-surface-2 shimmer"
+                  className="h-3.5 rounded bg-surface-2 shimmer-loop"
                   style={{ width: `${65 - (i % 4) * 10}%` }}
                 />
               </div>

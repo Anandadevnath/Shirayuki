@@ -35,8 +35,8 @@ export default function Loading() {
           <div className="grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]">
             <section className="glass rounded-lg p-4 sm:p-5">
               <div className="mb-4 flex flex-col items-center gap-2.5">
-                <div className="h-3 w-16 rounded bg-surface-2 shimmer" />
-                <div className="h-7 w-44 rounded-md bg-surface-2 shimmer" />
+                <div className="h-3 w-16 rounded bg-surface-2 shimmer-loop" />
+                <div className="h-7 w-44 rounded-md bg-surface-2 shimmer-loop" />
               </div>
               <div className="grid grid-cols-2 gap-x-4 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
                 {Array.from({ length: 10 }).map((_, i) => (
@@ -45,12 +45,12 @@ export default function Loading() {
                     className="reveal"
                     style={revealDelay(Math.min(i, 9) * 45)}
                   >
-                    <div className="aspect-[3/4] w-full rounded-[1.25rem] bg-surface-2 shimmer" />
+                    <div className="aspect-[3/4] w-full rounded-[1.25rem] bg-surface-2 shimmer-loop ring-1 ring-line/80" />
                   </div>
                 ))}
               </div>
             </section>
-            <PanelSkeleton rows={10} posterClass="h-20 w-14" />
+            <PanelSkeleton rows={10} posterClass="h-20 w-14" rank />
           </div>
 
           <ScheduleSkeleton />

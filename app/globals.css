@@ -269,6 +269,10 @@ header[data-scrolled="1"] {
    Skeleton shimmer — a frost sheen sweeping over a faintly breathing
    surface. The base pulses opacity while a soft highlight glides across,
    so placeholders read as "alive / loading" rather than static blocks.
+   Two variants share the sweep below: `.shimmer` runs exactly one cycle
+   (SmartImage cross-fades it out via `.shimmer-stack`), while
+   `.shimmer-loop` repeats for placeholders that persist until data
+   arrives (route skeletons, watchlist tiles, player loader).
    GPU-only (transform/opacity); honours reduced-motion below.
    ───────────────────────────────────────────────────────────── */
 @keyframes shimmer {
@@ -284,10 +288,14 @@ header[data-scrolled="1"] {
   0%, 80%, 100% { transform: scale(0.6); opacity: 0.35; }
   40%           { transform: scale(1);   opacity: 1; }
 }
-.shimmer {
+/* Shared positioning/isolation for both shimmer variants. */
+.shimmer,
+.shimmer-loop {
   position: relative;
   overflow: hidden;
   isolation: isolate;
+}
+.shimmer {
   /* `1 forwards` instead of `infinite` — once the image has decoded and
      `.shimmer-stack` (the wrapper) cross-faded to opacity 0, this element
      is invisible but the animation kept ticking against the compositor.
@@ -296,7 +304,14 @@ header[data-scrolled="1"] {
      sweep, so the placeholder is still visibly alive while it shows. */
   animation: skeleton-pulse 1.8s ease-in-out 1 forwards;
 }
-.shimmer::after {
+/* Looping variant for placeholders with no cross-fade partner — route-level
+   skeletons and persistent loaders stay visibly alive until real content
+   replaces them, instead of freezing to a static surface after one sweep. */
+.shimmer-loop {
+  animation: skeleton-pulse 1.8s ease-in-out infinite;
+}
+.shimmer::after,
+.shimmer-loop::after {
   content: "";
   position: absolute;
   inset: 0;
@@ -309,7 +324,25 @@ header[data-scrolled="1"] {
     color-mix(in oklch, var(--color-frost) 12%, transparent) 55%,
     transparent
   );
+}
+.shimmer::after {
   animation: shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) 1 forwards;
+}
+.shimmer-loop::after {
+  animation: shimmer 1.8s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+}
+
+/* Explicit reduced-motion guard: kill the sheen and the pulse entirely so
+   placeholders rest at full, static opacity. (The global catch-all below also
+   matches these elements; this keeps the skeleton behaviour readable here and
+   stops the ::after sweep from settling mid-frame under the catch-all.) */
+@media (prefers-reduced-motion: reduce) {
+  .shimmer,
+  .shimmer::after,
+  .shimmer-loop,
+  .shimmer-loop::after {
+    animation: none;
+  }
 }
 
 /* ─────────────────────────────────────────────────────────────

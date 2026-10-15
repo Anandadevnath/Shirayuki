@@ -8,7 +8,7 @@ import { GridSkeleton } from "@/components/ui/Skeleton";
 export default function Loading() {
   return (
     <div className="pt-4">
-      <div className="mb-6 h-8 w-56 rounded-md bg-surface-2 shimmer" />
+      <div className="mb-6 h-8 w-56 rounded-md bg-surface-2 shimmer-loop" />
       <GridSkeleton count={24} />
     </div>
   );

@@ -121,7 +121,7 @@ export async function Footer() {
           fallback={
             <div className="mt-9 flex flex-wrap justify-center gap-2" aria-hidden>
               {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-8 w-20 rounded-md bg-surface-2 shimmer" />
+                <div key={i} className="h-8 w-20 rounded-md bg-surface-2 shimmer-loop" />
               ))}
             </div>
           }
