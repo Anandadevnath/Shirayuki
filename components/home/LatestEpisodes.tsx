@@ -59,10 +59,10 @@ function pose(offset: number): Pose {
 }
 
 /**
- * One poster in the coverflow. The centre card (`active`) blooms forward with a
- * frost halo and reveals its meta; side cards angle back, dim and, on click,
- * glide to the centre instead of navigating. All motion is transform/opacity
- * only (GPU-composited) and flattened under reduced-motion.
+ * One poster in the coverflow. The centre card (`active`) blooms forward with
+ * its frost ring and reveals its meta; side cards angle back, dim and, on
+ * click, glide to the centre instead of navigating. All motion is
+ * transform/opacity only (GPU-composited) and flattened under reduced-motion.
  *
  * Memoized: receives a precomputed `Pose` (hoisted to the parent's useMemo)
  * so neighbour cards don't re-render on every state tick — only the active
@@ -108,37 +108,6 @@ const FlowCard = memo(function FlowCard({
         hidden && "pointer-events-none",
       )}
     >
-      {/* Frost floor-glow — only blooms beneath the centred hero. Off-stage
-          cards (`hidden` true) skip the layer entirely so their compositor
-          footprint is just the card itself. */}
-      {!hidden && (
-        <div
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute -inset-5 -z-10 rounded-[2.4rem] blur-2xl transition-opacity duration-500",
-            "bg-[radial-gradient(60%_60%_at_50%_45%,var(--color-frost)_0%,var(--color-frost-deep)_40%,transparent_72%)]",
-            active ? "opacity-30" : "opacity-0",
-          )}
-        />
-      )}
-
-      {/* Active hero's extra frost halo + deep drop — cross-faded via opacity
-          so the rest → active change is a single paint instead of a 500ms
-          box-shadow interpolation. Lives outside the inner overflow-clip so
-          the glow can spill past the card frame, matching the original look.
-          Off-stage cards skip it; visible-but-not-active cards keep it for
-          the cross-fade. */}
-      {!hidden && (
-        <div
-          aria-hidden
-          className={cn(
-            "pointer-events-none absolute -inset-4 -z-[5] rounded-[2rem] transition-opacity duration-500",
-            active ? "opacity-100" : "opacity-0",
-          )}
-          style={{ boxShadow: "0 40px 80px -24px rgba(0,0,0,0.9), var(--shadow-frost)" }}
-        />
-      )}
-
       {/* The poster frame — split into a static base + a hover-only shadow
           overlay so neither shadow ever needs to "transition" (which forces
           a paint every frame). The recede blur (--blur) is also dropped
