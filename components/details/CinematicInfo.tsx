@@ -235,7 +235,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
       </div>
 
       {/* ── Main grid: poster / content / stat rail ────────────── */}
-      <div className="grid grid-cols-1 gap-6 p-5 sm:p-6 md:grid-cols-[180px_1fr_220px] md:gap-7">
+      <div className="grid grid-cols-1 gap-6 p-5 sm:p-6 md:grid-cols-[180px_1fr] md:gap-7 lg:grid-cols-[180px_1fr_220px]">
         {/* ── LEFT: Premium poster ───────────────────────────── */}
         <div className="reveal flex justify-center md:justify-start" style={revealDelay(60)}>
           <div className="group/poster relative w-[180px]">
@@ -345,7 +345,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
 
         {/* ── RIGHT: Floating stat rail ────────────────────── */}
         <div
-          className="title-rise flex flex-col gap-2"
+          className="title-rise flex flex-col gap-2 md:col-span-2 md:grid md:grid-cols-2 lg:col-span-1 lg:flex lg:flex-col"
           style={revealDelay(180)}
         >
           <StatCard

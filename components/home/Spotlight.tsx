@@ -182,7 +182,7 @@ export function Spotlight({
       onFocus={() => setInteracting(true)}
       onBlur={() => setInteracting(false)}
     >
-      <div className="relative flex h-[94svh] min-h-[680px] max-h-[1120px] w-full flex-col">
+      <div className="relative flex h-[94svh] min-h-[min(680px,94svh)] max-h-[1120px] w-full flex-col">
         {/* ── Background depth: a single sharp key art (priority on slide 0)
             sits over a blurred backdrop painted from the same poster URL. The
             backdrop is a SECOND <Image> at quality={50} so it goes through
@@ -327,13 +327,13 @@ export function Spotlight({
               </div>
 
               {a.description && (
-                <p className="max-w-lg text-sm leading-relaxed text-muted/90 sm:line-clamp-2">
+                <p className="max-w-lg text-sm leading-relaxed text-muted/90 [@media(max-height:480px)]:hidden sm:line-clamp-2">
                   {truncate(a.description, 170)}
                 </p>
               )}
 
               {/* Stats row */}
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-snow">
+              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-snow [@media(max-height:480px)]:hidden">
                 {!!a.score && (
                   <span className="flex items-center gap-1.5">
                     <Star className="size-4 fill-warning text-warning" /> {a.score}
