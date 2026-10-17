@@ -13,7 +13,7 @@ import { revealDelay } from "@/lib/utils/reveal";
  * top-shift matches the hero pull-up the real page uses.
  *
  * Geometry contract with the real board (app/page.tsx): the section stack is a
- * plain `relative z-10 flex flex-col gap-12` — no extra wrapper — and each
+ * plain `.section-stack` (`relative z-10` — no extra wrapper) — and each
  * placeholder carries the SAME negative margin as the real section it mirrors
  * (SpotlightSkeleton `-mt-24`, TrendingSkeleton `-mt-48`). Above-the-fold board
  * sections then render directly (no reveal wrapper), so the swap from this
@@ -23,7 +23,7 @@ export default function Loading() {
   return (
     <div>
       <SpotlightSkeleton />
-      <div className="relative z-10 flex flex-col gap-12">
+      <div className="section-stack relative z-10">
         <TrendingSkeleton />
         <LatestEpisodesSkeleton />
 
@@ -37,7 +37,7 @@ export default function Loading() {
         </div>
 
         {/* Latest Completed grid + Top 10 panel */}
-        <div className="grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]">
+        <div className="grid grid-cols-1 items-stretch gap-x-6 gap-y-[var(--space-section)] lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]">
           <section className="glass rounded-lg p-4 sm:p-5">
             <div className="mb-4 flex flex-col items-center gap-2.5">
               <div className="h-3 w-16 rounded bg-surface-2 shimmer-loop" />

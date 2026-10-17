@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { PageHeader } from "@/components/common/SectionHeader";
 import { WatchlistClient } from "./WatchlistClient";
 
 export const metadata: Metadata = {
@@ -17,9 +18,8 @@ export const metadata: Metadata = {
  */
 export default function WatchlistPage() {
   return (
-    <div className="pt-4">
-      <p className="text-sm text-frost">Pick up where you left off</p>
-      <h1 className="mb-6 mt-1 text-2xl font-bold">Watchlist</h1>
+    <div className="flex flex-col gap-[var(--space-header)]">
+      <PageHeader eyebrow="Pick up where you left off" title="Watchlist" />
       <WatchlistClient />
     </div>
   );

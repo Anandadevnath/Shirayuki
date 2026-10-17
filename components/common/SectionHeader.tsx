@@ -3,6 +3,41 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
 
 /**
+ * Page-level header used by every browse / grid route (search, genre,
+ * category, A–Z, watchlist, schedule). Consolidates the eyebrow + title +
+ * optional lede rhythm that was previously hand-rolled per page, so the
+ * header-to-content gap is one value everywhere (`--space-header`).
+ *
+ * `eyebrow` renders the small frost label; `lede` is an optional muted
+ * paragraph under the title. Both are optional — a bare title is valid.
+ */
+export function PageHeader({
+  title,
+  eyebrow,
+  lede,
+  children,
+  className,
+}: {
+  title: ReactNode;
+  eyebrow?: ReactNode;
+  lede?: ReactNode;
+  /** right-aligned controls (rare on page headers) */
+  children?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <header className={cn("flex flex-col gap-1.5", className)}>
+      {eyebrow && <p className="text-sm font-medium text-frost">{eyebrow}</p>}
+      <div className="flex items-end justify-between gap-4">
+        <h1 className="font-display text-2xl font-bold leading-tight">{title}</h1>
+        {children}
+      </div>
+      {lede && <p className="max-w-2xl text-sm text-muted">{lede}</p>}
+    </header>
+  );
+}
+
+/**
  * The single section header used across the home page (and beyond) so every
  * rail / grid / panel shares one rhythm: a small frost eyebrow, a display
  * title, then an optional "See all" link and/or controls on the right.

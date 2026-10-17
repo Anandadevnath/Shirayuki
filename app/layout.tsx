@@ -122,7 +122,7 @@ export default function RootLayout({
       <body className="min-h-dvh overflow-x-clip antialiased">
         <RootEffects />
         <Nav />
-        <main className="relative mx-auto w-full max-w-[1460px] px-4 pb-24 pt-4 sm:px-6 lg:px-8">
+        <main className="page-shell relative mx-auto w-full max-w-[1460px] px-4 pb-24 sm:px-6 lg:px-8">
           {children}
         </main>
         <Footer />

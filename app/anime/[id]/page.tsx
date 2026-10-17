@@ -244,35 +244,40 @@ export default async function AnimePage({ params }: Params) {
         </aside>
       </div>
 
-      {seasons.length > 0 && (
-        <div className="mt-10">
-          <SeasonRail items={seasons} currentId={id} />
-        </div>
-      )}
+      {/* Trailing detail sections (franchise, art, cast, related, upcoming)
+          share one vertical rhythm via `.section-stack`, offset from the
+          hero/info grid by the global section gap. */}
+      <div className="section-stack mt-[var(--space-section)]">
+        {seasons.length > 0 && (
+          <div>
+            <SeasonRail items={seasons} currentId={id} />
+          </div>
+        )}
 
-      {art && art.art.length > 0 && (
-        <div className="mt-10">
-          <ArtGallery items={art.art} currentId={id} />
-        </div>
-      )}
+        {art && art.art.length > 0 && (
+          <div>
+            <ArtGallery items={art.art} currentId={id} />
+          </div>
+        )}
 
-      {art && art.characters.length > 0 && (
-        <div className="mt-12">
-          <CastSection characters={art.characters} charactersTotal={art.charactersTotal} />
-        </div>
-      )}
+        {art && art.characters.length > 0 && (
+          <div>
+            <CastSection characters={art.characters} charactersTotal={art.charactersTotal} />
+          </div>
+        )}
 
-      {a.recommended.length > 0 && (
-        <div className="mt-10">
-          <Rail title="Related" items={a.recommended} />
-        </div>
-      )}
+        {a.recommended.length > 0 && (
+          <div>
+            <Rail title="Related" items={a.recommended} />
+          </div>
+        )}
 
-      {upcoming.length > 0 && (
-        <div className="mt-10">
-          <Rail title="Upcoming" eyebrow="Fresh Premieres" items={upcoming} href="/schedule" />
-        </div>
-      )}
+        {upcoming.length > 0 && (
+          <div>
+            <Rail title="Upcoming" eyebrow="Fresh Premieres" items={upcoming} href="/schedule" />
+          </div>
+        )}
+      </div>
     </div>
   );
 }

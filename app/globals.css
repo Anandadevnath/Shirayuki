@@ -44,6 +44,25 @@
      icon controls and progress bars stay `rounded-full`. */
   --radius-btn: 0.625rem;
 
+  /* Spacing — the global vertical rhythm. Page shells, section stacks and
+     page headers all reference these so every route shares one scale
+     instead of ad-hoc pt-4 / pt-10 / mt-10 / mb-6 / gap-12 values.
+
+       1  --space-page-y    page top/bottom inset (below the fixed nav)
+       2  --space-section   gap between stacked page sections (home rails,
+                            schedule blocks, detail panels)
+       3  --space-header    gap below a page/section header block
+       4  --space-gutter    horizontal page gutter (matches the shared
+                            container's px-4 / sm:px-6 / lg:px-8 steps)
+
+     Tailwind v4 derives the numeric scale (gap-4, p-6, …) from these
+     custom properties, so `gap-section` / `p-page-y` utilities are also
+     available. Reference the tokens directly for one-off rhythm. */
+  --space-page-y: 2.5rem;   /* 40px */
+  --space-section: 3rem;    /* 48px */
+  --space-header: 1.5rem;   /* 24px */
+  --space-gutter: 1rem;     /* 16px */
+
   /* Shadows — cool, low-opacity, elevation via surface step + hairline.
      `--shadow-frost` is a restrained cool drop shadow used for card lift /
      hover; it hints at the accent without a coloured halo. `--shadow-neon`
@@ -130,6 +149,18 @@
   }
   .no-scrollbar { scrollbar-width: none; -ms-overflow-style: none; }
   .no-scrollbar::-webkit-scrollbar { display: none; }
+  /* Global page rhythm — every route's content root uses `.page-shell` so
+     the top inset below the fixed nav and the bottom run-out are identical
+     site-wide. Section stacks use `.section-stack` for the vertical gap
+     between sibling sections (home rails, schedule blocks, …). */
+  .page-shell {
+    padding-top: var(--space-page-y);
+  }
+  .section-stack {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-section);
+  }
   .text-gradient-frost {
     background: linear-gradient(135deg, var(--color-frost), var(--color-frost-deep));
     -webkit-background-clip: text;

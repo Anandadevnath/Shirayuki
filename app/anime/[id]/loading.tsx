@@ -8,7 +8,7 @@ import { Skeleton } from "@/components/ui/Skeleton";
  */
 export default function AnimeDetailLoading() {
   return (
-    <div className="pt-4">
+    <div>
       {/* Breadcrumb */}
       <div className="mb-4 flex items-center gap-2">
         <Skeleton className="h-3 w-10" />
@@ -60,7 +60,7 @@ export default function AnimeDetailLoading() {
       </div>
 
       {/* Franchise rails */}
-      <div className="mt-12">
+      <div className="mt-[var(--space-section)]">
         <Skeleton className="mb-4 h-7 w-40" />
         <div className="flex gap-4 overflow-hidden">
           {Array.from({ length: 6 }).map((_, i) => (
@@ -73,7 +73,7 @@ export default function AnimeDetailLoading() {
       </div>
 
       {/* Episode list panel */}
-      <div className="mt-12">
+      <div className="mt-[var(--space-section)]">
         <Skeleton className="mb-4 h-7 w-32" />
         <div className="mb-4 flex items-center justify-between">
           <Skeleton className="h-9 w-64 rounded-sm" />
@@ -89,7 +89,7 @@ export default function AnimeDetailLoading() {
       </div>
 
       {/* Cast grid */}
-      <div className="mt-12">
+      <div className="mt-[var(--space-section)]">
         <Skeleton className="mb-4 h-7 w-44" />
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
           {Array.from({ length: 10 }).map((_, i) => (

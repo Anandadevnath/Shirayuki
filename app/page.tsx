@@ -98,7 +98,7 @@ async function HomeBoard({
 
   if (!res.ok) {
     return (
-      <div className="pt-10">
+      <div>
         <ErrorState retryHref="/" />
       </div>
     );
@@ -123,7 +123,11 @@ async function HomeBoard({
   const lcpPoster = home.spotlight[0]?.poster ?? null;
 
   return (
-    <div>
+    /* The home hero is full-bleed and slides UNDER the fixed nav, so this
+       route neutralises the shared `.page-shell` top inset (it would push
+       the hero down by one page-y). Cancelling via the token — not a magic
+       pixel value — keeps the home offset tied to the global rhythm. */
+    <div style={{ marginTop: "calc(-1 * var(--space-page-y))" }}>
       {lcpPoster && (
         <link
           rel="preload"
@@ -162,7 +166,7 @@ async function HomeBoard({
 
           The fine-grained cascade lives inside each rail (cards stagger in
           DOM order); the section wrappers stay at delay 0. */}
-      <div className="relative z-10 flex flex-col gap-12">
+      <div className="section-stack relative z-10">
           {/* Trending keeps its hero-overlap position (v0 layout) so the home
               page stays stable whether or not the user has watch history:
               when Continue Watching has no items it returns null and Trending
@@ -210,7 +214,7 @@ async function HomeBoard({
               taller of the two) and the left poster grid distributes its rows to
               fill, so neither panel is left with dead space. Stacks on mobile. */}
           <Reveal
-            className="grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]"
+            className="grid grid-cols-1 items-stretch gap-x-6 gap-y-[var(--space-section)] lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]"
           >
             <QuickLists completed={completed} />
 
