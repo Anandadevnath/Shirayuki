@@ -160,8 +160,6 @@ export function ScheduleCalendar({
   days,
   className,
   autoRotate = false,
-  dates,
-  todayIndex,
 }: {
   days: ScheduleWeekday[];
   className?: string;
@@ -170,13 +168,6 @@ export function ScheduleCalendar({
    *  prefers-reduced-motion and freezes while hovered / focused / touched
    *  (mirrors the Trending marquee's pause behavior). */
   autoRotate?: boolean;
-  /** Optional calendar dates aligned with `days` (e.g. "Apr 26") — rendered
-   *  under each weekday label in a compact two-line cell, as in the
-   *  reference design. Omitted → the tabs render as before. */
-  dates?: (string | null)[];
-  /** Which of `days` is today, when `dates` is provided — that cell's
-   *  weekday label is replaced with "Today". */
-  todayIndex?: number;
 }) {
   const scrollerRef = useRef<HTMLDivElement>(null);
   // Default to the first weekday that actually has releases (Saturday in the
@@ -262,7 +253,6 @@ export function ScheduleCalendar({
         >
           {days.map((d, i) => {
             const isActive = i === active;
-            const isTodayCell = todayIndex === i;
             return (
               <button
                 key={d.day}
@@ -274,21 +264,14 @@ export function ScheduleCalendar({
                 className={cn(
                   "flex shrink-0 flex-col items-start rounded-lg border px-3 py-1.5 text-left transition-colors",
                   isActive
-                    ? "border-frost/60 bg-gradient-to-b from-frost/85 to-frost-deep/80 text-[#06101E]"
+                    ? "border-frost/50 bg-frost-soft text-frost"
                     : "border-line/60 bg-surface/40 text-muted hover:border-frost/30 hover:text-snow",
                 )}
               >
-                <span className="flex items-baseline gap-1.5">
-                  <span className={cn("text-[13px] font-bold leading-none", isActive ? "text-[#06101E]" : "text-snow")}>
-                    {isTodayCell ? "Today" : d.day}
-                  </span>
-                  {dates?.[i] != null && (
-                    <span className={cn("font-mono text-[10px] leading-none", isActive ? "text-[#06101E]/80" : "text-faint")}>
-                      {dates[i]}
-                    </span>
-                  )}
+                <span className={cn("text-[13px] font-bold leading-none", isActive ? "text-frost" : "text-snow")}>
+                  {d.day}
                 </span>
-                <span className={cn("mt-1 font-mono text-[10px] leading-none", isActive ? "text-[#06101E]/80" : "opacity-75")}>
+                <span className="mt-1 font-mono text-[10px] leading-none opacity-75">
                   {d.items.length} release{d.items.length === 1 ? "" : "s"}
                 </span>
               </button>
