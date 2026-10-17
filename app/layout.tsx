@@ -46,6 +46,11 @@ export const metadata: Metadata = {
   description:
     "A premium anime streaming experience with the cold elegance of fresh snow. Browse, discover, and watch with skip-intro, continue-watching, and a player that just works.",
   applicationName: "Sode no Shirayuki",
+  icons: {
+    icon: "/icon.png",
+    shortcut: "/icon.png",
+    apple: "/apple-icon.png",
+  },
   openGraph: {
     title: "Sode no Shirayuki",
     description: "Anime, in pure focus.",
