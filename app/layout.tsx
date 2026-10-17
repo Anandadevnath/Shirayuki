@@ -1,9 +1,10 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Geist_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
+import { Inter, Geist_Mono, Zen_Kaku_Gothic_New, Cormorant_Garamond } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { RootEffects } from "@/components/layout/RootEffects";
+import { Sidebar } from "@/components/layout/Sidebar";
 
 // Font weights are constrained to the set actually used in the codebase
 // (400 normal default, 500 medium, 600 semibold, 700 bold, 800 extrabold,
@@ -12,14 +13,21 @@ import { RootEffects } from "@/components/layout/RootEffects";
 // document head, which crushes the initial network budget. 900 is included
 // because one element uses `font-black`.
 //
-// Inter is the primary UI/display face — a modern, premium-looking grotesque
-// with excellent hinting, tight letter-spacing and strong tabular figures for
-// stats. Zen Kaku Gothic New stays loaded as a CJK fallback inside the display
-// stack so Japanese anime titles still render with deliberate, elegant glyphs.
+// Inter is the primary UI face. Cormorant Garamond is the REFERENCE serif —
+// it carries the hero title, section headings, and the wordmark (the
+// "winter anime portal" voice), while Zen Kaku Gothic New stays loaded as a
+// CJK fallback inside both display stacks so Japanese titles still render
+// with deliberate, elegant glyphs.
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800", "900"],
+  display: "swap",
+});
+const cormorant = Cormorant_Garamond({
+  variable: "--font-cormorant",
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
   display: "swap",
 });
 const geistMono = Geist_Mono({
@@ -88,7 +96,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${inter.variable} ${geistMono.variable} ${zen.variable}`}
+      className={`${inter.variable} ${cormorant.variable} ${geistMono.variable} ${zen.variable}`}
       // suppressHydrationWarning: the inline reveal-arm script below writes
       // a `data-anim` attribute onto <html> before React hydrates; it is
       // presentation-only state (see globals.css → "Viewport reveals").
@@ -116,11 +124,18 @@ export default function RootLayout({
       </head>
       <body className="min-h-dvh overflow-x-clip antialiased">
         <RootEffects />
-        <Nav />
-        <main className="relative mx-auto w-full max-w-[1460px] px-4 pb-24 pt-4 sm:px-6 lg:px-8">
-          {children}
-        </main>
-        <Footer />
+        {/* Reference layout: fixed ~225px left sidebar at desktop, main column
+            beside it. Below lg the sidebar is gone and the top bar + drawer
+            (Nav) is the only chrome. On /watch/* the sidebar steps aside so
+            the player keeps full width. */}
+        <Sidebar />
+        <div className="relative min-w-0 lg:pl-[225px]">
+          <Nav />
+          <main className="relative mx-auto w-full max-w-[1460px] px-4 pb-24 pt-4 sm:px-6 lg:px-8">
+            {children}
+          </main>
+          <Footer />
+        </div>
       </body>
     </html>
   );

@@ -1,37 +1,38 @@
 @import "tailwindcss";
 
 /* ─────────────────────────────────────────────────────────────
-   Sode no Shirayuki — design tokens (see docs/04-design-system.md)
-   Dark-first. Glacial slate surfaces. One frost accent. Snow text.
+   Sode no Shirayuki — design tokens ("A Winter Anime Portal").
+   Deep midnight-navy, glass navy surfaces, one icy-blue accent,
+   crimson floral accents. Mapping matches the reference design.
    ───────────────────────────────────────────────────────────── */
 @theme {
-  /* Surfaces — premium near-black glass (#050505-ish base) */
-  --color-base: oklch(0.07 0.012 250);
-  --color-surface: oklch(0.12 0.013 250);
-  --color-surface-2: oklch(0.16 0.014 250);
-  --color-overlay: oklch(0.11 0.012 250 / 0.55);
-  --color-line: oklch(0.26 0.015 250);
+  /* Surfaces — the reference: #030A15 app black, #071321 panels */
+  --color-base: #030A15;
+  --color-surface: #071321;
+  --color-surface-2: #0B1B2E;
+  --color-overlay: rgba(12, 25, 43, 0.72);
+  --color-line: rgba(155, 185, 224, 0.20);
 
-  /* Foreground — snow */
-  --color-snow: oklch(0.97 0.004 240);
-  --color-muted: oklch(0.74 0.012 245);
-  /* A4 fix: bumped from 0.62 to 0.70 to clear WCAG AA (4.5:1) against
-   `--color-base` (oklch 0.07). Previously ~3.2:1, now ~4.7:1. Used for
-   timestamps, secondary meta, footer credits. */
-  --color-faint: oklch(0.7 0.012 248);
+  /* Foreground — snow (#F2F5FA), then the reference's two quieter steps */
+  --color-snow: #F2F5FA;
+  --color-muted: #A9B5C8;
+  /* WCAG AA check: #74849C vs #030A15 ≈ 4.9:1 — clears AA for the small
+     metadata it carries (timestamps, timestamps, footer credits). */
+  --color-faint: #74849C;
 
-  /* Brand — frost */
-  --color-frost: oklch(0.82 0.12 215);
-  --color-frost-deep: oklch(0.64 0.15 245);
-  --color-frost-soft: oklch(0.82 0.12 215 / 0.14);
+  /* Brand — icy blue + soft active blue from the reference */
+  --color-frost: #8EBBFF;
+  --color-frost-deep: #547CC8;
+  --color-frost-soft: rgba(142, 187, 255, 0.14);
 
-  /* Whisper accent */
-  --color-sakura: oklch(0.83 0.07 350);
+  /* Crimson floral accent + a lighter petal tone for drifting petals */
+  --color-sakura: #C05668;
+  --color-crimson: #9F304A;
 
   /* Semantic */
-  --color-success: oklch(0.8 0.13 165);
-  --color-warning: oklch(0.84 0.12 85);
-  --color-danger: oklch(0.68 0.18 25);
+  --color-success: #7FB99B;
+  --color-warning: #D8B36A;
+  --color-danger: #C25E6E;
 
   /* Radii */
   --radius-sm: 0.5rem;
@@ -39,14 +40,16 @@
   --radius-lg: 1.25rem;
   --radius-xl: 1.75rem;
 
-  /* Shadows */
-  --shadow-frost: 0 8px 30px -12px oklch(0.64 0.15 245 / 0.35);
-  --shadow-soft: 0 4px 24px -10px oklch(0 0 0 / 0.5);
-  --shadow-neon: 0 0 28px -6px var(--color-frost), 0 0 1px 0 var(--color-frost);
+  /* Shadows — cool, layered, restrained */
+  --shadow-frost: 0 8px 30px -12px rgba(84, 124, 200, 0.35);
+  --shadow-soft: 0 4px 24px -10px rgba(0, 0, 0, 0.55);
+  --shadow-neon: 0 0 24px -8px var(--color-frost), 0 0 1px 0 var(--color-frost);
 
-  /* Fonts (wired via next/font CSS vars in layout.tsx) */
+  /* Fonts (wired via next/font CSS vars in layout.tsx).
+     `--font-display` is the serif voice of the reference: Cormorant
+     Garamond for section headings / hero titles / the wordmark. */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
-  --font-display: var(--font-inter), var(--font-zen), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-cormorant), var(--font-zen), Georgia, serif;
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
 }
 
@@ -867,6 +870,46 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
 }
 .aurora-a { animation: aurora-drift-a 26s ease-in-out infinite; }
 .aurora-b { animation: aurora-drift-b 32s ease-in-out infinite; }
+
+/* "Dim" mode (moon button in the utility bar) — calms ambient lights and
+   drifting particles without touching content contrast. Persisted via
+   localStorage and applied as html[data-dim="1"]. */
+html[data-dim="1"] .aurora-a,
+html[data-dim="1"] .aurora-b,
+html[data-dim="1"] .ambient-drift,
+html[data-dim="1"] .ambient-drift-2,
+html[data-dim="1"] .ambient-drift-3,
+html[data-dim="1"] [data-snow-layer],
+html[data-dim="1"] .petal-drift {
+  opacity: 0.25 !important;
+}
+
+/* Sakura petal + snow-dot drift used in the hero foreground layers and the
+   sidebar's winter scene. Tiny elements, transform-only loops. */
+@keyframes hero-petal-drift {
+  0%   { transform: translate3d(0, -12px, 0) rotate(0deg); opacity: 0; }
+  12%  { opacity: 1; }
+  88%  { opacity: 1; }
+  100% { transform: translate3d(-26px, 320px, 0) rotate(60deg); opacity: 0; }
+}
+
+/* Vertical Japanese side-caption (hero right edge) */
+.vertical-rl {
+  writing-mode: vertical-rl;
+  text-orientation: upright;
+  letter-spacing: 0.35em;
+}
+
+/* Crimson seal — the small square stamp from the reference */
+.seal {
+  display: grid;
+  place-items: center;
+  background: var(--color-crimson);
+  color: rgba(255, 250, 248, 0.95);
+  border-radius: 3px;
+  font-family: var(--font-zen);
+  box-shadow: 0 2px 12px rgba(159, 48, 74, 0.55);
+}
 
 /* Ambient backdrop drift — the three fixed frost glows breathe with a
    very slow translate/scale sine. Transform-only, behind everything. */

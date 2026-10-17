@@ -96,7 +96,8 @@ export function SnowLayer() {
     <canvas
       ref={ref}
       aria-hidden
-      className="pointer-events-none fixed inset-0 z-0 h-dvh w-full opacity-50"
+      data-snow-layer
+      className="pointer-events-none fixed inset-0 z-0 h-dvh w-full opacity-50 transition-opacity duration-500"
     />
   );
 }

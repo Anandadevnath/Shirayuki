@@ -1,13 +1,12 @@
 import { getHome, getSchedule, safe } from "@/lib/api";
 import { Spotlight } from "@/components/home/Spotlight";
 import { ContinueWatching } from "@/components/home/ContinueWatching";
-import { Trending } from "@/components/home/Trending";
-import { LatestEpisodes } from "@/components/home/LatestEpisodes";
-import { QuickLists } from "@/components/home/QuickLists";
-import { DiscoverColumns } from "@/components/home/DiscoverColumns";
-import { Top10Tabs } from "@/components/home/Top10Tabs";
-import { ReleaseSchedule } from "@/components/home/ReleaseSchedule";
-import { Rail } from "@/components/anime/Rail";
+import { TrendingRail } from "@/components/home/TrendingRail";
+import {
+  LatestEpisodesPanel,
+  SeasonalPicksPanel,
+} from "@/components/home/EpisodePanels";
+import { ReleaseCalendarPanel } from "@/components/home/ReleaseCalendarPanel";
 import { Reveal } from "@/components/ui/Reveal";
 import { ErrorState } from "@/components/common/States";
 import { ScheduleSkeleton } from "@/components/ui/Skeleton";
@@ -27,21 +26,15 @@ import { Suspense } from "react";
 // ISR page for a full 15-minute window — every build during a flaky spell baked
 // an ErrorState home. Dynamic rendering means a failed fetch simply
 // falls through to the next request and self-heals the moment the API recovers.
-// Trade-off: the page no longer participates in route-level HTTP caching /
-// back-forward cache, since the provider fetch cache carries the 15-min window.
 export const dynamic = "force-dynamic";
 
 /**
- * The home board: everything except the schedule hangs off the single
- * `getHome()` payload, so those sections resolve together and stream in as
- * one Suspense unit (route-level `app/loading.tsx` renders their skeleton
- * while the shell has already flushed).
- *
- * The release calendar is an INDEPENDENT endpoint (`getSchedule`), so it
- * streams as its own island: when the schedule endpoint trails the home
- * payload (or vice versa), each top slot fills in the moment its own data
- * lands instead of the whole page waiting on the slowest endpoint — with an
- * in-place <ScheduleSkeleton /> meanwhile.
+ * The homepage mirrors the "A Winter Anime Portal" reference exactly:
+ * cinematic hero → Trending Anime → Latest Episodes + Seasonal Picks →
+ * Release Calendar (with the winter promo panel). Continue Watching slots in
+ * only when the viewer actually has progress. All data streams: the route
+ * shell + skeleton flush instantly (app/loading.tsx), the schedule remains
+ * its own island, and section entrances rise once as they enter the viewport.
  */
 export default function HomePage() {
   return (
@@ -66,7 +59,6 @@ async function HomeBoard() {
   }
 
   const home = res.data;
-  const completed = home.completed.slice(0, 15);
 
   // The first spotlight slide is the LCP candidate. Spotlight is a client
   // component (carousel + autoplay), so its `<Image priority>` only registers
@@ -74,127 +66,63 @@ async function HomeBoard() {
   // connections. Render the preload directly server-side so the network
   // fetch starts during HTML parse, in parallel with the JS bundle download.
   // Next.js hoists server-rendered <link> tags into the document head.
-  //
-  // Note on URL: we point the preload at the raw upstream CDN URL (not the
-  // next/image optimizer URL) because we don't know the optimized variant
-  // at SSR time without making an extra request. The two responses share
-  // the upstream cache, so even if the browser later swaps in an optimized
-  // variant, the raw bytes from the preload are reused for the same source
-  // image — no double download on the LCP path.
   const lcpPoster = home.spotlight[0]?.poster ?? null;
 
   return (
     <div>
       {lcpPoster && (
-        <link
-          rel="preload"
-          as="image"
-          href={lcpPoster}
-          // Hint the browser to fetch this at the highest priority, ahead of
-          // the JS bundle. Lighthouse treats this as a positive LCP signal.
-          // The exact srcset is owned by next/image's optimizer at runtime;
-          // the bare URL fetch hits the same upstream anyway.
-          fetchPriority="high"
-        />
+        <link rel="preload" as="image" href={lcpPoster} fetchPriority="high" />
       )}
+
       {home.spotlight.length > 0 && <Spotlight items={home.spotlight} />}
 
-      {/* Document-level <h1> for the home page. The spotlight carousel
-          surfaces an <h2> per slide (the anime title); screen readers and
-          crawlers need a stable page-level heading that summarises the
-          page rather than the currently-active slide. Visually hidden so
-          the hero art stays uncluttered. */}
+      {/* Document-level <h1> for the home page. The hero surfaces an <h2>
+          per slide (the anime title); crawlers and screen readers need a
+          stable page-level heading. Visually hidden. */}
       <h1 className="sr-only">Browse, discover and watch anime — Sode no Shirayuki</h1>
 
-      {/* Section-level cascade — each board section rises once as it scrolls
-          into view (shared IntersectionObserver via <Reveal>; one-shot, so
-          scrolling back up never replays). Only the section as a whole is
-          observed — cards inside keep their own light entrance cadence —
-          keeping observer count flat regardless of home length. */}
-      <div className="relative z-10 flex flex-col gap-12">
-          {/* Trending keeps its hero-overlap position (v0 layout) so the home
-              page stays stable whether or not the user has watch history:
-              when Continue Watching has no items it returns null and Trending
-              simply rides below the hero — when it does have items, Continue
-              Watching renders AFTER Trending so Trending never shifts. */}
-          <Reveal>
-            <Trending items={home.trending} />
-          </Reveal>
+      {/* The reference composition, top to bottom. Section entrance =
+          one viewport-gated rise (shared IntersectionObserver); the schedule
+          stays its own island so a trailing endpoint can never hold the
+          board hostage. */}
+      <div className="relative z-10 flex flex-col gap-8 pb-2 pt-9 sm:gap-9">
+        <Reveal>
+          <TrendingRail items={home.trending} />
+        </Reveal>
 
-          <Reveal delay={60}>
-            <ContinueWatching />
-          </Reveal>
+        {/* Personal, zero-wait: reads localStorage, renders null when empty. */}
+        <ContinueWatching />
 
-          {/* Card rails first — posters get room to breathe. Latest Episodes
-              gets the cinematic 3D treatment (pointer-tilt floating posters). */}
-          <Reveal delay={120}>
-            <LatestEpisodes items={home.latestEpisodes} />
-          </Reveal>
+        <Reveal delay={120}>
+          <div className="grid grid-cols-1 items-stretch gap-4 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)]">
+            <LatestEpisodesPanel items={home.latestEpisodes} />
+            <SeasonalPicksPanel items={home.upcoming} />
+          </div>
+        </Reveal>
 
-          <Reveal delay={180}>
-            <DiscoverColumns
-              topAiring={home.topAiring}
-              mostPopular={home.mostPopular}
-              mostFavorite={home.mostFavorite}
-              newReleases={home.newReleases}
-              completed={home.completed}
-            />
-          </Reveal>
-
-          {/* Top Upcoming — the last ranked section on the upstream home. Sits
-              between the discovery columns and the Latest Completed / Top 10
-              pair, mirroring hianime's own section order. No "See all" link:
-              the upstream hianime.at has no dedicated /upcoming listing page. */}
-          <Reveal delay={220}>
-            <Rail title="Top Upcoming" eyebrow="Premieres" items={home.upcoming} />
-          </Reveal>
-
-          <Suspense fallback={<ReleaseScheduleFallback />}>
-            <ReleaseScheduleSlot />
-          </Suspense>
-
-          {/* Latest Completed (left) and the Top 10 list (right) are two separate
-              glass containers side by side. They stretch to a shared height (the
-              taller of the two) and the left poster grid distributes its rows to
-              fill, so neither panel is left with dead space. Stacks on mobile. */}
-          <Reveal
-            delay={300}
-            className="grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]"
+        <Reveal delay={200}>
+          <Suspense
+            fallback={
+              <div className="rounded-2xl border border-line/60 bg-surface/45 p-4 sm:p-5">
+                <ScheduleSkeleton />
+              </div>
+            }
           >
-            <QuickLists completed={completed} />
-
-            <Top10Tabs buckets={home.top10} />
-          </Reveal>
-        </div>
+            <ReleaseCalendarSlot />
+          </Suspense>
+        </Reveal>
+      </div>
     </div>
   );
 }
 
 /**
- * Release calendar island — independent `getSchedule()` endpoint.
- *
- * Previously the schedule was fetched with `Promise.all([getHome, …])` at the
- * top of the page, which made the ENTIRE home wait for the slowest of the two
- * endpoints. As its own Suspense island it streams in whenever it's ready:
- * a fast schedule paints early, a slow one shows an in-place skeleton while
- * the rest of the board has already landed. A schedule failure still drops
- * just this section (the fallback renders null).
+ * Release calendar island — independent `getSchedule()` endpoint. Streams in
+ * whenever it's ready: fast → paints with the rest of the board; slow → the
+ * in-place skeleton holds the slot. Failure drops just this section.
  */
-async function ReleaseScheduleSlot() {
+async function ReleaseCalendarSlot() {
   const scheduleRes = await safe(getSchedule);
   if (!scheduleRes.ok) return null;
-  return (
-    <Reveal delay={260}>
-      <ReleaseSchedule data={scheduleRes.data} />
-    </Reveal>
-  );
-}
-
-/** In-place placeholder for the calendar island while its endpoint streams. */
-function ReleaseScheduleFallback() {
-  return (
-    <Reveal delay={260}>
-      <ScheduleSkeleton />
-    </Reveal>
-  );
+  return <ReleaseCalendarPanel data={scheduleRes.data} />;
 }
