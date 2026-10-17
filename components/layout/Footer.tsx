@@ -39,7 +39,10 @@ export async function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative z-10 mt-20 overflow-hidden border-t border-line/70">
+    // No top margin: the page shell's own bottom run-out (`pb-24` on <main>)
+    // already seats the footer. A margin here stacked on it and left a doubled
+    // blank band between the last section and the footer's hairline.
+    <footer className="relative z-10 overflow-hidden border-t border-line/70">
       {/* Frost top hairline + ambient bloom behind the brand. */}
       <div
         aria-hidden

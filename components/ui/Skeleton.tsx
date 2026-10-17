@@ -142,27 +142,29 @@ export function TrendingSkeleton({
   // it the swap pushed the whole board up by 12rem (the vertical jump).
   return (
     <section className={cn("relative", offsetClassName)}>
-      <div className="mb-4 flex items-center gap-4">
+      <div className="mb-5 flex items-end gap-4">
         <div className="flex items-center gap-3">
-          <Skeleton className="h-9 w-1 rounded-full" />
+          <Skeleton className="h-10 w-1 rounded-full" />
           <div className="space-y-2">
             <Skeleton className="h-3 w-24 rounded" />
             <Skeleton className="h-6 w-32 rounded-md" />
           </div>
         </div>
-        <div className="ml-auto hidden shrink-0 gap-1.5 sm:flex">
-          <Skeleton className="size-8 rounded-full" />
-          <Skeleton className="size-8 rounded-full" />
+        <div className="ml-auto hidden shrink-0 gap-2 sm:flex">
+          <Skeleton className="size-9 rounded-full" />
+          <Skeleton className="size-9 rounded-full" />
         </div>
       </div>
-      <div className="flex gap-3.5 overflow-hidden px-0.5 pb-4 pt-3">
+      <div className="flex gap-3.5 overflow-hidden px-0.5 py-1">
         {Array.from({ length: cards }).map((_, i) => (
           <div
             key={i}
-            className="reveal w-44 shrink-0 sm:w-52 md:w-56"
+            className="reveal relative w-52 shrink-0 sm:w-60 md:w-72"
             style={revealDelay(i * 70)}
           >
-            <Skeleton className="aspect-[3/2] w-full rounded-2xl" />
+            <Skeleton className="aspect-[4/3] w-full rounded-xl" />
+            {/* Rank badge placeholder — mirrors the card's top-left chip. */}
+            <Skeleton className="absolute left-2.5 top-2.5 h-8 w-8 rounded-lg" />
           </div>
         ))}
       </div>
