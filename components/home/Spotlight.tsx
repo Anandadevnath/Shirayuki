@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -14,6 +14,7 @@ import {
 } from "lucide-react";
 import type { AnimeCardModel, SpotlightModel } from "@/lib/providers/types";
 import { EpBadges } from "@/components/anime/Badges";
+import { Skeleton } from "@/components/ui/Skeleton";
 import { truncate } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import { isInList, toggleList, WATCHLIST_EVENT } from "@/lib/watchlist/local";
@@ -88,6 +89,26 @@ export function Spotlight({
   // mirrors LatestEpisodes so both carousels feel identical to the user.
   const [interacting, setInteracting] = useState(false);
 
+  // ── Initial-reveal gate ────────────────────────────────────────────────
+  // The finished hero (key art + copy) is held behind a skeleton until the
+  // FIRST active slide's key art has actually decoded. Data readiness is
+  // implicit (this component only mounts once its models arrived); image
+  // readiness is what we track here, separately. `revealed` is deliberately
+  // monotonic — it never resets — so slide changes, re-renders and data
+  // updates can never replay the entrance; slide swaps keep using the
+  // mounted 800ms crossfade instead (both slides stay painted underneath).
+  // Errors also mark ready (fallback art / frosted surface), so a broken
+  // poster URL can never leave an infinite skeleton.
+  const [revealed, setRevealed] = useState(false);
+  const artRef = useRef<HTMLImageElement>(null);
+  const markReady = useCallback(() => setRevealed(true), []);
+
+  // Cached-at-hydration path: `onLoad` never fires for an <img> that already
+  // completed before React hydrates, so check completeness pre-paint. Runs on
+  // mount (cached reload → hero reveals without an entrance flash) and when
+  // the active slide changes (switching to an already-decoded slide is a
+  // no-op once revealed).
+
   // Only the slides that have been shown (plus the one queued next) mount their
   // heavy key-art. The crossfade is unaffected — every slide's container stays
   // mounted and animates opacity; we just defer the <Image> network requests so
@@ -103,6 +124,44 @@ export function Spotlight({
       return next;
     });
   }, [active, n]);
+
+  // `useLayoutEffect` so a cached bitmap reveals the hero BEFORE the first
+  // client paint — the skeleton is dropped in the same frame the browser
+  // would have painted it, so a warm refresh shows no skeleton flash at all.
+  useLayoutEffect(() => {
+    if (revealed) return;
+    const img = artRef.current;
+    if (!img) return;
+    // complete + non-zero natural size = decoded and paintable right now.
+    if (img.complete && img.naturalWidth > 0) markReady();
+    // complete + zero size = decode failure (broken/cancelled request) —
+    // reveal anyway; the frosted fallback is the hero background.
+    else if (img.complete) markReady();
+  }, [revealed, active, seen, markReady]);
+
+  // No key art on the active slide (empty/missing poster URL): there is no
+  // bitmap to wait for, so the hero must reveal at once. Without this an
+  // art-less slide mounts no <img>, `onLoad` can never fire, and the skeleton
+  // would loop forever. Layout effect so the reveal lands pre-paint.
+  useLayoutEffect(() => {
+    if (revealed) return;
+    if (!list[active]?.poster) markReady();
+  }, [revealed, active, list, markReady]);
+
+  // Bounded grace: if the key art neither loads nor errors within a short
+  // window (a stalled request the browser never resolves, or a slow
+  // connection where the 1920px hero can't arrive), reveal anyway so a slow
+  // image can never hold the hero's copy hostage behind a skeleton for
+  // seconds. Kept short (2.5s) on purpose: the copy is text that was ready at
+  // mount, so this is the maximum we make it wait on the dominant image. The
+  // skeleton layer stays the visible background until this fires, so the hero
+  // never reveals an empty backdrop. Cleared once ready — the normal path
+  // pays nothing.
+  useEffect(() => {
+    if (revealed) return;
+    const t = setTimeout(markReady, 2500);
+    return () => clearTimeout(t);
+  }, [revealed, markReady]);
 
   const go = useCallback((idx: number) => setActive(((idx % n) + n) % n), [n]);
   // Wrap-around step used by both keyboard arrows and drag-to-swipe.
@@ -254,6 +313,15 @@ export function Spotlight({
                       alt=""
                       fill
                       sizes="100vw"
+                      // Only the active slide's key art gates the initial
+                      // reveal: its onLoad marks the hero ready (network
+                      // path), its onError falls back to "ready" so a broken
+                      // URL reveals the blurred fill / frosted surface rather
+                      // than looping a skeleton forever. The ref powers the
+                      // cached-at-hydration completeness check above.
+                      ref={idx === active ? artRef : undefined}
+                      onLoad={idx === active ? markReady : undefined}
+                      onError={idx === active ? markReady : undefined}
                       className={cn(
                         "object-cover object-[center_22%] brightness-[0.82]",
                         // Cinematic settle: each activation starts from a 4.5%
@@ -334,12 +402,46 @@ export function Spotlight({
         </div>
         <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/85 via-base/55 via-35% via-base/25 to-transparent" />
 
+        {/* ── Initial-reveal skeleton — mirrors the route-level
+            SpotlightSkeleton (components/ui/Skeleton) so the skeleton → board
+            swap keeps identical geometry: same full-bleed section, same
+            copy block, same spacing. It stays up (shimmer looping) until the
+            first active slide's key art has decoded, then crossfades out over
+            700ms into the finished hero. Removed from the tree after reveal,
+            so no animation keeps ticking behind live content. ── */}
+        {!revealed && (
+          <div
+            aria-hidden
+            className="absolute inset-0 z-10 flex flex-1 flex-col bg-surface-2 shimmer-loop"
+          >
+            <div className="relative flex flex-1 items-center pb-[8vh]">
+              <div className="mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
+                <div className="flex max-w-xl flex-col gap-5">
+                  <Skeleton className="h-10 w-3/4 rounded-lg sm:h-14" />
+                  <Skeleton className="h-10 w-2/3 rounded-lg sm:h-14" />
+                  <div className="flex gap-2 pt-1">
+                    <Skeleton className="h-6 w-16 rounded-full" />
+                    <Skeleton className="h-6 w-14 rounded-full" />
+                    <Skeleton className="h-6 w-20 rounded-full" />
+                  </div>
+                  <Skeleton className="h-4 w-full max-w-lg rounded" />
+                  <Skeleton className="h-4 w-5/6 max-w-lg rounded" />
+                  <div className="mt-2 flex gap-3">
+                    <Skeleton className="h-12 w-36 rounded-2xl" />
+                    <Skeleton className="h-12 w-32 rounded-2xl" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* ── Right vertical diamond nav — one facet per slide (carousel
             jumps), plus keyboard arrows and drag-to-swipe. The old prev /
             next arrow buttons were removed for a clean, chrome-free banner.
             The left "Featured" strip lives INSIDE the shared content
             container above. ── */}
-        {n > 1 && (
+        {n > 1 && revealed && (
           <div className="absolute right-5 top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 sm:right-7 sm:flex">
             {list.map((_, idx) => (
               <button
@@ -375,8 +477,16 @@ export function Spotlight({
             → stats, 90ms apart, ~0.7s each). The CTA row is intentionally
             NOT keyed — the buttons stay planted under the cursor between
             slide changes (remounting them both flickers the My List state
-            and yanks click targets mid-interaction). ── */}
-        <div className="relative z-10 flex flex-1 items-center pb-[8vh]">
+            and yanks click targets mid-interaction).
+
+            Gated on `revealed`: the copy mounts only once the key art has
+            decoded, so its entrance chain always plays over real artwork
+            instead of an empty panel. Mount-time = ready-time means the
+            animation starts exactly when the content is ready, and because
+            `revealed` never flips back, re-renders and data updates cannot
+            replay it. ── */}
+        {revealed && (
+          <div className="relative z-10 flex flex-1 items-center pb-[8vh]">
           {/* This container is the SHARED content container — identical to
               <main>'s mx-auto max-w-[1460px] px-4 sm:px-6 lg:px-8 — so the
               hero title/copy/CTA block shares its exact left and right
@@ -487,6 +597,7 @@ export function Spotlight({
             </div>
           </div>
         </div>
+        )}
       </div>
     </section>
   );

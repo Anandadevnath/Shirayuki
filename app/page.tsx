@@ -106,32 +106,45 @@ async function HomeBoard() {
           the hero art stays uncluttered. */}
       <h1 className="sr-only">Browse, discover and watch anime — Sode no Shirayuki</h1>
 
-      {/* Section-level cascade — each board section rises once as it scrolls
-          into view (shared IntersectionObserver via <Reveal>; one-shot, so
-          scrolling back up never replays). Only the section as a whole is
-          observed — cards inside keep their own light entrance cadence —
-          keeping observer count flat regardless of home length. */}
+      {/* Section-level cascade — a SINGLE coordinated reveal strategy.
+
+          Above-the-fold sections (Trending, Continue Watching, Latest
+          Episodes) render DIRECTLY, with no reveal wrapper: they occupy the
+          exact pixels the route-level skeleton (app/loading.tsx) was already
+          painting, so an entrance here would blink the section out and replay
+          — the skeleton→content flash. Their "entrance" is the load-driven
+          crossfade of their inner content (SmartImage posters, the Spotlight
+          key art), which keeps one reveal clock for the whole board.
+
+          Below-the-fold sections use the shared IntersectionObserver via
+          <Reveal> (one-shot, so scrolling back up never replays) and reveal
+          as the user actually reaches them — no arbitrary per-section delays,
+          no section held behind another.
+
+          The fine-grained cascade lives inside each rail (cards stagger in
+          DOM order); the section wrappers stay at delay 0. */}
       <div className="relative z-10 flex flex-col gap-12">
           {/* Trending keeps its hero-overlap position (v0 layout) so the home
               page stays stable whether or not the user has watch history:
               when Continue Watching has no items it returns null and Trending
               simply rides below the hero — when it does have items, Continue
-              Watching renders AFTER Trending so Trending never shifts. */}
-          <Reveal>
-            <Trending items={home.trending} />
-          </Reveal>
+              Watching renders AFTER Trending so Trending never shifts.
 
-          <Reveal delay={60}>
-            <ContinueWatching />
-          </Reveal>
+              These above-the-fold sections are rendered WITHOUT a reveal
+              wrapper: they replace pixels the route skeleton was already
+              painting, so any wrapper would either re-hide them or add a
+              phantom flex-gap slot when a client child (Continue Watching)
+              renders null. Rendering the sections directly keeps the stack
+              rhythm exact and the skeleton→content handoff a pure crossfade. */}
+          <Trending items={home.trending} />
+
+          <ContinueWatching />
 
           {/* Card rails first — posters get room to breathe. Latest Episodes
               gets the cinematic 3D treatment (pointer-tilt floating posters). */}
-          <Reveal delay={120}>
-            <LatestEpisodes items={home.latestEpisodes} />
-          </Reveal>
+          <LatestEpisodes items={home.latestEpisodes} />
 
-          <Reveal delay={180}>
+          <Reveal>
             <DiscoverColumns
               topAiring={home.topAiring}
               mostPopular={home.mostPopular}
@@ -145,7 +158,7 @@ async function HomeBoard() {
               between the discovery columns and the Latest Completed / Top 10
               pair, mirroring hianime's own section order. No "See all" link:
               the upstream hianime.at has no dedicated /upcoming listing page. */}
-          <Reveal delay={220}>
+          <Reveal>
             <Rail title="Top Upcoming" eyebrow="Premieres" items={home.upcoming} />
           </Reveal>
 
@@ -158,7 +171,6 @@ async function HomeBoard() {
               taller of the two) and the left poster grid distributes its rows to
               fill, so neither panel is left with dead space. Stacks on mobile. */}
           <Reveal
-            delay={300}
             className="grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]"
           >
             <QuickLists completed={completed} />
@@ -173,28 +185,17 @@ async function HomeBoard() {
 /**
  * Release calendar island — independent `getSchedule()` endpoint.
  *
- * Previously the schedule was fetched with `Promise.all([getHome, …])` at the
- * top of the page, which made the ENTIRE home wait for the slowest of the two
- * endpoints. As its own Suspense island it streams in whenever it's ready:
- * a fast schedule paints early, a slow one shows an in-place skeleton while
- * the rest of the board has already landed. A schedule failure still drops
- * just this section (the fallback renders null).
+ * As its own Suspense island it streams in whenever it's ready: a fast
+ * schedule paints early, a slow one shows an in-place skeleton while the rest
+ * of the board has already landed. A schedule failure drops just this section.
  */
 async function ReleaseScheduleSlot() {
   const scheduleRes = await safe(getSchedule);
   if (!scheduleRes.ok) return null;
-  return (
-    <Reveal delay={260}>
-      <ReleaseSchedule data={scheduleRes.data} />
-    </Reveal>
-  );
+  return <ReleaseSchedule data={scheduleRes.data} />;
 }
 
 /** In-place placeholder for the calendar island while its endpoint streams. */
 function ReleaseScheduleFallback() {
-  return (
-    <Reveal delay={260}>
-      <ScheduleSkeleton />
-    </Reveal>
-  );
+  return <ScheduleSkeleton />;
 }
