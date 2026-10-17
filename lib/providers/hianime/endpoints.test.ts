@@ -4,9 +4,12 @@ import { fileURLToPath } from "node:url";
 import assert from "node:assert/strict";
 
 /**
- * Regression guard for the 2026-10 provider rename: /episode/servers and
- * /episode/sources now require `animeEpisodeId` (+ `ep`); sending the old
- * bare `episodeId` query param 404s, and that silently killed ALL playback
+ * Regression guard for the /episode/servers + /episode/sources URL contract.
+ *
+ * The upstream param has flip-flopped (`episodeId` → `animeEpisodeId`+`ep` →
+ * back to bare `episodeId`). The current API accepts ONLY the bare episodeId
+ * hash; `animeEpisodeId` 404s, and `animeEpisodeId=<numeric>&ep=<n>` silently
+ * resolves a DIFFERENT episode by position. Either form breaks playback
  * ("No streaming server is available" on every watch page).
  *
  * The provider module uses bundler-style extensionless imports, so node:test
@@ -27,20 +30,36 @@ function fnBody(name: string): string {
   return next === -1 ? src.slice(start) : src.slice(start, next);
 }
 
-test("getServers queries animeEpisodeId + ep (never the removed episodeId param)", () => {
-  const body = fnBody("getServers");
-  assert.match(body, /\/episode\/servers\?animeEpisodeId=/, "must use animeEpisodeId");
-  assert.match(body, /&ep=/, "must pass the episode number");
-  assert.doesNotMatch(body, /\?episodeId=/, "bare episodeId param 404s upstream");
+// The upstream param has flip-flopped: `episodeId` → `animeEpisodeId`+`ep` →
+// back to bare `episodeId`. The current API accepts ONLY the bare episodeId
+// hash and 404s on `animeEpisodeId`. Critically, `animeEpisodeId=<numeric>&ep=<n>`
+// "succeeds" but resolves the WRONG episode by position — a silent, worse
+// failure than the 404. These tests pin the exact-hash contract so a future
+// rename cannot silently regress playback again.
+//
+// Assertions target the path CONSTANTS only (comments may legitimately mention
+// the rejected param names).
+function pathLines(name: string): string {
+  return fnBody(name)
+    .split("\n")
+    .filter((l) => !l.trim().startsWith("//"))
+    .join("\n");
+}
+
+test("getServers queries the bare episodeId hash (never animeEpisodeId)", () => {
+  const body = pathLines("getServers");
+  assert.match(body, /\/episode\/servers\?episodeId=/, "must use the bare episodeId hash");
+  assert.doesNotMatch(body, /animeEpisodeId=/, "animeEpisodeId 404s or misresolves upstream");
+  assert.doesNotMatch(body, /&ep=/, "positional ep resolves the wrong episode upstream");
 });
 
-test("getSources queries animeEpisodeId + ep + server + category", () => {
-  const body = fnBody("getSources");
-  assert.match(body, /\/episode\/sources\?animeEpisodeId=/, "must use animeEpisodeId");
-  assert.match(body, /&ep=/, "must pass the episode number");
+test("getSources queries the bare episodeId hash + server + category", () => {
+  const body = pathLines("getSources");
+  assert.match(body, /\/episode\/sources\?episodeId=/, "must use the bare episodeId hash");
   assert.match(body, /&server=/);
   assert.match(body, /&category=/);
-  assert.doesNotMatch(body, /\?episodeId=/, "bare episodeId param 404s upstream");
+  assert.doesNotMatch(body, /animeEpisodeId=/, "animeEpisodeId 404s or misresolves upstream");
+  assert.doesNotMatch(body, /&ep=/, "positional ep resolves the wrong episode upstream");
 });
 
 test("apiFetch does not retry deterministic 4xx (404 failover must stay fast)", () => {

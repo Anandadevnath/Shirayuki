@@ -1,6 +1,6 @@
 import { CalendarDays } from "lucide-react";
 import type { Metadata } from "next";
-import { getSchedule, safe } from "@/lib/api";
+import { getSchedule, withTimeout } from "@/lib/api";
 import type { AnimeCardModel, ScheduleItem, ScheduleWeekday } from "@/lib/providers/types";
 import { Grid } from "@/components/anime/Grid";
 import { ErrorState } from "@/components/common/States";
@@ -33,7 +33,10 @@ function toCard(it: ScheduleItem): AnimeCardModel {
 }
 
 export default async function SchedulePage() {
-  const res = await safe(getSchedule);
+  // The schedule is a heavy scrape (~7s cold). Bound it so the route always
+  // settles: on a stalled upstream the deadline resolves to a typed failure and
+  // the page renders its ErrorState instead of holding the skeleton forever.
+  const res = await withTimeout(getSchedule(), 20_000, "schedule");
 
   if (!res.ok) {
     return (

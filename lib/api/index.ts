@@ -1,5 +1,4 @@
 import { cache } from "react";
-import type { Result } from "../providers/types";
 import * as hianime from "../providers/hianime";
 
 /**
@@ -11,16 +10,11 @@ import * as hianime from "../providers/hianime";
  */
 export type * from "../providers/types";
 
-/** Wrap a throwing provider call into a typed Result for graceful UI fallback. */
-export async function safe<T>(fn: () => Promise<T>): Promise<Result<T>> {
-  try {
-    return { ok: true, data: await fn() };
-  } catch (err) {
-    const error = err instanceof Error ? err.message : "Unknown error";
-    if (process.env.NODE_ENV !== "production") console.warn("[api]", error);
-    return { ok: false, error };
-  }
-}
+// `safe` and `withTimeout` live in a provider-free module so they stay
+// unit-testable under node:test (this module imports the provider graph, whose
+// extensionless bundler imports node cannot resolve). Re-exported here so call
+// sites keep a single facade import and the `safe` contract stays single-source.
+export { safe, withTimeout } from "./concurrency";
 
 /* ── provider surface (request-scope memoized) ───────────────────────────────
  * React `cache()` dedupes repeated getter calls WITHIN one server request.
