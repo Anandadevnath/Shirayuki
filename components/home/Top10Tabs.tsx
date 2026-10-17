@@ -3,6 +3,7 @@
 import { useMemo, useState } from "react";
 import type { Top10Buckets } from "@/lib/providers/types";
 import { RankRow } from "./RankList";
+import { TabBar, useTabIndicator } from "@/components/common/TabIndicator";
 import { cn } from "@/lib/utils/cn";
 
 const PERIODS = [
@@ -28,6 +29,10 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
 
   const items = buckets[active] ?? [];
 
+  // Gliding indicator — measured from the real tab buttons so the bar
+  // travels between labels instead of fading per tab.
+  const { bindTrack, bindBtn, barStyle } = useTabIndicator(active);
+
   return (
     <section className="laser-frame laser-live glass flex flex-col rounded-lg p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
@@ -38,13 +43,15 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
           <span className="hidden h-px w-12 bg-gradient-to-r from-frost/60 to-transparent sm:block" />
         </div>
         <div
+          ref={bindTrack}
           role="tablist"
           aria-label="Top 10 period"
-          className="flex shrink-0 items-center gap-4 text-sm font-semibold"
+          className="relative flex shrink-0 items-center gap-4 text-sm font-semibold"
         >
           {counts.map((p) => (
             <button
               key={p.key}
+              ref={bindBtn(p.key)}
               role="tab"
               type="button"
               aria-selected={active === p.key}
@@ -52,16 +59,14 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
               tabIndex={active === p.key ? 0 : -1}
               onClick={() => setActive(p.key)}
               className={cn(
-                "relative pb-0.5 transition-colors",
+                "relative pb-0.5 transition-colors duration-200",
                 active === p.key ? "text-frost" : "text-muted hover:text-snow",
               )}
             >
               {p.label}
-              {active === p.key && (
-                <span className="absolute inset-x-0 -bottom-px h-0.5 rounded-full bg-frost" />
-              )}
             </button>
           ))}
+          <TabBar barStyle={barStyle} />
         </div>
       </div>
       <div
@@ -70,15 +75,17 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
         aria-label={`Top 10 ${active}`}
         className="mt-3 flex flex-col gap-1"
       >
-        {items.length > 0 ? (
-          items.map((a) => (
-            <RankRow key={a.id} anime={a} />
-          ))
-        ) : (
-          <p className="py-6 text-center text-sm text-muted">
-            Nothing ranked yet — check back soon.
-          </p>
-        )}
+        {/* key by period → a short settle on swap; height stays data-driven
+            (no fixed panel height) and reduced-motion flattens the motion */}
+        <div key={active} className="tab-swap flex flex-col gap-1">
+          {items.length > 0 ? (
+            items.map((a) => <RankRow key={a.id} anime={a} />)
+          ) : (
+            <p className="py-6 text-center text-sm text-muted">
+              Nothing ranked yet — check back soon.
+            </p>
+          )}
+        </div>
       </div>
     </section>
   );

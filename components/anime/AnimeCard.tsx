@@ -85,15 +85,24 @@ export const AnimeCard = memo(function AnimeCard({
           cross-fade via opacity — far cheaper than re-rasterising a blurred
           box-shadow every frame. transform-gpu is enough to keep the lift
           on the compositor; a permanent `will-change` on every card adds
-          up to hundreds of layers on the home page. */}
-      <div className="relative transform-gpu transition-transform duration-300 ease-out group-hover:-translate-y-1.5">
+          up to hundreds of layers on the home page.
+
+          Interaction channels:
+          - hover: lift + settle (-6px) — the premium float
+          - group-active (press): eases back toward rest — tactile "press"
+            without releasing the hover state
+          - group-focus-visible: mirrors the hover lift so keyboard users
+            get the same affordance; the global :focus-visible ring or the
+            in-frame frost ring makes the focus location obvious
+          All transform-only → neighboring cards never move. */}
+      <div className="relative transform-gpu transition-transform duration-300 ease-out group-hover:-translate-y-1.5 group-focus-visible:-translate-y-1.5 group-active:translate-y-[-0.375rem]">
         <div
           aria-hidden
           className="pointer-events-none absolute inset-0 rounded-[1.25rem] shadow-[var(--shadow-soft)]"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-[1.25rem] opacity-0 shadow-[var(--shadow-frost)] transition-opacity duration-300 ease-out group-hover:opacity-100"
+          className="pointer-events-none absolute inset-0 rounded-[1.25rem] opacity-0 shadow-[var(--shadow-frost)] transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
         />
 
         {/* Frame: static `ring-1 ring-line` so the resting state is identical
@@ -102,13 +111,18 @@ export const AnimeCard = memo(function AnimeCard({
             (which forces a full repaint of the card body on every hover
             frame) while preserving the visual. */}
         <div className="relative aspect-[3/4] overflow-hidden rounded-[1.25rem] bg-surface-2 ring-1 ring-line/80">
-          {/* Frosted hover ring — opacity cross-fade, GPU-composited */}
+          {/* Frosted hover ring — opacity cross-fade, GPU-composited. Also
+              lands on keyboard focus so the focus target is unmistakable
+              even while the browser's default outline is clipped by the
+              card frame. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[1.25rem] ring-1 ring-frost/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100"
+            className="pointer-events-none absolute inset-0 rounded-[1.25rem] ring-2 ring-frost/60 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
           />
-          {/* Poster — gentle cinematic push-in on hover */}
-          <div className="absolute inset-0 transform-gpu transition-transform duration-300 ease-out group-hover:scale-[1.06]">
+          {/* Poster — gentle cinematic push-in on hover/focus (1.05: reads
+              as a breath, not a zoom; transform-only so rails and grids
+              never reflow). */}
+          <div className="absolute inset-0 transform-gpu transition-transform duration-300 ease-out group-hover:scale-[1.05] group-focus-visible:scale-[1.05]">
             {poster}
           </div>
 
@@ -119,14 +133,15 @@ export const AnimeCard = memo(function AnimeCard({
           />
 
           {/* Bottom scrim — base layer + a deeper layer that fades in on hover
-              (opacity cross-fade, no per-frame gradient repaint). */}
+              (opacity cross-fade, no per-frame gradient repaint) to keep the
+              revealed actions readable against any art. */}
           <div
             aria-hidden
             className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-base via-base/55 to-transparent"
           />
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-base via-base/75 to-transparent opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100"
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-base via-base/75 to-transparent opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
           />
 
           {/* Top badges */}
@@ -137,19 +152,24 @@ export const AnimeCard = memo(function AnimeCard({
 
           {/* Bottom content */}
           <div className="absolute inset-x-0 bottom-0 p-3.5">
-            <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-snow [text-shadow:0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
+            <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-snow [text-shadow:0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost group-focus-visible:text-frost">
               {anime.title}
             </h3>
 
-            {/* Reveal row: composited fade + slide on hover. The wrapper takes its
+            {/* Reveal row: composited fade + slide on hover/focus. The wrapper takes its
                 natural height at all times (so the row's footprint is always
                 reserved inside the bottom content overlay → always inside the
                 card frame, never below it). The inner strip is opacity-0 at
                 rest and translates down a touch; on hover it fades and slides
                 up. Both opacity and transform are GPU-composited — no layout
                 invalidation of the parent's backdrop-filter, so hover stays
-                smooth inside glass panels like QuickLists. */}
-            <div className="flex translate-y-1 transform-gpu items-center gap-2 pt-2.5 opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100">
+                smooth inside glass panels like QuickLists.
+
+                Touch devices have no hover: the row rests visible
+                (`pointer: coarse`) so type/score are readable and Watch is
+                reachable without a hover ritual; the reduced-motion variant
+                flattens the movement. */}
+            <div className="flex translate-y-1 transform-gpu items-center gap-2 pt-2.5 opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 [@media(pointer:coarse)]:translate-y-0 [@media(pointer:coarse)]:opacity-100 motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100">
               <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-frost to-frost-deep px-3 py-1 text-[11px] font-bold text-base shadow-[var(--shadow-neon)]">
                 <Play className="size-3 translate-x-px fill-current" /> Watch
               </span>

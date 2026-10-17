@@ -85,14 +85,34 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" data-scroll-behavior="smooth" className={`${inter.variable} ${geistMono.variable} ${zen.variable}`}>
+    <html
+      lang="en"
+      data-scroll-behavior="smooth"
+      className={`${inter.variable} ${geistMono.variable} ${zen.variable}`}
+      // suppressHydrationWarning: the inline reveal-arm script below writes
+      // a `data-anim` attribute onto <html> before React hydrates; it is
+      // presentation-only state (see globals.css → "Viewport reveals").
+      suppressHydrationWarning
+    >
       <head>
+        {/* Arm scroll-reveals before first paint. When JS never runs, the
+            attribute stays unset and `html[data-anim="1"] [data-reveal]` CSS
+            never hides anything — content is statically visible. The
+            <noscript> style below is the belt to this suspenders. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `document.documentElement.setAttribute("data-anim","1")`,
+          }}
+        />
         {PRECONNECT_HOSTS.map((href) => (
           <link key={href} rel="preconnect" href={href} crossOrigin="anonymous" />
         ))}
         {DNS_PREFETCH_HOSTS.map((href) => (
           <link key={href} rel="dns-prefetch" href={href} />
         ))}
+        <noscript>
+          <style>{`[data-reveal]{opacity:1!important;transform:none!important;animation:none!important}`}</style>
+        </noscript>
       </head>
       <body className="min-h-dvh overflow-x-clip antialiased">
         <RootEffects />

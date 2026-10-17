@@ -214,38 +214,50 @@ export function Nav() {
           </button>
         </nav>
 
-        {/* Mobile navigation drawer. Kept mounted so open/close cross-fades
-            via CSS rather than a remount; `pointer-events-none` when closed so
-            it never traps taps. Hidden entirely at md+ where the inline links
-            return. */}
+        {/* Mobile navigation drawer. Kept mounted and animated with the
+            `grid-template-rows: 0fr → 1fr` technique: the row animates
+            smoothly between collapsed and auto height with no max-height
+            guessing, so the drawer glides open/closed at any content size
+            (max-h transitions jerk when content exceeds the cap). Links
+            stagger in with 40ms delay steps on open; on close they fade
+            immediately (delay 0) so the drawer never feels laggy. `pointer-
+            events-none` when closed so it never traps taps. Hidden entirely
+            at md+ where the inline links return. */}
         <div
           id="mobile-nav"
           data-open={menuOpen ? "1" : "0"}
-          className="glass overflow-hidden border-line/60 transition-[max-height,opacity] duration-300 ease-out data-[open=0]:max-h-0 data-[open=0]:opacity-0 data-[open=1]:max-h-96 data-[open=1]:border-t data-[open=1]:opacity-100 md:hidden"
+          /* Fades at rest too: the collapsed 0fr row still paints the inner
+             glass panel's 2px of border, which would read as a stray
+             hairline under the header when closed. */
+          className="grid border-line/60 opacity-0 transition-[grid-template-rows,opacity] duration-300 ease-out md:hidden data-[open=0]:grid-rows-[0fr] data-[open=1]:grid-rows-[1fr] data-[open=1]:border-t data-[open=1]:opacity-100"
           aria-hidden={!menuOpen}
         >
-          <ul className="mx-auto flex w-full max-w-[1460px] flex-col gap-1 px-4 py-3 sm:px-6">
-            {LINKS.map((l) => {
-              const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
-              return (
-                <li key={l.href}>
-                  <Link
-                    href={l.href}
-                    aria-current={active ? "page" : undefined}
-                    tabIndex={menuOpen ? undefined : -1}
-                    className={cn(
-                      "block rounded-sm px-3 py-2.5 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost",
-                      active
-                        ? "bg-frost-soft text-frost"
-                        : "text-muted hover:bg-surface-2/70 hover:text-snow",
-                    )}
-                  >
-                    {l.label}
-                  </Link>
-                </li>
-              );
-            })}
-          </ul>
+          <div className="glass overflow-hidden" style={{ pointerEvents: menuOpen ? undefined : "none" }}>
+            <ul className="mx-auto flex w-full max-w-[1460px] flex-col gap-1 px-4 py-3 sm:px-6">
+              {LINKS.map((l, i) => {
+                const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
+                return (
+                  <li key={l.href}>
+                    <Link
+                      href={l.href}
+                      aria-current={active ? "page" : undefined}
+                      tabIndex={menuOpen ? undefined : -1}
+                      style={{ transitionDelay: menuOpen ? `${80 + i * 40}ms` : "0ms" }}
+                      className={cn(
+                        "block translate-y-1 rounded-sm px-3 py-2.5 text-sm font-medium opacity-0 transition-[opacity,translate,background-color,color] duration-300 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost",
+                        menuOpen && "translate-y-0 opacity-100",
+                        active
+                          ? "bg-frost-soft text-frost"
+                          : "text-muted hover:bg-surface-2/70 hover:text-snow",
+                      )}
+                    >
+                      {l.label}
+                    </Link>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
         </div>
       </header>
 

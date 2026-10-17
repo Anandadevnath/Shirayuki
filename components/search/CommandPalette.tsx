@@ -91,10 +91,17 @@ export function CommandPalette({ open, onOpenChange }: Props) {
   const [indexReady, setIndexReady] = useState(hasSearchIndexCache());
   const netCache = useRef(new Map<string, AnimeCardModel[]>());
   const networkSeq = useRef(0);
+  // Exit choreography: Escape / backdrop / selection routes the palette out
+  // through a short reverse animation before the component actually unmounts.
+  // Navigation-triggered closes skip the wait (the route change is the close
+  // feedback), so ⏎ → detail page never feels delayed.
+  const [closing, setClosing] = useState(false);
+  const closeTimer = useRef<number | null>(null);
 
   // Reset state on open, focus the input, ensure local index is loaded.
   useEffect(() => {
     if (open) {
+      setClosing(false);
       setQ("");
       setLocalResults([]);
       setNetResults([]);
@@ -107,6 +114,22 @@ export function CommandPalette({ open, onOpenChange }: Props) {
       });
     }
   }, [open]);
+
+  // Clear a pending animated close if the component unmounts mid-exit.
+  useEffect(() => () => {
+    if (closeTimer.current != null) window.clearTimeout(closeTimer.current);
+  }, []);
+
+  /** Animated close (backdrop click / Escape). Idempotent while exiting. */
+  function requestClose() {
+    if (closing) return;
+    setClosing(true);
+    closeTimer.current = window.setTimeout(() => {
+      closeTimer.current = null;
+      setClosing(false);
+      onOpenChange(false);
+    }, 165);
+  }
 
   // Instant local search on every keystroke (synchronous, sub-ms over ~80).
   useEffect(() => {
@@ -185,7 +208,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
   }
 
   function onKeyDown(e: React.KeyboardEvent) {
-    if (e.key === "Escape") onOpenChange(false);
+    if (e.key === "Escape") requestClose();
     else if (e.key === "ArrowDown") {
       e.preventDefault();
       setActive((a) => Math.min(a + 1, merged.length - 1));
@@ -213,11 +236,13 @@ export function CommandPalette({ open, onOpenChange }: Props) {
     >
       {/* Backdrop — translucent scrim, deep blur so the panel
           feels like it's floating above the page. Lower opacity lets the
-          page bleed through, reinforcing the glassy/transparent feel. */}
+          page bleed through, reinforcing the glassy/transparent feel.
+          Fades out during the animated close (data-closing). */}
       <button
-        className="absolute inset-0 cursor-default bg-base/55 backdrop-blur-2xl"
+        className="palette-backdrop absolute inset-0 cursor-default bg-base/55 backdrop-blur-2xl"
         aria-label="Close search"
-        onClick={() => onOpenChange(false)}
+        data-closing={closing ? "1" : undefined}
+        onClick={requestClose}
       />
 
       {/* Panel — laser-frame gives the static frost aura edge (the
@@ -230,7 +255,10 @@ export function CommandPalette({ open, onOpenChange }: Props) {
           the rest of the glass surfaces. max-w-2xl gives the panel real
           presence; vertically centred on screen. The custom `rounded-[3px]`
           is deliberately sharp — a tech/HUD vibe, not a friendly bubble. */}
-      <div className="laser-frame glass relative w-full max-w-2xl overflow-hidden rounded-[3px] shadow-[var(--shadow-frost)]">
+      <div
+        className="palette-panel laser-frame glass relative w-full max-w-2xl overflow-hidden rounded-[3px] shadow-[var(--shadow-frost)]"
+        data-closing={closing ? "1" : undefined}
+      >
         {/* Input row — taller (h-14) and roomier (px-5) so the search
             field reads as the primary control, not a thin strip. */}
         <div className="relative flex items-center gap-3 px-5">

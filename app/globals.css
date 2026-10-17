@@ -534,6 +534,95 @@ header[data-scrolled="1"] {
 }
 
 /* ─────────────────────────────────────────────────────────────
+   Viewport reveals — same rise as `.reveal`, but armed with data
+   attributes and started by a single shared IntersectionObserver
+   (lib/utils/reveal-observer.ts) so below-fold sections animate
+   when the user actually reaches them, once per element, and are
+   never replayed by a few pixels of scrolling.
+
+   Safety rails, in order of importance:
+   1. `html[data-anim]` is set by a tiny inline <script> in layout.tsx.
+      Without JS execution the selector never matches → content prints
+      fully visible (no-JS users always see the page).
+   2. a <noscript> block in layout.tsx force-shows everything anyway.
+   3. The reduced-motion block below force-shows everything too.
+   4. Reveal components check matchMedia themselves and skip arming.
+
+   Hidden state is expressed via `animation-play-state: paused` on the
+   same `reveal-rise` keyframe instead of `opacity: 0`, so the moment
+   `[data-shown]` lands the play state flips to running and the element
+   animates from its first keyframe with its `--reveal-delay` stagger —
+   one code path, no transition state machine.
+   ───────────────────────────────────────────────────────────── */
+html[data-anim="1"] [data-reveal]:not([data-shown]) {
+  animation: reveal-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+  animation-play-state: paused;
+}
+html[data-anim="1"] [data-reveal][data-shown] {
+  animation: reveal-rise 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--reveal-delay, 0ms);
+  /* running is implied — declared so the pair is auditable in one place */
+  animation-play-state: running;
+}
+html[data-anim="1"] [data-reveal="fade"][data-shown],
+html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
+  animation-name: reveal-fade;
+  animation-duration: 0.5s;
+}
+@media (prefers-reduced-motion: reduce) {
+  html[data-anim="1"] [data-reveal] {
+    /* Never leave a user without content because an observer was slow
+       or a JS boundary failed: reveal immediately, no motion. */
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+  }
+}
+
+/* Gentle one-shot entrance for states (empty / error / small async islands).
+   Mount-time only (no observer): these mount *after* data resolution, so
+   the entrance reads as content arriving, not as decoration. */
+@keyframes enter-fade {
+  from { opacity: 0; transform: translate3d(0, 8px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.enter-fade {
+  animation: enter-fade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Tab panel swap — a quick 4px settle when a tab's content changes
+   (Top 10 periods, schedule weekdays). Short and small so swapping
+   reads as a state change, not a page transition. Replays via React
+   `key` on the panel wrapper. */
+@keyframes tab-swap {
+  from { opacity: 0; transform: translate3d(0, 4px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.tab-swap {
+  animation: tab-swap 0.24s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Measured tab indicator — the underline glides between tabs with a
+   transform-only animation: translateX positions the bar, scaleX stretches
+   it to the active tab's width. Never transition `left`/`width` here —
+   layout properties force main-thread style+layout each frame and visibly
+   stall while the swapped-in panel hydrates/decodes images. scaleX on a
+   2px pill distorts its caps imperceptibly (the standard trade-off, same
+   technique as MUI's TabIndicator). The reduced-motion catch-all flattens
+   the glide. */
+.tab-indicator {
+  transform-origin: left center;
+  /* Force compositor promotion: this is the one element on a swap-heavy
+     panel that must glide even while incoming rows decode. A single
+     standing will-change on a 2×44px bar is negligible; without it a
+     main-thread stall (image decode bursts from the swapped panel) can
+     freeze the transition mid-flight. */
+  will-change: transform;
+  transition: transform 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* ─────────────────────────────────────────────────────────────
    Cinematic details — premium anime info card.
    GPU-only (transform/opacity). Honors reduced-motion above.
    ───────────────────────────────────────────────────────────── */
@@ -649,4 +738,152 @@ header[data-scrolled="1"] {
   width: 18px;
   height: 1px;
   background: linear-gradient(90deg, var(--color-frost), transparent);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Route transitions — app/template.tsx wraps every route in
+   `.route-in`. Opacity-only by design: a transform on the wrapper
+   would temporarily re-anchor `position: fixed` children (the anime
+   detail page's full-bleed blurred backdrop is fixed), and a filter
+   would do the same. A plain fade never changes containing blocks.
+   Remounts per navigation (template semantics), so back/forward are
+   unaffected; SSR/print paint instantly since this is a plain
+   mount-time animation with no JS dependency.
+   ───────────────────────────────────────────────────────────── */
+@keyframes route-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.route-in {
+  animation: route-in 0.26s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .route-in { animation: none; }
+}
+
+/* Generic popover entrance (player settings menu, shortcuts dialog).
+   Replaces the tw-animate-style `animate-in fade-in slide-in-from-…`
+   classes that were silently no-op without the plugin. Fade + 8px rise,
+   transform/opacity only. */
+@keyframes menu-in {
+  from { opacity: 0; transform: translate3d(0, 8px, 0) scale(0.98); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+.menu-in {
+  animation: menu-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* Command palette. Backdrop fades while the panel rises a touch and
+   settles from 98.5% scale — the standard overlay choreography. The
+   close path adds `[data-closing]` variants so the transition out is
+   as intentional as the transition in (exit = 160ms). */
+@keyframes palette-backdrop-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes palette-panel-in {
+  from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.985); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
+}
+.palette-backdrop {
+  animation: palette-backdrop-in 0.19s ease-out both;
+}
+.palette-panel {
+  animation: palette-panel-in 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.palette-backdrop[data-closing="1"],
+.palette-panel[data-closing="1"] {
+  animation: palette-backdrop-in 0.16s ease-in both reverse;
+}
+.palette-panel[data-closing="1"] {
+  animation-name: palette-panel-in;
+  /* reverse of the entrance reads as a clean settle-out */
+}
+
+/* Press feedback — the shared micro-interaction for solid CTAs and
+   toolbar buttons. Hover bloom + active press on the same transform
+   channel; pairs with the existing `.watch-pill-spring`. Apply the
+   class; the transitions live here so every button feels identical. */
+.press {
+  transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
+              box-shadow 180ms ease;
+}
+.press:hover  { transform: translateY(-1px); }
+.press:active { transform: translateY(0) scale(0.97); }
+
+/* ─────────────────────────────────────────────────────────────
+   Spotlight hero choreography.
+
+   `.hero-in` — copy elements rise with a staggered delay chain driven
+   by `--hero-delay` (80ms steps). The copy block is re-keyed per slide,
+   so the sequence replays softly on every featured-title change.
+
+   `.hero-art` — the sharp key art settles from a 1.045 zoom to rest
+   over 7.5s (slower than the 7s autoplay, so art is always winding
+   down whenever a change happens — reads as a living shot, not a
+   canned zoom). The blurred backdrop layer runs the same drift at
+   1.07 for a whisper of depth separation (restrained parallax).
+
+   `.aurora` — two low-opacity gradient light fields behind the copy,
+   drifting on long transform-only loops. Behind every scrim and text
+   layer; under the global reduced-motion catch-all they hold still.
+   ───────────────────────────────────────────────────────────── */
+@keyframes hero-rise {
+  from { opacity: 0; transform: translate3d(0, 18px, 0); }
+  to   { opacity: 1; transform: translate3d(0, 0, 0); }
+}
+.hero-in {
+  animation: hero-rise 0.72s cubic-bezier(0.16, 1, 0.3, 1) both;
+  animation-delay: var(--hero-delay, 0ms);
+}
+@keyframes hero-art-settle {
+  from { transform: scale(1.045); }
+  to   { transform: scale(1); }
+}
+@keyframes hero-backdrop-settle {
+  from { transform: scale(1.07); }
+  to   { transform: scale(1.10); }
+}
+.hero-art {
+  animation: hero-art-settle 7.5s linear both;
+}
+.hero-backdrop-art {
+  animation: hero-backdrop-settle 9s linear both;
+}
+/* Crossfade timing for slide layers — slightly longer than the 700ms
+   default next/image swap so the outgoing art lingers a beat. */
+.hero-slide-fade {
+  transition: opacity 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+}
+@keyframes aurora-drift-a {
+  0%   { transform: translate3d(0, 0, 0) scale(1); }
+  50%  { transform: translate3d(3.5%, -2.5%, 0) scale(1.06); }
+  100% { transform: translate3d(0, 0, 0) scale(1); }
+}
+@keyframes aurora-drift-b {
+  0%   { transform: translate3d(0, 0, 0) scale(1.04); }
+  50%  { transform: translate3d(-3%, 2.5%, 0) scale(1); }
+  100% { transform: translate3d(0, 0, 0) scale(1.04); }
+}
+.aurora-a { animation: aurora-drift-a 26s ease-in-out infinite; }
+.aurora-b { animation: aurora-drift-b 32s ease-in-out infinite; }
+
+/* Ambient backdrop drift — the three fixed frost glows breathe with a
+   very slow translate/scale sine. Transform-only, behind everything. */
+.ambient-drift { animation: aurora-drift-a 30s ease-in-out infinite; }
+.ambient-drift-2 { animation: aurora-drift-b 38s ease-in-out infinite; }
+.ambient-drift-3 { animation: aurora-drift-a 44s ease-in-out infinite reverse; }
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora-a, .aurora-b,
+  .ambient-drift, .ambient-drift-2, .ambient-drift-3,
+  .hero-art, .hero-backdrop-art {
+    animation: none;
+  }
+  .hero-in {
+    /* Copy should appear without motion; `both` fill of a 0.001ms run
+       would land instantly via the global catch-all — this makes the
+       intent explicit and keeps the delays from staggering in. */
+    animation: none;
+  }
 }

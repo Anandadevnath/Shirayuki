@@ -93,9 +93,9 @@ export function ScheduleItemCard({ it }: { it: ScheduleItem }) {
       href={`/anime/${it.id}`}
       className="group block w-[44vw] shrink-0 snap-start sm:w-[24vw] md:w-[200px]"
     >
-      <div className="relative transform-gpu transition-transform duration-300 ease-out group-hover:-translate-y-1.5">
+      <div className="relative transform-gpu transition-transform duration-300 ease-out group-hover:-translate-y-1.5 group-focus-visible:-translate-y-1.5 group-active:translate-y-[-0.375rem]">
         <div className="relative aspect-[3/4] overflow-hidden rounded-[1.25rem] bg-surface-2 ring-1 ring-line/80">
-          <div className="absolute inset-0 transform-gpu transition-transform duration-300 ease-out group-hover:scale-[1.06]">
+          <div className="absolute inset-0 transform-gpu transition-transform duration-300 ease-out group-hover:scale-[1.05] group-focus-visible:scale-[1.05]">
             {it.poster ? (
               <SmartImage
                 src={it.poster}
@@ -108,10 +108,16 @@ export function ScheduleItemCard({ it }: { it: ScheduleItem }) {
               <div className="grid h-full place-items-center text-faint">No image</div>
             )}
           </div>
-          {/* Frosted hover ring — opacity cross-fade, GPU-composited */}
+          {/* Frosted hover/focus ring — opacity cross-fade, GPU-composited.
+              The deeper bottom scrim lands with it so titles stay readable
+              over bright art (same treatment as AnimeCard). */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[1.25rem] ring-1 ring-frost/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100"
+            className="pointer-events-none absolute inset-0 rounded-[1.25rem] ring-2 ring-frost/60 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
+          />
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-base/80 to-transparent opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
           />
         </div>
       </div>

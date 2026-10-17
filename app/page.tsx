@@ -1,5 +1,4 @@
 import { getHome, getSchedule, safe } from "@/lib/api";
-import { revealDelay } from "@/lib/utils/reveal";
 import { Spotlight } from "@/components/home/Spotlight";
 import { ContinueWatching } from "@/components/home/ContinueWatching";
 import { Trending } from "@/components/home/Trending";
@@ -9,6 +8,7 @@ import { DiscoverColumns } from "@/components/home/DiscoverColumns";
 import { Top10Tabs } from "@/components/home/Top10Tabs";
 import { ReleaseSchedule } from "@/components/home/ReleaseSchedule";
 import { Rail } from "@/components/anime/Rail";
+import { Reveal } from "@/components/ui/Reveal";
 import { ErrorState } from "@/components/common/States";
 
 // Home is rendered dynamically (not statically prerendered) on purpose.
@@ -92,33 +92,32 @@ export default async function HomePage() {
           the hero art stays uncluttered. */}
       <h1 className="sr-only">Browse, discover and watch anime — Sode no Shirayuki</h1>
 
-      {/* Section-level cascade — each board section fades up in sequence as
-          the page paints, so nothing snaps in. Pure-CSS, runs once on mount
-          (no scroll observer, so content is never gated behind hydration).
-          The stack sits in normal document flow below the full-bleed hero, so
-          sections follow a clean top-to-bottom rhythm — no artificial pull-up
-          that would overlap the hero's bottom and clip card edges. */}
+      {/* Section-level cascade — each board section rises once as it scrolls
+          into view (shared IntersectionObserver via <Reveal>; one-shot, so
+          scrolling back up never replays). Only the section as a whole is
+          observed — cards inside keep their own light entrance cadence —
+          keeping observer count flat regardless of home length. */}
       <div className="relative z-10 flex flex-col gap-12">
           {/* Trending keeps its hero-overlap position (v0 layout) so the home
               page stays stable whether or not the user has watch history:
               when Continue Watching has no items it returns null and Trending
               simply rides below the hero — when it does have items, Continue
               Watching renders AFTER Trending so Trending never shifts. */}
-          <div className="reveal" style={revealDelay(0)}>
+          <Reveal>
             <Trending items={home.trending} />
-          </div>
+          </Reveal>
 
-          <div className="reveal" style={revealDelay(80)}>
+          <Reveal delay={60}>
             <ContinueWatching />
-          </div>
+          </Reveal>
 
           {/* Card rails first — posters get room to breathe. Latest Episodes
               gets the cinematic 3D treatment (pointer-tilt floating posters). */}
-          <div className="reveal" style={revealDelay(160)}>
+          <Reveal delay={120}>
             <LatestEpisodes items={home.latestEpisodes} />
-          </div>
+          </Reveal>
 
-          <div className="reveal" style={revealDelay(240)}>
+          <Reveal delay={180}>
             <DiscoverColumns
               topAiring={home.topAiring}
               mostPopular={home.mostPopular}
@@ -126,37 +125,37 @@ export default async function HomePage() {
               newReleases={home.newReleases}
               completed={home.completed}
             />
-          </div>
+          </Reveal>
 
           {/* Top Upcoming — the last ranked section on the upstream home. Sits
               between the discovery columns and the Latest Completed / Top 10
               pair, mirroring hianime's own section order. No "See all" link:
               the upstream hianime.at has no dedicated /upcoming listing page. */}
-          <div className="reveal" style={revealDelay(280)}>
+          <Reveal delay={220}>
             <Rail title="Top Upcoming" eyebrow="Premieres" items={home.upcoming} />
-          </div>
+          </Reveal>
 
           {/* Release Calendar — the weekly premiere-grid teaser for /schedule.
               Renders only when the schedule endpoint succeeded; a failure
               silently drops this section (see scheduleRes gate above). */}
           {scheduleRes.ok && (
-            <div className="reveal" style={revealDelay(320)}>
+            <Reveal delay={260}>
               <ReleaseSchedule data={scheduleRes.data} />
-            </div>
+            </Reveal>
           )}
 
           {/* Latest Completed (left) and the Top 10 list (right) are two separate
               glass containers side by side. They stretch to a shared height (the
               taller of the two) and the left poster grid distributes its rows to
               fill, so neither panel is left with dead space. Stacks on mobile. */}
-          <div
-            className="reveal grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]"
-            style={revealDelay(360)}
+          <Reveal
+            delay={300}
+            className="grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]"
           >
             <QuickLists completed={completed} />
 
             <Top10Tabs buckets={home.top10} />
-          </div>
+          </Reveal>
         </div>
     </div>
   );

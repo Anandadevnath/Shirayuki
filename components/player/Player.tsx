@@ -791,7 +791,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
                 <div
                   role="menu"
                   aria-label="Player settings"
-                  className="absolute bottom-9 right-0 w-48 rounded-md glass p-2 text-sm shadow-[var(--shadow-frost)] animate-in fade-in slide-in-from-bottom-2 motion-reduce:animate-none"
+                  className="absolute bottom-9 right-0 w-48 rounded-md glass p-2 text-sm shadow-[var(--shadow-frost)] menu-in motion-reduce:animate-none"
                 >
                   <p className="px-2 pb-1 text-xs text-faint">Quality</p>
                   <button
@@ -912,7 +912,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
                 <div
                   role="dialog"
                   aria-label="Keyboard shortcuts"
-                  className="absolute bottom-9 right-0 w-64 rounded-md glass p-3 text-xs shadow-[var(--shadow-frost)] animate-in fade-in slide-in-from-bottom-2 motion-reduce:animate-none"
+                  className="absolute bottom-9 right-0 w-64 rounded-md glass p-3 text-xs shadow-[var(--shadow-frost)] menu-in motion-reduce:animate-none"
                 >
                   <div className="mb-2 flex items-center justify-between">
                     <p className="text-xs text-faint">Keyboard shortcuts</p>

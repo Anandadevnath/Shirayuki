@@ -33,7 +33,7 @@ export function Pagination({
   ).filter((p) => p >= 1 && p <= totalPages);
 
   const btn =
-    "grid h-9 min-w-9 place-items-center rounded-sm border border-line px-2 text-sm transition-colors";
+    "grid h-9 min-w-9 place-items-center rounded-sm border border-line px-2 text-sm transition-[color,border-color,transform,background-color] duration-200 ease-out active:scale-95 hover:-translate-y-px";
 
   return (
     <nav className="mt-10 flex flex-wrap items-center justify-center gap-1.5" aria-label="Pagination">

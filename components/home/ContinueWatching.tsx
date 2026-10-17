@@ -47,10 +47,10 @@ export function ContinueWatching() {
                 href={`/watch/${e.animeId}/${encodeURIComponent(e.episodeId)}`}
                 className="relative block overflow-hidden rounded-md ring-1 ring-line"
               >
-                {/* Frost ring on hover — opacity crossfade, no box-shadow repaint */}
+                {/* Frost ring on hover/focus — opacity crossfade, no box-shadow repaint */}
                 <span
                   aria-hidden
-                  className="pointer-events-none absolute inset-0 z-10 rounded-md ring-1 ring-frost/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100"
+                  className="pointer-events-none absolute inset-0 z-10 rounded-md ring-1 ring-frost/40 opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100"
                 />
                 <div className="relative aspect-video bg-surface-2">
                   {e.poster && (
@@ -68,7 +68,7 @@ export function ContinueWatching() {
                     />
                   )}
                   <div className="absolute inset-0 bg-gradient-to-t from-base/95 to-transparent" />
-                  <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity group-hover:opacity-100">
+                  <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100 group-focus-visible:opacity-100">
                     <span className="grid size-11 place-items-center rounded-full glass text-frost">
                       <Play className="size-5 translate-x-0.5 fill-current" />
                     </span>

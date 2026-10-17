@@ -42,7 +42,7 @@ function MyListButton({ anime }: { anime: SpotlightModel }) {
       aria-pressed={added}
       aria-label={`${added ? "Remove from" : "Add to"} My List: ${anime.title}`}
       className={cn(
-        "flex items-center gap-2 rounded-2xl border px-6 py-3 text-sm font-semibold backdrop-blur-md transition-colors",
+        "flex items-center gap-2 rounded-2xl border px-6 py-3 text-sm font-semibold backdrop-blur-md transition-colors press",
         added
           ? "border-frost/60 bg-frost-soft text-frost"
           : "border-line glass text-snow hover:border-frost/50",
@@ -157,6 +157,10 @@ export function Spotlight({
   const a = list[active];
   const eps = totalEpisodes(a);
 
+  /** Staggered hero-copy chain — one increasing delay per content group. */
+  const heroDelay = (ms: number) =>
+    ({ "--hero-delay": `${ms}ms` }) as React.CSSProperties;
+
   return (
     <section
       // Full-bleed: break out of the centered <main> to the true viewport edges.
@@ -196,14 +200,18 @@ export function Spotlight({
               <div
                 key={s.id}
                 className={cn(
-                  "absolute inset-0 transition-opacity duration-700 ease-out",
+                  // Slide swap crossfade — 800ms so the outgoing art lingers
+                  // a beat and the change reads as a dissolve, not a blink.
+                  "hero-slide-fade absolute inset-0",
                   idx === active ? "opacity-100" : "opacity-0",
                 )}
               >
                 {/* Blurred fill — same URL, AVIF/WebP via next/image, paints
                     underneath the sharp key art. quality=50 is small enough
                     to keep the blurred backdrop cheap; the 2.4x scale + blur
-                    hides any softness. */}
+                    hides any softness. Its settle animation runs at a
+                    different rate than the sharp art (9s vs 7.5s), which
+                    separates the two planes into a restrained parallax. */}
                 {seen.has(idx) && (
                   <Image
                     src={s.poster}
@@ -212,7 +220,10 @@ export function Spotlight({
                     fill
                     sizes="100vw"
                     quality={50}
-                    className="scale-110 object-cover opacity-60 blur-2xl"
+                    className={cn(
+                      "scale-110 object-cover opacity-60 blur-2xl",
+                      idx === active && "hero-backdrop-art",
+                    )}
                   />
                 )}
                 {seen.has(idx) ? (
@@ -221,7 +232,17 @@ export function Spotlight({
                     alt=""
                     fill
                     sizes="100vw"
-                    className="object-cover object-[center_22%] brightness-[0.82]"
+                    className={cn(
+                      "object-cover object-[center_22%] brightness-[0.82]",
+                      // Cinematic settle: each activation starts from a 4.5%
+                      // zoom and eases to rest over 7.5s — slower than the
+                      // 7s autoplay cadence, so art is always winding down
+                      // whenever a change lands. Transform-only; the art
+                      // never drives layout. Removing the class on the
+                      // inactive slide resets scale to 1 invisibly (opacity
+                      // is 0), so the next activation zooms fresh.
+                      idx === active && "hero-art",
+                    )}
                     priority={idx === 0}
                   />
                 ) : (
@@ -233,6 +254,16 @@ export function Spotlight({
               </div>
             ) : null,
           )}
+        </div>
+
+        {/* ── Atmospheric light — two low-opacity frost light fields that
+            drift on long transform-only loops (26s / 32s). They sit ABOVE
+            the art and BELOW every scrim + text layer, so they read as
+            ambient scene lighting, never as a veil over the copy, and are
+            frozen entirely under reduced-motion. ── */}
+        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+          <div className="aurora-a absolute -left-[12%] top-[12%] h-[62%] w-[55%] rounded-full bg-frost/10 blur-[130px]" />
+          <div className="aurora-b absolute -right-[10%] top-[38%] h-[58%] w-[46%] rounded-full bg-frost-deep/10 blur-[140px]" />
         </div>
 
         {/* Cinematic scrims — a gentle vignette so the art reads as one calm
@@ -255,8 +286,12 @@ export function Spotlight({
         <div className="absolute inset-x-0 bottom-0 h-[36%] bg-gradient-to-t from-base/85 from-6% via-base/30 via-32% to-transparent" />
         <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/85 via-base/55 via-35% via-base/25 to-transparent" />
 
-        {/* ── Left vertical "featured" strip ── */}
-        <div className="pointer-events-none absolute left-6 top-1/2 z-10 hidden -translate-y-1/2 flex-col items-center gap-4 lg:flex">
+        {/* ── Left vertical "featured" strip — one-shot entrance alongside
+            the first copy cascade ── */}
+        <div
+          className="hero-in pointer-events-none absolute left-6 top-1/2 z-10 hidden -translate-y-1/2 flex-col items-center gap-4 lg:flex"
+          style={heroDelay(520)}
+        >
           <span className="h-16 w-px bg-gradient-to-b from-transparent to-frost/60" />
           <span
             className="font-mono text-[11px] font-semibold uppercase tracking-[0.5em] text-frost"
@@ -303,62 +338,87 @@ export function Spotlight({
 
         {/* ── Copy + CTAs, centred in the full-height hero with a slight
             upward bias (pb-[8vh]) so the block sits comfortably above the
-            bottom fade — balanced composition, nothing tucks under the hero. */}
+            bottom fade — balanced composition, nothing tucks under the hero.
+
+            Choreography: the text stack is keyed by the active slide, so
+            every change replays a staggered rise (title → meta → synopsis
+            → stats, 90ms apart, ~0.7s each). The CTA row is intentionally
+            NOT keyed — the buttons stay planted under the cursor between
+            slide changes (remounting them both flickers the My List state
+            and yanks click targets mid-interaction). ── */}
         <div className="relative z-10 flex flex-1 items-center pb-[8vh]">
           <div className="mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
             <div className="flex max-w-xl flex-col gap-4">
-              <h2 className="font-display text-3xl font-extrabold leading-[1.04] [text-shadow:0_2px_28px_rgba(0,0,0,0.8)] sm:text-4xl md:text-5xl">
-                <span className="line-clamp-2">{a.title}</span>
-              </h2>
+              {/* Line-clamped rows keep per-slide text heights stable, so the
+                  keyed re-render can never shift layout — the hero's own
+                  height is viewport-fixed and everything inside is
+                  height-capped. */}
+              <div key={active} className="contents">
+                <h2
+                  className="hero-in font-display text-3xl font-extrabold leading-[1.04] [text-shadow:0_2px_28px_rgba(0,0,0,0.8)] sm:text-4xl md:text-5xl"
+                  style={heroDelay(60)}
+                >
+                  <span className="line-clamp-2">{a.title}</span>
+                </h2>
 
-              {/* Metadata row — real fields only */}
-              <div className="flex flex-wrap items-center gap-2 text-xs text-muted sm:text-sm">
-                {a.type && (
-                  <span className="rounded-full border border-line bg-base/40 px-3 py-0.5 backdrop-blur-sm">
-                    {a.type}
-                  </span>
+                {/* Metadata row — real fields only */}
+                <div
+                  className="hero-in flex flex-wrap items-center gap-2 text-xs text-muted sm:text-sm"
+                  style={heroDelay(150)}
+                >
+                  {a.type && (
+                    <span className="rounded-full border border-line bg-base/40 px-3 py-0.5 backdrop-blur-sm">
+                      {a.type}
+                    </span>
+                  )}
+                  {a.quality && (
+                    <span className="rounded-full bg-frost-soft px-3 py-0.5 font-semibold text-frost">
+                      {a.quality}
+                    </span>
+                  )}
+                  <EpBadges sub={a.episodes.sub} dub={a.episodes.dub} />
+                </div>
+
+                {a.description && (
+                  <p
+                    className="hero-in max-w-lg text-sm leading-relaxed text-muted/90 [@media(max-height:480px)]:hidden sm:line-clamp-2"
+                    style={heroDelay(240)}
+                  >
+                    {truncate(a.description, 170)}
+                  </p>
                 )}
-                {a.quality && (
-                  <span className="rounded-full bg-frost-soft px-3 py-0.5 font-semibold text-frost">
-                    {a.quality}
-                  </span>
-                )}
-                <EpBadges sub={a.episodes.sub} dub={a.episodes.dub} />
+
+                {/* Stats row */}
+                <div
+                  className="hero-in flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-snow [@media(max-height:480px)]:hidden"
+                  style={heroDelay(330)}
+                >
+                  {!!a.score && (
+                    <span className="flex items-center gap-1.5">
+                      <Star className="size-4 fill-warning text-warning" /> {a.score}
+                      <span className="text-faint">Rating</span>
+                    </span>
+                  )}
+                  {eps != null && (
+                    <span className="flex items-center gap-1.5">
+                      <Film className="size-4 text-frost" /> {eps}
+                      <span className="text-faint">Episodes</span>
+                    </span>
+                  )}
+                  {typeof a.rank === "number" && (
+                    <span className="flex items-center gap-1.5">
+                      <Flame className="size-4 text-sakura" />
+                      <span className="text-faint">Trending</span> #{a.rank}
+                    </span>
+                  )}
+                </div>
               </div>
 
-              {a.description && (
-                <p className="max-w-lg text-sm leading-relaxed text-muted/90 [@media(max-height:480px)]:hidden sm:line-clamp-2">
-                  {truncate(a.description, 170)}
-                </p>
-              )}
-
-              {/* Stats row */}
-              <div className="flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-snow [@media(max-height:480px)]:hidden">
-                {!!a.score && (
-                  <span className="flex items-center gap-1.5">
-                    <Star className="size-4 fill-warning text-warning" /> {a.score}
-                    <span className="text-faint">Rating</span>
-                  </span>
-                )}
-                {eps != null && (
-                  <span className="flex items-center gap-1.5">
-                    <Film className="size-4 text-frost" /> {eps}
-                    <span className="text-faint">Episodes</span>
-                  </span>
-                )}
-                {typeof a.rank === "number" && (
-                  <span className="flex items-center gap-1.5">
-                    <Flame className="size-4 text-sakura" />
-                    <span className="text-faint">Trending</span> #{a.rank}
-                  </span>
-                )}
-              </div>
-
-              {/* CTAs */}
-              <div className="mt-1 flex items-center gap-3">
+              {/* CTAs — stable across slide changes */}
+              <div className="hero-in mt-1 flex items-center gap-3" style={heroDelay(430)}>
                 <Link
                   href={`/watch/${a.id}`}
-                  className="flex items-center gap-2 rounded-2xl bg-frost px-7 py-3 text-sm font-semibold text-base shadow-[var(--shadow-neon)] transition-transform hover:scale-[1.04]"
+                  className="press flex items-center gap-2 rounded-2xl bg-frost px-7 py-3 text-sm font-semibold text-base shadow-[var(--shadow-neon)]"
                 >
                   <Play className="size-4 fill-current" /> Watch Now
                 </Link>

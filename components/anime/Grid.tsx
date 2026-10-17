@@ -1,23 +1,19 @@
 import type { AnimeCardModel } from "@/lib/providers/types";
-import { revealDelay } from "@/lib/utils/reveal";
 import { AnimeCard } from "./AnimeCard";
+import { Reveal } from "@/components/ui/Reveal";
 
 export function Grid({ items }: { items: AnimeCardModel[] }) {
   return (
     <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {items.map((a, i) => (
-        // Cinematic cascade — cards rise in sequence, capped so a long grid
-        // doesn't wait seconds for the last card. Pure-CSS, plays once on
-        // mount. 28ms per index keeps the cascade total to ~308ms across the
-        // visible first 12 cards (vs. 495ms at 45ms) — cards 12+ snap in
-        // together at the same offset.
-        <div
-          key={a.id}
-          className="reveal"
-          style={revealDelay(Math.min(i, 11) * 28)}
-        >
+        // Cinematic cascade, viewport-gated: each card rises once when it
+        // actually reaches the viewport (shared IntersectionObserver —
+        // see components/ui/Reveal). 28ms per index caps the visible
+        // stagger; cards already on-screen at mount cascade immediately,
+        // so above-fold grids keep their load-in rhythm.
+        <Reveal key={a.id} delay={Math.min(i, 11) * 28}>
           <AnimeCard anime={a} />
-        </div>
+        </Reveal>
       ))}
     </div>
   );

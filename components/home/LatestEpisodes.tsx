@@ -53,8 +53,8 @@ function pose(offset: number): Pose {
     transform: `translate3d(calc(-50% + ${x}%), -50%, ${z}px) rotateY(${ry}deg) scale(${scale})`,
     opacity: abs > VISIBLE ? 0 : 1 - abs * 0.16,
     zIndex: 50 - abs,
-    blur: abs === 0 ? 0 : Math.min(abs * 1.3, 4),
-    scrim: Math.min(abs * 0.22 + 0.18, 0.7),
+    blur: abs === 0 ? 0 : Math.min(abs * 0.9, 2.5),
+    scrim: Math.min(abs * 0.18 + 0.12, 0.5),
   };
 }
 
@@ -130,7 +130,10 @@ const FlowCard = memo(function FlowCard({
           <div
             className={cn(
               "absolute inset-0 transition-transform duration-700 ease-out",
-              active && "scale-[1.04] group-hover:scale-[1.08]",
+              // Zoom is hover-only: a permanent scale on the hero wastes bitmap
+              // resolution (a scaled-up render of an already-limited source reads
+              // soft), while the hover bloom keeps the interactive feel.
+              active && "group-hover:scale-[1.08]",
             )}
           >
             {/* Hidden cards (more than VISIBLE positions away) skip the
@@ -146,12 +149,12 @@ const FlowCard = memo(function FlowCard({
                 src={anime.poster}
                 alt={anime.title}
                 fill
-                // Posters are 16:9 "big_cover" banners shown in a 3:4 portrait box
-                // via object-cover, so the image is scaled up until its HEIGHT fills
-                // the card — the width-based candidate must be large enough that the
-                // derived height still covers ~296px @2dpr (~1080px wide). A 320px
-                // sizes hint fetched a 640px variant and upscaled it vertically ~1.6×,
-                // which read as blur. These values keep the centred hero crisp.
+                // Card renders at ~222×296 CSS px (~444×592 device px @2dpr), so a
+                // 600px sizes hint → 640 variant is the right raster either way.
+                // NOTE: several upstream posters are only ~210×300 (e.g. the
+                // hianime.at storage webp / anipix thumbnails) — the optimizer
+                // never upscales, so those cards are source-limited; fixing their
+                // sharpness needs higher-res art from the API, not bigger hints.
                 sizes="(max-width:640px) 80vw, (max-width:1024px) 60vw, 600px"
                 quality={90}
                 className="object-cover"
