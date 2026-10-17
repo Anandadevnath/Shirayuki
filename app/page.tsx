@@ -10,6 +10,9 @@ import { ReleaseSchedule } from "@/components/home/ReleaseSchedule";
 import { Rail } from "@/components/anime/Rail";
 import { Reveal } from "@/components/ui/Reveal";
 import { ErrorState } from "@/components/common/States";
+import { ScheduleSkeleton } from "@/components/ui/Skeleton";
+import HomeSkeleton from "./loading";
+import { Suspense } from "react";
 
 // Home is rendered dynamically (not statically prerendered) on purpose.
 //
@@ -28,18 +31,31 @@ import { ErrorState } from "@/components/common/States";
 // back-forward cache, since the provider fetch cache carries the 15-min window.
 export const dynamic = "force-dynamic";
 
-export default async function HomePage() {
-  // The v2 home payload's featured["Latest Completed"] fetches a full 50-title
-  // list, so we cap it so the grid fills out to roughly the Top 10 panel's height.
-  //
-  // Schedule is fetched in parallel: it's an independent endpoint served from
-  // the API's own cache (`revalidate: 1800`), so it adds ~0 latency on top of
-  // `getHome`. A schedule failure never takes the home down — the section is
-  // simply skipped (`scheduleRes.ok` gate below).
-  const [res, scheduleRes] = await Promise.all([
-    safe(getHome),
-    safe(getSchedule),
-  ]);
+/**
+ * The home board: everything except the schedule hangs off the single
+ * `getHome()` payload, so those sections resolve together and stream in as
+ * one Suspense unit (route-level `app/loading.tsx` renders their skeleton
+ * while the shell has already flushed).
+ *
+ * The release calendar is an INDEPENDENT endpoint (`getSchedule`), so it
+ * streams as its own island: when the schedule endpoint trails the home
+ * payload (or vice versa), each top slot fills in the moment its own data
+ * lands instead of the whole page waiting on the slowest endpoint — with an
+ * in-place <ScheduleSkeleton /> meanwhile.
+ */
+export default function HomePage() {
+  return (
+    <div>
+      <Suspense fallback={<HomeSkeleton />}>
+        <HomeBoard />
+      </Suspense>
+    </div>
+  );
+}
+
+/** The whole getHome()-driven board, streamed as one unit. */
+async function HomeBoard() {
+  const res = await safe(getHome);
 
   if (!res.ok) {
     return (
@@ -81,9 +97,7 @@ export default async function HomePage() {
           fetchPriority="high"
         />
       )}
-      {home.spotlight.length > 0 && (
-        <Spotlight items={home.spotlight} />
-      )}
+      {home.spotlight.length > 0 && <Spotlight items={home.spotlight} />}
 
       {/* Document-level <h1> for the home page. The spotlight carousel
           surfaces an <h2> per slide (the anime title); screen readers and
@@ -135,14 +149,9 @@ export default async function HomePage() {
             <Rail title="Top Upcoming" eyebrow="Premieres" items={home.upcoming} />
           </Reveal>
 
-          {/* Release Calendar — the weekly premiere-grid teaser for /schedule.
-              Renders only when the schedule endpoint succeeded; a failure
-              silently drops this section (see scheduleRes gate above). */}
-          {scheduleRes.ok && (
-            <Reveal delay={260}>
-              <ReleaseSchedule data={scheduleRes.data} />
-            </Reveal>
-          )}
+          <Suspense fallback={<ReleaseScheduleFallback />}>
+            <ReleaseScheduleSlot />
+          </Suspense>
 
           {/* Latest Completed (left) and the Top 10 list (right) are two separate
               glass containers side by side. They stretch to a shared height (the
@@ -158,5 +167,34 @@ export default async function HomePage() {
           </Reveal>
         </div>
     </div>
+  );
+}
+
+/**
+ * Release calendar island — independent `getSchedule()` endpoint.
+ *
+ * Previously the schedule was fetched with `Promise.all([getHome, …])` at the
+ * top of the page, which made the ENTIRE home wait for the slowest of the two
+ * endpoints. As its own Suspense island it streams in whenever it's ready:
+ * a fast schedule paints early, a slow one shows an in-place skeleton while
+ * the rest of the board has already landed. A schedule failure still drops
+ * just this section (the fallback renders null).
+ */
+async function ReleaseScheduleSlot() {
+  const scheduleRes = await safe(getSchedule);
+  if (!scheduleRes.ok) return null;
+  return (
+    <Reveal delay={260}>
+      <ReleaseSchedule data={scheduleRes.data} />
+    </Reveal>
+  );
+}
+
+/** In-place placeholder for the calendar island while its endpoint streams. */
+function ReleaseScheduleFallback() {
+  return (
+    <Reveal delay={260}>
+      <ScheduleSkeleton />
+    </Reveal>
   );
 }
