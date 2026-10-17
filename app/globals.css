@@ -868,6 +868,57 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
 .aurora-a { animation: aurora-drift-a 26s ease-in-out infinite; }
 .aurora-b { animation: aurora-drift-b 32s ease-in-out infinite; }
 
+/* ── Spotlight → page dissolve (alpha mask, not a covering scrim) ───────────
+   Applied to the hero's artwork/aurora/petal layers. The artwork is fully
+   opaque through the upper half of the hero, then its OWN alpha eases
+   100% → 55% → 12% → 0 across the lower half, reaching zero just before the
+   hero's bottom edge. Because nothing but page background remains at the
+   boundary, the hero and the (overlapping) Trending section share one
+   continuous atmosphere — there is no artwork left to cut a line into. */
+.art-dissolve {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 50%,
+    rgba(0, 0, 0, 0.55) 68%,
+    rgba(0, 0, 0, 0.12) 88%,
+    transparent 99%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 50%,
+    rgba(0, 0, 0, 0.55) 68%,
+    rgba(0, 0, 0, 0.12) 88%,
+    transparent 99%
+  );
+}
+
+/* ── Crimson petals — the sakura accent ────────────────────────────────────
+   Six sparse petals drift down through the hero at staggered speeds and sway
+   amplitude. The petal shape is a slightly asymmetric double-radius blob set
+   on a deep-crimson → sakura gradient; sway comes from the per-petal
+   --petal-x travel stretched across the fall. Decorative only, never
+   interactive, and removed entirely under reduced-motion. */
+.petal {
+  position: absolute;
+  top: -5%;
+  width: 11px;
+  height: 15px;
+  border-radius: 64% 36% 62% 38% / 56% 64% 36% 44%;
+  background: linear-gradient(148deg, oklch(0.62 0.17 14) 15%, var(--color-sakura) 90%);
+  box-shadow: 0 0 6px 0 oklch(0.62 0.17 14 / 0.35);
+  opacity: 0;
+  animation: petal-fall var(--petal-dur, 15s) linear var(--petal-delay, 0s) infinite;
+  will-change: transform, opacity;
+}
+@keyframes petal-fall {
+  0%   { transform: translate3d(0, -6vh, 0) rotate(0deg); opacity: 0; }
+  7%   { opacity: var(--petal-o, 0.5); }
+  88%  { opacity: var(--petal-o, 0.5); }
+  100% { transform: translate3d(var(--petal-x, 9vw), 108vh, 0) rotate(320deg); opacity: 0; }
+}
+
 /* Ambient backdrop drift — the three fixed frost glows breathe with a
    very slow translate/scale sine. Transform-only, behind everything. */
 .ambient-drift { animation: aurora-drift-a 30s ease-in-out infinite; }
@@ -880,6 +931,9 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
   .hero-art, .hero-backdrop-art {
     animation: none;
   }
+  /* Petals are pure decoration — under reduced-motion the crimson field is
+     removed entirely, so the hero reads as a calm, static key art composition. */
+  .petal { display: none; }
   .hero-in {
     /* Copy should appear without motion; `both` fill of a 0.001ms run
        would land instantly via the global catch-all — this makes the

@@ -60,6 +60,20 @@ function MyListButton({ anime }: { anime: SpotlightModel }) {
  * right, and the copy + CTAs anchored low-left. The trending rail now lives in
  * its own section below — the hero stays uncluttered and atmospheric.
  */
+const MAX_SLIDES = 7;
+
+/** Sparse crimson-petal field — six petals with varied fall duration, start
+ *  delay, horizontal sway and peak opacity. Decorative only (aria-hidden in
+ *  the JSX), pure CSS transform/opacity loops, hidden under reduced-motion. */
+const PETALS = [
+  { left: 58, dur: 13, delay: 0, x: 9, o: 0.55 },
+  { left: 67, dur: 17, delay: 3.5, x: -7, o: 0.4 },
+  { left: 76, dur: 15, delay: 7, x: 11, o: 0.5 },
+  { left: 86, dur: 19, delay: 1.8, x: -9, o: 0.35 },
+  { left: 44, dur: 21, delay: 5, x: -12, o: 0.3 },
+  { left: 93, dur: 16, delay: 10, x: 7, o: 0.45 },
+];
+
 export function Spotlight({
   items,
 }: {
@@ -67,7 +81,7 @@ export function Spotlight({
   /** Accepted for call-site compatibility; trending renders in its own section now. */
   trending?: AnimeCardModel[];
 }) {
-  const list = items ?? [];
+  const list = (items ?? []).slice(0, MAX_SLIDES);
   const n = list.length;
   const [active, setActive] = useState(0);
   // Auto-advance pauses while hovered, focused, or dragging — single flag
@@ -165,7 +179,7 @@ export function Spotlight({
     <section
       // Full-bleed: break out of the centered <main> to the true viewport edges.
       // body has overflow-x-clip, so 100vw spans full width with no horizontal scroll.
-      className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-hidden focus:outline-none touch-pan-y select-none"
+      className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-hidden focus:outline-none focus-visible:ring-1 focus-visible:ring-frost/60 touch-pan-y select-none"
       role="group"
       aria-roledescription="carousel"
       aria-label="Featured anime"
@@ -187,14 +201,14 @@ export function Spotlight({
       onBlur={() => setInteracting(false)}
     >
       <div className="relative flex h-[94svh] min-h-[min(680px,94svh)] max-h-[1120px] w-full flex-col">
-        {/* ── Background depth: a single sharp key art (priority on slide 0)
-            sits over a blurred backdrop painted from the same poster URL. The
-            backdrop is a SECOND <Image> at quality={50} so it goes through
-            the optimizer (AVIF/WebP, srcset) — the previous CSS
-            background-image variant fetched the raw upstream bytes (no AVIF,
-            no srcset, bypassed the remotePatterns allowlist). Slides that
-            haven't been seen yet keep their shimmer placeholder visible. ── */}
-        <div className="absolute inset-0">
+        {/* ── Background depth: the slide stack DISSOLVES via alpha (art-dissolve
+            mask), not via a scrim covering it. The artwork is fully visible
+            through the upper half of the hero, then its own opacity eases
+            100% → 55% → 12% → 0 across the lower half — so at the hero's
+            bottom edge there is literally no artwork left to cut, and the
+            page background shows through continuously beneath both the hero
+            and the overlapping Trending section. ── */}
+        <div className="art-dissolve absolute inset-0">
           {list.map((s, idx) =>
             s.poster ? (
               <div
@@ -261,9 +275,38 @@ export function Spotlight({
             the art and BELOW every scrim + text layer, so they read as
             ambient scene lighting, never as a veil over the copy, and are
             frozen entirely under reduced-motion. ── */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div
+          aria-hidden
+          className="art-dissolve pointer-events-none absolute inset-0 overflow-hidden"
+        >
           <div className="aurora-a absolute -left-[12%] top-[12%] h-[62%] w-[55%] rounded-full bg-frost/10 blur-[130px]" />
           <div className="aurora-b absolute -right-[10%] top-[38%] h-[58%] w-[46%] rounded-full bg-frost-deep/10 blur-[140px]" />
+        </div>
+
+        {/* ── Drifting crimson petals — the sakura accent: a sparse field of
+            six petals falling through the scene at staggered speeds and
+            sway amplitudes (pure transform/opacity CSS loops, decorative,
+            aria-hidden, pointer-events-none). They dissolve with the same
+            alpha mask as the art, and hidden entirely under reduced-motion. ── */}
+        <div
+          aria-hidden
+          className="art-dissolve pointer-events-none absolute inset-0 overflow-hidden"
+        >
+          {PETALS.map((p, i) => (
+            <span
+              key={i}
+              className="petal"
+              style={
+                {
+                  left: `${p.left}%`,
+                  "--petal-dur": `${p.dur}s`,
+                  "--petal-delay": `${p.delay}s`,
+                  "--petal-x": `${p.x}vw`,
+                  "--petal-o": p.o,
+                } as React.CSSProperties
+              }
+            />
+          ))}
         </div>
 
         {/* Cinematic scrims — a gentle vignette so the art reads as one calm
@@ -275,40 +318,18 @@ export function Spotlight({
             so the navbar (which overlaps the section via -mt-24) blends into
             the gradient instead of clipping it. */}
         <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/35 to-base/60" />
-        {/* Bottom scrim — a tall, feathered cinematic fade so the key art melts
-            into the dark page instead of ending in a hard band. Kept lighter
-            and airier than before: the darkness stays seated near the very
-            bottom edge (via sits at ~32% with a soft /30 tone), and the long
-            transparent tail feathers out through the middle of the hero. So
-            the art glows through the whole band, the Trending section below
-            reads clearly, and the transition into the next section stays
-            smooth — no dense pocket of darkness to trip the eye. */}
-        <div className="absolute inset-x-0 bottom-0 h-[36%] bg-gradient-to-t from-base/85 from-6% via-base/30 via-32% to-transparent" />
+        {/* Bottom atmosphere — a MILD gradient kept only for copy contrast in
+            the lower hero. It can never read as a seam: the artwork layers
+            are already fully transparent here (art-dissolve mask), so this
+            base tint blends over the page background itself. */}
+        <div className="absolute inset-x-0 bottom-0 h-[28%] bg-gradient-to-t from-base/45 via-base/10 to-transparent" />
         <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/85 via-base/55 via-35% via-base/25 to-transparent" />
 
-        {/* ── Left vertical "featured" strip — one-shot entrance alongside
-            the first copy cascade ── */}
-        <div
-          className="hero-in pointer-events-none absolute left-6 top-1/2 z-10 hidden -translate-y-1/2 flex-col items-center gap-4 lg:flex"
-          style={heroDelay(520)}
-        >
-          <span className="h-16 w-px bg-gradient-to-b from-transparent to-frost/60" />
-          <span
-            className="font-mono text-[11px] font-semibold uppercase tracking-[0.5em] text-frost"
-            style={{ writingMode: "vertical-rl" }}
-          >
-            Featured
-          </span>
-          <span
-            className="font-display text-sm font-bold tabular-nums text-snow/80"
-            style={{ writingMode: "vertical-rl" }}
-          >
-            {String(active + 1).padStart(2, "0")} — {String(n).padStart(2, "0")}
-          </span>
-          <span className="h-16 w-px bg-gradient-to-b from-frost/60 to-transparent" />
-        </div>
-
-        {/* ── Right vertical diamond nav — one facet per slide ── */}
+        {/* ── Right vertical diamond nav — one facet per slide (carousel
+            jumps), plus keyboard arrows and drag-to-swipe. The old prev /
+            next arrow buttons were removed for a clean, chrome-free banner.
+            The left "Featured" strip lives INSIDE the shared content
+            container above. ── */}
         {n > 1 && (
           <div className="absolute right-5 top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 sm:right-7 sm:flex">
             {list.map((_, idx) => (
@@ -347,7 +368,37 @@ export function Spotlight({
             slide changes (remounting them both flickers the My List state
             and yanks click targets mid-interaction). ── */}
         <div className="relative z-10 flex flex-1 items-center pb-[8vh]">
-          <div className="mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
+          {/* This container is the SHARED content container — identical to
+              <main>'s mx-auto max-w-[1460px] px-4 sm:px-6 lg:px-8 — so the
+              hero title/copy/CTA block shares its exact left and right
+              boundaries with every homepage section (Trending heading, card
+              rails, grids). Do not add asymmetric padding here; the vertical
+              "Featured" strip below decorates the gutter instead of pushing
+              the copy off-alignment. */}
+          <div className="relative mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
+            {/* Left vertical "featured" strip — absolutely positioned inside
+                the shared container's left padding gutter (0 → ~20px wide,
+                text starts at 32px), so it never displaces the copy and both
+                edges stay flush with the sections below. */}
+            <div
+              className="hero-in pointer-events-none absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 flex-col items-center gap-4 lg:flex"
+              style={heroDelay(520)}
+            >
+              <span className="h-16 w-px bg-gradient-to-b from-transparent to-frost/60" />
+              <span
+                className="font-mono text-[11px] font-semibold uppercase tracking-[0.5em] text-frost"
+                style={{ writingMode: "vertical-rl" }}
+              >
+                Featured
+              </span>
+              <span
+                className="font-display text-sm font-bold tabular-nums text-snow/80"
+                style={{ writingMode: "vertical-rl" }}
+              >
+                {String(active + 1).padStart(2, "0")} — {String(n).padStart(2, "0")}
+              </span>
+              <span className="h-16 w-px bg-gradient-to-b from-frost/60 to-transparent" />
+            </div>
             <div className="flex max-w-xl flex-col gap-4">
               {/* Line-clamped rows keep per-slide text heights stable, so the
                   keyed re-render can never shift layout — the hero's own

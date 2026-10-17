@@ -406,8 +406,16 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
       {/* Editorial header — frost accent bar + stacked eyebrow/title, with
           scroll arrows on the right (reduced-motion only). */}
       <div className="mb-4 flex items-center gap-4">
-        <div className="flex items-center gap-3">
-          <span className="h-9 w-1 shrink-0 rounded-full bg-gradient-to-b from-frost to-frost-deep shadow-[var(--shadow-neon)]" />
+        <div className="relative flex items-center gap-3">
+          {/* Accent bar hangs in the shared container's left gutter
+              (-left-4 → occupies the 32px padding zone at lg, 16px at <lg)
+              so the heading TEXT starts at the same container edge as the
+              hero copy, the rails and every other section — alignment stays
+              exact across the homepage. */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -left-4 top-1/2 h-9 w-1 -translate-y-1/2 rounded-full bg-gradient-to-b from-frost to-frost-deep shadow-[var(--shadow-neon)]"
+          />
           <div className="min-w-0">
             <span className="flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-frost">
               <span aria-hidden className="inline-flex">

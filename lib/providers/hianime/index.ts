@@ -240,7 +240,12 @@ export async function getServers(
   episodeId: string,
   ep: number,
 ): Promise<ServersModel> {
-  const path = `${V2}/episode/servers?episodeId=${encodeURIComponent(episodeId)}`;
+  // Docs: /episode/servers?animeEpisodeId=<slug-id>&ep=<n> — the upstream
+  // renamed the query param (bare `episodeId` now 404s), which silently
+  // broke every watch page ("No streaming server is available").
+  const path = `${V2}/episode/servers?animeEpisodeId=${encodeURIComponent(
+    episodeId,
+  )}&ep=${encodeURIComponent(String(ep))}`;
   const { data } = await apiFetch(path, S.envelope(S.serversData), { noStore: true });
 
   const map = (arr: { name?: string | null; serverId?: string | null }[], category: ServerCategory) => {
@@ -287,9 +292,12 @@ export async function getSources(
   server: string,
   category: string,
 ): Promise<SourcesModel | null> {
-  const path = `${V2}/episode/sources?episodeId=${encodeURIComponent(
+  // Docs: /episode/sources?animeEpisodeId=<slug-id>&ep=<n>&server=..&category=..
+  const path = `${V2}/episode/sources?animeEpisodeId=${encodeURIComponent(
     episodeId,
-  )}&server=${encodeURIComponent(server)}&category=${encodeURIComponent(category)}`;
+  )}&ep=${encodeURIComponent(String(ep))}&server=${encodeURIComponent(
+    server,
+  )}&category=${encodeURIComponent(category)}`;
   const { data } = await apiFetch(path, S.envelope(S.sourcesData), { noStore: true });
   if (!data.link) return null;
   return {

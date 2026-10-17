@@ -55,15 +55,35 @@ export async function apiFetch<T extends z.ZodTypeAny>(
         try {
           detail = (await res.text()).slice(0, 140).replace(/\s+/g, " ").trim();
         } catch {}
+        // A deterministic client error is not a gate: 404 = this id/server
+        // simply has nothing (the watch failover loop legitimately walks
+        // servers until one answers), 400/401/403 = bad request, not
+        // transient. Retrying those 3× only added ~3s of backoff per dead
+        // server candidate and multiplied console noise. Only transient
+        // failures (timeouts, 402/425/429 gates, 5xx) earn a retry.
+        if (res.status === 400 || res.status === 401 || res.status === 403 || res.status === 404) {
+          throw new NonRetryError(`HTTP ${res.status}${detail ? ` — ${detail}` : ""}`);
+        }
         throw new Error(`HTTP ${res.status}${detail ? ` — ${detail}` : ""}`);
       }
       const json = await res.json();
       return schema.parse(json);
     } catch (err) {
       lastErr = err;
+      if (err instanceof NonRetryError) throw err.cause ?? err;
       const backoff = backoffs[attempt];
       if (backoff !== undefined) await new Promise((r) => setTimeout(r, backoff));
     }
   }
   throw lastErr instanceof Error ? lastErr : new Error("Provider fetch failed");
+}
+
+/** Wraps a deterministic upstream failure so the retry loop exits without
+ *  backoff. `.cause` carries the plain Error message callers expect. */
+class NonRetryError extends Error {
+  cause: Error;
+  constructor(message: string) {
+    super(message);
+    this.cause = new Error(message);
+  }
 }
