@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Captions, Mic, ServerCog } from "lucide-react";
-import { getAnime, getEpisodes, getServers, getSources, safe } from "@/lib/api";
+import { getAnime, getEpisodes, getServers, getSources, safe, withTimeout } from "@/lib/api";
 import type { ServerModel, SourcesModel } from "@/lib/providers/types";
 import { ErrorState } from "@/components/common/States";
 import CinematicInfo from "@/components/details/CinematicInfo";
@@ -33,9 +33,17 @@ const safeDecode = (seg: string): string => {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id, ep } = await params;
   const episodeId = safeDecode(ep);
-  const res = await safe(() => getAnime(id));
-  const title = res.ok && res.data ? res.data.title : "Watch";
-  return { title: `${title} · EP ${epNumberOf(episodeId)}`, robots: { index: false } };
+  // Resolve title + the real episode number together; the number is NOT
+  // derivable from the opaque id hash, so it must come from the episode list.
+  const [animeRes, epsRes] = await Promise.all([
+    safe(() => getAnime(id)),
+    safe(() => getEpisodes(id)),
+  ]);
+  const title = animeRes.ok && animeRes.data ? animeRes.data.title : "Watch";
+  const num =
+    (epsRes.ok && epsRes.data.episodes.find((e) => e.episodeId === episodeId)?.number) ||
+    epNumberOf(episodeId);
+  return { title: `${title} · EP ${num}`, robots: { index: false } };
 }
 
 export default async function WatchPage({ params, searchParams }: Props) {
@@ -74,9 +82,18 @@ export default async function WatchPage({ params, searchParams }: Props) {
     : [];
   let chosen: ServerModel | null = preferred;
   let sources: SourcesModel | null = null;
+  // Server failover is a genuine SEQUENTIAL dependency: each candidate must be
+  // tried (and fail) before the next is meaningful, so this cannot be raced.
+  // To keep it from ever hanging the render on a stalled server, each attempt
+  // gets an explicit deadline (12s) — long enough for the client's own retry
+  // budget, short enough that a dead server only costs one bounded wait before
+  // the loop moves on. Once a source resolves, the loop breaks and the player
+  // renders; nothing after it waits on the remaining servers.
   for (const candidate of ordered) {
-    const res = await safe(() =>
+    const res = await withTimeout(
       getSources(episodeId, epNum, candidate.nameId, category),
+      12_000,
+      `sources:${candidate.nameId}`,
     );
     if (res.ok && res.data) {
       chosen = candidate;
@@ -116,6 +133,18 @@ export default async function WatchPage({ params, searchParams }: Props) {
                 outro={sources.outro}
                 nextHref={nextHref}
                 referer={sources.referer}
+                // Alternate servers for this episode (same category), minus the
+                // one now playing. Lets the player fail over MID-PLAYBACK
+                // without a navigation when the active source dies, preserving
+                // the user's timestamp. Empty when there is only one server.
+                failover={{
+                  episodeId,
+                  episodeNumber: epNum,
+                  category,
+                  servers: ordered
+                    .filter((s) => s.nameId !== chosen?.nameId)
+                    .map((s) => ({ name: s.name, nameId: s.nameId })),
+                }}
                 meta={{
                   animeId: id,
                   title: anime.title,

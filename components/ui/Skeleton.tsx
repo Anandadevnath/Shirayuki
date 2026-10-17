@@ -129,13 +129,22 @@ export function SpotlightSkeleton() {
 
 // ── Trending rail (editorial header + landscape ranked cards) ─────────────────
 export function TrendingSkeleton({ cards = 6 }: { cards?: number }) {
+  // `-mt-48` mirrors the real <Trending> section's hero-overlap pull-up so the
+  // route skeleton sits at the same Y as the content that replaces it — without
+  // it the swap pushed the whole board up by 12rem (the vertical jump).
   return (
-    <section className="relative">
-      <div className="mb-4 flex items-center gap-3">
-        <Skeleton className="h-9 w-1 rounded-full" />
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-24 rounded" />
-          <Skeleton className="h-6 w-32 rounded-md" />
+    <section className="relative -mt-48">
+      <div className="mb-4 flex items-center gap-4">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-9 w-1 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-24 rounded" />
+            <Skeleton className="h-6 w-32 rounded-md" />
+          </div>
+        </div>
+        <div className="ml-auto hidden shrink-0 gap-1.5 sm:flex">
+          <Skeleton className="size-8 rounded-full" />
+          <Skeleton className="size-8 rounded-full" />
         </div>
       </div>
       <div className="flex gap-3.5 overflow-hidden px-0.5 pb-4 pt-3">
@@ -159,7 +168,7 @@ export function LatestEpisodesSkeleton() {
     <section className="relative">
       <div className="mb-4 flex flex-col items-center gap-2.5">
         <Skeleton className="h-3 w-20 rounded" />
-        <Skeleton className="h-7 w-56 rounded-md" />
+        <Skeleton className="h-8 w-56 rounded-md" />
       </div>
       <div className="relative grid h-[43vw] max-h-[296px] min-h-[224px] w-full place-items-center">
         {/* Fanned side posters echoing the coverflow geometry. */}
@@ -216,20 +225,28 @@ export function PanelSkeleton({
   rows = 5,
   posterClass = "h-16 w-12",
   rank = false,
+  footer = false,
   className,
 }: {
   rows?: number;
   posterClass?: string;
   /** Render rank numeral placeholders (Top 10 style rows). */
   rank?: boolean;
+  /** Reserve the "View more" footer row (Discover columns have one; Top 10
+   *  does not) so the panel height matches the real section it stands in for. */
+  footer?: boolean;
   className?: string;
 }) {
   return (
     <section className={cn("glass flex flex-col rounded-lg p-4 sm:p-5", className)}>
-      <Skeleton className="mb-3 h-6 w-36 rounded-md" />
-      <Stagger count={rows} className="flex flex-col divide-y divide-line/40">
+      {/* Header: DiscoverColumn uses `mb-1 font-display text-lg` (24px line +
+       *  4px margin); Top 10's tabbed header is a touch taller. h-6/mb-1 keeps
+       *  the common case within a couple of px. */}
+      <Skeleton className="mb-1 h-6 w-36 rounded-md" />
+      <Stagger count={rows} className="flex flex-1 flex-col divide-y divide-line/40">
         {() => <ListRowSkeleton posterClass={posterClass} rank={rank} />}
       </Stagger>
+      {footer && <Skeleton className="mt-3 h-5 w-24 rounded" />}
     </section>
   );
 }

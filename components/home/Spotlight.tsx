@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import {
@@ -60,6 +60,20 @@ function MyListButton({ anime }: { anime: SpotlightModel }) {
  * right, and the copy + CTAs anchored low-left. The trending rail now lives in
  * its own section below — the hero stays uncluttered and atmospheric.
  */
+const MAX_SLIDES = 7;
+
+/** Sparse crimson-petal field — six petals with varied fall duration, start
+ *  delay, horizontal sway and peak opacity. Decorative only (aria-hidden in
+ *  the JSX), pure CSS transform/opacity loops, hidden under reduced-motion. */
+const PETALS = [
+  { left: 58, dur: 13, delay: 0, x: 9, o: 0.55 },
+  { left: 67, dur: 17, delay: 3.5, x: -7, o: 0.4 },
+  { left: 76, dur: 15, delay: 7, x: 11, o: 0.5 },
+  { left: 86, dur: 19, delay: 1.8, x: -9, o: 0.35 },
+  { left: 44, dur: 21, delay: 5, x: -12, o: 0.3 },
+  { left: 93, dur: 16, delay: 10, x: 7, o: 0.45 },
+];
+
 export function Spotlight({
   items,
 }: {
@@ -67,12 +81,33 @@ export function Spotlight({
   /** Accepted for call-site compatibility; trending renders in its own section now. */
   trending?: AnimeCardModel[];
 }) {
-  const list = items ?? [];
+  const list = (items ?? []).slice(0, MAX_SLIDES);
   const n = list.length;
   const [active, setActive] = useState(0);
   // Auto-advance pauses while hovered, focused, or dragging — single flag
   // mirrors LatestEpisodes so both carousels feel identical to the user.
   const [interacting, setInteracting] = useState(false);
+
+  // ── Initial-reveal gate ────────────────────────────────────────────────
+  // `artReady` gates ONLY the heavy key art — not the copy. The hero's copy
+  // is text that was ready the moment the models arrived; holding it behind
+  // the 1920px key-art decode made the whole hero lag behind Trending (which
+  // paints as soon as its smaller 256px posters land). So the copy paints
+  // immediately over a skeleton BACKGROUND, and the key art crossfades in
+  // beneath it once decoded. `artReady` is monotonic — it never resets — so
+  // slide changes, re-renders and data updates can never replay the entrance;
+  // slide swaps keep using the mounted 800ms crossfade instead.
+  // Errors also mark art ready (frosted fallback surface), so a broken poster
+  // URL can never leave a permanent skeleton background.
+  const [artReady, setArtReady] = useState(false);
+  const artRef = useRef<HTMLImageElement>(null);
+  const markArtReady = useCallback(() => setArtReady(true), []);
+
+  // Cached-at-hydration path: `onLoad` never fires for an <img> that already
+  // completed before React hydrates, so check completeness pre-paint. Runs on
+  // mount (cached reload → hero reveals without an entrance flash) and when
+  // the active slide changes (switching to an already-decoded slide is a
+  // no-op once revealed).
 
   // Only the slides that have been shown (plus the one queued next) mount their
   // heavy key-art. The crossfade is unaffected — every slide's container stays
@@ -89,6 +124,41 @@ export function Spotlight({
       return next;
     });
   }, [active, n]);
+
+  // `useLayoutEffect` so a cached bitmap reveals the hero art BEFORE the first
+  // client paint — the skeleton background is dropped in the same frame the
+  // browser would have painted it, so a warm refresh shows no skeleton flash.
+  useLayoutEffect(() => {
+    if (artReady) return;
+    const img = artRef.current;
+    if (!img) return;
+    // complete + non-zero natural size = decoded and paintable right now.
+    if (img.complete && img.naturalWidth > 0) markArtReady();
+    // complete + zero size = decode failure (broken/cancelled request) —
+    // reveal the art layer anyway; the frosted fallback is the hero background.
+    else if (img.complete) markArtReady();
+  }, [artReady, active, seen, markArtReady]);
+
+  // No key art on the active slide (empty/missing poster URL): there is no
+  // bitmap to wait for, so the art layer must clear at once. Without this an
+  // art-less slide mounts no <img>, `onLoad` can never fire, and the skeleton
+  // background would linger. Layout effect so it lands pre-paint.
+  useLayoutEffect(() => {
+    if (artReady) return;
+    if (!list[active]?.poster) markArtReady();
+  }, [artReady, active, list, markArtReady]);
+
+  // Bounded grace: if the key art neither loads nor errors within a short
+  // window (a stalled request the browser never resolves, or a slow connection
+  // where the 1920px hero can't arrive), drop the skeleton background so a
+  // slow image can never leave the hero on a placeholder indefinitely. The
+  // copy is already visible throughout; this only controls the background
+  // layer. Cleared once ready — the normal path pays nothing.
+  useEffect(() => {
+    if (artReady) return;
+    const t = setTimeout(markArtReady, 2500);
+    return () => clearTimeout(t);
+  }, [artReady, markArtReady]);
 
   const go = useCallback((idx: number) => setActive(((idx % n) + n) % n), [n]);
   // Wrap-around step used by both keyboard arrows and drag-to-swipe.
@@ -164,8 +234,11 @@ export function Spotlight({
   return (
     <section
       // Full-bleed: break out of the centered <main> to the true viewport edges.
-      // body has overflow-x-clip, so 100vw spans full width with no horizontal scroll.
-      className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-hidden focus:outline-none touch-pan-y select-none"
+      // body has overflow-x-clip, so 100vw spans full width; overflow-x-clip
+      // here (NOT overflow-hidden) clips the blurred fill art's horizontal
+      // spill while leaving the vertical axis free for the atmosphere
+      // wrapper to extend past the section's bottom edge.
+      className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-x-clip focus:outline-none focus-visible:ring-1 focus-visible:ring-frost/60 touch-pan-y select-none"
       role="group"
       aria-roledescription="carousel"
       aria-label="Featured anime"
@@ -187,83 +260,121 @@ export function Spotlight({
       onBlur={() => setInteracting(false)}
     >
       <div className="relative flex h-[94svh] min-h-[min(680px,94svh)] max-h-[1120px] w-full flex-col">
-        {/* ── Background depth: a single sharp key art (priority on slide 0)
-            sits over a blurred backdrop painted from the same poster URL. The
-            backdrop is a SECOND <Image> at quality={50} so it goes through
-            the optimizer (AVIF/WebP, srcset) — the previous CSS
-            background-image variant fetched the raw upstream bytes (no AVIF,
-            no srcset, bypassed the remotePatterns allowlist). Slides that
-            haven't been seen yet keep their shimmer placeholder visible. ── */}
-        <div className="absolute inset-0">
-          {list.map((s, idx) =>
-            s.poster ? (
-              <div
-                key={s.id}
-                className={cn(
-                  // Slide swap crossfade — 800ms so the outgoing art lingers
-                  // a beat and the change reads as a dissolve, not a blink.
-                  "hero-slide-fade absolute inset-0",
-                  idx === active ? "opacity-100" : "opacity-0",
-                )}
-              >
-                {/* Blurred fill — same URL, AVIF/WebP via next/image, paints
-                    underneath the sharp key art. quality=50 is small enough
-                    to keep the blurred backdrop cheap; the 2.4x scale + blur
-                    hides any softness. Its settle animation runs at a
-                    different rate than the sharp art (9s vs 7.5s), which
-                    separates the two planes into a restrained parallax. */}
-                {seen.has(idx) && (
-                  <Image
-                    src={s.poster}
-                    alt=""
-                    aria-hidden
-                    fill
-                    sizes="100vw"
-                    quality={50}
-                    className={cn(
-                      "scale-110 object-cover opacity-60 blur-2xl",
-                      idx === active && "hero-backdrop-art",
-                    )}
-                  />
-                )}
-                {seen.has(idx) ? (
-                  <Image
-                    src={s.poster}
-                    alt=""
-                    fill
-                    sizes="100vw"
-                    className={cn(
-                      "object-cover object-[center_22%] brightness-[0.82]",
-                      // Cinematic settle: each activation starts from a 4.5%
-                      // zoom and eases to rest over 7.5s — slower than the
-                      // 7s autoplay cadence, so art is always winding down
-                      // whenever a change lands. Transform-only; the art
-                      // never drives layout. Removing the class on the
-                      // inactive slide resets scale to 1 invisibly (opacity
-                      // is 0), so the next activation zooms fresh.
-                      idx === active && "hero-art",
-                    )}
-                    priority={idx === 0}
-                  />
-                ) : (
-                  /* Skeleton-grade placeholder for unseen slides; matches the
-                     exact dimensions of the sharp <Image> so when it swaps in
-                     there's zero layout shift. */
-                  <div className="absolute inset-0 bg-surface-2 shimmer-loop" />
-                )}
-              </div>
-            ) : null,
-          )}
-        </div>
+        {/* ── Atmosphere — art, aurora and petals share ONE alpha mask that
+            extends 12rem PAST the hero's bottom edge (exactly the Trending
+            `-mt-48` overlap). The artwork therefore never terminates at the
+            hero container boundary: it continues into the transition area and
+            its own alpha eases 100% → 60% → 28% → 10% → 0 there, so the
+            boundary row and the rows below it are the same continuous paint.
+            pointer-events-none keeps the overhang from stealing hovers or
+            swipes from the Trending cards riding above it. ── */}
+        <div
+          aria-hidden
+          className="art-dissolve pointer-events-none absolute inset-x-0 top-0 h-[calc(100%+12rem)]"
+        >
+          <div className="absolute inset-0">
+            {list.map((s, idx) =>
+              s.poster ? (
+                <div
+                  key={s.id}
+                  className={cn(
+                    // Slide swap crossfade — 800ms so the outgoing art lingers
+                    // a beat and the change reads as a dissolve, not a blink.
+                    "hero-slide-fade absolute inset-0",
+                    idx === active ? "opacity-100" : "opacity-0",
+                  )}
+                >
+                  {/* Blurred fill — same URL, AVIF/WebP via next/image, paints
+                      underneath the sharp key art. quality=50 is small enough
+                      to keep the blurred backdrop cheap; the 2.4x scale + blur
+                      hides any softness. Its settle animation runs at a
+                      different rate than the sharp art (9s vs 7.5s), which
+                      separates the two planes into a restrained parallax. */}
+                  {seen.has(idx) && (
+                    <Image
+                      src={s.poster}
+                      alt=""
+                      aria-hidden
+                      fill
+                      sizes="100vw"
+                      quality={50}
+                      className={cn(
+                        "scale-110 object-cover opacity-60 blur-2xl",
+                        idx === active && "hero-backdrop-art",
+                      )}
+                    />
+                  )}
+                  {seen.has(idx) ? (
+                    <Image
+                      src={s.poster}
+                      alt=""
+                      fill
+                      sizes="100vw"
+                      // Only the active slide's key art gates the initial
+                      // reveal: its onLoad marks the hero ready (network
+                      // path), its onError falls back to "ready" so a broken
+                      // URL reveals the blurred fill / frosted surface rather
+                      // than looping a skeleton forever. The ref powers the
+                      // cached-at-hydration completeness check above.
+                      ref={idx === active ? artRef : undefined}
+                      onLoad={idx === active ? markArtReady : undefined}
+                      onError={idx === active ? markArtReady : undefined}
+                      className={cn(
+                        "object-cover object-[center_22%] brightness-[0.82]",
+                        // Cinematic settle: each activation starts from a 4.5%
+                        // zoom and eases to rest over 7.5s — slower than the
+                        // 7s autoplay cadence, so art is always winding down
+                        // whenever a change lands. Transform-only; the art
+                        // never drives layout. Removing the class on the
+                        // inactive slide resets scale to 1 invisibly (opacity
+                        // is 0), so the next activation zooms fresh.
+                        idx === active && "hero-art",
+                      )}
+                      priority={idx === 0}
+                    />
+                  ) : (
+                    /* Skeleton-grade placeholder for unseen slides; matches the
+                       exact dimensions of the sharp <Image> so when it swaps in
+                       there's zero layout shift. */
+                    <div className="absolute inset-0 bg-surface-2 shimmer-loop" />
+                  )}
+                </div>
+              ) : null,
+            )}
+          </div>
 
-        {/* ── Atmospheric light — two low-opacity frost light fields that
-            drift on long transform-only loops (26s / 32s). They sit ABOVE
-            the art and BELOW every scrim + text layer, so they read as
-            ambient scene lighting, never as a veil over the copy, and are
-            frozen entirely under reduced-motion. ── */}
-        <div aria-hidden className="pointer-events-none absolute inset-0 overflow-hidden">
-          <div className="aurora-a absolute -left-[12%] top-[12%] h-[62%] w-[55%] rounded-full bg-frost/10 blur-[130px]" />
-          <div className="aurora-b absolute -right-[10%] top-[38%] h-[58%] w-[46%] rounded-full bg-frost-deep/10 blur-[140px]" />
+          {/* ── Atmospheric light — two low-opacity frost light fields that
+              drift on long transform-only loops (26s / 32s). They sit ABOVE
+              the art and BELOW every scrim + text layer, so they read as
+              ambient scene lighting, never as a veil over the copy, and are
+              frozen entirely under reduced-motion. ── */}
+          <div aria-hidden className="absolute inset-0 overflow-hidden">
+            <div className="aurora-a absolute -left-[12%] top-[12%] h-[62%] w-[55%] rounded-full bg-frost/10 blur-[130px]" />
+            <div className="aurora-b absolute -right-[10%] top-[38%] h-[58%] w-[46%] rounded-full bg-frost-deep/10 blur-[140px]" />
+          </div>
+
+          {/* ── Drifting crimson petals — the sakura accent: a sparse field of
+              six petals falling through the scene at staggered speeds and
+              sway amplitudes (pure transform/opacity CSS loops, decorative,
+              aria-hidden, pointer-events-none). They share the atmosphere
+              mask, and are hidden entirely under reduced-motion. ── */}
+          <div aria-hidden className="absolute inset-0 overflow-hidden">
+            {PETALS.map((p, i) => (
+              <span
+                key={i}
+                className="petal"
+                style={
+                  {
+                    left: `${p.left}%`,
+                    "--petal-dur": `${p.dur}s`,
+                    "--petal-delay": `${p.delay}s`,
+                    "--petal-x": `${p.x}vw`,
+                    "--petal-o": p.o,
+                  } as React.CSSProperties
+                }
+              />
+            ))}
+          </div>
         </div>
 
         {/* Cinematic scrims — a gentle vignette so the art reads as one calm
@@ -273,43 +384,43 @@ export function Spotlight({
             the same downward-fading gradient rather than a separate "header
             zone". The leading edge sits at the absolute top of the section,
             so the navbar (which overlaps the section via -mt-24) blends into
-            the gradient instead of clipping it. */}
-        <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/35 to-base/60" />
-        {/* Bottom scrim — a tall, feathered cinematic fade so the key art melts
-            into the dark page instead of ending in a hard band. Kept lighter
-            and airier than before: the darkness stays seated near the very
-            bottom edge (via sits at ~32% with a soft /30 tone), and the long
-            transparent tail feathers out through the middle of the hero. So
-            the art glows through the whole band, the Trending section below
-            reads clearly, and the transition into the next section stays
-            smooth — no dense pocket of darkness to trip the eye. */}
-        <div className="absolute inset-x-0 bottom-0 h-[36%] bg-gradient-to-t from-base/85 from-6% via-base/30 via-32% to-transparent" />
+            the gradient instead of clipping it. Both the horizontal and bottom
+            scrims share `scrim-dissolve`: their tint MUST reach zero before
+            the hero's bottom edge — an edge-vignette at full strength on the
+            last pixel row and absent on the next one is what painted the old
+            horizontal seam. */}
+        <div aria-hidden className="scrim-dissolve pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/35 to-base/60" />
+          {/* Bottom atmosphere — copy contrast for the lower hero. Dissolves
+              with the group above, so it can never read as a step where the
+              hero ends: the artwork tail beneath it continues smoothly into
+              the Trending overlap. */}
+          <div className="absolute inset-x-0 bottom-0 h-[28%] bg-gradient-to-t from-base/45 via-base/10 to-transparent" />
+        </div>
         <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/85 via-base/55 via-35% via-base/25 to-transparent" />
 
-        {/* ── Left vertical "featured" strip — one-shot entrance alongside
-            the first copy cascade ── */}
-        <div
-          className="hero-in pointer-events-none absolute left-6 top-1/2 z-10 hidden -translate-y-1/2 flex-col items-center gap-4 lg:flex"
-          style={heroDelay(520)}
-        >
-          <span className="h-16 w-px bg-gradient-to-b from-transparent to-frost/60" />
-          <span
-            className="font-mono text-[11px] font-semibold uppercase tracking-[0.5em] text-frost"
-            style={{ writingMode: "vertical-rl" }}
-          >
-            Featured
-          </span>
-          <span
-            className="font-display text-sm font-bold tabular-nums text-snow/80"
-            style={{ writingMode: "vertical-rl" }}
-          >
-            {String(active + 1).padStart(2, "0")} — {String(n).padStart(2, "0")}
-          </span>
-          <span className="h-16 w-px bg-gradient-to-b from-frost/60 to-transparent" />
-        </div>
+        {/* ── Art placeholder — sits BENEATH the copy (z-0), mirroring the
+            route-level SpotlightSkeleton's backdrop so the skeleton → board
+            swap keeps identical geometry. It holds the hero's background
+            surface (shimmer) only until the active slide's key art decodes,
+            then is removed so nothing keeps ticking behind live content.
+            The copy above is NEVER gated on this: it is text that was ready at
+            mount, so the hero reads as content immediately instead of waiting
+            on the 1920px image. pointer-events-none so it can't intercept the
+            CTA clicks while it is still visible. ── */}
+        {!artReady && (
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-0 z-0 bg-surface-2 shimmer-loop"
+          />
+        )}
 
-        {/* ── Right vertical diamond nav — one facet per slide ── */}
-        {n > 1 && (
+        {/* ── Right vertical diamond nav — one facet per slide (carousel
+            jumps), plus keyboard arrows and drag-to-swipe. The old prev /
+            next arrow buttons were removed for a clean, chrome-free banner.
+            The left "Featured" strip lives INSIDE the shared content
+            container above. ── */}
+        {n > 1 && artReady && (
           <div className="absolute right-5 top-1/2 z-20 hidden -translate-y-1/2 flex-col items-center gap-3 sm:right-7 sm:flex">
             {list.map((_, idx) => (
               <button
@@ -340,6 +451,12 @@ export function Spotlight({
             upward bias (pb-[8vh]) so the block sits comfortably above the
             bottom fade — balanced composition, nothing tucks under the hero.
 
+            Rendered unconditionally: the copy is text that was ready the
+            moment the models arrived, so it must not wait on the key-art
+            decode (that dependency is what made the hero lag Trending on the
+            first load). It paints over the art placeholder immediately; the
+            key art crossfades in beneath it when decoded.
+
             Choreography: the text stack is keyed by the active slide, so
             every change replays a staggered rise (title → meta → synopsis
             → stats, 90ms apart, ~0.7s each). The CTA row is intentionally
@@ -347,7 +464,37 @@ export function Spotlight({
             slide changes (remounting them both flickers the My List state
             and yanks click targets mid-interaction). ── */}
         <div className="relative z-10 flex flex-1 items-center pb-[8vh]">
-          <div className="mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
+          {/* This container is the SHARED content container — identical to
+              <main>'s mx-auto max-w-[1460px] px-4 sm:px-6 lg:px-8 — so the
+              hero title/copy/CTA block shares its exact left and right
+              boundaries with every homepage section (Trending heading, card
+              rails, grids). Do not add asymmetric padding here; the vertical
+              "Featured" strip below decorates the gutter instead of pushing
+              the copy off-alignment. */}
+          <div className="relative mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
+            {/* Left vertical "featured" strip — absolutely positioned inside
+                the shared container's left padding gutter (0 → ~20px wide,
+                text starts at 32px), so it never displaces the copy and both
+                edges stay flush with the sections below. */}
+            <div
+              className="hero-in pointer-events-none absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 flex-col items-center gap-4 lg:flex"
+              style={heroDelay(520)}
+            >
+              <span className="h-16 w-px bg-gradient-to-b from-transparent to-frost/60" />
+              <span
+                className="font-mono text-[11px] font-semibold uppercase tracking-[0.5em] text-frost"
+                style={{ writingMode: "vertical-rl" }}
+              >
+                Featured
+              </span>
+              <span
+                className="font-display text-sm font-bold tabular-nums text-snow/80"
+                style={{ writingMode: "vertical-rl" }}
+              >
+                {String(active + 1).padStart(2, "0")} — {String(n).padStart(2, "0")}
+              </span>
+              <span className="h-16 w-px bg-gradient-to-b from-frost/60 to-transparent" />
+            </div>
             <div className="flex max-w-xl flex-col gap-4">
               {/* Line-clamped rows keep per-slide text heights stable, so the
                   keyed re-render can never shift layout — the hero's own

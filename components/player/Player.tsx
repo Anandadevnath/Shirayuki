@@ -5,13 +5,14 @@ import { useRouter } from "next/navigation";
 import {
   Play, Pause, Volume2, VolumeX, Maximize, Minimize,
   SkipForward, SkipBack, Settings, PictureInPicture2, Captions, Loader2,
-  Keyboard, X,
+  Keyboard, X, RotateCcw,
 } from "lucide-react";
 import { usePrefs } from "@/lib/stores/prefs";
 import { saveProgress, getEpisodeSeconds, type WatchEntry } from "@/lib/progress/local";
 import { formatTime } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import { SubtitleOverlay } from "@/components/player/SubtitleOverlay";
+import { nextRecovery, initialRecovery, type RecoveryState } from "@/lib/player/recovery";
 
 export interface PlayerProps {
   src: string;
@@ -25,6 +26,18 @@ export interface PlayerProps {
    *  /api/subtitle so the .vtt fetch doesn't 403). Mirrors `src`'s
    *  /api/stream referer handling. */
   referer?: string | null;
+  /** Alternate servers for the SAME episode, in preference order, EXCLUDING the
+   *  one currently playing. Used by the mid-playback failover loop: when a
+   *  source's bounded recovery is exhausted the player advances to the next
+   *  candidate (resolved through /api/sources) WITHOUT a full navigation, and
+   *  restores the user's timestamp on the new source. Empty when the episode
+   *  has only one server. */
+  failover?: {
+    episodeId: string;
+    episodeNumber: number;
+    category: string;
+    servers: { name: string; nameId: string }[];
+  } | null;
 }
 
 interface Level { height: number; index: number }
@@ -35,18 +48,157 @@ interface Level { height: number; index: number }
 // reconciliation passes per second.
 const TICK_MS = 120;
 
-export function Player({ src, poster, tracks, intro, outro, meta, nextHref, referer }: PlayerProps) {
+/** Startup deadline: if the player has not become ready (canplay) within this
+ *  window, the watchdog treats the source as failed and fails over / errors.
+ *  Generous enough for a slow-but-alive CDN, tight enough that a dead one never
+ *  strands the user on a spinner. */
+const PLAYBACK_STARTUP_BUDGET_MS = 20_000;
+
+export function Player({ src, poster, tracks, intro, outro, meta, nextHref, referer, failover }: PlayerProps) {
   const router = useRouter();
   const videoRef = useRef<HTMLVideoElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const settingsRef = useRef<HTMLDivElement>(null);
   const helpRef = useRef<HTMLDivElement>(null);
   const hlsRef = useRef<unknown>(null);
+  // Bounded fatal-error recovery counters (see lib/player/recovery). Reset per
+  // source inside the attach effect so each episode/server starts fresh.
+  const recoveryRef = useRef<RecoveryState>(initialRecovery);
+  // Bumped by the retry button to re-run the attach effect for the SAME src
+  // (new hls instance + reset counters) without a full page navigation.
+  const [retryNonce, setRetryNonce] = useState(0);
+
+  // ── Mid-playback failover state ──────────────────────────────────────
+  // The active stream can differ from the server-rendered `src` after a
+  // failover swap, so the playable source lives in state seeded from props.
+  const [activeSrc, setActiveSrc] = useState(src);
+  const [activeTracks, setActiveTracks] = useState(tracks);
+  const [activeReferer, setActiveReferer] = useState(referer ?? null);
+  const [activeServer, setActiveServer] = useState(meta.server);
+  // Remaining alternate servers to try, in preference order.
+  const [remaining, setRemaining] = useState(() => failover?.servers ?? []);
+  // Set while the failover loop is resolving the next candidate.
+  const [switching, setSwitching] = useState(false);
+  // Synchronous re-entrancy guard: `switching` state lags a frame, so a
+  // second fatal error in the same tick could start a racing swap.
+  const switchingRef = useRef(false);
+  // Timestamp to restore on the next source (set when a mid-play failure is
+  // detected so the user resumes where they were on the alternate server).
+  const resumeAtRef = useRef<number | null>(null);
+
+  // Re-sync when the parent renders a genuinely new episode. Keyed on the
+  // episode id (a primitive) rather than the object props, so a re-render that
+  // merely recreates the props objects cannot reset + remount the player mid-
+  // playback. `src` is also primitive and included for the server-switch case.
+  useEffect(() => {
+    setActiveSrc(src);
+    setActiveTracks(tracks);
+    setActiveReferer(referer ?? null);
+    setActiveServer(meta.server);
+    setRemaining(failover?.servers ?? []);
+    // A new episode is a fresh failover context: clear both the tried-set and
+    // any in-flight swap guard so a prior episode's dead servers never block
+    // (or short-circuit) the new episode's candidates.
+    triedRef.current = new Set();
+    switchingRef.current = false;
+    resumeAtRef.current = null;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [src, meta.episodeId]);
+
+  // Bounded marker for the code that runs after mount. Establishes which
+  // servers have already failed so failover never loops onto a dead one.
+  const triedRef = useRef<Set<string>>(new Set());
+  // Watchdog: hls.js declares a manifest/segment load fatal only after its OWN
+  // internal retries, which on a hard drop (connection refused / aborted proxy)
+  // can take long enough that the user stares at "Loading…" indefinitely.
+  // This timer guarantees the player reaches SOMETHING (ready, failover, or the
+  // terminal error) within a bounded window — the SDK's own timers are not a
+  // contract we rely on for the UI's liveness.
+  const watchdogRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  /**
+   * Advance to the next alternate server for the same episode.
+   *
+   * Called when a source's bounded recovery is exhausted (see
+   * lib/player/recovery). Responsibilities:
+   *   1. remember the current playhead so the new source resumes there;
+   *   2. resolve the next candidate through /api/sources (no-store);
+   *   3. swap activeSrc so the attach effect remounts hls on the new stream;
+   *   4. if EVERY candidate is exhausted, surface the terminal error UI.
+   * Re-entrancy is guarded by `switching`, and `triedRef` guarantees each
+   * server is attempted at most once — no ping-pong between failing sources.
+   */
+  const failoverToNext = useCallback(() => {
+    // Never overlap swaps.
+    if (switchingRef.current) return;
+    const v = videoRef.current;
+    // Preserve position for the resume on the alternate source.
+    if (v && v.currentTime > 1 && v.duration > 0) resumeAtRef.current = v.currentTime;
+
+    triedRef.current.add(activeServer);
+    const next = remaining.find((s) => !triedRef.current.has(s.nameId));
+
+    if (!next || !failover) {
+      setFatalError(true);
+      setWaiting(false);
+      return;
+    }
+
+    switchingRef.current = true;
+    setSwitching(true);
+    setWaiting(true);
+    setRemaining((list) => list.filter((s) => s.nameId !== next.nameId));
+
+    const params = new URLSearchParams({
+      episodeId: failover.episodeId,
+      ep: String(failover.episodeNumber),
+      server: next.nameId,
+      category: failover.category,
+    });
+    fetch(`/api/sources?${params.toString()}`)
+      .then((r) => r.json())
+      .then((body: { ok: boolean; source?: { m3u8: string; referer: string | null; tracks: { file: string; label: string; default: boolean }[] } }) => {
+        if (!body.ok || !body.source) {
+          switchingRef.current = false;
+          setSwitching(false);
+          // Server had no source — keep walking the remaining candidates.
+          failoverToNext();
+          return;
+        }
+        const s = body.source;
+        const nextSrc = `/api/stream?url=${encodeURIComponent(s.m3u8)}${
+          s.referer ? `&referer=${encodeURIComponent(s.referer)}` : ""
+        }`;
+        setActiveServer(next.nameId);
+        setActiveTracks(s.tracks.map((t) => ({ src: t.file, label: t.label, default: t.default })));
+        setActiveReferer(s.referer);
+        setActiveSrc(nextSrc);
+        switchingRef.current = false;
+        setSwitching(false);
+        // ready flips on the new stream's `canplay`; the timestamp is applied
+        // by the restore effect below once the new source is ready.
+      })
+      .catch(() => {
+        switchingRef.current = false;
+        setSwitching(false);
+        failoverToNext();
+      });
+  }, [activeServer, remaining, failover]);
 
   const prefs = usePrefs();
   const [ready, setReady] = useState(false);
   const [playing, setPlaying] = useState(false);
   const [waiting, setWaiting] = useState(false);
+  // Terminal playback state: set when recovery is exhausted AND no alternate
+  // server remains. Drives the explicit retry surface instead of an endless
+  // "Loading…" spinner.
+  const [fatalError, setFatalError] = useState(false);
+  // Mirrors of ready/fatalError for the watchdog timer, whose callback runs
+  // outside React's render and would otherwise close over stale state.
+  const readyRef = useRef(false);
+  const fatalRef = useRef(false);
+  useEffect(() => { readyRef.current = ready; }, [ready]);
+  useEffect(() => { fatalRef.current = fatalError; }, [fatalError]);
   const [hasPlayedOnce, setHasPlayedOnce] = useState(false);
   const [current, setCurrent] = useState(0);
   const [duration, setDuration] = useState(0);
@@ -79,6 +231,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
     if (!video) return;
     let destroyed = false;
     setReady(false);
+    setFatalError(false);
 
     async function attach() {
       const { default: Hls } = await import("hls.js");
@@ -96,9 +249,23 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
           backBufferLength: 30,
           maxBufferLength: 30,
           maxMaxBufferLength: 60,
+          // Startup tuning: give the ABR a sane bandwidth PRIOR (2.5 Mbps)
+          // so its very first estimate isn't the floor rate — prevents the
+          // classic "opens on 240p for a second then jumps" flicker on a
+          // connection that can clearly do better. `maxStarvationDelay`
+          // clamps how long it tolerates an empty buffer before downshifting,
+          // and `abrBandWidthFactor/UpFactor` make up-shifts eager but
+          // down-shifts decisive, matching the scrubber's quality chip.
+          abrEwmaDefaultEstimate: 2_500_000,
+          abrBandWidthFactor: 0.9,
+          abrBandWidthUpFactor: 0.7,
+          maxStarvationDelay: 4,
         });
         hlsRef.current = hls;
-        hls.loadSource(src);
+        // Recovery counters reset per source: a fresh episode/server gets a
+        // fresh retry budget — a prior source's exhaustion never carries over.
+        recoveryRef.current = initialRecovery;
+        hls.loadSource(activeSrc);
         hls.attachMedia(video);
         hls.on(Hls.Events.MANIFEST_PARSED, (_e, data) => {
           if (destroyed || !video) return;
@@ -120,18 +287,40 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
             (l) => l.w <= targetW * 1.25 && l.h <= targetH * 1.25,
           );
           if (fit) hls.startLevel = fit.i;
-          setReady(true);
+          // NOTE: manifest alone is NOT readiness — it only means the
+          // playlist parsed. The player stays in "Loading…" until the media
+          // element can actually play (canplay below), so the spinner and
+          // skeleton never clear onto a black, un-seekable frame.
         });
         hls.on(Hls.Events.LEVEL_SWITCHED, (_e, data) => setLevel(data.level));
         hls.on(Hls.Events.ERROR, (_e, data) => {
-          if (data.fatal) {
-            // best-effort recovery
-            if (data.type === "networkError") hls.startLoad();
-            else if (data.type === "mediaError") hls.recoverMediaError();
+          // Non-fatal errors are hls.js internals (a lost fragment it already
+          // re-requests); they must NOT touch our fatal UI.
+          if (!data.fatal) return;
+          if (destroyed) return;
+          // BOUNDED recovery: hls.js's own per-fragment retries already ran.
+          // These outer budgets cap fatal recovery so a dead source cannot
+          // loop startLoad()/recoverMediaError() forever. Exhaustion flips the
+          // player to an explicit, retryable error state.
+          const { action, state } = nextRecovery(
+            recoveryRef.current,
+            data.type as string,
+          );
+          recoveryRef.current = state;
+          if (action.kind === "network") {
+            hls.startLoad();
+          } else if (action.kind === "media") {
+            hls.recoverMediaError();
+          } else {
+            // Budget exhausted for this source. Before surfacing a terminal
+            // error, try the next server (if any): a mid-play failure is
+            // exactly the case client-side failover exists for, and swapping
+            // sources keeps the user's timestamp instead of stranding them.
+            failoverToNext();
           }
         });
       } else if (video.canPlayType("application/vnd.apple.mpegurl")) {
-        video.src = src; // Safari native HLS
+        video.src = activeSrc; // Safari native HLS
         setReady(true);
       }
     }
@@ -143,7 +332,25 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
       hls?.destroy?.();
       hlsRef.current = null;
     };
-  }, [src]);
+  }, [activeSrc, retryNonce, failoverToNext]);
+
+  // ── Startup watchdog ────────────────────────────────────────────────
+  // Guarantees the player leaves the "Loading…" state within a bounded window
+  // even when hls.js never surfaces a fatal error (a hard-aborted proxy, a
+  // silently dead socket). On expiry it either fails over to the next server
+  // or shows the terminal error — never an endless spinner. Reset whenever a
+  // new source becomes ready or a different source is attempted.
+  useEffect(() => {
+    if (ready || fatalError) return;
+    watchdogRef.current = setTimeout(() => {
+      if (readyRef.current || fatalRef.current) return;
+      failoverToNext();
+    }, PLAYBACK_STARTUP_BUDGET_MS);
+    return () => {
+      if (watchdogRef.current) clearTimeout(watchdogRef.current);
+      watchdogRef.current = null;
+    };
+  }, [activeSrc, ready, fatalError, failoverToNext]);
 
   // ── Restore position + apply remembered prefs ───────────────────────
   useEffect(() => {
@@ -152,10 +359,19 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
     v.volume = prefs.volume;
     v.muted = prefs.muted;
     v.playbackRate = prefs.rate;
-    const saved = getEpisodeSeconds(meta.episodeId);
-    if (saved > 5) v.currentTime = saved;
+    // A mid-play failover takes priority over localStorage: it carries the
+    // EXACT playhead from the dead source, so the user resumes seamlessly
+    // rather than jumping back to a coarser saved position.
+    const resume = resumeAtRef.current;
+    if (resume != null && resume > 5) {
+      v.currentTime = resume;
+      resumeAtRef.current = null;
+    } else {
+      const saved = getEpisodeSeconds(meta.episodeId);
+      if (saved > 5) v.currentTime = saved;
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ready, meta.episodeId]);
+  }, [ready, meta.episodeId, activeSrc]);
 
   // ── Persist progress every 5s ───────────────────────────────────────
   useEffect(() => {
@@ -256,6 +472,18 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
     setUpNextVisible(false);
     prefs.set({ autoPlayNext: false });
   };
+
+  // Explicit retry from the fatal-error surface. Re-runs the attach effect
+  // for the SAME source with a fresh hls instance and reset recovery budget.
+  // Does NOT navigate, so the user keeps their place in the page and any
+  // remembered timestamp still restores after the new instance is ready.
+  const retry = useCallback(() => {
+    setFatalError(false);
+    setWaiting(false);
+    setReady(false);
+    recoveryRef.current = initialRecovery;
+    setRetryNonce((n) => n + 1);
+  }, []);
 
   // ── Settings panel: click-outside + Escape to close ───────────────
   useEffect(() => {
@@ -507,6 +735,14 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
         }}
         onWaiting={() => setWaiting(true)}
         onPlaying={() => setWaiting(false)}
+        // Readiness = the media element can actually present a frame, not
+        // merely that the manifest parsed. `canplay` fires once enough data
+        // is buffered to start; clearing "Loading…" here (instead of on
+        // MANIFEST_PARSED) means the spinner never hands off to a black
+        // un-seekable frame on a slow connection.
+        onCanPlay={() => {
+          if (!fatalError) setReady(true);
+        }}
         onTimeUpdate={(e) => {
           const v = e.currentTarget;
           const now = performance.now();
@@ -530,10 +766,10 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
       <SubtitleOverlay
         videoRef={videoRef}
         src={
-          captionsOn && trackIdx >= 0 && tracks[trackIdx]
+          captionsOn && trackIdx >= 0 && activeTracks[trackIdx]
             ? `/api/subtitle?url=${encodeURIComponent(
-                tracks[trackIdx]!.src,
-              )}${referer ? `&referer=${encodeURIComponent(referer)}` : ""}`
+                activeTracks[trackIdx]!.src,
+              )}${activeReferer ? `&referer=${encodeURIComponent(activeReferer)}` : ""}`
             : null
         }
         visible={captionsOn}
@@ -543,19 +779,47 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
       {/* C6 fix: corner loading spinner instead of full-screen overlay.
        A full-screen spinner hides the play button affordance; a corner
        one keeps the controls readable while still showing progress. */}
-      {(!ready || waiting) && (
+      {(!ready || waiting) && !fatalError && (
         <div className="pointer-events-none absolute right-3 top-3 flex items-center gap-2 rounded-sm glass px-3 py-1.5 text-xs text-snow">
           <Loader2 className="size-3.5 animate-spin" />
-          <span>{!ready ? "Loading…" : "Buffering…"}</span>
+          <span>{switching ? "Switching server…" : !ready ? "Loading…" : "Buffering…"}</span>
+        </div>
+      )}
+
+      {/* Terminal playback error. Recovery (bounded — see lib/player/recovery)
+       exhausted, so the source is genuinely unrecoverable here. Offers an
+       explicit retry instead of leaving the corner spinner up forever. Styled
+       with the same glass/frost tokens as the rest of the chrome. */}
+      {fatalError && (
+        <div className="absolute inset-0 z-30 grid place-items-center bg-black/70 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-3 rounded-md glass px-6 py-5 text-center shadow-[var(--shadow-frost)]">
+            <p className="text-sm font-semibold text-snow">Playback stopped</p>
+            <p className="max-w-xs text-xs text-muted">
+              This source couldn&apos;t be played. Retry it, or pick another
+              server below.
+            </p>
+            <button
+              onClick={retry}
+              className="mt-1 flex items-center gap-2 rounded-sm bg-frost px-4 py-2 text-sm font-semibold text-base transition-transform hover:scale-[1.04] motion-reduce:transition-none"
+            >
+              <RotateCcw className="size-4" /> Retry
+            </button>
+          </div>
         </div>
       )}
 
       {/* Skip buttons — C7 fix: center horizontally on mobile so they're
-       thumb-reachable, and reposition to right on sm+. */}
+       thumb-reachable, and reposition to right on sm+.
+       z-30: ABOVE the controls overlay (z-20). The control bar's gradient
+       layer spans `inset-x-0 bottom-0 pt-16`, so at `bottom-24` it physically
+       overlaps this button's box and — at a lower z — swallowed every click
+       (the button looked live but was not clickable). Sitting above the
+       controls layer makes the press land on the button. pointer-events-auto
+       is explicit so no ancestor's pointer-events state can leak in. */}
       {inIntro && !prefs.autoSkipIntro && intro && (
         <button
           onClick={() => seek(intro.end)}
-          className="absolute bottom-24 left-1/2 z-10 -translate-x-1/2 flex items-center gap-2 rounded-sm glass px-4 py-2 text-sm font-semibold text-snow transition-transform duration-200 hover:scale-[1.04] motion-reduce:transition-none sm:left-auto sm:right-5 sm:translate-x-0"
+          className="pointer-events-auto absolute bottom-24 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-sm glass px-4 py-2 text-sm font-semibold text-snow transition-transform duration-200 hover:scale-[1.04] motion-reduce:transition-none sm:left-auto sm:right-5 sm:translate-x-0"
         >
           <SkipForward className="size-4" /> Skip Intro
         </button>
@@ -563,7 +827,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
       {inOutro && !prefs.autoSkipOutro && outro && (
         <button
           onClick={() => (nextHref ? goNext() : seek(outro.end))}
-          className="absolute bottom-24 left-1/2 z-10 -translate-x-1/2 flex items-center gap-2 rounded-sm glass px-4 py-2 text-sm font-semibold text-snow transition-transform duration-200 hover:scale-[1.04] motion-reduce:transition-none sm:left-auto sm:right-5 sm:translate-x-0"
+          className="pointer-events-auto absolute bottom-24 left-1/2 z-30 flex -translate-x-1/2 items-center gap-2 rounded-sm glass px-4 py-2 text-sm font-semibold text-snow transition-transform duration-200 hover:scale-[1.04] motion-reduce:transition-none sm:left-auto sm:right-5 sm:translate-x-0"
         >
           <SkipForward className="size-4" /> {nextHref ? "Next Episode" : "Skip Outro"}
         </button>

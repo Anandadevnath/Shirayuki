@@ -1,7 +1,6 @@
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { RailShell } from "@/components/common/RailShell";
 import { AnimeCard } from "./AnimeCard";
-import { Reveal } from "@/components/ui/Reveal";
 
 export function Rail({
   title,
@@ -18,17 +17,18 @@ export function Rail({
 
   return (
     <RailShell title={title} eyebrow={eyebrow} href={href}>
-      {items.map((a, i) => (
-        // Viewport-gated stagger inside the rail: the shared observer
-        // watches horizontally too, so edge cards settle in as the user
-        // scrolls the rail — not while they're off-screen at load.
-        <Reveal
+      {items.map((a) => (
+        // Cards stay VISIBLE from first paint (no <Reveal> hiding wrapper —
+        // same reasoning as Grid: an opacity-0 wrapper would blank the rail's
+        // poster placeholders for the hydration window and replay a second
+        // fade on top of SmartImage's crossfade). The fixed-width layout slot
+        // now lives on a plain wrapper div so the track geometry is unchanged.
+        <div
           key={`${a.id}-${a.episodeNumber ?? ""}`}
-          delay={Math.min(i, 9) * 60}
           className="w-[44vw] shrink-0 snap-start sm:w-[24vw] md:w-[200px]"
         >
           <AnimeCard anime={a} />
-        </Reveal>
+        </div>
       ))}
     </RailShell>
   );

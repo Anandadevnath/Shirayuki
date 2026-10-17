@@ -195,20 +195,39 @@ export type GuardedFetchResult =
  * On failure, `status` is the HTTP status the route should answer with:
  * 400 for an invalid caller-supplied target, 502 for a blocked/dying hop.
  */
+/** Default per-hop connect/headers budget for a guarded proxy fetch. Long
+ *  enough for a cold CDN TLS handshake + first byte, short enough that a
+ *  stalled upstream cannot pin a serverless invocation. Media segment bodies
+ *  stream AFTER headers arrive, so this bounds only the head, not the bytes. */
+const GUARDED_FETCH_TIMEOUT_MS = 15_000;
+
 export async function fetchGuarded(
   rawUrl: string | null | undefined,
   headers: Record<string, string>,
+  timeoutMs: number = GUARDED_FETCH_TIMEOUT_MS,
 ): Promise<GuardedFetchResult> {
   const initial = await validateProxyUrl(rawUrl);
   if (!initial.ok) return { ok: false, status: 400, reason: initial.reason };
 
   let current = initial.url;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    // Abort the hop if the upstream never answers headers. Without this a
+    // half-open CDN connection held the proxy route (and its serverless slot)
+    // open until the platform's own hard limit — the player meanwhile showed
+    // an indefinite "Loading…". A 502 sends it down the existing recovery path.
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), timeoutMs);
     let res: Response;
     try {
-      res = await fetch(current.toString(), { headers, redirect: "manual" });
+      res = await fetch(current.toString(), {
+        headers,
+        redirect: "manual",
+        signal: controller.signal,
+      });
     } catch {
       return { ok: false, status: 502, reason: "upstream fetch failed" };
+    } finally {
+      clearTimeout(timer);
     }
 
     if (res.status < 300 || res.status >= 400 || res.status === 304) {

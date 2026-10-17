@@ -868,6 +868,91 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
 .aurora-a { animation: aurora-drift-a 26s ease-in-out infinite; }
 .aurora-b { animation: aurora-drift-b 32s ease-in-out infinite; }
 
+/* ── Spotlight → page dissolve (alpha mask, not a covering scrim) ───────────
+   Applied to the hero's ATMOSPHERE wrapper (key art + blurred fill + aurora +
+   petals). The wrapper is h-[calc(100%+12rem)] — 12rem taller than the hero,
+   exactly the Trending section's `-mt-48` overlap — so the artwork physically
+   continues past the hero's bottom edge instead of being clipped there. The
+   mask is keyed to that extended box: fully opaque through the upper ~40%
+   (the whole presentation area of the hero), then a long multi-stop fade
+   (100% → 60% → 28% → 10% → 0) that straddles the hero boundary and lands on
+   zero inside the Trending overlap. Because the artwork on both sides of the
+   boundary is the same continuously-masked paint, the boundary row and the
+   row below it are identical — there is no edge left for a seam, and no
+   artwork hard-stops at the container line. */
+.art-dissolve {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 42%,
+    rgba(0, 0, 0, 0.6) 60%,
+    rgba(0, 0, 0, 0.28) 75%,
+    rgba(0, 0, 0, 0.1) 87%,
+    transparent 99%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 42%,
+    rgba(0, 0, 0, 0.6) 60%,
+    rgba(0, 0, 0, 0.28) 75%,
+    rgba(0, 0, 0, 0.1) 87%,
+    transparent 99%
+  );
+}
+
+/* Scrim dissolve — the hero's vignette scrims (left-to-right tint + bottom
+   atmosphere) fade to zero BEFORE the hero's bottom edge. At full strength a
+   scrim paints to the last pixel row of the hero and is absent on the next,
+   which reads as a hard horizontal line even when the artwork itself is
+   already transparent. Finishing the dissolve at ~98% of the hero height
+   guarantees the tint is gone before the boundary; the page background —
+   body `--color-base` plus the fixed Ambient glows, which are continuous
+   across the boundary — is what shows through and carries the transition. */
+.scrim-dissolve {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 55%,
+    rgba(0, 0, 0, 0.5) 72%,
+    rgba(0, 0, 0, 0.15) 88%,
+    transparent 98%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 55%,
+    rgba(0, 0, 0, 0.5) 72%,
+    rgba(0, 0, 0, 0.15) 88%,
+    transparent 98%
+  );
+}
+
+/* ── Crimson petals — the sakura accent ────────────────────────────────────
+   Six sparse petals drift down through the hero at staggered speeds and sway
+   amplitude. The petal shape is a slightly asymmetric double-radius blob set
+   on a deep-crimson → sakura gradient; sway comes from the per-petal
+   --petal-x travel stretched across the fall. Decorative only, never
+   interactive, and removed entirely under reduced-motion. */
+.petal {
+  position: absolute;
+  top: -5%;
+  width: 11px;
+  height: 15px;
+  border-radius: 64% 36% 62% 38% / 56% 64% 36% 44%;
+  background: linear-gradient(148deg, oklch(0.62 0.17 14) 15%, var(--color-sakura) 90%);
+  box-shadow: 0 0 6px 0 oklch(0.62 0.17 14 / 0.35);
+  opacity: 0;
+  animation: petal-fall var(--petal-dur, 15s) linear var(--petal-delay, 0s) infinite;
+  will-change: transform, opacity;
+}
+@keyframes petal-fall {
+  0%   { transform: translate3d(0, -6vh, 0) rotate(0deg); opacity: 0; }
+  7%   { opacity: var(--petal-o, 0.5); }
+  88%  { opacity: var(--petal-o, 0.5); }
+  100% { transform: translate3d(var(--petal-x, 9vw), 108vh, 0) rotate(320deg); opacity: 0; }
+}
+
 /* Ambient backdrop drift — the three fixed frost glows breathe with a
    very slow translate/scale sine. Transform-only, behind everything. */
 .ambient-drift { animation: aurora-drift-a 30s ease-in-out infinite; }
@@ -880,6 +965,9 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
   .hero-art, .hero-backdrop-art {
     animation: none;
   }
+  /* Petals are pure decoration — under reduced-motion the crimson field is
+     removed entirely, so the hero reads as a calm, static key art composition. */
+  .petal { display: none; }
   .hero-in {
     /* Copy should appear without motion; `both` fill of a 0.001ms run
        would land instantly via the global catch-all — this makes the

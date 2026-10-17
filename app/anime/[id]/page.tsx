@@ -3,7 +3,7 @@ import type { Metadata } from "next";
 import Image from "next/image";
 import Link from "next/link";
 import { Play, Film, Clapperboard } from "lucide-react";
-import { getAnime, getEpisodes, getHome, getAnimeSeasons, getAnimeArt, safe } from "@/lib/api";
+import { getAnime, getEpisodes, getHome, getAnimeSeasons, getAnimeArt, safe, withTimeout } from "@/lib/api";
 import { SeasonRail } from "@/components/details/SeasonRail";
 import { ArtGallery } from "@/components/details/ArtGallery";
 import { CastSection } from "@/components/details/CastSection";
@@ -32,12 +32,18 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function AnimePage({ params }: Params) {
   const { id } = await params;
+  // Every request is independent, so they are ALL started together. `getAnime`
+  // is the only REQUIRED call — the rest are optional rails that degrade to
+  // hidden sections. `getHome` here is a heavyweight full-home scrape used only
+  // for the "Upcoming" rail, so it carries an explicit deadline: if the home
+  // data cache is cold and the upstream is slow, the detail page must still
+  // render its own content on time instead of waiting on an optional rail.
   const [detailRes, epRes, seasonsRes, artRes, homeRes] = await Promise.all([
     safe(() => getAnime(id)),
     safe(() => getEpisodes(id)),
     safe(() => getAnimeSeasons(id)),
     safe(() => getAnimeArt(id)),
-    safe(() => getHome()),
+    withTimeout(getHome(), 6_000, "home"),
   ]);
 
   if (!detailRes.ok || !detailRes.data) notFound();
