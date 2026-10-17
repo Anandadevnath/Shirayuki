@@ -869,28 +869,62 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
 .aurora-b { animation: aurora-drift-b 32s ease-in-out infinite; }
 
 /* ── Spotlight → page dissolve (alpha mask, not a covering scrim) ───────────
-   Applied to the hero's artwork/aurora/petal layers. The artwork is fully
-   opaque through the upper half of the hero, then its OWN alpha eases
-   100% → 55% → 12% → 0 across the lower half, reaching zero just before the
-   hero's bottom edge. Because nothing but page background remains at the
-   boundary, the hero and the (overlapping) Trending section share one
-   continuous atmosphere — there is no artwork left to cut a line into. */
+   Applied to the hero's ATMOSPHERE wrapper (key art + blurred fill + aurora +
+   petals). The wrapper is h-[calc(100%+12rem)] — 12rem taller than the hero,
+   exactly the Trending section's `-mt-48` overlap — so the artwork physically
+   continues past the hero's bottom edge instead of being clipped there. The
+   mask is keyed to that extended box: fully opaque through the upper ~40%
+   (the whole presentation area of the hero), then a long multi-stop fade
+   (100% → 60% → 28% → 10% → 0) that straddles the hero boundary and lands on
+   zero inside the Trending overlap. Because the artwork on both sides of the
+   boundary is the same continuously-masked paint, the boundary row and the
+   row below it are identical — there is no edge left for a seam, and no
+   artwork hard-stops at the container line. */
 .art-dissolve {
   -webkit-mask-image: linear-gradient(
     to bottom,
     #000 0%,
-    #000 50%,
-    rgba(0, 0, 0, 0.55) 68%,
-    rgba(0, 0, 0, 0.12) 88%,
+    #000 42%,
+    rgba(0, 0, 0, 0.6) 60%,
+    rgba(0, 0, 0, 0.28) 75%,
+    rgba(0, 0, 0, 0.1) 87%,
     transparent 99%
   );
   mask-image: linear-gradient(
     to bottom,
     #000 0%,
-    #000 50%,
-    rgba(0, 0, 0, 0.55) 68%,
-    rgba(0, 0, 0, 0.12) 88%,
+    #000 42%,
+    rgba(0, 0, 0, 0.6) 60%,
+    rgba(0, 0, 0, 0.28) 75%,
+    rgba(0, 0, 0, 0.1) 87%,
     transparent 99%
+  );
+}
+
+/* Scrim dissolve — the hero's vignette scrims (left-to-right tint + bottom
+   atmosphere) fade to zero BEFORE the hero's bottom edge. At full strength a
+   scrim paints to the last pixel row of the hero and is absent on the next,
+   which reads as a hard horizontal line even when the artwork itself is
+   already transparent. Finishing the dissolve at ~98% of the hero height
+   guarantees the tint is gone before the boundary; the page background —
+   body `--color-base` plus the fixed Ambient glows, which are continuous
+   across the boundary — is what shows through and carries the transition. */
+.scrim-dissolve {
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 55%,
+    rgba(0, 0, 0, 0.5) 72%,
+    rgba(0, 0, 0, 0.15) 88%,
+    transparent 98%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    #000 0%,
+    #000 55%,
+    rgba(0, 0, 0, 0.5) 72%,
+    rgba(0, 0, 0, 0.15) 88%,
+    transparent 98%
   );
 }
 

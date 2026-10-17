@@ -178,8 +178,11 @@ export function Spotlight({
   return (
     <section
       // Full-bleed: break out of the centered <main> to the true viewport edges.
-      // body has overflow-x-clip, so 100vw spans full width with no horizontal scroll.
-      className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-hidden focus:outline-none focus-visible:ring-1 focus-visible:ring-frost/60 touch-pan-y select-none"
+      // body has overflow-x-clip, so 100vw spans full width; overflow-x-clip
+      // here (NOT overflow-hidden) clips the blurred fill art's horizontal
+      // spill while leaving the vertical axis free for the atmosphere
+      // wrapper to extend past the section's bottom edge.
+      className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-x-clip focus:outline-none focus-visible:ring-1 focus-visible:ring-frost/60 touch-pan-y select-none"
       role="group"
       aria-roledescription="carousel"
       aria-label="Featured anime"
@@ -201,112 +204,112 @@ export function Spotlight({
       onBlur={() => setInteracting(false)}
     >
       <div className="relative flex h-[94svh] min-h-[min(680px,94svh)] max-h-[1120px] w-full flex-col">
-        {/* ── Background depth: the slide stack DISSOLVES via alpha (art-dissolve
-            mask), not via a scrim covering it. The artwork is fully visible
-            through the upper half of the hero, then its own opacity eases
-            100% → 55% → 12% → 0 across the lower half — so at the hero's
-            bottom edge there is literally no artwork left to cut, and the
-            page background shows through continuously beneath both the hero
-            and the overlapping Trending section. ── */}
-        <div className="art-dissolve absolute inset-0">
-          {list.map((s, idx) =>
-            s.poster ? (
-              <div
-                key={s.id}
-                className={cn(
-                  // Slide swap crossfade — 800ms so the outgoing art lingers
-                  // a beat and the change reads as a dissolve, not a blink.
-                  "hero-slide-fade absolute inset-0",
-                  idx === active ? "opacity-100" : "opacity-0",
-                )}
-              >
-                {/* Blurred fill — same URL, AVIF/WebP via next/image, paints
-                    underneath the sharp key art. quality=50 is small enough
-                    to keep the blurred backdrop cheap; the 2.4x scale + blur
-                    hides any softness. Its settle animation runs at a
-                    different rate than the sharp art (9s vs 7.5s), which
-                    separates the two planes into a restrained parallax. */}
-                {seen.has(idx) && (
-                  <Image
-                    src={s.poster}
-                    alt=""
-                    aria-hidden
-                    fill
-                    sizes="100vw"
-                    quality={50}
-                    className={cn(
-                      "scale-110 object-cover opacity-60 blur-2xl",
-                      idx === active && "hero-backdrop-art",
-                    )}
-                  />
-                )}
-                {seen.has(idx) ? (
-                  <Image
-                    src={s.poster}
-                    alt=""
-                    fill
-                    sizes="100vw"
-                    className={cn(
-                      "object-cover object-[center_22%] brightness-[0.82]",
-                      // Cinematic settle: each activation starts from a 4.5%
-                      // zoom and eases to rest over 7.5s — slower than the
-                      // 7s autoplay cadence, so art is always winding down
-                      // whenever a change lands. Transform-only; the art
-                      // never drives layout. Removing the class on the
-                      // inactive slide resets scale to 1 invisibly (opacity
-                      // is 0), so the next activation zooms fresh.
-                      idx === active && "hero-art",
-                    )}
-                    priority={idx === 0}
-                  />
-                ) : (
-                  /* Skeleton-grade placeholder for unseen slides; matches the
-                     exact dimensions of the sharp <Image> so when it swaps in
-                     there's zero layout shift. */
-                  <div className="absolute inset-0 bg-surface-2 shimmer-loop" />
-                )}
-              </div>
-            ) : null,
-          )}
-        </div>
-
-        {/* ── Atmospheric light — two low-opacity frost light fields that
-            drift on long transform-only loops (26s / 32s). They sit ABOVE
-            the art and BELOW every scrim + text layer, so they read as
-            ambient scene lighting, never as a veil over the copy, and are
-            frozen entirely under reduced-motion. ── */}
+        {/* ── Atmosphere — art, aurora and petals share ONE alpha mask that
+            extends 12rem PAST the hero's bottom edge (exactly the Trending
+            `-mt-48` overlap). The artwork therefore never terminates at the
+            hero container boundary: it continues into the transition area and
+            its own alpha eases 100% → 60% → 28% → 10% → 0 there, so the
+            boundary row and the rows below it are the same continuous paint.
+            pointer-events-none keeps the overhang from stealing hovers or
+            swipes from the Trending cards riding above it. ── */}
         <div
           aria-hidden
-          className="art-dissolve pointer-events-none absolute inset-0 overflow-hidden"
+          className="art-dissolve pointer-events-none absolute inset-x-0 top-0 h-[calc(100%+12rem)]"
         >
-          <div className="aurora-a absolute -left-[12%] top-[12%] h-[62%] w-[55%] rounded-full bg-frost/10 blur-[130px]" />
-          <div className="aurora-b absolute -right-[10%] top-[38%] h-[58%] w-[46%] rounded-full bg-frost-deep/10 blur-[140px]" />
-        </div>
+          <div className="absolute inset-0">
+            {list.map((s, idx) =>
+              s.poster ? (
+                <div
+                  key={s.id}
+                  className={cn(
+                    // Slide swap crossfade — 800ms so the outgoing art lingers
+                    // a beat and the change reads as a dissolve, not a blink.
+                    "hero-slide-fade absolute inset-0",
+                    idx === active ? "opacity-100" : "opacity-0",
+                  )}
+                >
+                  {/* Blurred fill — same URL, AVIF/WebP via next/image, paints
+                      underneath the sharp key art. quality=50 is small enough
+                      to keep the blurred backdrop cheap; the 2.4x scale + blur
+                      hides any softness. Its settle animation runs at a
+                      different rate than the sharp art (9s vs 7.5s), which
+                      separates the two planes into a restrained parallax. */}
+                  {seen.has(idx) && (
+                    <Image
+                      src={s.poster}
+                      alt=""
+                      aria-hidden
+                      fill
+                      sizes="100vw"
+                      quality={50}
+                      className={cn(
+                        "scale-110 object-cover opacity-60 blur-2xl",
+                        idx === active && "hero-backdrop-art",
+                      )}
+                    />
+                  )}
+                  {seen.has(idx) ? (
+                    <Image
+                      src={s.poster}
+                      alt=""
+                      fill
+                      sizes="100vw"
+                      className={cn(
+                        "object-cover object-[center_22%] brightness-[0.82]",
+                        // Cinematic settle: each activation starts from a 4.5%
+                        // zoom and eases to rest over 7.5s — slower than the
+                        // 7s autoplay cadence, so art is always winding down
+                        // whenever a change lands. Transform-only; the art
+                        // never drives layout. Removing the class on the
+                        // inactive slide resets scale to 1 invisibly (opacity
+                        // is 0), so the next activation zooms fresh.
+                        idx === active && "hero-art",
+                      )}
+                      priority={idx === 0}
+                    />
+                  ) : (
+                    /* Skeleton-grade placeholder for unseen slides; matches the
+                       exact dimensions of the sharp <Image> so when it swaps in
+                       there's zero layout shift. */
+                    <div className="absolute inset-0 bg-surface-2 shimmer-loop" />
+                  )}
+                </div>
+              ) : null,
+            )}
+          </div>
 
-        {/* ── Drifting crimson petals — the sakura accent: a sparse field of
-            six petals falling through the scene at staggered speeds and
-            sway amplitudes (pure transform/opacity CSS loops, decorative,
-            aria-hidden, pointer-events-none). They dissolve with the same
-            alpha mask as the art, and hidden entirely under reduced-motion. ── */}
-        <div
-          aria-hidden
-          className="art-dissolve pointer-events-none absolute inset-0 overflow-hidden"
-        >
-          {PETALS.map((p, i) => (
-            <span
-              key={i}
-              className="petal"
-              style={
-                {
-                  left: `${p.left}%`,
-                  "--petal-dur": `${p.dur}s`,
-                  "--petal-delay": `${p.delay}s`,
-                  "--petal-x": `${p.x}vw`,
-                  "--petal-o": p.o,
-                } as React.CSSProperties
-              }
-            />
-          ))}
+          {/* ── Atmospheric light — two low-opacity frost light fields that
+              drift on long transform-only loops (26s / 32s). They sit ABOVE
+              the art and BELOW every scrim + text layer, so they read as
+              ambient scene lighting, never as a veil over the copy, and are
+              frozen entirely under reduced-motion. ── */}
+          <div aria-hidden className="absolute inset-0 overflow-hidden">
+            <div className="aurora-a absolute -left-[12%] top-[12%] h-[62%] w-[55%] rounded-full bg-frost/10 blur-[130px]" />
+            <div className="aurora-b absolute -right-[10%] top-[38%] h-[58%] w-[46%] rounded-full bg-frost-deep/10 blur-[140px]" />
+          </div>
+
+          {/* ── Drifting crimson petals — the sakura accent: a sparse field of
+              six petals falling through the scene at staggered speeds and
+              sway amplitudes (pure transform/opacity CSS loops, decorative,
+              aria-hidden, pointer-events-none). They share the atmosphere
+              mask, and are hidden entirely under reduced-motion. ── */}
+          <div aria-hidden className="absolute inset-0 overflow-hidden">
+            {PETALS.map((p, i) => (
+              <span
+                key={i}
+                className="petal"
+                style={
+                  {
+                    left: `${p.left}%`,
+                    "--petal-dur": `${p.dur}s`,
+                    "--petal-delay": `${p.delay}s`,
+                    "--petal-x": `${p.x}vw`,
+                    "--petal-o": p.o,
+                  } as React.CSSProperties
+                }
+              />
+            ))}
+          </div>
         </div>
 
         {/* Cinematic scrims — a gentle vignette so the art reads as one calm
@@ -316,13 +319,19 @@ export function Spotlight({
             the same downward-fading gradient rather than a separate "header
             zone". The leading edge sits at the absolute top of the section,
             so the navbar (which overlaps the section via -mt-24) blends into
-            the gradient instead of clipping it. */}
-        <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/35 to-base/60" />
-        {/* Bottom atmosphere — a MILD gradient kept only for copy contrast in
-            the lower hero. It can never read as a seam: the artwork layers
-            are already fully transparent here (art-dissolve mask), so this
-            base tint blends over the page background itself. */}
-        <div className="absolute inset-x-0 bottom-0 h-[28%] bg-gradient-to-t from-base/45 via-base/10 to-transparent" />
+            the gradient instead of clipping it. Both the horizontal and bottom
+            scrims share `scrim-dissolve`: their tint MUST reach zero before
+            the hero's bottom edge — an edge-vignette at full strength on the
+            last pixel row and absent on the next one is what painted the old
+            horizontal seam. */}
+        <div aria-hidden className="scrim-dissolve pointer-events-none absolute inset-0">
+          <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/35 to-base/60" />
+          {/* Bottom atmosphere — copy contrast for the lower hero. Dissolves
+              with the group above, so it can never read as a step where the
+              hero ends: the artwork tail beneath it continues smoothly into
+              the Trending overlap. */}
+          <div className="absolute inset-x-0 bottom-0 h-[28%] bg-gradient-to-t from-base/45 via-base/10 to-transparent" />
+        </div>
         <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/85 via-base/55 via-35% via-base/25 to-transparent" />
 
         {/* ── Right vertical diamond nav — one facet per slide (carousel
