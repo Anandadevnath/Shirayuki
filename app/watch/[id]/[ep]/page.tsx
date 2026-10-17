@@ -19,9 +19,20 @@ type Props = {
 const epNumberOf = (episodeId: string) =>
   Number(episodeId.match(/ep-(\d+)/)?.[1] ?? episodeId.match(/(\d+)$/)?.[1] ?? 1);
 
+/** Double-decode of a route segment. A malformed escape sequence (e.g.
+ *  a raw invalid UTF-8 byte in the URL) makes decodeURIComponent throw, which
+ *  would 500 the whole page — fall back to the raw segment instead. */
+const safeDecode = (seg: string): string => {
+  try {
+    return decodeURIComponent(seg);
+  } catch {
+    return seg;
+  }
+};
+
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id, ep } = await params;
-  const episodeId = decodeURIComponent(ep);
+  const episodeId = safeDecode(ep);
   const res = await safe(() => getAnime(id));
   const title = res.ok && res.data ? res.data.title : "Watch";
   return { title: `${title} · EP ${epNumberOf(episodeId)}`, robots: { index: false } };
@@ -30,7 +41,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 export default async function WatchPage({ params, searchParams }: Props) {
   const { id, ep } = await params;
   const { cat, server } = await searchParams;
-  const episodeId = decodeURIComponent(ep);
+  const episodeId = safeDecode(ep);
   const epNum = epNumberOf(episodeId);
 
   const [detailRes, epsRes, serversRes] = await Promise.all([

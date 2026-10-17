@@ -95,6 +95,23 @@ const nextConfig: NextConfig = {
           // The player page embeds third-party HLS streams; pin frame ancestors
           // to ourselves even though /watch is noindex.
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
+          // CSP baseline (security headers only — deliberately no script-src
+          // yet, since a strict one needs per-request nonces via middleware):
+          //   frame-ancestors — clickjacking (doubles as modern X-Frame-Options)
+          //   base-uri       — neutralises a hostile <base> hijacking relative
+          //                    URLs (asset/redirect hijack)
+          //   object-src     — blocks <object>/<embed> plugin injection
+          //   form-action    — blocks form-post exfiltration to attacker origins
+          //                    (the primary data-theft path if markup is ever
+          //                    injected)
+          { key: "Content-Security-Policy", value: "object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'" },
+          // Deny powerful features the app never uses (mic/camera/geolocation/
+          // payment sensors) — limits the blast radius of any injected script.
+          { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), browsing-topics=()" },
+          // HTTPS-only transport for one year. Browsers ignore this header
+          // when it arrives over plain http (e.g. localhost dev), so it is
+          // safe to declare unconditionally in next.config.
+          { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
         ],
       },
       {

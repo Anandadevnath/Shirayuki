@@ -10,6 +10,7 @@ import { CastSection } from "@/components/details/CastSection";
 import { Rail } from "@/components/anime/Rail";
 import { EpBadges } from "@/components/anime/Badges";
 import { truncate, slugify } from "@/lib/utils/format";
+import { jsonLdHtml } from "@/lib/utils/jsonld";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -74,7 +75,7 @@ export default async function AnimePage({ params }: Params) {
     <div>
       <script
         type="application/ld+json"
-        dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+        dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
 
       {/* Anime-specific backdrop. Sits between the Ambient layer (-z-10) and

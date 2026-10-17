@@ -25,14 +25,14 @@ export default async function CategoryPage({ params, searchParams }: Props) {
     <div className="pt-4">
       <h1 className="mb-6 text-2xl font-bold">{titleize(id)}</h1>
       {!res.ok ? (
-        <ErrorState retryHref={`/category/${id}`} />
+        <ErrorState retryHref={`/category/${encodeURIComponent(id)}`} />
       ) : !res.data.results.length ? (
         <EmptyState />
       ) : (
         <>
           <Grid items={res.data.results} />
           <Pagination
-            basePath={`/category/${id}`}
+            basePath={`/category/${encodeURIComponent(id)}`}
             currentPage={res.data.currentPage}
             totalPages={res.data.totalPages}
           />

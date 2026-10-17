@@ -9,6 +9,7 @@ import {
 import { cn } from "@/lib/utils/cn";
 import { revealDelay } from "@/lib/utils/reveal";
 import { isInList as isInListLocal, toggleList, WATCHLIST_EVENT } from "@/lib/watchlist/local";
+import { isSafeStorageKey, parseStorageRecord } from "@/lib/storage/sanitize";
 
 interface CinematicInfoProps {
   anime: {
@@ -424,24 +425,36 @@ function MetaChip({
 const COMPLETED_KEY = "shirayuki:completed:v1";
 const COMPLETED_EVENT = "shirayuki:completed";
 
-function isCompleted(id: string): boolean {
-  if (typeof window === "undefined") return false;
+/** Read + validate the completed map. localStorage is untrusted input: a
+ *  non-object payload (array/primitive) or prototype-chain keys must never
+ *  reach the object lookup/write path. Uses the shared storage sanitizer so
+ *  this map matches the guarantees in lib/progress and lib/watchlist. */
+function readCompleted(): Record<string, true> {
+  const map: Record<string, true> = Object.create(null);
+  if (typeof window === "undefined") return map;
   try {
-    const map: Record<string, true> = JSON.parse(
-      localStorage.getItem(COMPLETED_KEY) || "{}",
-    );
-    return !!map[id];
+    const parsed = parseStorageRecord(localStorage.getItem(COMPLETED_KEY));
+    for (const [k, v] of Object.entries(parsed)) {
+      if (v === true) map[k] = true;
+    }
   } catch {
-    return false;
+    /* corrupted JSON → treat as empty */
   }
+  return map;
+}
+
+function isCompleted(id: string): boolean {
+  if (!isSafeStorageKey(id)) return false;
+  return readCompleted()[id] === true;
 }
 
 function setCompleted(id: string, done: boolean) {
   if (typeof window === "undefined") return;
+  // `map["__proto__"] = true` would reassign the prototype instead of storing
+  // an entry — refuse these ids outright.
+  if (!isSafeStorageKey(id)) return;
   try {
-    const map: Record<string, true> = JSON.parse(
-      localStorage.getItem(COMPLETED_KEY) || "{}",
-    );
+    const map = readCompleted();
     if (done) map[id] = true;
     else delete map[id];
     localStorage.setItem(COMPLETED_KEY, JSON.stringify(map));

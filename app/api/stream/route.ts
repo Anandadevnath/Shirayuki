@@ -1,23 +1,28 @@
 import type { NextRequest } from "next/server";
+import { fetchGuarded, sanitizeReferer } from "@/lib/api/proxy-guard";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/**
- * First-party HLS proxy. The embed hosts gate streams behind a `Referer` the
- * browser can't set, and serve cross-origin. We fetch upstream with the right
- * headers, rewrite playlist URIs back through this proxy, and stream segments.
- * (The old React app shipped a proxy helper but never wired it — bug #2.)
- */
+/** First-party HLS proxy. The embed hosts gate streams behind a `Referer` the
+ *  browser can't set, and serve cross-origin. We fetch upstream with the right
+ *  headers, rewrite playlist URIs back through this proxy, and stream segments.
+ *
+ *  SECURITY: the `url` parameter is caller-controlled, so every target —
+ *  including each redirect hop — must pass the SSRF guard in
+ *  `lib/api/proxy-guard.ts` (scheme/host/DNS checks against private and
+ *  link-local ranges). The `referer` parameter is sanitized before it is
+ *  forwarded upstream. There is deliberately NO permissive CORS header: all
+ *  consumers (the player, hls.js, native Safari HLS) load these URLs
+ *  same-origin, so a wildcard `Access-Control-Allow-Origin` would only turn
+ *  this deployment into an open relay for third-party sites. */
 
-/** CORS preflight — hls.js fires OPTIONS on cross-origin segment requests in
- *  some browsers (Safari, Firefox with strict mode). Allow the methods + the
- *  Range header so segment range requests don't get rejected. */
+/** Preflight handler kept for protocol clarity — it answers WITHOUT any
+ *  `Access-Control-Allow-*` headers, so cross-origin requests are refused. */
 export function OPTIONS() {
   return new Response(null, {
     status: 204,
     headers: {
-      "Access-Control-Allow-Origin": "*",
       "Access-Control-Allow-Methods": "GET, OPTIONS",
       "Access-Control-Allow-Headers": "Range, Content-Type",
       "Access-Control-Max-Age": "86400",
@@ -62,15 +67,7 @@ function rewritePlaylist(
 export async function GET(req: NextRequest) {
   const { searchParams, origin } = new URL(req.url);
   const target = searchParams.get("url");
-  const referer = searchParams.get("referer") ?? "";
-  if (!target) return new Response("Missing url", { status: 400 });
-
-  let upstream: URL;
-  try {
-    upstream = new URL(target);
-  } catch {
-    return new Response("Bad url", { status: 400 });
-  }
+  const referer = sanitizeReferer(searchParams.get("referer")) ?? "";
 
   const headers: Record<string, string> = {
     "User-Agent":
@@ -84,15 +81,16 @@ export async function GET(req: NextRequest) {
   const range = req.headers.get("range");
   if (range) headers.Range = range;
 
-  let res: Response;
-  try {
-    res = await fetch(upstream.toString(), { headers, redirect: "follow" });
-  } catch {
-    return new Response("Upstream fetch failed", {
-      status: 502,
-      headers: { "Cache-Control": "public, max-age=30" },
-    });
+  // Validates the target (and every redirect hop) before any bytes move.
+  const fetched = await fetchGuarded(target, headers);
+  if (!fetched.ok) {
+    return new Response(
+      fetched.status === 400 ? "Bad url" : "Upstream fetch failed",
+      { status: fetched.status },
+    );
   }
+  const { res } = fetched;
+  const upstream = fetched.url;
 
   if (!res.ok && res.status !== 206) {
     return new Response(`Upstream ${res.status}`, { status: res.status });
@@ -116,7 +114,6 @@ export async function GET(req: NextRequest) {
         // cached rewritten playlist to repeat viewers without an upstream
         // round-trip, while still picking up upstream changes within ~5 min.
         "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-        "Access-Control-Allow-Origin": "*",
       },
     });
   }
@@ -130,7 +127,6 @@ export async function GET(req: NextRequest) {
   }
   if (!out.has("content-type")) out.set("content-type", "video/mp2t");
   out.set("Cache-Control", "public, max-age=3600");
-  out.set("Access-Control-Allow-Origin", "*");
 
   return new Response(res.body, { status: res.status, headers: out });
 }

@@ -26,14 +26,14 @@ export default async function GenrePage({ params, searchParams }: Props) {
       <p className="text-sm text-frost">Genre</p>
       <h1 className="mb-6 mt-1 text-2xl font-bold">{titleize(id)}</h1>
       {!res.ok ? (
-        <ErrorState retryHref={`/genre/${id}`} />
+        <ErrorState retryHref={`/genre/${encodeURIComponent(id)}`} />
       ) : !res.data.results.length ? (
         <EmptyState />
       ) : (
         <>
           <Grid items={res.data.results} />
           <Pagination
-            basePath={`/genre/${id}`}
+            basePath={`/genre/${encodeURIComponent(id)}`}
             currentPage={res.data.currentPage}
             totalPages={res.data.totalPages}
           />
