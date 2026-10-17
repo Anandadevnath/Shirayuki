@@ -38,11 +38,21 @@
   --radius-md: 0.875rem;
   --radius-lg: 1.25rem;
   --radius-xl: 1.75rem;
+  /* Action buttons + capsule chips: moderately rounded rectangles, not
+     pills. One token so every button shares the same corner across the
+     site (was previously a mix of full pills and rounded-sm). Circular
+     icon controls and progress bars stay `rounded-full`. */
+  --radius-btn: 0.625rem;
 
-  /* Shadows */
-  --shadow-frost: 0 8px 30px -12px oklch(0.64 0.15 245 / 0.35);
+  /* Shadows — cool, low-opacity, elevation via surface step + hairline.
+     `--shadow-frost` is a restrained cool drop shadow used for card lift /
+     hover; it hints at the accent without a coloured halo. `--shadow-neon`
+     used to paint a bright cyan bloom around every primary CTA and play
+     pill — it is now a deep, colourless contact shadow (name kept so call
+     sites don't churn). Glow is reserved for genuinely featured moments. */
+  --shadow-frost: 0 10px 32px -14px oklch(0.3 0.05 250 / 0.55);
   --shadow-soft: 0 4px 24px -10px oklch(0 0 0 / 0.5);
-  --shadow-neon: 0 0 28px -6px var(--color-frost), 0 0 1px 0 var(--color-frost);
+  --shadow-neon: 0 6px 18px -8px oklch(0 0 0 / 0.6);
 
   /* Fonts (wired via next/font CSS vars in layout.tsx) */
   --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
@@ -476,15 +486,14 @@ header[data-scrolled="1"] {
   padding: 1px;
   background: linear-gradient(
     140deg,
-    color-mix(in oklch, var(--color-frost-deep) 55%, transparent),
-    transparent 35%,
-    transparent 65%,
-    color-mix(in oklch, var(--color-frost) 55%, transparent)
+    color-mix(in oklch, var(--color-frost-deep) 32%, transparent),
+    transparent 40%,
+    transparent 60%,
+    color-mix(in oklch, var(--color-frost) 30%, transparent)
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  filter: drop-shadow(0 0 6px color-mix(in oklch, var(--color-frost) 35%, transparent));
   pointer-events: none;
 }
 /* A single travelling comet on a thin bright ring. The ring is 1.5px thick
@@ -506,17 +515,16 @@ header[data-scrolled="1"] {
   background: conic-gradient(
     from var(--laser-angle) at 50% 50%,
     transparent 0deg,
-    transparent 60deg,
-    color-mix(in oklch, var(--color-frost-deep) 60%, transparent) 120deg,
-    var(--color-frost) 145deg,
-    #ffffff 152deg,
-    transparent 162deg,
+    transparent 55deg,
+    color-mix(in oklch, var(--color-frost-deep) 45%, transparent) 120deg,
+    color-mix(in oklch, var(--color-frost) 70%, transparent) 145deg,
+    color-mix(in oklch, var(--color-snow) 80%, transparent) 152deg,
+    transparent 165deg,
     transparent 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
           mask-composite: exclude;
-  filter: drop-shadow(0 0 8px color-mix(in oklch, var(--color-frost) 55%, transparent));
   animation: laser-sweep 7s linear infinite;
   pointer-events: none;
 }
@@ -686,14 +694,16 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
 }
 
 /* Genre pill interactive. transform + cheap color props only; any hover glow
-   is a static box-shadow that snaps (never transitioned). */
+   is a static box-shadow that snaps (never transitioned). Hover uses a small
+   lift + border/background shift, not a scale — scaling text pills reads
+   jittery next to neighbours. */
 .genre-pill {
   transition: transform 250ms cubic-bezier(0.16, 1, 0.3, 1),
               background-color 250ms ease,
               border-color 250ms ease;
 }
 .genre-pill:hover {
-  transform: translate3d(0, -1px, 0) scale(1.04);
+  transform: translate3d(0, -1px, 0);
 }
 
 /* Stat-card micro-shine sweep (background-position, GPU friendly) */
@@ -801,12 +811,14 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
 }
 
 /* Press feedback — the shared micro-interaction for solid CTAs and
-   toolbar buttons. Hover bloom + active press on the same transform
-   channel; pairs with the existing `.watch-pill-spring`. Apply the
-   class; the transitions live here so every button feels identical. */
+    toolbar buttons. Hover lift + active press on the same transform
+    channel; pairs with the existing `.watch-pill-spring`. No coloured
+    bloom — the lift alone reads as feedback. Apply the class; the
+    transitions live here so every button feels identical. */
 .press {
   transition: transform 180ms cubic-bezier(0.16, 1, 0.3, 1),
-              box-shadow 180ms ease;
+              background-color 180ms ease,
+              border-color 180ms ease;
 }
 .press:hover  { transform: translateY(-1px); }
 .press:active { transform: translateY(0) scale(0.97); }
@@ -941,7 +953,6 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
   height: 15px;
   border-radius: 64% 36% 62% 38% / 56% 64% 36% 44%;
   background: linear-gradient(148deg, oklch(0.62 0.17 14) 15%, var(--color-sakura) 90%);
-  box-shadow: 0 0 6px 0 oklch(0.62 0.17 14 / 0.35);
   opacity: 0;
   animation: petal-fall var(--petal-dur, 15s) linear var(--petal-delay, 0s) infinite;
   will-change: transform, opacity;

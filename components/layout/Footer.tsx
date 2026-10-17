@@ -47,7 +47,7 @@ export async function Footer() {
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-[-7rem] h-72 w-[60rem] max-w-[92vw] -translate-x-1/2 rounded-full opacity-20 blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-[-7rem] h-72 w-[60rem] max-w-[92vw] -translate-x-1/2 rounded-full opacity-10 blur-3xl"
         style={{ background: "radial-gradient(closest-side, var(--color-frost-deep), transparent)" }}
       />
 
@@ -55,7 +55,7 @@ export async function Footer() {
         {/* ── Brand ── */}
         <div className="flex flex-col items-center gap-5 text-center">
           <div className="flex translate-x-5 items-center sm:translate-x-8">
-            <span className="relative h-20 w-[4.5rem] shrink-0 drop-shadow-[0_6px_24px_rgba(120,180,255,0.25)] sm:h-24 sm:w-20">
+            <span className="relative h-20 w-[4.5rem] shrink-0 sm:h-24 sm:w-20">
               <Image
                 src="/logos/shirayuki2.png"
                 alt=""

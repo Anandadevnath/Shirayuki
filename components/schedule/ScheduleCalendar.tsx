@@ -74,7 +74,7 @@ export function ScheduleItemRow({
           </span>
         </span>
         {showComing && it.isUpcoming && (
-          <span className="shrink-0 self-start rounded-full bg-frost-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-frost">
+          <span className="shrink-0 self-start rounded-[var(--radius-btn)] bg-frost-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-frost">
             Coming
           </span>
         )}
@@ -113,7 +113,7 @@ export function ScheduleItemCard({ it }: { it: ScheduleItem }) {
               over bright art (same treatment as AnimeCard). */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[1.25rem] ring-2 ring-frost/60 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
+            className="pointer-events-none absolute inset-0 rounded-[1.25rem] ring-1 ring-frost/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
           />
           <div
             aria-hidden
@@ -141,7 +141,7 @@ export function ScheduleItemCard({ it }: { it: ScheduleItem }) {
             <span className="font-mono text-[11px] text-faint">Date TBD</span>
           )}
           {it.isUpcoming && (
-            <span className="rounded-full bg-frost-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-frost">
+            <span className="rounded-[var(--radius-btn)] bg-frost-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-frost">
               Coming
             </span>
           )}
@@ -262,7 +262,7 @@ export function ScheduleCalendar({
                 aria-controls="schedule-panel"
                 onClick={() => select(i)}
                 className={cn(
-                  "flex shrink-0 flex-col items-start rounded-lg border px-3 py-1.5 text-left transition-colors",
+                  "flex shrink-0 flex-col items-start rounded-[var(--radius-btn)] border px-3 py-1.5 text-left transition-colors",
                   isActive
                     ? "border-frost/50 bg-frost-soft text-frost"
                     : "border-line/60 bg-surface/40 text-muted hover:border-frost/30 hover:text-snow",

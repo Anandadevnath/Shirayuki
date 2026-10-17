@@ -119,7 +119,7 @@ export function Nav() {
             className="group flex items-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
             aria-label="Shirayuki — Home"
           >
-            <span className="relative h-16 w-14 shrink-0 drop-shadow-[0_4px_16px_rgba(120,180,255,0.25)]">
+            <span className="relative h-16 w-14 shrink-0">
               <Image
                 src="/logos/shirayuki2.png"
                 alt=""

@@ -60,14 +60,14 @@ function TrendCard({
       <div
         className={cn(
           "relative h-full w-full overflow-hidden rounded-2xl ring-1",
-          top3 ? "ring-frost/40" : "ring-line",
+          top3 ? "ring-frost/35" : "ring-line",
         )}
       >
         <span
           aria-hidden
           className={cn(
             "pointer-events-none absolute inset-0 z-10 rounded-2xl ring-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
-            top3 ? "ring-frost" : "ring-frost/60",
+            top3 ? "ring-frost/60" : "ring-frost/50",
           )}
         />
 
@@ -92,7 +92,7 @@ function TrendCard({
 
         {/* Hover play affordance */}
         <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          <span className="grid size-11 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
+          <span className="grid size-11 scale-75 place-items-center rounded-full bg-base/70 text-frost ring-1 ring-frost/50 backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
             <Play className="size-5 fill-current" />
           </span>
         </span>
@@ -414,7 +414,7 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
               exact across the homepage. */}
           <span
             aria-hidden
-            className="pointer-events-none absolute -left-4 top-1/2 h-9 w-1 -translate-y-1/2 rounded-full bg-gradient-to-b from-frost to-frost-deep shadow-[var(--shadow-neon)]"
+            className="pointer-events-none absolute -left-4 top-1/2 h-9 w-1 -translate-y-1/2 rounded-full bg-gradient-to-b from-frost to-frost-deep"
           />
           <div className="min-w-0">
             <span className="flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-frost">
@@ -443,7 +443,7 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
           <button
             onClick={() => onArrow(1)}
             aria-label="Scroll trending right"
-            className="grid size-8 place-items-center rounded-full bg-frost text-base shadow-[var(--shadow-neon)] transition-transform duration-200 hover:scale-105 active:scale-90"
+            className="grid size-8 place-items-center rounded-full bg-frost text-base transition-transform duration-200 hover:scale-105 active:scale-90"
           >
             <ChevronRight className="size-4" />
           </button>

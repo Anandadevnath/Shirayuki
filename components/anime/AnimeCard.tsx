@@ -106,18 +106,19 @@ export const AnimeCard = memo(function AnimeCard({
         />
 
         {/* Frame: static `ring-1 ring-line` so the resting state is identical
-            to before, plus a sibling overlay that paints the frosted hover
-            ring at opacity-0 → 100%. Avoids the box-shadow transition
+            to before, plus a sibling overlay that paints a restrained frosted
+            hover ring at opacity-0 → 100%. Avoids the box-shadow transition
             (which forces a full repaint of the card body on every hover
             frame) while preserving the visual. */}
         <div className="relative aspect-[3/4] overflow-hidden rounded-[1.25rem] bg-surface-2 ring-1 ring-line/80">
-          {/* Frosted hover ring — opacity cross-fade, GPU-composited. Also
-              lands on keyboard focus so the focus target is unmistakable
-              even while the browser's default outline is clipped by the
-              card frame. */}
+          {/* Frosted hover ring — opacity cross-fade, GPU-composited. A single
+              1px hairline in frost rather than a bright 2px halo, so the edge
+              reads as a crisp border, not a glow. Also lands on keyboard focus
+              so the focus target is unmistakable even while the browser's
+              default outline is clipped by the card frame. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[1.25rem] ring-2 ring-frost/60 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
+            className="pointer-events-none absolute inset-0 rounded-[1.25rem] ring-1 ring-frost/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
           />
           {/* Poster — gentle cinematic push-in on hover/focus (1.05: reads
               as a breath, not a zoom; transform-only so rails and grids
@@ -170,11 +171,11 @@ export const AnimeCard = memo(function AnimeCard({
                 reachable without a hover ritual; the reduced-motion variant
                 flattens the movement. */}
             <div className="flex translate-y-1 transform-gpu items-center gap-2 pt-2.5 opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 [@media(pointer:coarse)]:translate-y-0 [@media(pointer:coarse)]:opacity-100 motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-frost to-frost-deep px-3 py-1 text-[11px] font-bold text-base shadow-[var(--shadow-neon)]">
+              <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-btn)] bg-frost px-3 py-1 text-[11px] font-semibold text-base">
                 <Play className="size-3 translate-x-px fill-current" /> Watch
               </span>
               {anime.type && (
-                <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-snow/90">
+                <span className="rounded-[var(--radius-btn)] border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-snow/90">
                   {anime.type}
                 </span>
               )}

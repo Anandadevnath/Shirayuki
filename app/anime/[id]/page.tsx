@@ -96,7 +96,7 @@ export default async function AnimePage({ params }: Params) {
             priority
             sizes="100vw"
             quality={50}
-            className="object-cover opacity-40 blur-2xl saturate-150"
+            className="object-cover opacity-40 blur-2xl saturate-125"
           />
         )}
         <div className="absolute inset-0 bg-base/70" />
@@ -162,7 +162,7 @@ export default async function AnimePage({ params }: Params) {
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link
                   href={firstEp ? `/watch/${id}/${encodeURIComponent(firstEp)}` : `/watch/${id}`}
-                  className="flex items-center gap-2 rounded-sm bg-gradient-to-br from-frost to-frost-deep px-5 py-2.5 text-sm font-semibold text-base shadow-[var(--shadow-neon)] transition-transform hover:scale-[1.03]"
+                  className="press flex h-10 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 text-sm font-semibold text-base"
                 >
                   <Play className="size-4 fill-current" /> Watch now
                 </Link>

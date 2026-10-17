@@ -42,10 +42,10 @@ function MyListButton({ anime }: { anime: SpotlightModel }) {
       aria-pressed={added}
       aria-label={`${added ? "Remove from" : "Add to"} My List: ${anime.title}`}
       className={cn(
-        "flex items-center gap-2 rounded-2xl border px-6 py-3 text-sm font-semibold backdrop-blur-md transition-colors press",
+        "press flex h-11 items-center gap-2 rounded-[var(--radius-btn)] border px-5 text-sm font-semibold backdrop-blur-md transition-colors",
         added
-          ? "border-frost/60 bg-frost-soft text-frost"
-          : "border-line glass text-snow hover:border-frost/50",
+          ? "border-frost/50 bg-frost-soft text-frost"
+          : "border-line bg-base/30 text-snow hover:border-frost/40 hover:text-frost",
       )}
     >
       {added ? <Check className="size-4" /> : <Plus className="size-4" />}
@@ -349,8 +349,8 @@ export function Spotlight({
               ambient scene lighting, never as a veil over the copy, and are
               frozen entirely under reduced-motion. ── */}
           <div aria-hidden className="absolute inset-0 overflow-hidden">
-            <div className="aurora-a absolute -left-[12%] top-[12%] h-[62%] w-[55%] rounded-full bg-frost/10 blur-[130px]" />
-            <div className="aurora-b absolute -right-[10%] top-[38%] h-[58%] w-[46%] rounded-full bg-frost-deep/10 blur-[140px]" />
+            <div className="aurora-a absolute -left-[12%] top-[12%] h-[62%] w-[55%] rounded-full bg-frost/[0.08] blur-[130px]" />
+            <div className="aurora-b absolute -right-[10%] top-[38%] h-[58%] w-[46%] rounded-full bg-frost-deep/[0.08] blur-[140px]" />
           </div>
 
           {/* ── Drifting crimson petals — the sakura accent: a sparse field of
@@ -390,12 +390,16 @@ export function Spotlight({
             last pixel row and absent on the next one is what painted the old
             horizontal seam. */}
         <div aria-hidden className="scrim-dissolve pointer-events-none absolute inset-0">
-          <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/35 to-base/60" />
+          {/* Readability gradient: strongest behind the copy (left), easing to a
+              lighter vignette on the right so the key art stays visible. A
+              second stop at ~55% keeps the title legible across mid-length
+              titles without veiling the artwork's centre. */}
+          <div className="absolute inset-0 bg-gradient-to-r from-base/95 via-base/55 via-45% to-base/45" />
           {/* Bottom atmosphere — copy contrast for the lower hero. Dissolves
               with the group above, so it can never read as a step where the
               hero ends: the artwork tail beneath it continues smoothly into
               the Trending overlap. */}
-          <div className="absolute inset-x-0 bottom-0 h-[28%] bg-gradient-to-t from-base/45 via-base/10 to-transparent" />
+          <div className="absolute inset-x-0 bottom-0 h-[32%] bg-gradient-to-t from-base/55 via-base/15 to-transparent" />
         </div>
         <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/85 via-base/55 via-35% via-base/25 to-transparent" />
 
@@ -434,7 +438,7 @@ export function Spotlight({
                   className={cn(
                     "transition-[color,fill]",
                     idx === active
-                      ? "size-3.5 fill-frost text-frost drop-shadow-[var(--shadow-neon)]"
+                      ? "size-3.5 fill-frost text-frost drop-shadow-[0_1px_3px_rgba(0,0,0,0.6)]"
                       : "size-2.5 fill-snow/25 text-snow/25 group-hover:fill-snow/60 group-hover:text-snow/60",
                   )}
                 />
@@ -463,7 +467,7 @@ export function Spotlight({
             NOT keyed — the buttons stay planted under the cursor between
             slide changes (remounting them both flickers the My List state
             and yanks click targets mid-interaction). ── */}
-        <div className="relative z-10 flex flex-1 items-center pb-[8vh]">
+        <div className="relative z-10 flex flex-1 items-center pb-[10vh]">
           {/* This container is the SHARED content container — identical to
               <main>'s mx-auto max-w-[1460px] px-4 sm:px-6 lg:px-8 — so the
               hero title/copy/CTA block shares its exact left and right
@@ -475,34 +479,44 @@ export function Spotlight({
             {/* Left vertical "featured" strip — absolutely positioned inside
                 the shared container's left padding gutter (0 → ~20px wide,
                 text starts at 32px), so it never displaces the copy and both
-                edges stay flush with the sections below. */}
+                edges stay flush with the sections below. Simplified to a
+                single hairline rule above and below the label; the rule pair
+                reads as a deliberate marker rather than decoration. */}
             <div
               className="hero-in pointer-events-none absolute left-0 top-1/2 z-10 hidden -translate-y-1/2 flex-col items-center gap-4 lg:flex"
               style={heroDelay(520)}
             >
-              <span className="h-16 w-px bg-gradient-to-b from-transparent to-frost/60" />
+              <span className="h-14 w-px bg-gradient-to-b from-transparent to-frost/50" />
               <span
-                className="font-mono text-[11px] font-semibold uppercase tracking-[0.5em] text-frost"
+                className="font-mono text-[10px] font-semibold uppercase tracking-[0.42em] text-frost"
                 style={{ writingMode: "vertical-rl" }}
               >
                 Featured
               </span>
               <span
-                className="font-display text-sm font-bold tabular-nums text-snow/80"
+                className="font-mono text-[11px] font-medium tabular-nums text-snow/65"
                 style={{ writingMode: "vertical-rl" }}
               >
-                {String(active + 1).padStart(2, "0")} — {String(n).padStart(2, "0")}
+                {String(active + 1).padStart(2, "0")} / {String(n).padStart(2, "0")}
               </span>
-              <span className="h-16 w-px bg-gradient-to-b from-frost/60 to-transparent" />
+              <span className="h-14 w-px bg-gradient-to-b from-frost/50 to-transparent" />
             </div>
-            <div className="flex max-w-xl flex-col gap-4">
+            {/* Hero copy stack. Spacing follows a deliberate scale, not one
+                uniform gap: the title owns its own leading, then a 24px beat
+                to the badges, 20px to the synopsis block, and a 32px beat to
+                the action row — so each tier reads as its own group instead
+                of a single cramped column. The synopsis + stats share the
+                middle block (gap-3) since they are one "about this title"
+                unit. The stack itself is `gap-5` as the baseline rhythm; the
+                per-tier margins below are the intentional overrides. */}
+            <div className="flex max-w-xl flex-col gap-5">
               {/* Line-clamped rows keep per-slide text heights stable, so the
                   keyed re-render can never shift layout — the hero's own
                   height is viewport-fixed and everything inside is
                   height-capped. */}
               <div key={active} className="contents">
                 <h2
-                  className="hero-in font-display text-3xl font-extrabold leading-[1.04] [text-shadow:0_2px_28px_rgba(0,0,0,0.8)] sm:text-4xl md:text-5xl"
+                  className="hero-in font-display text-[1.75rem] font-bold leading-[1.15] tracking-[-0.02em] [text-shadow:0_2px_20px_rgba(0,0,0,0.75)] sm:text-4xl md:text-[2.75rem]"
                   style={heroDelay(60)}
                 >
                   <span className="line-clamp-2">{a.title}</span>
@@ -510,62 +524,64 @@ export function Spotlight({
 
                 {/* Metadata row — real fields only */}
                 <div
-                  className="hero-in flex flex-wrap items-center gap-2 text-xs text-muted sm:text-sm"
+                  className="hero-in flex flex-wrap items-center gap-2 text-xs text-muted sm:text-[13px]"
                   style={heroDelay(150)}
                 >
                   {a.type && (
-                    <span className="rounded-full border border-line bg-base/40 px-3 py-0.5 backdrop-blur-sm">
+                    <span className="rounded-[var(--radius-btn)] border border-line bg-base/40 px-2.5 py-1 backdrop-blur-sm">
                       {a.type}
                     </span>
                   )}
                   {a.quality && (
-                    <span className="rounded-full bg-frost-soft px-3 py-0.5 font-semibold text-frost">
+                    <span className="rounded-[var(--radius-btn)] bg-frost-soft px-2.5 py-1 font-semibold text-frost">
                       {a.quality}
                     </span>
                   )}
                   <EpBadges sub={a.episodes.sub} dub={a.episodes.dub} />
                 </div>
 
-                {a.description && (
-                  <p
-                    className="hero-in max-w-lg text-sm leading-relaxed text-muted/90 [@media(max-height:480px)]:hidden sm:line-clamp-2"
-                    style={heroDelay(240)}
-                  >
-                    {truncate(a.description, 170)}
-                  </p>
-                )}
+                {/* Directly under the actionable badges; the synopsis + stats
+                    are grouped so the "about" block reads as one unit. */}
+                <div className="hero-in flex flex-col gap-3" style={heroDelay(240)}>
+                  {a.description && (
+                    <p className="max-w-lg text-sm leading-6 text-muted/90 [@media(max-height:480px)]:hidden sm:line-clamp-2">
+                      {truncate(a.description, 170)}
+                    </p>
+                  )}
 
-                {/* Stats row */}
-                <div
-                  className="hero-in flex flex-wrap items-center gap-x-6 gap-y-2 text-sm font-medium text-snow [@media(max-height:480px)]:hidden"
-                  style={heroDelay(330)}
-                >
-                  {!!a.score && (
-                    <span className="flex items-center gap-1.5">
-                      <Star className="size-4 fill-warning text-warning" /> {a.score}
-                      <span className="text-faint">Rating</span>
-                    </span>
-                  )}
-                  {eps != null && (
-                    <span className="flex items-center gap-1.5">
-                      <Film className="size-4 text-frost" /> {eps}
-                      <span className="text-faint">Episodes</span>
-                    </span>
-                  )}
-                  {typeof a.rank === "number" && (
-                    <span className="flex items-center gap-1.5">
-                      <Flame className="size-4 text-sakura" />
-                      <span className="text-faint">Trending</span> #{a.rank}
-                    </span>
-                  )}
+                  {/* Episode / rating / rank row — its own tier, separated from
+                      the synopsis above and the CTAs below so the facts never
+                      crowd the prose. */}
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] font-medium text-snow [@media(max-height:480px)]:hidden">
+                    {!!a.score && (
+                      <span className="flex items-center gap-1.5">
+                        <Star className="size-4 fill-warning text-warning" /> {a.score}
+                        <span className="text-faint">Rating</span>
+                      </span>
+                    )}
+                    {eps != null && (
+                      <span className="flex items-center gap-1.5">
+                        <Film className="size-4 text-frost" /> {eps}
+                        <span className="text-faint">Episodes</span>
+                      </span>
+                    )}
+                    {typeof a.rank === "number" && (
+                      <span className="flex items-center gap-1.5">
+                        <Flame className="size-4 text-sakura" />
+                        <span className="text-faint">Trending</span> #{a.rank}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              {/* CTAs — stable across slide changes */}
-              <div className="hero-in mt-1 flex items-center gap-3" style={heroDelay(430)}>
+              {/* CTAs — stable across slide changes. The extra `mt-3` on top of
+                  the stack's `gap-5` gives this row the largest beat (~32px),
+                  lifting the actions clear of the descriptive copy. */}
+              <div className="hero-in mt-3 flex flex-wrap items-center gap-3" style={heroDelay(430)}>
                 <Link
                   href={`/watch/${a.id}`}
-                  className="press flex items-center gap-2 rounded-2xl bg-frost px-7 py-3 text-sm font-semibold text-base shadow-[var(--shadow-neon)]"
+                  className="press flex h-11 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 text-sm font-semibold text-base"
                 >
                   <Play className="size-4 fill-current" /> Watch Now
                 </Link>

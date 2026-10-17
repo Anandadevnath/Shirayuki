@@ -20,11 +20,12 @@ export default async function SearchPage({ searchParams }: SP) {
   return (
     <div className="pt-4">
       <h1 className="mb-5 text-2xl font-bold">Search</h1>
-      {/* Refined focus state: the field's border warms to frost and picks up
-          a soft glow while typing — CSS-only, no JS, works with autofill. */}
+      {/* Refined focus state: the field's border warms to frost and the
+          surface lifts on a soft, colourless shadow while typing — CSS-only,
+          no JS, works with autofill. */}
       <form
         action="/search"
-        className="mb-8 flex items-center gap-2 rounded-md border border-line bg-surface/60 px-4 transition-[border-color,box-shadow] duration-200 ease-out focus-within:border-frost/40 focus-within:shadow-[var(--shadow-frost)]"
+        className="mb-8 flex items-center gap-2 rounded-md border border-line bg-surface/60 px-4 transition-[border-color,box-shadow] duration-200 ease-out focus-within:border-frost/50 focus-within:shadow-[var(--shadow-soft)]"
       >
         <SearchIcon className="size-4 text-faint" />
         <input

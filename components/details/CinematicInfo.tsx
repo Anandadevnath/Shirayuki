@@ -80,7 +80,7 @@ function StatusBadge({ status }: { status: string }) {
   return (
     <span
       className={cn(
-        "inline-flex items-center gap-1.5 rounded-full border px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wider",
+        "inline-flex items-center gap-1.5 rounded-[var(--radius-btn)] border px-2.5 py-1 text-[10.5px] font-semibold uppercase tracking-wider",
         cls,
       )}
     >
@@ -319,7 +319,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
                 <button
                   key={g}
                   type="button"
-                  className="genre-pill rounded-full border border-frost/25 bg-gradient-to-br from-frost/15 to-frost/5 px-3 py-1 text-[11.5px] font-semibold uppercase tracking-wider text-frost shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] hover:border-frost/60 hover:from-frost/25 hover:to-frost/10 hover:shadow-[0_4px_16px_-4px_color-mix(in_oklch,var(--color-frost-deep)_50%,transparent)]"
+                  className="genre-pill rounded-[var(--radius-btn)] border border-frost/25 bg-gradient-to-br from-frost/15 to-frost/5 px-3 py-1 text-[11.5px] font-semibold uppercase tracking-wider text-frost shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] hover:border-frost/60 hover:from-frost/25 hover:to-frost/10"
                 >
                   {g}
                 </button>
