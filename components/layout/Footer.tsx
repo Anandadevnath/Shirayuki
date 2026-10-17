@@ -75,7 +75,7 @@ export async function Footer() {
             </span>
           </div>
 
-          <p className="max-w-md text-sm leading-relaxed text-muted">
+          <p className="text-desc max-w-md text-muted">
             Your destination for streaming anime in pure focus — thousands of episodes in HD,
             skip-intro, and continue-watching. No ads.
           </p>
@@ -153,7 +153,7 @@ export async function Footer() {
             ))}
           </div>
         </div>
-        <p className="mt-3 text-[11px] leading-relaxed text-faint">
+        <p className="text-caption mt-3 text-faint">
           Shirayuki does not store any files on its server. All content is provided by
           non-affiliated third parties. For educational / demo use only.
         </p>

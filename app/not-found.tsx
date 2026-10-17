@@ -11,7 +11,7 @@ export default function NotFound() {
       </p>
       <Link
         href="/"
-        className="press mt-1 flex h-10 items-center rounded-[var(--radius-btn)] bg-frost px-5 text-sm font-semibold text-base"
+        className="press text-btn mt-1 flex h-10 items-center rounded-[var(--radius-btn)] bg-frost px-5 text-base"
       >
         Back home
       </Link>

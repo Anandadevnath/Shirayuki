@@ -171,8 +171,8 @@ export default async function WatchPage({ params, searchParams }: Props) {
 
           {/* ── Title strip ─────────────────────────────────────────── */}
           <div className="border-t border-line/60 bg-surface/60 px-5 py-4 sm:px-6">
-            <h1 className="text-xl font-bold text-snow sm:text-2xl">{anime.title}</h1>
-            <p className="mt-0.5 text-sm text-muted">
+            <h1 className="text-title text-snow sm:text-[1.375rem]">{anime.title}</h1>
+            <p className="text-meta mt-0.5 text-muted">
               Episode {epNum}
               {episodes[currentIdx]?.title ? ` · ${episodes[currentIdx]?.title}` : ""}
             </p>
@@ -181,7 +181,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
           {/* ── Server switcher (transparent + glassy) ──────────────── */}
           <div className="space-y-3 border-t border-line/60 bg-surface/50 px-5 py-4 sm:px-6">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="flex items-center gap-1.5 text-xs text-faint">
+              <span className="text-caption flex items-center gap-1.5 text-faint">
                 <Captions className="size-3.5" /> Subtitles / Dub
               </span>
               <div className="flex gap-1">
@@ -219,7 +219,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
 
             {pool.length > 0 && (
               <div className="flex flex-wrap items-center gap-3">
-                <span className="flex items-center gap-1.5 text-xs text-faint">
+                <span className="text-caption flex items-center gap-1.5 text-faint">
                   <ServerCog className="size-3.5" /> Server
                 </span>
                 <div className="flex flex-wrap gap-1">
@@ -246,10 +246,10 @@ export default async function WatchPage({ params, searchParams }: Props) {
         {/* ── Episode Sidebar (height syncs with player) ──────────── */}
         <aside className="laser-frame glass flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md">
           <div className="flex items-center justify-between border-b border-line/60 bg-surface/60 px-5 py-4">
-            <h2 className="text-sm font-semibold text-snow">
+            <h2 className="text-title text-snow">
               Episodes <span className="text-faint">({episodes.length})</span>
             </h2>
-            <span className="font-mono text-[10px] uppercase tracking-widest text-faint">
+            <span className="text-eyebrow text-faint">
               {category.toUpperCase()}
             </span>
           </div>
@@ -259,7 +259,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
                 key={e.episodeId}
                 href={`/watch/${id}/${encodeURIComponent(e.episodeId)}`}
                 className={cn(
-                  "hover-snap flex items-center gap-3 rounded-md px-2.5 py-2 text-sm",
+                  "hover-snap text-meta flex items-center gap-3 rounded-md px-2.5 py-2",
                   e.episodeId === episodeId
                     ? "bg-frost-soft text-frost"
                     : "text-muted hover:bg-surface-2/70 hover:text-snow",

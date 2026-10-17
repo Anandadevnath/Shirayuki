@@ -75,7 +75,7 @@ export default async function SchedulePage() {
     <div className="flex flex-col gap-[var(--space-section)]">
       <PageHeader
         eyebrow={
-          <span className="flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-frost">
+          <span className="text-label flex items-center gap-2 text-frost">
             <CalendarDays className="size-3.5" /> Release Calendar
           </span>
         }

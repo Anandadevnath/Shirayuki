@@ -23,7 +23,7 @@ function DiscoverRow({ anime }: { anime: AnimeCardModel }) {
         )}
       </span>
       <span className="min-w-0 flex-1 pt-0.5">
-        <span className="line-clamp-2 text-sm font-semibold leading-snug text-snow transition-colors group-hover:text-frost">
+        <span className="text-title line-clamp-2 font-semibold text-snow transition-colors group-hover:text-frost">
           {anime.title}
         </span>
         <span className="mt-2 flex items-center gap-2">
@@ -54,7 +54,7 @@ function DiscoverColumn({
 
   return (
     <section className="glass flex flex-col rounded-lg p-4 sm:p-5" aria-label={title}>
-      <h3 className="text-gradient-frost mb-1 font-display text-lg font-extrabold">
+      <h3 className="text-gradient-frost text-title mb-1 font-bold">
         {title}
       </h3>
       <ul className="flex flex-1 flex-col">

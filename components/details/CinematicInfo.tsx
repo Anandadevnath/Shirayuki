@@ -157,7 +157,7 @@ function ReadMore({ text }: { text: string }) {
     <div className="space-y-1.5">
       <p
         className={cn(
-          "text-[13.5px] leading-relaxed text-muted/90",
+          "text-desc text-muted/90",
           expanded ? "" : "overflow-hidden",
         )}
         style={
@@ -175,7 +175,7 @@ function ReadMore({ text }: { text: string }) {
       <button
         type="button"
         onClick={() => setExpanded((v) => !v)}
-        className="inline-flex items-center gap-1 text-[11px] font-semibold uppercase tracking-wider text-frost transition-colors hover:text-snow"
+        className="text-meta inline-flex items-center gap-1 font-semibold text-frost transition-colors hover:text-snow"
       >
         {expanded ? "Read less" : "Read more"}
         <span
@@ -277,7 +277,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
                 <Award className="size-3" />
                 {type} · {premiered}
               </span>
-              <h3 className="text-balance text-[2rem] font-bold leading-[1.05] tracking-tight text-snow sm:text-[2.4rem]">
+              <h3 className="text-balance font-display text-[2rem] font-bold leading-[1.08] tracking-[-0.02em] text-snow sm:text-[2.4rem]">
                 {anime.title}
               </h3>
               {synonyms.length > 0 && (
@@ -319,7 +319,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
                 <button
                   key={g}
                   type="button"
-                  className="genre-pill rounded-[var(--radius-btn)] border border-frost/25 bg-gradient-to-br from-frost/15 to-frost/5 px-3 py-1 text-[11.5px] font-semibold uppercase tracking-wider text-frost shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] hover:border-frost/60 hover:from-frost/25 hover:to-frost/10"
+                  className="genre-pill rounded-[var(--radius-btn)] border border-frost/25 bg-gradient-to-br from-frost/15 to-frost/5 px-3 py-1 text-[0.6875rem] font-semibold uppercase tracking-[0.08em] text-frost shadow-[inset_0_1px_0_0_rgba(255,255,255,0.08)] hover:border-frost/60 hover:from-frost/25 hover:to-frost/10"
                 >
                   {g}
                 </button>
@@ -519,7 +519,7 @@ function ActionButtons({
           }}
           aria-pressed={inList}
           className={cn(
-            "group inline-flex items-center gap-1.5 rounded-md border px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider transition-[border-color,color,background-color] duration-300",
+            "press text-btn group inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-btn)] border px-3.5 transition-colors duration-300",
             inList
               ? "border-frost/70 bg-frost/30 text-snow"
               : "border-frost/40 bg-gradient-to-br from-frost/20 to-frost/5 text-frost hover:border-frost/70 hover:from-frost/30 hover:to-frost/10",
@@ -550,7 +550,7 @@ function ActionButtons({
               flashToast("Couldn't copy link");
             }
           }}
-          className="group inline-flex items-center gap-1.5 rounded-md border border-line/60 bg-surface/60 px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider text-muted transition-[border-color,background-color,color] duration-300 hover:border-frost/30 hover:bg-surface-2/60 hover:text-snow"
+          className="press text-btn group inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-btn)] border border-line/60 bg-surface/60 px-3.5 text-muted transition-colors duration-300 hover:border-frost/30 hover:bg-surface-2/60 hover:text-snow"
         >
           <Share2 className="size-3.5" />
           Share
@@ -565,7 +565,7 @@ function ActionButtons({
           }}
           aria-pressed={done}
           className={cn(
-            "group inline-flex items-center gap-1.5 rounded-md border px-3.5 py-2 text-[12px] font-semibold uppercase tracking-wider transition-[border-color,background-color,color] duration-300",
+            "press text-btn group inline-flex h-10 items-center gap-1.5 rounded-[var(--radius-btn)] border px-3.5 transition-colors duration-300",
             done
               ? "border-success/50 bg-success/15 text-success"
               : "border-line/60 bg-surface/60 text-muted hover:border-success/40 hover:bg-success/10 hover:text-success",

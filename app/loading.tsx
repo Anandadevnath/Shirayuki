@@ -36,6 +36,8 @@ export default function Loading() {
           ))}
         </div>
 
+        <ScheduleSkeleton />
+
         {/* Latest Completed grid + Top 10 panel */}
         <div className="grid grid-cols-1 items-stretch gap-x-6 gap-y-[var(--space-section)] lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]">
           <section className="glass rounded-lg p-4 sm:p-5">
@@ -58,7 +60,9 @@ export default function Loading() {
           <PanelSkeleton rows={10} posterClass="h-20 w-14" rank />
         </div>
 
-        <ScheduleSkeleton />
+        {/* Top Upcoming — same ranked marquee as Trending, at the board's end
+            (offsetClassName="mt-0": no hero-overlap pull-up here). */}
+        <TrendingSkeleton offsetClassName="mt-0" />
       </div>
     </div>
   );

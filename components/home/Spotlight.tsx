@@ -42,7 +42,7 @@ function MyListButton({ anime }: { anime: SpotlightModel }) {
       aria-pressed={added}
       aria-label={`${added ? "Remove from" : "Add to"} My List: ${anime.title}`}
       className={cn(
-        "press flex h-11 items-center gap-2 rounded-[var(--radius-btn)] border px-5 text-sm font-semibold backdrop-blur-md transition-colors",
+        "press text-btn flex h-11 items-center gap-2 rounded-[var(--radius-btn)] border px-5 backdrop-blur-md transition-colors",
         added
           ? "border-frost/50 bg-frost-soft text-frost"
           : "border-line bg-base/30 text-snow hover:border-frost/40 hover:text-frost",
@@ -488,8 +488,8 @@ export function Spotlight({
             >
               <span className="h-14 w-px bg-gradient-to-b from-transparent to-frost/50" />
               <span
-                className="font-mono text-[10px] font-semibold uppercase tracking-[0.42em] text-frost"
-                style={{ writingMode: "vertical-rl" }}
+                className="text-label text-frost"
+                style={{ writingMode: "vertical-rl", letterSpacing: "0.42em" }}
               >
                 Featured
               </span>
@@ -516,15 +516,15 @@ export function Spotlight({
                   height-capped. */}
               <div key={active} className="contents">
                 <h2
-                  className="hero-in font-display text-[1.75rem] font-bold leading-[1.15] tracking-[-0.02em] [text-shadow:0_2px_20px_rgba(0,0,0,0.75)] sm:text-4xl md:text-[2.75rem]"
+                  className="hero-in text-hero line-clamp-2 [text-shadow:0_2px_20px_rgba(0,0,0,0.75)]"
                   style={heroDelay(60)}
                 >
-                  <span className="line-clamp-2">{a.title}</span>
+                  {a.title}
                 </h2>
 
                 {/* Metadata row — real fields only */}
                 <div
-                  className="hero-in flex flex-wrap items-center gap-2 text-xs text-muted sm:text-[13px]"
+                  className="hero-in flex flex-wrap items-center gap-2 text-meta text-muted"
                   style={heroDelay(150)}
                 >
                   {a.type && (
@@ -544,7 +544,7 @@ export function Spotlight({
                     are grouped so the "about" block reads as one unit. */}
                 <div className="hero-in flex flex-col gap-3" style={heroDelay(240)}>
                   {a.description && (
-                    <p className="max-w-lg text-sm leading-6 text-muted/90 [@media(max-height:480px)]:hidden sm:line-clamp-2">
+                    <p className="text-desc max-w-lg text-muted/90 [@media(max-height:480px)]:hidden sm:line-clamp-2">
                       {truncate(a.description, 170)}
                     </p>
                   )}
@@ -552,7 +552,7 @@ export function Spotlight({
                   {/* Episode / rating / rank row — its own tier, separated from
                       the synopsis above and the CTAs below so the facts never
                       crowd the prose. */}
-                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-[13px] font-medium text-snow [@media(max-height:480px)]:hidden">
+                  <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-meta font-medium text-snow [@media(max-height:480px)]:hidden">
                     {!!a.score && (
                       <span className="flex items-center gap-1.5">
                         <Star className="size-4 fill-warning text-warning" /> {a.score}
@@ -581,7 +581,7 @@ export function Spotlight({
               <div className="hero-in mt-3 flex flex-wrap items-center gap-3" style={heroDelay(430)}>
                 <Link
                   href={`/watch/${a.id}`}
-                  className="press flex h-11 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 text-sm font-semibold text-base"
+                  className="press text-btn flex h-11 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 text-base"
                 >
                   <Play className="size-4 fill-current" /> Watch Now
                 </Link>

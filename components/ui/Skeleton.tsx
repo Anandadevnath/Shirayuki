@@ -128,12 +128,20 @@ export function SpotlightSkeleton() {
 }
 
 // ── Trending rail (editorial header + landscape ranked cards) ─────────────────
-export function TrendingSkeleton({ cards = 6 }: { cards?: number }) {
-  // `-mt-48` mirrors the real <Trending> section's hero-overlap pull-up so the
+export function TrendingSkeleton({
+  cards = 6,
+  offsetClassName = "-mt-48",
+}: {
+  cards?: number;
+  /** hero-overlap pull-up; `-mt-48` matches the hero-adjacent <Trending>,
+   *  `mt-0` for mid/bottom-page marquees such as Top Upcoming */
+  offsetClassName?: string;
+}) {
+  // The pull-up mirrors the real <Trending> section's hero-overlap so the
   // route skeleton sits at the same Y as the content that replaces it — without
   // it the swap pushed the whole board up by 12rem (the vertical jump).
   return (
-    <section className="relative -mt-48">
+    <section className={cn("relative", offsetClassName)}>
       <div className="mb-4 flex items-center gap-4">
         <div className="flex items-center gap-3">
           <Skeleton className="h-9 w-1 rounded-full" />

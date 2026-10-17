@@ -1,39 +1,53 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Geist_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
+import { Inter, Manrope, Geist_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
 import "./globals.css";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { RootEffects } from "@/components/layout/RootEffects";
 
-// Font weights are constrained to the set actually used in the codebase
-// (400 normal default, 500 medium, 600 semibold, 700 bold, 800 extrabold,
-// 900 black). next/font auto-preloads every weight it returns from Google —
-// without an explicit `weight` array it ships ~188 woff2 files in the
-// document head, which crushes the initial network budget. 900 is included
-// because one element uses `font-black`.
+// ── Typography system ─────────────────────────────────────────────────────
+// Three self-hosted Google faces, each with ONE job (no duplicates):
 //
-// Inter is the primary UI/display face — a modern, premium-looking grotesque
-// with excellent hinting, tight letter-spacing and strong tabular figures for
-// stats. Zen Kaku Gothic New stays loaded as a CJK fallback inside the display
-// stack so Japanese anime titles still render with deliberate, elegant glyphs.
+//   Inter      — primary UI + body: nav, buttons, metadata, descriptions,
+//                episode lists, forms. Neutral, superb hinting, strong
+//                tabular figures. 400–700 only (nothing in the UI is heavier
+//                than bold once headings use Manrope).
+//   Manrope    — display / headings: hero + page + section titles, card
+//                titles, rank numerals. A geometric grotesque with subtly
+//                warmer curves than Inter, so headings read as a distinct,
+//                intentional tier against the Inter body.
+//   Geist Mono — sparing technical accent: eyebrows (FEATURED, HOT RIGHT
+//                NOW), timestamps, kbd, episode counters. Never body copy.
+//   Zen Kaku   — CJK fallback inside the display stack so Japanese titles
+//                (袖白雪) render with deliberate, elegant glyphs. Latin is
+//                never requested from it (Manrope covers latin).
+//
+// `next/font` self-hosts + preloads only the weights declared here; the
+// previous Inter load shipped 6 weights (400–900) for a UI whose heaviest
+// text is bold. We now request exactly what the tokens use.
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
+  weight: ["400", "500", "600", "700"],
+  display: "swap",
+});
+const manrope = Manrope({
+  variable: "--font-manrope",
+  subsets: ["latin"],
+  weight: ["500", "600", "700", "800"],
   display: "swap",
 });
 const geistMono = Geist_Mono({
   variable: "--font-geist-mono",
   subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+  weight: ["400", "500", "600"],
   display: "swap",
 });
 const zen = Zen_Kaku_Gothic_New({
   variable: "--font-zen",
   subsets: ["latin"],
   // 500/700 cover all observed usage (medium/bold). Other weights fall back
-  // to browser-synthesised bold via the `--font-zen` stack. Adding 900 saves
-  // a woff2 file (~12KB) since no element uses `font-black`.
+  // to browser-synthesised bold via the `--font-zen` stack.
   weight: ["500", "700"],
   display: "swap",
 });
@@ -93,7 +107,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${inter.variable} ${geistMono.variable} ${zen.variable}`}
+      className={`${inter.variable} ${manrope.variable} ${geistMono.variable} ${zen.variable}`}
       // suppressHydrationWarning: the inline reveal-arm script below writes
       // a `data-anim` attribute onto <html> before React hydrates; it is
       // presentation-only state (see globals.css → "Viewport reveals").

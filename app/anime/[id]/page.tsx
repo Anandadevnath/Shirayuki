@@ -123,11 +123,11 @@ export default async function AnimePage({ params }: Params) {
             </div>
 
             <div className="flex-1 pt-1 sm:pt-0">
-              <h1 className="font-display text-2xl font-extrabold leading-tight sm:text-4xl">
+              <h1 className="text-page">
                 {a.title}
               </h1>
 
-              <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-muted">
+              <div className="text-meta mt-3 flex flex-wrap items-center gap-2 text-muted">
                 {a.rating && (
                   <span className="rounded-sm border border-line bg-surface/60 px-2 py-1 font-semibold text-snow">
                     {a.rating}
@@ -154,7 +154,7 @@ export default async function AnimePage({ params }: Params) {
               </div>
 
               {a.description && (
-                <p className="mt-4 max-w-3xl text-sm leading-relaxed text-muted">
+                <p className="text-desc mt-4 max-w-3xl text-muted">
                   {truncate(a.description, 420)}
                 </p>
               )}
@@ -162,7 +162,7 @@ export default async function AnimePage({ params }: Params) {
               <div className="mt-5 flex flex-wrap gap-3">
                 <Link
                   href={firstEp ? `/watch/${id}/${encodeURIComponent(firstEp)}` : `/watch/${id}`}
-                  className="press flex h-10 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 text-sm font-semibold text-base"
+                  className="press text-btn flex h-10 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 text-base"
                 >
                   <Play className="size-4 fill-current" /> Watch now
                 </Link>
@@ -173,7 +173,7 @@ export default async function AnimePage({ params }: Params) {
 
         {/* Panel 2 — anime info sidecar */}
         <aside className="glass relative overflow-hidden rounded-2xl p-5 sm:p-6">
-          <h2 className="mb-4 font-display text-sm font-bold uppercase tracking-[0.18em] text-frost">
+          <h2 className="text-eyebrow mb-4 text-frost">
             Anime Info
           </h2>
 

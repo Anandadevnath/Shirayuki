@@ -29,10 +29,10 @@ export function PageHeader({
     <header className={cn("flex flex-col gap-1.5", className)}>
       {eyebrow && <p className="text-sm font-medium text-frost">{eyebrow}</p>}
       <div className="flex items-end justify-between gap-4">
-        <h1 className="font-display text-2xl font-bold leading-tight">{title}</h1>
+        <h1 className="text-page font-display">{title}</h1>
         {children}
       </div>
-      {lede && <p className="max-w-2xl text-sm text-muted">{lede}</p>}
+      {lede && <p className="max-w-2xl text-desc text-muted">{lede}</p>}
     </header>
   );
 }
@@ -62,11 +62,9 @@ export function SectionHeader({
     <div className={cn("mb-4 flex items-end justify-between gap-4", className)}>
       <div className="min-w-0">
         {eyebrow && (
-          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-frost">
-            {eyebrow}
-          </span>
+          <span className="text-label block text-frost">{eyebrow}</span>
         )}
-        <h2 className="font-display text-xl font-extrabold leading-tight sm:text-2xl">{title}</h2>
+        <h2 className="text-section">{title}</h2>
       </div>
       {(href || children) && (
         <div className="flex shrink-0 items-center gap-2">
@@ -108,18 +106,11 @@ export function CinematicHeader({
   return (
     <div className={cn("mb-4 flex flex-col items-center gap-2.5 text-center", className)}>
       {eyebrow && (
-        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.3em] text-frost">
-          {eyebrow}
-        </span>
+        <span className="text-label text-frost">{eyebrow}</span>
       )}
       <div className="flex w-full items-center justify-center gap-4 sm:gap-6">
         <span className="h-px flex-1 bg-gradient-to-r from-transparent via-frost/40 to-frost/70" />
-        <h2
-          className={cn(
-            "shrink-0 font-display text-xl font-extrabold leading-tight tracking-tight sm:text-2xl",
-            titleClassName,
-          )}
-        >
+        <h2 className={cn("text-section shrink-0", titleClassName)}>
           {title}
         </h2>
         <span className="h-px flex-1 bg-gradient-to-l from-transparent via-frost/40 to-frost/70" />

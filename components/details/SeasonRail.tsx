@@ -136,7 +136,7 @@ export function SeasonRail({
                 <div className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 p-2.5">
                   <span
                     className={cn(
-                      "font-display text-xl font-extrabold leading-none tracking-tight [text-shadow:0_2px_8px_rgba(0,0,0,0.85)] sm:text-2xl",
+                      "font-display text-xl font-bold leading-none tracking-tight [text-shadow:0_2px_8px_rgba(0,0,0,0.85)] sm:text-2xl",
                       isCurrent || top3 ? "text-frost" : "text-snow",
                     )}
                     style={{

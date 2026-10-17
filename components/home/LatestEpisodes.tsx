@@ -208,8 +208,8 @@ const FlowCard = memo(function FlowCard({
         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
           <h3
             className={cn(
-              "line-clamp-2 font-semibold leading-snug tracking-tight text-snow [text-shadow:0_1px_10px_rgba(0,0,0,0.95)] transition-opacity duration-500",
-              active ? "text-base sm:text-lg" : "text-sm opacity-0",
+              "text-title line-clamp-2 text-snow [text-shadow:0_1px_10px_rgba(0,0,0,0.95)] transition-opacity duration-500",
+              active ? "text-[1.125rem] sm:text-[1.25rem]" : "opacity-0",
             )}
           >
             {anime.title}

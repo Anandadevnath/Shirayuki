@@ -839,10 +839,10 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
       {upNextVisible && nextHref && (
         <div className="absolute inset-0 z-30 grid place-items-center bg-black/60 backdrop-blur-sm">
           <div className="flex flex-col items-center gap-4 rounded-md glass p-6 text-center shadow-[var(--shadow-frost)]">
-            <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-frost">
-              Up next in
+            <span className="text-eyebrow text-frost">
+              Up next
             </span>
-            <span className="font-display text-5xl font-extrabold tabular-nums text-snow">
+            <span className="font-display text-5xl font-bold tabular-nums text-snow">
               {upNextCountdown}
             </span>
             <div className="flex gap-2">

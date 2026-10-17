@@ -16,7 +16,7 @@ export function RankRow({ anime, rank }: { anime: AnimeCardModel; rank?: number 
       {rank != null && (
         <span
           aria-hidden
-          className="w-6 shrink-0 text-right font-display text-xl font-extrabold leading-none text-gradient-frost/60 transition-colors group-hover:text-gradient-frost"
+          className="w-6 shrink-0 text-right font-display text-xl font-bold leading-none text-gradient-frost/60 transition-colors group-hover:text-gradient-frost"
         >
           {rank}
         </span>
@@ -37,10 +37,10 @@ export function RankRow({ anime, rank }: { anime: AnimeCardModel; rank?: number 
 
       {/* Title + meta — takes the rest of the container width */}
       <span className="flex min-w-0 flex-1 flex-col gap-1.5">
-        <span className="line-clamp-2 text-[15px] font-semibold leading-snug text-snow transition-colors group-hover:text-frost">
+        <span className="text-title line-clamp-2 text-snow transition-colors group-hover:text-frost">
           {anime.title}
         </span>
-        <span className="flex flex-wrap items-center gap-1.5 text-[11px]">
+        <span className="text-caption flex flex-wrap items-center gap-1.5">
           <EpBadges sub={anime.episodes.sub} dub={anime.episodes.dub} />
           {anime.type && (
             <>

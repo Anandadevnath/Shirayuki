@@ -1,6 +1,7 @@
 import { getHome, getSchedule, withTimeout } from "@/lib/api";
 import type { Result } from "@/lib/providers/types";
 import type { HomeModel, ScheduleModel } from "@/lib/providers/types";
+import { Flame, CalendarClock } from "lucide-react";
 import { Spotlight } from "@/components/home/Spotlight";
 import { ContinueWatching } from "@/components/home/ContinueWatching";
 import { Trending } from "@/components/home/Trending";
@@ -9,7 +10,6 @@ import { QuickLists } from "@/components/home/QuickLists";
 import { DiscoverColumns } from "@/components/home/DiscoverColumns";
 import { Top10Tabs } from "@/components/home/Top10Tabs";
 import { ReleaseSchedule } from "@/components/home/ReleaseSchedule";
-import { Rail } from "@/components/anime/Rail";
 import { Reveal } from "@/components/ui/Reveal";
 import { ErrorState } from "@/components/common/States";
 import { ScheduleSkeleton } from "@/components/ui/Skeleton";
@@ -179,7 +179,15 @@ async function HomeBoard({
               phantom flex-gap slot when a client child (Continue Watching)
               renders null. Rendering the sections directly keeps the stack
               rhythm exact and the skeleton→content handoff a pure crossfade. */}
-          <Trending items={home.trending} />
+          <Trending
+            items={home.trending}
+            title="Trending"
+            eyebrow="Hot right now"
+            icon={<Flame className="size-3.5 fill-frost/25" />}
+            ariaLabelPrefix="Trending"
+            id="trending-heading"
+            offsetClassName="-mt-48"
+          />
 
           <ContinueWatching />
 
@@ -197,14 +205,6 @@ async function HomeBoard({
             />
           </Reveal>
 
-          {/* Top Upcoming — the last ranked section on the upstream home. Sits
-              between the discovery columns and the Latest Completed / Top 10
-              pair, mirroring hianime's own section order. No "See all" link:
-              the upstream hianime.at has no dedicated /upcoming listing page. */}
-          <Reveal>
-            <Rail title="Top Upcoming" eyebrow="Premieres" items={home.upcoming} />
-          </Reveal>
-
           <Suspense fallback={<ReleaseScheduleFallback />}>
             <ReleaseScheduleSlot schedulePromise={schedulePromise} />
           </Suspense>
@@ -220,6 +220,20 @@ async function HomeBoard({
 
             <Top10Tabs buckets={home.top10} />
           </Reveal>
+
+          {/* Top Upcoming — the last ranked section on the board, rendered with
+              the SAME ranked marquee as Trending so the two rails share one
+              design and animation. No "See all" link: the upstream hianime.at
+              has no dedicated /upcoming listing page. */}
+          <Trending
+            items={home.upcoming}
+            title="Top Upcoming"
+            eyebrow="Premieres"
+            icon={<CalendarClock className="size-3.5 text-frost/70" />}
+            ariaLabelPrefix="Upcoming"
+            id="upcoming-heading"
+            offsetClassName="mt-0"
+          />
         </div>
     </div>
   );

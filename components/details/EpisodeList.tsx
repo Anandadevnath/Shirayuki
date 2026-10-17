@@ -43,7 +43,7 @@ export function EpisodeList({
 
   if (!episodes.length) {
     return (
-      <p className="rounded-md border border-line bg-surface/40 px-4 py-8 text-center text-sm text-muted">
+      <p className="text-desc rounded-md border border-line bg-surface/40 px-4 py-8 text-center text-muted">
         No episodes are available yet for this title.
       </p>
     );
@@ -89,12 +89,12 @@ export function EpisodeList({
               href={`/watch/${animeId}/${encodeURIComponent(e.episodeId)}`}
               className="group flex items-center gap-3 rounded-md border border-line bg-surface/40 px-3 py-2.5 transition-colors hover:border-frost/40 hover:bg-surface-2"
             >
-              <span className="line-clamp-1 flex-1 text-sm text-snow group-hover:text-frost">
+              <span className="text-meta line-clamp-1 flex-1 text-snow group-hover:text-frost">
                 {e.title ?? `Episode ${e.number}`}
               </span>
               {e.isFiller && (
-                <span className="shrink-0 rounded-sm bg-warning/15 px-1.5 py-0.5 text-[10px] font-semibold text-warning">
-                  FILLER
+                <span className="text-eyebrow shrink-0 rounded-sm bg-warning/15 px-1.5 py-0.5 text-warning">
+                  Filler
                 </span>
               )}
             </Link>

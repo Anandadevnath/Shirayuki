@@ -153,7 +153,7 @@ export function Nav() {
                     href={l.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "relative inline-flex items-center rounded-sm px-3 py-2 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost",
+                      "text-meta relative inline-flex items-center rounded-sm px-3 py-2 transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost",
                       "nav-link-glow",
                       active
                         ? "text-snow"
@@ -179,7 +179,7 @@ export function Nav() {
 
           <button
             onClick={openPalette}
-            className="nav-cta-glass group ml-auto flex items-center gap-2 rounded-sm border border-line/70 px-3 py-2 text-sm text-faint transition-[border-color,color,background-color,backdrop-filter] duration-200 ease-out hover:border-frost/50 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
+            className="nav-cta-glass group text-meta ml-auto flex items-center gap-2 rounded-sm border border-line/70 px-3 py-2 text-faint transition-[border-color,color,background-color,backdrop-filter] duration-200 ease-out hover:border-frost/50 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
             aria-label="Search anime"
             // A7 fix: expose the keyboard shortcut as a structured attribute
             // so screen readers can announce it consistently.
@@ -244,7 +244,7 @@ export function Nav() {
                       tabIndex={menuOpen ? undefined : -1}
                       style={{ transitionDelay: menuOpen ? `${80 + i * 40}ms` : "0ms" }}
                       className={cn(
-                        "block translate-y-1 rounded-sm px-3 py-2.5 text-sm font-medium opacity-0 transition-[opacity,translate,background-color,color] duration-300 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost",
+                        "text-meta block translate-y-1 rounded-sm px-3 py-2.5 opacity-0 transition-[opacity,translate,background-color,color] duration-300 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost",
                         menuOpen && "translate-y-0 opacity-100",
                         active
                           ? "bg-frost-soft text-frost"

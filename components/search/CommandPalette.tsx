@@ -310,7 +310,7 @@ export function CommandPalette({ open, onOpenChange }: Props) {
             tracking, the Linear-style eyebrow. */}
         {(merged.length > 0 || empty) && (
           <div className="flex items-center justify-between px-5 pt-3 pb-2">
-            <span className="font-mono text-[11px] uppercase tracking-[0.18em] text-faint">
+            <span className="text-label text-faint">
               {empty ? "Featured this season" : "Suggestions"}
             </span>
             <span className="font-mono text-[11px] tabular-nums text-faint/70">
@@ -382,20 +382,20 @@ export function CommandPalette({ open, onOpenChange }: Props) {
                     <span className="min-w-0 flex-1">
                       <span
                         className={cn(
-                          "block truncate text-[15px] font-semibold leading-tight",
+                          "text-title block truncate",
                           i === active ? "text-frost" : "text-snow",
                         )}
                       >
                         {highlight(r.title, trimmed)}
                       </span>
                       {r.jname && (
-                        <span className="mt-1 block truncate text-[13px] leading-tight text-faint">
+                        <span className="text-caption mt-1 block truncate text-faint">
                           {highlight(r.jname, trimmed)}
                         </span>
                       )}
                     </span>
                     {hasMeta && (
-                      <span className="flex shrink-0 items-center gap-2.5 text-[12px] tabular-nums text-faint">
+                      <span className="text-caption flex shrink-0 items-center gap-2.5 tabular-nums text-faint">
                         {typeof r.score === "number" && (
                           <span className="flex items-center gap-1 font-semibold text-snow/90">
                             <Star className="size-3.5 fill-warning text-warning" />

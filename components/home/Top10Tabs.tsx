@@ -37,7 +37,7 @@ export function Top10Tabs({ buckets }: { buckets: Top10Buckets }) {
     <section className="laser-frame laser-live glass flex flex-col rounded-lg p-4 sm:p-5">
       <div className="mb-4 flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
-          <h2 className="text-gradient-frost font-display text-xl font-extrabold tracking-tight sm:text-2xl">
+          <h2 className="text-gradient-frost text-section">
             Top 10
           </h2>
           <span className="hidden h-px w-12 bg-gradient-to-r from-frost/60 to-transparent sm:block" />

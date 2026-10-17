@@ -39,7 +39,7 @@ export const AnimeCard = memo(function AnimeCard({
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="line-clamp-2 text-sm font-medium text-snow group-hover:text-frost">
+          <span className="text-title line-clamp-2 text-snow group-hover:text-frost">
             {anime.title}
           </span>
           <span className="mt-1 flex items-center gap-2">
@@ -153,7 +153,7 @@ export const AnimeCard = memo(function AnimeCard({
 
           {/* Bottom content */}
           <div className="absolute inset-x-0 bottom-0 p-3.5">
-            <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-snow [text-shadow:0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost group-focus-visible:text-frost">
+            <h3 className="text-title line-clamp-2 text-snow [text-shadow:0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost group-focus-visible:text-frost">
               {anime.title}
             </h3>
 
