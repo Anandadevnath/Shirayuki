@@ -133,6 +133,18 @@ export default async function WatchPage({ params, searchParams }: Props) {
                 outro={sources.outro}
                 nextHref={nextHref}
                 referer={sources.referer}
+                // Alternate servers for this episode (same category), minus the
+                // one now playing. Lets the player fail over MID-PLAYBACK
+                // without a navigation when the active source dies, preserving
+                // the user's timestamp. Empty when there is only one server.
+                failover={{
+                  episodeId,
+                  episodeNumber: epNum,
+                  category,
+                  servers: ordered
+                    .filter((s) => s.nameId !== chosen?.nameId)
+                    .map((s) => ({ name: s.name, nameId: s.nameId })),
+                }}
                 meta={{
                   animeId: id,
                   title: anime.title,

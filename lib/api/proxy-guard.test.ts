@@ -189,3 +189,25 @@ test("fetchGuarded bails out after too many redirects", async () => {
     globalThis.fetch = original;
   }
 });
+
+test("fetchGuarded aborts a stalled upstream with a 502 instead of hanging", async () => {
+  const original = globalThis.fetch;
+  // A fetch that never resolves headers mimics a half-open CDN connection.
+  // It must honour the AbortController so the proxy route can settle.
+  globalThis.fetch = ((_url: string, init?: RequestInit) =>
+    new Promise<Response>((_resolve, reject) => {
+      const signal = init?.signal;
+      if (signal?.aborted) return reject(new Error("aborted"));
+      signal?.addEventListener("abort", () => reject(new Error("aborted")));
+    })) as typeof fetch;
+  try {
+    const started = Date.now();
+    const r = await fetchGuarded("http://93.184.216.34/segment.ts", {}, 50);
+    const elapsed = Date.now() - started;
+    assert.equal(r.ok, false);
+    assert.equal(r.ok === false && r.status, 502);
+    assert.ok(elapsed < 2000, `should abort promptly, took ${elapsed}ms`);
+  } finally {
+    globalThis.fetch = original;
+  }
+});
