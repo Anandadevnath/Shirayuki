@@ -136,8 +136,20 @@ export default function RootLayout({
       <body className="min-h-dvh overflow-x-clip antialiased">
         <RootEffects />
         <Nav />
-        <main className="page-shell relative mx-auto w-full max-w-[1460px] px-4 pb-24 sm:px-6 lg:px-8">
-          {children}
+        {/* <main> is intentionally full-width and acts as the page size
+            container (`container-type: inline-size`), so `cqw` units inside it
+            resolve to the scrollbar-excluded layout width. A full-bleed child
+            (the home hero) breaks out with `w-[100cqw]` +
+            `left-[calc(50%-50cqw)]` instead of `w-screen`: 100vw includes the
+            classic vertical scrollbar, which made the hero protrude past the
+            right edge by the scrollbar width. `100cqw` never overshoots, so no
+            root-level overflow clip is needed to contain it. The centred,
+            max-width content column lives on the inner wrapper, preserving
+            every route's content geometry exactly. */}
+        <main className="page-shell page-container relative w-full">
+          <div className="mx-auto w-full max-w-[1460px] px-4 pb-24 sm:px-6 lg:px-8">
+            {children}
+          </div>
         </main>
         <Footer />
       </body>

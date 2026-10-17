@@ -269,6 +269,15 @@
   .page-shell {
     padding-top: var(--space-page-y);
   }
+  /* Size container for the page column. `<main>` spans the full layout width
+     and is the query container, so `cqw` units inside it resolve to the
+     scrollbar-excluded viewport width — the value `100vw` should have been but
+     isn't (100vw includes the classic vertical scrollbar). Full-bleed children
+     use `w-[100cqw]` + `left-[calc(50%-50cqw)]` to reach the true viewport
+     edges without ever overshooting the right edge. */
+  .page-container {
+    container-type: inline-size;
+  }
   .section-stack {
     display: flex;
     flex-direction: column;

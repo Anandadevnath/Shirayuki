@@ -48,28 +48,28 @@ function TrendCard({
       aria-label={`${baseline} #${rank}: ${s.title}`}
       aria-hidden={ariaHidden}
       tabIndex={ariaHidden ? -1 : undefined}
-      className="group relative aspect-[4/3] w-52 shrink-0 transform-gpu transition-transform duration-300 hover:-translate-y-1 sm:w-60 md:w-72"
+      className="group relative aspect-[3/2] w-44 shrink-0 transform-gpu transition-transform duration-300 hover:-translate-y-1 sm:w-52 md:w-56"
     >
       {/* Frost lift shadow — opacity-crossfaded sibling on the unclipped outer
           wrapper, never a transitioned box-shadow (which would repaint the
           card body every hover frame). */}
       <span
         aria-hidden
-        className="pointer-events-none absolute inset-0 rounded-xl opacity-0 shadow-[var(--shadow-frost)] transition-opacity duration-300 group-hover:opacity-100"
+        className="pointer-events-none absolute inset-0 rounded-2xl opacity-0 shadow-[var(--shadow-frost)] transition-opacity duration-300 group-hover:opacity-100"
       />
 
       {/* Clipped frame — the ring crossfades frost on hover via a sibling
           overlay (ring on the frame stays static, no box-shadow repaint). */}
       <div
         className={cn(
-          "relative h-full w-full overflow-hidden rounded-xl ring-1",
+          "relative h-full w-full overflow-hidden rounded-2xl ring-1",
           top3 ? "ring-frost/35" : "ring-line",
         )}
       >
         <span
           aria-hidden
           className={cn(
-            "pointer-events-none absolute inset-0 z-20 rounded-xl ring-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
+            "pointer-events-none absolute inset-0 z-10 rounded-2xl ring-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
             top3 ? "ring-frost/60" : "ring-frost/50",
           )}
         />
@@ -79,34 +79,19 @@ function TrendCard({
             src={s.poster}
             alt=""
             fill
-            sizes="288px"
-            className="object-cover brightness-[0.97] transition-transform duration-500 ease-out group-hover:scale-105"
+            sizes="224px"
+            className="object-cover brightness-[0.97]"
           />
         )}
 
-        {/* Scrim — a single bottom anchor seating the title. Sized to the
-            caption block so the artwork above stays clean and unobscured. */}
-        <div className="absolute inset-x-0 bottom-0 h-2/3 bg-gradient-to-t from-base via-base/70 to-transparent" />
+        {/* Scrim — a light bottom anchor to seat the chart number + title.
+            Softer than before so the artwork stays clearly visible; the
+            rank/title carry their own text-shadow for legibility. */}
+        <div className="absolute inset-0 bg-gradient-to-t from-base/90 via-base/20 to-transparent" />
 
         {/* Frost wash on hover — tints the art instead of a slow `filter`
             transition on the poster. */}
         <div className="absolute inset-0 bg-frost-soft opacity-0 transition-opacity duration-300 group-hover:opacity-100" />
-
-        {/* Chart rank — a compact frosted corner badge. Reads instantly as a
-            ranking without the numeral competing with (or crowding) the
-            title. Top-3 get the frost fill; the rest stay a quiet glass chip. */}
-        <span
-          aria-hidden
-          className={cn(
-            "absolute left-2.5 top-2.5 z-10 grid h-8 min-w-8 place-items-center rounded-lg px-2 font-display text-lg font-bold leading-none tracking-tight",
-            "ring-1 backdrop-blur-md",
-            top3
-              ? "bg-frost text-base ring-frost/60"
-              : "bg-base/65 text-snow ring-white/15",
-          )}
-        >
-          {rank}
-        </span>
 
         {/* Hover play affordance */}
         <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -115,10 +100,22 @@ function TrendCard({
           </span>
         </span>
 
-        {/* Title — bottom-left, uniform two-line clamp with a consistent
-            position across every card so the rail reads as one grid. */}
-        <div className="absolute inset-x-0 bottom-0 p-3">
-          <span className="text-sm line-clamp-2 block text-left font-semibold leading-snug text-snow [text-shadow:0_1px_6px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
+        {/* Oversized chart rank + title, baseline-aligned */}
+        <div className="absolute inset-x-0 bottom-0 flex items-end gap-2 p-2.5">
+          <span
+            className={cn(
+              "font-display text-4xl font-bold leading-[0.82] tracking-tight [text-shadow:0_2px_10px_rgba(0,0,0,0.8)] sm:text-5xl",
+              top3 ? "text-frost" : "text-snow",
+            )}
+            style={{
+              WebkitTextStroke: top3
+                ? "1.5px var(--color-frost)"
+                : "1px rgba(255,255,255,0.55)",
+            }}
+          >
+            {rank}
+          </span>
+          <span className="text-caption line-clamp-2 pb-0.5 text-left font-semibold leading-tight text-snow [text-shadow:0_1px_6px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
             {s.title}
           </span>
         </div>

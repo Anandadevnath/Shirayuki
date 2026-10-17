@@ -231,14 +231,21 @@ export function Spotlight({
   const heroDelay = (ms: number) =>
     ({ "--hero-delay": `${ms}ms` }) as React.CSSProperties;
 
+  // Full-bleed breakout, scrollbar-safe. The section lives inside <main>'s
+  // centred, max-width column, but must reach the true viewport edges. We use
+  // container-query units instead of `w-screen`: <main> is the size container
+  // (`page-container`), so `100cqw` is the scrollbar-excluded layout width,
+  // whereas `100vw` includes the classic vertical scrollbar and made the
+  // section protrude past the right edge by the scrollbar width (clipping a
+  // sliver of the hero under the sticky nav). `left-[calc(50%-50cqw)]` shifts
+  // the box from the column's content-left back to <main>'s left edge, so the
+  // section spans exactly `100cqw` with no overshoot at any viewport.
+  // `overflow-x-clip` (NOT overflow-hidden) still clips the blurred fill art's
+  // horizontal spill on this element while leaving the vertical axis free for
+  // the atmosphere wrapper to extend past the section's bottom.
   return (
     <section
-      // Full-bleed: break out of the centered <main> to the true viewport edges.
-      // body has overflow-x-clip, so 100vw spans full width; overflow-x-clip
-      // here (NOT overflow-hidden) clips the blurred fill art's horizontal
-      // spill while leaving the vertical axis free for the atmosphere
-      // wrapper to extend past the section's bottom edge.
-      className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-x-clip focus:outline-none focus-visible:ring-1 focus-visible:ring-frost/60 touch-pan-y select-none"
+      className="relative left-[calc(50%-50cqw)] -mt-24 w-[100cqw] overflow-x-clip focus:outline-none focus-visible:ring-1 focus-visible:ring-frost/60 touch-pan-y select-none"
       role="group"
       aria-roledescription="carousel"
       aria-label="Featured anime"

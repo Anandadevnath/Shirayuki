@@ -97,7 +97,7 @@ export function GridSkeleton({ count = 18 }: { count?: number }) {
 // ── Spotlight hero (full-bleed art + copy block + CTAs) ───────────────────────
 export function SpotlightSkeleton() {
   return (
-    <section className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-hidden">
+    <section className="relative left-[calc(50%-50cqw)] -mt-24 w-[100cqw] overflow-hidden">
       <div className="relative flex h-[94svh] min-h-[min(680px,94svh)] max-h-[1120px] w-full flex-col">
         <div className="absolute inset-0 bg-surface-2 shimmer-loop" />
         {/* Match the hero scrims so the skeleton sits in the same light. */}
@@ -159,12 +159,10 @@ export function TrendingSkeleton({
         {Array.from({ length: cards }).map((_, i) => (
           <div
             key={i}
-            className="reveal relative w-52 shrink-0 sm:w-60 md:w-72"
+            className="reveal relative w-44 shrink-0 sm:w-52 md:w-56"
             style={revealDelay(i * 70)}
           >
-            <Skeleton className="aspect-[4/3] w-full rounded-xl" />
-            {/* Rank badge placeholder — mirrors the card's top-left chip. */}
-            <Skeleton className="absolute left-2.5 top-2.5 h-8 w-8 rounded-lg" />
+            <Skeleton className="aspect-[3/2] w-full rounded-2xl" />
           </div>
         ))}
       </div>
