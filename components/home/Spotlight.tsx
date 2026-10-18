@@ -12,7 +12,7 @@ import {
   Flame,
   Diamond,
 } from "lucide-react";
-import type { AnimeCardModel, SpotlightModel } from "@/lib/providers/types";
+import type { SpotlightModel } from "@/lib/providers/types";
 import { EpBadges } from "@/components/anime/Badges";
 import { truncate } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
@@ -74,13 +74,7 @@ const PETALS = [
   { left: 93, dur: 16, delay: 10, x: 7, o: 0.45 },
 ];
 
-export function Spotlight({
-  items,
-}: {
-  items: SpotlightModel[];
-  /** Accepted for call-site compatibility; trending renders in its own section now. */
-  trending?: AnimeCardModel[];
-}) {
+export function Spotlight({ items }: { items: SpotlightModel[] }) {
   const list = (items ?? []).slice(0, MAX_SLIDES);
   const n = list.length;
   const [active, setActive] = useState(0);
@@ -243,9 +237,19 @@ export function Spotlight({
   // `overflow-x-clip` (NOT overflow-hidden) still clips the blurred fill art's
   // horizontal spill on this element while leaving the vertical axis free for
   // the atmosphere wrapper to extend past the section's bottom.
+  //
+  // The pull-up must clear EVERYTHING the layout puts above the hero, or the
+  // hero's leading edge lands *inside* the viewport and leaves a strip of bare
+  // page background behind the transparent navbar — a hard horizontal seam at
+  // the top of the home page (the artwork, its scrim and the page background
+  // visibly meeting on one row). Two things occupy that space: the sticky
+  // <header> (h-16 = 4rem, which still takes part in normal flow) and
+  // `.page-shell`'s top inset (`--space-page-y`). Pulling the hero up by
+  // exactly their sum puts its top edge at y = 0, so the art and its leading
+  // scrim sit behind the whole navbar instead of starting under it.
   return (
     <section
-      className="relative left-[calc(50%-50cqw)] -mt-24 w-[100cqw] overflow-x-clip focus:outline-none focus-visible:ring-1 focus-visible:ring-frost/60 touch-pan-y select-none"
+      className="relative left-[calc(50%-50cqw)] -mt-[calc(4rem_+_var(--space-page-y))] w-[100cqw] overflow-x-clip focus:outline-none focus-visible:ring-1 focus-visible:ring-frost/60 touch-pan-y select-none"
       role="group"
       aria-roledescription="carousel"
       aria-label="Featured anime"

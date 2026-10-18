@@ -9,7 +9,7 @@ export interface WatchEntry {
   animeId: string;
   title: string;
   poster: string | null;
-  episodeId: string; // "<animeId>:<ep>" e.g. "147105:1"
+  episodeId: string; // opaque provider episode id (never parsed)
   episodeNumber: number;
   category: string;
   server: string;

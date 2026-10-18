@@ -97,7 +97,11 @@ export function GridSkeleton({ count = 18 }: { count?: number }) {
 // ── Spotlight hero (full-bleed art + copy block + CTAs) ───────────────────────
 export function SpotlightSkeleton() {
   return (
-    <section className="relative left-[calc(50%-50cqw)] -mt-24 w-[100cqw] overflow-hidden">
+    // The pull-up must match Spotlight's exactly (see the note there): the
+    // header plus `.page-shell`'s top inset is what sits above the hero, so
+    // anything less leaves a strip of bare page background behind the navbar
+    // and makes the hero jump when the real artwork takes over.
+    <section className="relative left-[calc(50%-50cqw)] -mt-[calc(4rem_+_var(--space-page-y))] w-[100cqw] overflow-hidden">
       <div className="relative flex h-[94svh] min-h-[min(680px,94svh)] max-h-[1120px] w-full flex-col">
         <div className="absolute inset-0 bg-surface-2 shimmer-loop" />
         {/* Match the hero scrims so the skeleton sits in the same light. */}

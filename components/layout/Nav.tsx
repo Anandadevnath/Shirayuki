@@ -227,12 +227,22 @@ export function Nav() {
           id="mobile-nav"
           data-open={menuOpen ? "1" : "0"}
           /* Fades at rest too: the collapsed 0fr row still paints the inner
-             glass panel's 2px of border, which would read as a stray
-             hairline under the header when closed. */
-          className="grid border-line/60 opacity-0 transition-[grid-template-rows,opacity] duration-300 ease-out md:hidden data-[open=0]:grid-rows-[0fr] data-[open=1]:grid-rows-[1fr] data-[open=1]:border-t data-[open=1]:opacity-100"
+             glass panel's border, which would read as a stray hairline under
+             the header when closed. The panel below also drops the two
+             minimums a 0fr track can't shrink past — `min-h-0` for its
+             content and `group-data-[open=0]:border-0` for its border box.
+             Without them the "collapsed" row keeps ~2px of height, so the
+             header measures taller than its own `h-16` nav and the hero can
+             no longer be pulled flush under the navbar below lg. The border is
+             invisible at rest anyway (opacity-0 above), so dropping it while
+             closed costs nothing and lets the row reach a true 0. */
+          className="group grid border-line/60 opacity-0 transition-[grid-template-rows,opacity] duration-300 ease-out md:hidden data-[open=0]:grid-rows-[0fr] data-[open=1]:grid-rows-[1fr] data-[open=1]:border-t data-[open=1]:opacity-100"
           aria-hidden={!menuOpen}
         >
-          <div className="glass overflow-hidden" style={{ pointerEvents: menuOpen ? undefined : "none" }}>
+          <div
+            className="glass min-h-0 overflow-hidden group-data-[open=0]:border-0"
+            style={{ pointerEvents: menuOpen ? undefined : "none" }}
+          >
             <ul className="mx-auto flex w-full max-w-[1460px] flex-col gap-1 px-4 py-3 sm:px-6">
               {LINKS.map((l, i) => {
                 const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);

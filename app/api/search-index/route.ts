@@ -1,5 +1,7 @@
 import { NextResponse } from "next/server";
 import { getHome, safe } from "@/lib/api";
+import type { AnimeCardModel } from "@/lib/providers/types";
+import type { SearchIndexEntry } from "@/lib/search";
 
 /**
  * Tiny, deduped catalogue slice used to power the CommandPalette's local
@@ -16,19 +18,11 @@ export async function GET() {
   if (!res.ok) return NextResponse.json({ results: [] });
 
   const seen = new Set<string>();
-  const out: {
-    id: string;
-    title: string;
-    jname: string | null;
-    poster: string | null;
-    type: string | null;
-    episodes: { sub: number | null; dub: number | null };
-    score: number | null;
-  }[] = [];
+  // Same shape the palette consumes (`lib/search`) — imported rather than
+  // re-declared so the producer and consumer can't drift apart.
+  const out: SearchIndexEntry[] = [];
 
-  const push = (
-    a: { id: string; title: string; jname: string | null; poster: string | null; type: string | null; episodes: { sub: number | null; dub: number | null }; score?: number | null } | null | undefined,
-  ) => {
+  const push = (a: AnimeCardModel | null | undefined) => {
     if (!a || !a.id || seen.has(a.id)) return;
     seen.add(a.id);
     out.push({
