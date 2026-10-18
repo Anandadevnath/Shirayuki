@@ -10,9 +10,7 @@ import { QuickLists } from "@/components/home/QuickLists";
 import { DiscoverColumns } from "@/components/home/DiscoverColumns";
 import { Top10Tabs } from "@/components/home/Top10Tabs";
 import { ReleaseSchedule } from "@/components/home/ReleaseSchedule";
-import { Reveal } from "@/components/ui/Reveal";
 import { ErrorState } from "@/components/common/States";
-import { ScheduleSkeleton } from "@/components/ui/Skeleton";
 import HomeSkeleton from "./loading";
 import { Suspense } from "react";
 
@@ -40,40 +38,28 @@ import { Suspense } from "react";
 export const dynamic = "force-dynamic";
 
 /* ── Required vs optional home data ──────────────────────────────────────────
- * REQUIRED for the initial home render: the `getHome()` payload. It is a single
- * upstream call whose atomically-arriving buckets drive every above-the-fold and
- * ranked section (Spotlight, Trending, Latest Episodes, Discover, Top 10 …). If
- * it fails there is no meaningful board to show, so its failure routes to the
- * page-level ErrorState.
+ * The home board is revealed as ONE unit: every section (Spotlight, Trending,
+ * Latest Episodes, Discover, Top 10, and the Release calendar) appears together
+ * once the data is ready. To make that true, the board waits for BOTH upstream
+ * payloads before it renders any section — the schedule is no longer a separate
+ * streaming island that pops in late while the rest is already on screen.
  *
- * OPTIONAL: the release calendar (`getSchedule()`). It is a separate, much
- * slower scrape (~7s cold). It must NOT be a required gate: a slow or failing
- * schedule degrades to its own in-place skeleton / empty state while the board
- * still reveals the moment the required payload lands.
- *
- * The two fetches are started CONCURRENTLY below — the schedule is kicked off
- * before the required payload is awaited, so the slow schedule scrape runs in
- * parallel with (and past) the home payload instead of after it. Previously the
- * `<Suspense>` island lived *inside* the awaited board, so its `getSchedule()`
- * did not even start until `getHome()` resolved: a serial ~2s + ~7s waterfall.
+ * Home is dynamic per-request (see the note above the export). Both fetches are
+ * started CONCURRENTLY, then awaited together. If the schedule is slow, the
+ * board waits for it (bounded — see the deadlines below); if it fails or times
+ * out, the schedule section is simply omitted and the rest still renders. If
+ * the required home payload fails, the page-level ErrorState is shown.
  */
 export default function HomePage() {
   // Start BOTH upstream requests immediately, in parallel, at the top of the
-  // request. `withTimeout` has already converted each into a promise that always
-  // resolves (success, error, or explicit timeout), so the render can never be
-  // held by either. Starting the slow schedule here (rather than inside
-  // HomeBoard after its await) is the entire waterfall fix.
+  // request, so the board waits on the SLOWER of the two rather than a serial
+  // waterfall. `withTimeout` converts each into a promise that always settles
+  // (success, error, or explicit timeout) — the render can never hang.
   //
-  // Note: `withTimeout` bounds the RENDER, not the request — it does not abort
-  // the underlying fetch. When a deadline fires the original promise keeps
-  // running to its own client-side timeout in the background; the render simply
-  // stops waiting and settles with the timeout outcome.
-  //
-  // The schedule is optional and capped tightly (12s); the required home payload
-  // gets a longer but still bounded budget (20s) — enough for its own retry
-  // ladder on a slow-but-alive upstream, while guaranteeing a hung fetch reaches
-  // an explicit timeout outcome (page-level ErrorState) instead of leaving the
-  // route skeleton up forever.
+  // The schedule (a slow ~7s cold scrape) and the home payload now share a
+  // single reveal: the board is not sent until both settle, so no section ever
+  // arrives after the others. Both deadlines are generous enough to let a
+  // slow-but-alive upstream finish, while still bounding the worst case.
   const homePromise = withTimeout(getHome(), 20_000, "home");
   const schedulePromise = withTimeout(getSchedule(), 12_000, "schedule");
 
@@ -86,7 +72,11 @@ export default function HomePage() {
   );
 }
 
-/** The whole getHome()-driven board, streamed as one unit. */
+/**
+ * The whole home board, rendered as one unit. Awaits BOTH payloads (home +
+ * schedule) before rendering anything, so every section reveals together and a
+ * late section never appears after the others.
+ */
 async function HomeBoard({
   homePromise,
   schedulePromise,
@@ -94,7 +84,9 @@ async function HomeBoard({
   homePromise: Promise<Result<HomeModel>>;
   schedulePromise: Promise<Result<ScheduleModel>>;
 }) {
-  const res = await homePromise;
+  // Await the two payloads together. The board is held until both settle, so
+  // the sections below always arrive in a single render.
+  const [res, scheduleRes] = await Promise.all([homePromise, schedulePromise]);
 
   if (!res.ok) {
     return (
@@ -149,36 +141,20 @@ async function HomeBoard({
           the hero art stays uncluttered. */}
       <h1 className="sr-only">Browse, discover and watch anime — Sode no Shirayuki</h1>
 
-      {/* Section-level cascade — a SINGLE coordinated reveal strategy.
+      {/* Section stack — ONE coordinated reveal. Every section renders
+          directly (no per-section <Reveal>), so the board appears all at
+          once: the whole tree is produced by a single server render that
+          already awaited BOTH the home and schedule payloads, and the swap
+          from the route skeleton to real content is a single crossfade.
 
-          Above-the-fold sections (Trending, Continue Watching, Latest
-          Episodes) render DIRECTLY, with no reveal wrapper: they occupy the
-          exact pixels the route-level skeleton (app/loading.tsx) was already
-          painting, so an entrance here would blink the section out and replay
-          — the skeleton→content flash. Their "entrance" is the load-driven
-          crossfade of their inner content (SmartImage posters, the Spotlight
-          key art), which keeps one reveal clock for the whole board.
+          Sections are deliberately NOT wrapped individually in the
+          viewport-reveal wrapper — that made below-the-fold sections fade in
+          one at a time as the user scrolled, which read as "sections loading
+          late". They now share one reveal clock with the rest of the board.
 
-          Below-the-fold sections use the shared IntersectionObserver via
-          <Reveal> (one-shot, so scrolling back up never replays) and reveal
-          as the user actually reaches them — no arbitrary per-section delays,
-          no section held behind another.
-
-          The fine-grained cascade lives inside each rail (cards stagger in
-          DOM order); the section wrappers stay at delay 0. */}
+          The fine-grained cascade still lives INSIDE each rail (cards stagger
+          in DOM order); nothing is held behind another section. */}
       <div className="section-stack relative z-10">
-          {/* Trending keeps its hero-overlap position (v0 layout) so the home
-              page stays stable whether or not the user has watch history:
-              when Continue Watching has no items it returns null and Trending
-              simply rides below the hero — when it does have items, Continue
-              Watching renders AFTER Trending so Trending never shifts.
-
-              These above-the-fold sections are rendered WITHOUT a reveal
-              wrapper: they replace pixels the route skeleton was already
-              painting, so any wrapper would either re-hide them or add a
-              phantom flex-gap slot when a client child (Continue Watching)
-              renders null. Rendering the sections directly keeps the stack
-              rhythm exact and the skeleton→content handoff a pure crossfade. */}
           <Trending
             items={home.trending}
             title="Trending"
@@ -195,31 +171,29 @@ async function HomeBoard({
               gets the cinematic 3D treatment (pointer-tilt floating posters). */}
           <LatestEpisodes items={home.latestEpisodes} />
 
-          <Reveal>
-            <DiscoverColumns
-              topAiring={home.topAiring}
-              mostPopular={home.mostPopular}
-              mostFavorite={home.mostFavorite}
-              newReleases={home.newReleases}
-              completed={home.completed}
-            />
-          </Reveal>
+          <DiscoverColumns
+            topAiring={home.topAiring}
+            mostPopular={home.mostPopular}
+            mostFavorite={home.mostFavorite}
+            newReleases={home.newReleases}
+            completed={home.completed}
+          />
 
-          <Suspense fallback={<ReleaseScheduleFallback />}>
-            <ReleaseScheduleSlot schedulePromise={schedulePromise} />
-          </Suspense>
+          {/* Release calendar — rendered INLINE from the schedule payload the
+              board already awaited above (no Suspense island), so it appears
+              together with every other section instead of popping in late. A
+              failed / timed-out schedule just omits this section. */}
+          {scheduleRes.ok && <ReleaseSchedule data={scheduleRes.data} />}
 
           {/* Latest Completed (left) and the Top 10 list (right) are two separate
               glass containers side by side. They stretch to a shared height (the
               taller of the two) and the left poster grid distributes its rows to
               fill, so neither panel is left with dead space. Stacks on mobile. */}
-          <Reveal
-            className="grid grid-cols-1 items-stretch gap-x-6 gap-y-[var(--space-section)] lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]"
-          >
+          <div className="grid grid-cols-1 items-stretch gap-x-6 gap-y-[var(--space-section)] lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]">
             <QuickLists completed={completed} />
 
             <Top10Tabs buckets={home.top10} />
-          </Reveal>
+          </div>
 
           {/* Top Upcoming — the last ranked section on the board, rendered with
               the SAME ranked marquee as Trending so the two rails share one
@@ -237,29 +211,4 @@ async function HomeBoard({
         </div>
     </div>
   );
-}
-
-/**
- * Release calendar island — consumes the `getSchedule()` promise that was
- * ALREADY started in `HomePage()` (in parallel with the required `getHome()`
- * payload), not one it starts itself. The island therefore renders the instant
- * the schedule resolves — after its in-place skeleton — without the board ever
- * waiting on it and without re-issuing the request.
- *
- * A schedule failure (or timeout) drops just this section; the board is
- * unaffected because the two fetches were raced, not chained.
- */
-async function ReleaseScheduleSlot({
-  schedulePromise,
-}: {
-  schedulePromise: Promise<Result<ScheduleModel>>;
-}) {
-  const scheduleRes = await schedulePromise;
-  if (!scheduleRes.ok) return null;
-  return <ReleaseSchedule data={scheduleRes.data} />;
-}
-
-/** In-place placeholder for the calendar island while its endpoint streams. */
-function ReleaseScheduleFallback() {
-  return <ScheduleSkeleton />;
 }
