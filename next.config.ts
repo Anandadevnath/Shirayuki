@@ -125,6 +125,23 @@ const nextConfig: NextConfig = {
           { key: "Cache-Control", value: "public, s-maxage=60, stale-while-revalidate=300" },
         ],
       },
+      {
+        // Home page — the same edge-cache treatment as /watch, and the fix for
+        // the "first response is slow" complaint. The route stays
+        // `force-dynamic` server-side, so a flaky upstream never bakes a bad
+        // page into a long-lived ISR entry (see app/page.tsx). But without this
+        // header the response was `no-store`, so EVERY visitor paid a full
+        // serverless render + both upstream fetches. Now the edge keeps the
+        // rendered HTML for 60s and serves stale-while-revalidate for 5min, so
+        // all but the first visitor after a window are served instantly with
+        // zero render work, while the next request revalidates in the
+        // background. `Vary` already includes `rsc`, so an RSC prefetch never
+        // poisons the HTML cache entry (and vice versa).
+        source: "/",
+        headers: [
+          { key: "Cache-Control", value: "public, s-maxage=60, stale-while-revalidate=300" },
+        ],
+      },
     ];
   },
 };
