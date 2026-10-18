@@ -583,21 +583,27 @@ header[data-scrolled="1"] {
      will-change here would pin a GPU layer forever, per element. */
 }
 
-/* Image reveal — runs once on mount. Starts at a hair of scale + 0 opacity,
-   settles to crisp full-opacity. Pure CSS, no React state, so the parent
-   (SmartImage) stays a Server Component. The shimmer placeholder sits in
-   the same absolute box and cross-fades out as the keyframe lands via its
-   own .shimmer fade.
+/* Image reveal — runs once on mount. A PURE opacity cross-fade: the poster
+   fades in from 0 → 1 with no transform. The shimmer placeholder sits in the
+   same absolute box and cross-fades out underneath, so the shimmer itself is
+   the visual carrier of "appearing".
+
+   Why no scale (this was the "cards shake/flicker" bug): the previous version
+   settled each poster through `scale(1.03) → scale(1)`. On a grid or rail of
+   20–60 posters that decode in a burst, EVERY card independently jiggled as
+   its own bitmap landed, and because they land at slightly different times the
+   whole grid read as a noisy shake/flicker. A per-image transform also
+   perturbed the card's rounded frame edge. Opacity-only means each poster
+   simply fades into its final box wherever it sits — calm, and it stays
+   compositor-only.
 
    Perf note: earlier revisions animated `filter: blur(8px → 0)` for a
    "blur-up" feel, but filter transitions force the browser into a slow
    compositing path (especially with `object-cover` posters which already
-   require a rasterization pass). The opacity+scale cross-fade reads
-   identically to the eye once the shimmer placeholder is fading out from
-   underneath — the shimmer itself is the visual carrier of "appearing". */
+   require a rasterization pass). */
 @keyframes image-stack-in {
-  from { opacity: 0; transform: scale(1.03); }
-  to   { opacity: 1; transform: scale(1); }
+  from { opacity: 0; }
+  to   { opacity: 1; }
 }
 .image-stack {
   animation: image-stack-in 0.55s cubic-bezier(0.16, 1, 0.3, 1) both;
