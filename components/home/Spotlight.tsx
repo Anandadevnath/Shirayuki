@@ -331,7 +331,13 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
                       onLoad={idx === active ? markArtReady : undefined}
                       onError={idx === active ? markArtReady : undefined}
                       className={cn(
-                        "object-cover object-[center_22%] brightness-[0.82]",
+                        // No brightness filter: the art must keep the palette
+                        // it was drawn with. Readability comes entirely from
+                        // the scrims below, which are placed only where copy
+                        // actually sits — a full-frame `brightness()` dimmed
+                        // every slide's artwork to fix a problem that is
+                        // local to the copy column.
+                        "object-cover object-[center_22%]",
                         // Cinematic settle: each activation starts from a 4.5%
                         // zoom and eases to rest over 7.5s — slower than the
                         // 7s autoplay cadence, so art is always winding down
@@ -401,18 +407,34 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
             last pixel row and absent on the next one is what painted the old
             horizontal seam. */}
         <div aria-hidden className="scrim-dissolve pointer-events-none absolute inset-0">
-          {/* Readability gradient: strongest behind the copy (left), easing to a
-              lighter vignette on the right so the key art stays visible. A
-              second stop at ~55% keeps the title legible across mid-length
-              titles without veiling the artwork's centre. */}
-          <div className="absolute inset-0 bg-gradient-to-r from-base/95 via-base/55 via-45% to-base/45" />
-          {/* Bottom atmosphere — copy contrast for the lower hero. Dissolves
+          {/* Readability gradient. It exists for exactly one reason: the copy
+              column (`max-w-xl`, i.e. the left ~40% of the frame at desktop
+              widths) needs a dark bed under near-white type. Everything the
+              scrim does past the point where copy stops is pure veiling, so:
+
+              · through the copy column the tint is unchanged from the design
+                (0.95 → 0.55 at 45%) — the paragraph keeps the bed it was
+                tuned against, at every breakpoint;
+              · past it, `lg:` lets the veil fall to 0.15 instead of holding a
+                ~45% tint across the whole frame. That held tint is what made
+                every slide read muddy: at 1440px it covered ~60% of the
+                artwork at 45–50% black, i.e. the picture was showing at
+                little over half strength before the art filter even applied.
+              The tail only opens from `lg` up because below that the synopsis
+              spans the full width and still sits under the tail. */}
+          <div className="absolute inset-0 bg-gradient-to-r from-base/95 via-base/55 via-45% to-base/45 lg:to-base/15" />
+          {/* Bottom atmosphere — a light vignette at the hero's base. Dissolves
               with the group above, so it can never read as a step where the
               hero ends: the artwork tail beneath it continues smoothly into
-              the Trending overlap. */}
-          <div className="absolute inset-x-0 bottom-0 h-[32%] bg-gradient-to-t from-base/55 via-base/15 to-transparent" />
+              the Trending overlap. Kept deliberately shallow — it darkens the
+              artwork, not any copy. */}
+          <div className="absolute inset-x-0 bottom-0 h-[32%] bg-gradient-to-t from-base/45 via-base/12 to-transparent" />
         </div>
-        <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/85 via-base/55 via-35% via-base/25 to-transparent" />
+        {/* Top band — the navbar is fully transparent at scroll 0
+            (`.nav-glass`), so this is the ONLY thing keeping the nav labels
+            readable while the hero art passes behind them. It fades out well
+            before the copy starts, so it darkens the sky, never the title. */}
+        <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/80 via-base/45 via-38% to-transparent" />
 
         {/* ── Art placeholder — sits BENEATH the copy (z-0), mirroring the
             route-level SpotlightSkeleton's backdrop so the skeleton → board

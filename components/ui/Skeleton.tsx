@@ -104,9 +104,12 @@ export function SpotlightSkeleton() {
     <section className="relative left-[calc(50%-50cqw)] -mt-[calc(4rem_+_var(--space-page-y))] w-[100cqw] overflow-hidden">
       <div className="relative flex h-[94svh] min-h-[min(680px,94svh)] max-h-[1120px] w-full flex-col">
         <div className="absolute inset-0 bg-surface-2 shimmer-loop" />
-        {/* Match the hero scrims so the skeleton sits in the same light. */}
-        <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/35 to-base/60" />
-        <div className="absolute inset-x-0 bottom-0 h-[36%] bg-gradient-to-t from-base/85 from-6% via-base/30 via-32% to-transparent" />
+        {/* Match the hero scrims so the skeleton sits in the same light — the
+            same three layers, same opacities, as <Spotlight>: copy-side
+            readability bed, shallow base vignette, navbar band. */}
+        <div className="absolute inset-0 bg-gradient-to-r from-base/95 via-base/55 via-45% to-base/45 lg:to-base/15" />
+        <div className="absolute inset-x-0 bottom-0 h-[32%] bg-gradient-to-t from-base/45 via-base/12 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/80 via-base/45 via-38% to-transparent" />
         <div className="relative z-10 flex flex-1 items-center pb-[8vh]">
           <div className="mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
             <div className="flex max-w-xl flex-col gap-5 reveal">
