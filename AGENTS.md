@@ -1,13 +1,14 @@
 # AGENTS.md — Shirayuki
 
-Anime streaming client: Next.js 15 (App Router, RSC), React 19, TypeScript 5.7 strict, Tailwind v4, zod, zustand, hls.js. Deployed to Vercel (Singapore region). npm only — the repo ships `package-lock.json`, no pnpm/yarn lockfile. Node is pinned `24.x` in `package.json` engines.
+Anime streaming client: Next.js 15 (App Router, RSC), React 19, TypeScript 5.7 strict, Tailwind v4, zod, zustand, hls.js. Deployed to Vercel (Singapore region). npm only — the repo ships `package-lock.json`, no pnpm/yarn lockfile. Node is pinned `24.x` in `package.json` engines. `headroom-ai` is a declared dependency with **zero usage anywhere in source** — ignore it rather than hunting for where it's wired in.
 
 ## Commands
 
 ```bash
 npm run dev          # http://localhost:3000
+npm run build        # next build — run before claiming a routing/config change is safe
 npm run typecheck    # tsc --noEmit — the real verification gate
-npm test             # node --test "lib/**/*.test.ts" "app/**/*.test.ts"
+npm test             # node --test "lib/**/*.test.ts" "app/**/*.test.ts" (51 tests)
 node --test lib/api/proxy-guard.test.ts   # single file — node:test, NOT jest/vitest
 ```
 
@@ -46,7 +47,7 @@ Two animation systems coexist on purpose; adding to the wrong one is the easiest
 - Browse pages live in `app/(browse)/` (az, category, genre, schedule, search); detail is `app/anime/[id]/` (JSON-LD); player is `app/watch/[id]/[ep]/`; `app/watch/[id]/page.tsx` resolves the resume episode server-side then client-redirects; `app/watchlist/` is local-only.
 - API routes: `/api/stream`, `/api/subtitle`, `/api/suggest`, `/api/search-index`, and `/api/sources` (client-side source resolver for the player's mid-playback failover). There is **no `/api/schedule`** — the README mentions one, but the schedule is fetched server-side in `app/(browse)/schedule/page.tsx`.
 - Design tenet: one AnimeCard, one Nav, one Player — add variants, not duplicate components.
-- **Navigation is one typed config**: `lib/nav/config.ts` is the single source for both the desktop rail and the drawer. `NAVBAR_ITEMS` render in the rail (`hidden md:flex`); `DRAWER_GROUPS` + `visibleDrawerGroups(railVisible)` resolve what the drawer shows. The **hamburger is intentionally visible at EVERY breakpoint** (Nav.tsx has no `md:hidden` on it) and the drawer is a modal at all widths — do not re-hide either behind a breakpoint. The invariant is *no simultaneously-visible duplicate*: when the rail is on screen (`railVisible`, a `(min-width:768px)` matchMedia in Nav.tsx) the drawer drops its "Navigate" group; when the rail is hidden the drawer supplies those links. `assertNavUniqueness()` throws at module load if a path duplicates across either presentation — don't bypass it, and add destinations by editing the config, never by adding `<Link>`s to Nav/NavDrawer directly.
+- **Navigation is one typed config**: `lib/nav/config.ts` is the single source for both the desktop rail and the drawer. `NAVBAR_ITEMS` render in the rail (`hidden md:flex`); `DRAWER_GROUPS` + `visibleDrawerGroups(railVisible)` resolve what the drawer shows. The **hamburger is intentionally visible at EVERY breakpoint** (`components/layout/Nav.tsx` has no `md:hidden` on it) and the drawer (`components/layout/NavDrawer.tsx`) is a modal at all widths — do not re-hide either behind a breakpoint. The invariant is *no simultaneously-visible duplicate*: when the rail is on screen (`railVisible`, a `(min-width:768px)` matchMedia in Nav.tsx) the drawer drops its "Navigate" group; when the rail is hidden the drawer supplies those links. `assertNavUniqueness()` throws at module load if a path duplicates across either presentation — don't bypass it, and add destinations by editing the config, never by adding `<Link>`s to Nav/NavDrawer directly.
 - The legal pages `app/terms`, `app/privacy`, `app/dmca` (via `components/common/LegalPage.tsx`) exist because the footer + drawer link to them; the categories used in the config (`/category/{slug}`) are all live upstream ids.
 - The Player is loaded `ssr: false` via `components/player/PlayerLoader.tsx`; keep `hls.js` out of the initial page bundle.
 - `/watch/*` is `noindex` by design: `app/robots.ts` disallows `/watch/` and `/api/`, and the page metadata reinforces it.
