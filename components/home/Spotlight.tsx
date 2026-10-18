@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { motion, useScroll, useTransform } from "motion/react";
+import { motion } from "motion/react";
 import {
   Play,
   Plus,
@@ -15,7 +15,6 @@ import {
 import type { SpotlightModel } from "@/lib/providers/types";
 import { EpBadges } from "@/components/anime/Badges";
 import { TapButton, TapLink, pressProps } from "@/components/motion/tappable";
-import { useReducedMotionSSR } from "@/lib/utils/useReducedMotion";
 import { truncate } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import { isInList, toggleList, WATCHLIST_EVENT } from "@/lib/watchlist/local";
@@ -85,28 +84,14 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
   // mirrors LatestEpisodes so both carousels feel identical to the user.
   const [interacting, setInteracting] = useState(false);
 
-  // ── Scroll parallax ────────────────────────────────────────────────────
-  // As the hero leaves the viewport the art lags (moves down relative to the
-  // page) and the copy rises and fades, so the section reads as a scene the
-  // camera pulls out of rather than a flat block scrolling up. Transform-only,
-  // so the hero never reflows and never invalidates a paint; the values are
-  // only ever read by the `style` of the layers below, so nothing here causes
-  // a React re-render.
-  //
-  // Gated off entirely for reduced-motion users: `MotionConfig`'s
-  // `reducedMotion="user"` neutralises Motion's *animations*, but a motion
-  // value written straight to `style` is not an animation and would slip past
-  // it, so this channel carries its own gate.
-  const sectionRef = useRef<HTMLElement>(null);
-  const reduce = useReducedMotionSSR();
-
-  const { scrollYProgress } = useScroll({
-    target: sectionRef,
-    offset: ["start start", "end start"],
-  });
-  const artScrollY = useTransform(scrollYProgress, [0, 1], [0, 72]);
-  const copyScrollY = useTransform(scrollYProgress, [0, 1], [0, -48]);
-  const copyOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.3]);
+  // ── Scroll parallax (removed) ─────────────────────────────────────────
+  // The hero previously drove a scroll-linked parallax: the key art drifted
+  // DOWN (0→+72px) and the copy rose and faded as the section left the
+  // viewport. The downward art drift read as the spotlight "sliding down the
+  // page" while scrolling, which felt like the hero was lagging/fighting the
+  // scroll rather than sitting in the page, so the scroll-linked transform is
+  // gone. The hero now scrolls normally with the document; its entrance and
+  // slide-swap choreography are CSS and untouched.
 
   // ── Initial-reveal gate ────────────────────────────────────────────────
   // `artReady` gates ONLY the heavy key art — not the copy. The hero's copy
@@ -275,7 +260,6 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
   // scrim sit behind the whole navbar instead of starting under it.
   return (
     <section
-      ref={sectionRef}
       className="relative left-[calc(50%-50cqw)] -mt-[calc(4rem_+_var(--space-page-y))] w-[100cqw] overflow-x-clip focus:outline-none focus-visible:ring-1 focus-visible:ring-frost/60 touch-pan-y select-none"
       role="group"
       aria-roledescription="carousel"
@@ -306,16 +290,13 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
             boundary row and the rows below it are the same continuous paint.
             pointer-events-none keeps the overhang from stealing hovers or
             swipes from the Trending cards riding above it. ── */}
-        {/* The whole atmosphere plane (key art + blurred fill + aurora +
-            petals) is one parallax layer: it lags the scroll, so the copy in
-            front of it separates cleanly. Transform-only, and the layers
-            underneath keep their own CSS keyframes — Motion's transform lives
-            on this wrapper, never on an element that a CSS animation also
-            drives. */}
+        {/* The atmosphere plane (key art + blurred fill + aurora + petals).
+            It scrolls normally with the page — the scroll-linked transform
+            that made it lag/drift downward was removed (see the parallax note
+            above). The layers underneath keep their own CSS keyframes. */}
         <motion.div
           aria-hidden
           className="art-dissolve pointer-events-none absolute inset-x-0 top-0 h-[calc(100%+12rem)]"
-          style={reduce ? undefined : { y: artScrollY }}
         >
           <div className="absolute inset-0">
             {list.map((s, idx) =>
@@ -536,12 +517,13 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
             NOT keyed — the buttons stay planted under the cursor between
             slide changes (remounting them both flickers the My List state
             and yanks click targets mid-interaction). ── */}
-        {/* The copy is the near plane: it rises and fades a little as the hero
-            scrolls away. The stagger choreography above is untouched (it is
+        {/* The copy is a static plane: it scrolls with the page and no longer
+            rises/fades as the hero leaves the viewport (the scroll-linked
+            transform that did that was removed — see the parallax note above).
+            The stagger choreography above is untouched (it is
             CSS, keyed per slide). */}
         <motion.div
           className="relative z-10 flex flex-1 items-center pb-[10vh]"
-          style={reduce ? undefined : { y: copyScrollY, opacity: copyOpacity }}
         >
           {/* This container is the SHARED content container — identical to
               <main>'s mx-auto max-w-[1460px] px-4 sm:px-6 lg:px-8 — so the
