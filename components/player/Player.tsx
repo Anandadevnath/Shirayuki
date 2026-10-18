@@ -920,7 +920,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
            pointer so users can see where they're about to seek. */}
           {scrubberHover && duration > 0 && (
             <div
-              className="pointer-events-none absolute -top-7 -translate-x-1/2 rounded-sm bg-base/90 px-1.5 py-0.5 font-mono text-[10px] text-snow shadow-md"
+              className="pointer-events-none absolute -top-7 -translate-x-1/2 rounded-sm bg-base/90 px-1.5 py-0.5 font-accent text-[10px] text-snow shadow-md"
               style={{ left: `${(scrubberHover.x / (scrubberHover.x ? 1 : 1))}px` }}
             >
               {formatTime(scrubberHover.time)}
@@ -1026,7 +1026,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
               }}
             />
           </div>
-          <span className="font-mono text-xs tabular-nums text-snow/90" aria-live="off">
+          <span className="font-accent text-xs tabular-nums text-snow/90" aria-live="off">
             {formatTime(current)} / {formatTime(duration)}
           </span>
 
@@ -1034,7 +1034,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
             {/* C8 fix: current quality chip. Always visible so the user
              can see what they're getting, not just the settings panel. */}
             <span
-              className="hidden rounded-sm border border-line/60 bg-base/40 px-1.5 py-0.5 font-mono text-[10px] font-semibold uppercase tracking-wider text-faint sm:inline-block"
+              className="hidden rounded-sm border border-line/60 bg-base/40 px-1.5 py-0.5 font-accent text-[10px] font-semibold uppercase tracking-wider text-faint sm:inline-block"
               aria-live="polite"
               aria-label={`Current quality: ${level === -1 ? "Auto" : `${currentLevelHeight ?? ""}p`}`}
             >
@@ -1191,51 +1191,51 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
                   <ul className="space-y-1.5 text-snow">
                     <li className="flex items-center justify-between">
                       <span>Play / Pause</span>
-                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px]">K / Space</kbd>
+                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px]">K / Space</kbd>
                     </li>
                     <li className="flex items-center justify-between">
                       <span>Rewind 10s</span>
-                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px]">J</kbd>
+                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px]">J</kbd>
                     </li>
                     <li className="flex items-center justify-between">
                       <span>Forward 10s</span>
-                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px]">L</kbd>
+                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px]">L</kbd>
                     </li>
                     <li className="flex items-center justify-between">
                       <span>Seek 5s</span>
-                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px]">← →</kbd>
+                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px]">← →</kbd>
                     </li>
                     <li className="flex items-center justify-between">
                       <span>Volume</span>
-                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px]">↑ ↓</kbd>
+                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px]">↑ ↓</kbd>
                     </li>
                     <li className="flex items-center justify-between">
                       <span>Mute</span>
-                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px]">M</kbd>
+                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px]">M</kbd>
                     </li>
                     <li className="flex items-center justify-between">
                       <span>Fullscreen</span>
-                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px]">F</kbd>
+                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px]">F</kbd>
                     </li>
                     <li className="flex items-center justify-between">
                       <span>Captions</span>
-                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px]">C</kbd>
+                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px]">C</kbd>
                     </li>
                     <li className="flex items-center justify-between">
                       <span>Skip Intro</span>
-                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px]">S</kbd>
+                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px]">S</kbd>
                     </li>
                     <li className="flex items-center justify-between">
                       <span>Picture in picture</span>
-                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px]">P</kbd>
+                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px]">P</kbd>
                     </li>
                     <li className="flex items-center justify-between">
                       <span>Next episode</span>
-                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px]">N</kbd>
+                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px]">N</kbd>
                     </li>
                     <li className="flex items-center justify-between">
                       <span>Jump %</span>
-                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px]">0–9</kbd>
+                      <kbd className="rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px]">0–9</kbd>
                     </li>
                   </ul>
                 </div>

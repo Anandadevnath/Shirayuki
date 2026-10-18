@@ -4,6 +4,7 @@ import { memo } from "react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { cn } from "@/lib/utils/cn";
 import { SmartImage } from "@/components/ui/SmartImage";
+import { TiltCard } from "@/components/motion/TiltCard";
 import { EpBadges, TypePill } from "./Badges";
 
 /**
@@ -109,8 +110,14 @@ export const AnimeCard = memo(function AnimeCard({
             to before, plus a sibling overlay that paints a restrained frosted
             hover ring at opacity-0 → 100%. Avoids the box-shadow transition
             (which forces a full repaint of the card body on every hover
-            frame) while preserving the visual. */}
-        <div className="relative aspect-[3/4] overflow-hidden rounded-[1.25rem] bg-surface-2 ring-1 ring-line/80">
+            frame) while preserving the visual.
+
+            The frame is the pointer-tilt surface (`TiltCard`): on a fine
+            pointer the whole card leans a few degrees toward the cursor with
+            a soft specular sheen, and springs back on leave. Touch devices and
+            reduced-motion users get the exact same static frame — the tilt is
+            gated inside TiltCard and adds nothing to the markup when off. */}
+        <TiltCard className="relative aspect-[3/4] overflow-hidden rounded-[1.25rem] bg-surface-2 ring-1 ring-line/80">
           {/* Frosted hover ring — opacity cross-fade, GPU-composited. A single
               1px hairline in frost rather than a bright 2px halo, so the edge
               reads as a crisp border, not a glow. Also lands on keyboard focus
@@ -186,7 +193,7 @@ export const AnimeCard = memo(function AnimeCard({
               )}
             </div>
           </div>
-        </div>
+        </TiltCard>
       </div>
     </Link>
   );

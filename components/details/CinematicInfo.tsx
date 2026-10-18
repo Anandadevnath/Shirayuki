@@ -7,6 +7,7 @@ import {
   Share2, Check, Sparkles, Award, Languages, Activity,
 } from "lucide-react";
 import type { AnimeDetail } from "@/lib/providers/types";
+import { TiltCard } from "@/components/motion/TiltCard";
 import { cn } from "@/lib/utils/cn";
 import { revealDelay } from "@/lib/utils/reveal";
 import { isInList as isInListLocal, toggleList, WATCHLIST_EVENT } from "@/lib/watchlist/local";
@@ -237,7 +238,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
           Now Streaming
         </span>
         <div className="flex items-center gap-2 text-[10px] uppercase tracking-widest text-faint">
-          <span className="font-mono">
+          <span className="font-accent">
             {category.toUpperCase()} · EP {epNum}
           </span>
           {status && <StatusBadge status={status} />}
@@ -251,7 +252,19 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
           <div className="group/poster relative w-[180px]">
             {/* Glass frame with poster inside */}
             <div className="poster-float relative">
-              <div className="relative aspect-[2/3] w-full overflow-hidden rounded-md border border-line/60 bg-surface/40 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)] ring-1 ring-white/5 transition-transform duration-500 group-hover/poster:-translate-y-1 group-hover/poster:shadow-[0_30px_80px_-20px_color-mix(in_oklch,var(--color-frost-deep)_40%,transparent)]">
+              {/* The poster is a tilt surface: it leans toward the cursor with a
+                  spring and settles home on leave, and the hover lift is part
+                  of the same Motion transform (the frame used to carry a CSS
+                  `-translate-y-1`, which would have re-interpolated every frame
+                  Motion wrote). Touch and reduced-motion get the previous
+                  static poster. */}
+              <TiltCard
+                maxTilt={5}
+                hoverScale={1.01}
+                liftY={-4}
+                perspective={640}
+                className="relative aspect-[2/3] w-full overflow-hidden rounded-md border border-line/60 bg-surface/40 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)] ring-1 ring-white/5 group-hover/poster:shadow-[0_30px_80px_-20px_color-mix(in_oklch,var(--color-frost-deep)_40%,transparent)]"
+              >
                 {anime.poster ? (
                   <Image
                     src={anime.poster}
@@ -272,7 +285,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
                 <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/8 to-transparent" />
                 {/* Bottom edge glow */}
                 <div className="pointer-events-none absolute inset-x-0 bottom-0 h-1/4 bg-gradient-to-t from-frost/10 to-transparent" />
-              </div>
+              </TiltCard>
             </div>
           </div>
         </div>
@@ -286,7 +299,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
                 <Award className="size-3" />
                 {type} · {premiered}
               </span>
-              <h3 className="text-balance font-display text-[2rem] font-bold leading-[1.08] tracking-[-0.02em] text-snow sm:text-[2.4rem]">
+              <h3 className="text-display text-balance text-snow">
                 {anime.title}
               </h3>
               {synonyms.length > 0 && (

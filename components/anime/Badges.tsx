@@ -30,7 +30,7 @@ export function EpBadges({
 export function TypePill({ type }: { type?: string | null }) {
   if (!type) return null;
   return (
-    <span className="rounded-sm border border-line bg-surface/80 px-1.5 py-0.5 font-mono text-[10px] uppercase tracking-wide text-muted">
+    <span className="rounded-sm border border-line bg-surface/80 px-1.5 py-0.5 font-accent text-[10px] uppercase tracking-wide text-muted">
       {type}
     </span>
   );

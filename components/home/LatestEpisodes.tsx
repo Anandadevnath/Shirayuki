@@ -209,7 +209,12 @@ const FlowCard = memo(function FlowCard({
           <h3
             className={cn(
               "text-title line-clamp-2 text-snow [text-shadow:0_1px_10px_rgba(0,0,0,0.95)] transition-opacity duration-500",
-              active ? "text-[1.125rem] sm:text-[1.25rem]" : "opacity-0",
+              // The featured card's title is a size step up from the rail's
+              // `.text-title` default, so the explicit size wins the merge —
+              // keep the weight too, or the one visible title in this rail
+              // (side cards stay at opacity-0) renders lighter than every
+              // poster card title on the site.
+              active ? "text-[1.125rem] font-semibold sm:text-[1.25rem]" : "opacity-0",
             )}
           >
             {anime.title}

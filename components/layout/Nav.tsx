@@ -187,7 +187,7 @@ export function Nav() {
           >
             <Search className="size-4 transition-colors duration-200 group-hover:text-frost" />
             <span className="hidden lg:inline">Search anime…</span>
-            <kbd className="ml-2 hidden rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px] text-faint lg:inline">
+            <kbd className="ml-2 hidden rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px] text-faint lg:inline">
               ⌘K
             </kbd>
           </button>

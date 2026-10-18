@@ -267,7 +267,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
               >
                 <span
                   className={cn(
-                    "grid size-7 shrink-0 place-items-center rounded-sm font-mono text-xs",
+                    "grid size-7 shrink-0 place-items-center rounded-sm font-accent text-xs",
                     e.episodeId === episodeId
                       ? "bg-frost/20 text-frost"
                       : "bg-base text-faint",

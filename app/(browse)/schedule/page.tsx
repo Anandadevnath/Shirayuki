@@ -86,7 +86,7 @@ export default async function SchedulePage() {
             currently airing crop — derived from HiAnime listing data (no broadcast
             times are published upstream, so the calendar shows premiere days only).
             {s.updatedAt && (
-              <span className="mt-1 block font-mono text-[11px] text-faint">
+              <span className="mt-1 block font-accent text-[11px] text-faint">
                 Updated {new Date(s.updatedAt).toLocaleString()}
               </span>
             )}

@@ -9,6 +9,7 @@ import { ArtGallery } from "@/components/details/ArtGallery";
 import { CastSection } from "@/components/details/CastSection";
 import { Rail } from "@/components/anime/Rail";
 import { EpBadges } from "@/components/anime/Badges";
+import { TiltCard } from "@/components/motion/TiltCard";
 import { truncate, slugify } from "@/lib/utils/format";
 import { jsonLdHtml } from "@/lib/utils/jsonld";
 
@@ -116,11 +117,19 @@ export default async function AnimePage({ params }: Params) {
         {/* Panel 1 — poster, title, badges, description, actions */}
         <section className="glass relative overflow-hidden rounded-2xl p-5 sm:p-7">
           <div className="flex flex-col gap-6 sm:flex-row">
-            <div className="relative mx-auto aspect-[2/3] w-40 shrink-0 overflow-hidden rounded-lg ring-1 ring-line shadow-[var(--shadow-soft)] sm:mx-0 sm:w-52">
+            <TiltCard
+              maxTilt={5}
+              liftY={-4}
+              hoverScale={1.015}
+              perspective={640}
+              className="relative mx-auto aspect-[2/3] w-40 shrink-0 overflow-hidden rounded-lg ring-1 ring-line shadow-[var(--shadow-soft)] sm:mx-0 sm:w-52"
+            >
               {a.poster && (
                 <Image src={a.poster} alt={a.title} fill sizes="208px" className="object-cover" />
               )}
-            </div>
+              {/* Poster-edge light, matching the other key-art surfaces. */}
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/6 to-transparent" />
+            </TiltCard>
 
             <div className="flex-1 pt-1 sm:pt-0">
               <h1 className="text-page">
@@ -135,18 +144,18 @@ export default async function AnimePage({ params }: Params) {
                 )}
                 {malScore && (
                   <span className="rounded-sm bg-frost-soft px-2 py-1 font-semibold text-frost">
-                    <span className="font-mono">MAL</span> {malScore}
+                    <span className="font-accent">MAL</span> {malScore}
                   </span>
                 )}
-                <span className="font-mono text-faint">·</span>
+                <span className="font-accent text-faint">·</span>
                 {a.type && (
                   <span className="flex items-center gap-1 rounded-sm border border-line px-2 py-1">
                     <Film className="size-3" /> {a.type}
                   </span>
                 )}
-                <span className="font-mono text-faint">·</span>
+                <span className="font-accent text-faint">·</span>
                 {premieredYear && (
-                  <span className="rounded-sm border border-line px-2 py-1 font-mono">
+                  <span className="rounded-sm border border-line px-2 py-1 font-accent">
                     {premieredYear}
                   </span>
                 )}
@@ -211,7 +220,7 @@ export default async function AnimePage({ params }: Params) {
             {malScore && (
               <div className="flex gap-2">
                 <dt className="w-20 shrink-0 font-semibold text-muted">MAL Score</dt>
-                <dd className="flex-1 font-mono text-snow">{malScore}</dd>
+                <dd className="flex-1 font-accent text-snow">{malScore}</dd>
               </div>
             )}
           </dl>

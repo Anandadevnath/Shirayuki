@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
-import { Inter, Manrope, Geist_Mono, Zen_Kaku_Gothic_New } from "next/font/google";
+import { Manrope, Plus_Jakarta_Sans, Space_Grotesk, Zen_Kaku_Gothic_New } from "next/font/google";
 import "./globals.css";
+import { MotionProvider } from "@/components/motion/MotionProvider";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { RootEffects } from "@/components/layout/RootEffects";
@@ -8,16 +9,21 @@ import { RootEffects } from "@/components/layout/RootEffects";
 // ── Typography system ─────────────────────────────────────────────────────
 // Three self-hosted Google faces, each with ONE job (no duplicates):
 //
-//   Inter      — primary UI + body: nav, buttons, metadata, descriptions,
-//                episode lists, forms. Neutral, superb hinting, strong
-//                tabular figures. 400–700 only (nothing in the UI is heavier
-//                than bold once headings use Manrope).
+//   Plus Jakarta Sans — primary UI + body: nav, buttons, metadata,
+//                descriptions, episode lists, forms. A geometric-humanist
+//                face with a tall x-height and softly flared terminals, so
+//                interface text reads warm and deliberate instead of neutral
+//                and systemic. 400–700 (nothing in the UI is heavier than
+//                bold once headings use Manrope).
 //   Manrope    — display / headings: hero + page + section titles, card
 //                titles, rank numerals. A geometric grotesque with subtly
-//                warmer curves than Inter, so headings read as a distinct,
-//                intentional tier against the Inter body.
-//   Geist Mono — sparing technical accent: eyebrows (FEATURED, HOT RIGHT
-//                NOW), timestamps, kbd, episode counters. Never body copy.
+//                warmer curves than the UI face, so headings read as a
+//                distinct, intentional tier. 500–800.
+//   Space Grotesk — sparing technical accent: eyebrows (FEATURED, HOT RIGHT
+//                NOW), timestamps, kbd, episode counters, schedule/rank
+//                digits. A monospace-derived grotesque whose quirky
+//                letterforms turn small-caps labels into a deliberate art
+//                direction. Never body copy.
 //   Zen Kaku   — CJK fallback inside the display stack so Japanese titles
 //                (袖白雪) render with deliberate, elegant glyphs. Latin is
 //                never requested from it (Manrope covers latin).
@@ -25,8 +31,8 @@ import { RootEffects } from "@/components/layout/RootEffects";
 // `next/font` self-hosts + preloads only the weights declared here; the
 // previous Inter load shipped 6 weights (400–900) for a UI whose heaviest
 // text is bold. We now request exactly what the tokens use.
-const inter = Inter({
-  variable: "--font-inter",
+const jakarta = Plus_Jakarta_Sans({
+  variable: "--font-jakarta",
   subsets: ["latin"],
   weight: ["400", "500", "600", "700"],
   display: "swap",
@@ -37,9 +43,12 @@ const manrope = Manrope({
   weight: ["500", "600", "700", "800"],
   display: "swap",
 });
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const grotesk = Space_Grotesk({
+  variable: "--font-grotesk",
   subsets: ["latin"],
+  // 400/500 for plain technical text (kbd keys, values), 600 for the tracked
+  // uppercase labels. Nothing in the accent tier needs 700 — the UI face
+  // owns bold.
   weight: ["400", "500", "600"],
   display: "swap",
 });
@@ -107,7 +116,7 @@ export default function RootLayout({
     <html
       lang="en"
       data-scroll-behavior="smooth"
-      className={`${inter.variable} ${manrope.variable} ${geistMono.variable} ${zen.variable}`}
+      className={`${jakarta.variable} ${manrope.variable} ${grotesk.variable} ${zen.variable}`}
       // suppressHydrationWarning: the inline reveal-arm script below writes
       // a `data-anim` attribute onto <html> before React hydrates; it is
       // presentation-only state (see globals.css → "Viewport reveals").
@@ -134,24 +143,30 @@ export default function RootLayout({
         </noscript>
       </head>
       <body className="min-h-dvh overflow-x-clip antialiased">
-        <RootEffects />
-        <Nav />
-        {/* <main> is intentionally full-width and acts as the page size
-            container (`container-type: inline-size`), so `cqw` units inside it
-            resolve to the scrollbar-excluded layout width. A full-bleed child
-            (the home hero) breaks out with `w-[100cqw]` +
-            `left-[calc(50%-50cqw)]` instead of `w-screen`: 100vw includes the
-            classic vertical scrollbar, which made the hero protrude past the
-            right edge by the scrollbar width. `100cqw` never overshoots, so no
-            root-level overflow clip is needed to contain it. The centred,
-            max-width content column lives on the inner wrapper, preserving
-            every route's content geometry exactly. */}
-        <main className="page-shell page-container relative w-full">
-          <div className="mx-auto w-full max-w-[1460px] px-4 pb-24 sm:px-6 lg:px-8">
-            {children}
-          </div>
-        </main>
-        <Footer />
+        {/* MotionConfig only — renders no DOM, provides the shared default
+            transition and the `reducedMotion="user"` policy to every Motion
+            component below it (the CSS catch-all in globals.css cannot reach
+            JS-driven animations). Children still stream in as RSC. */}
+        <MotionProvider>
+          <RootEffects />
+          <Nav />
+          {/* <main> is intentionally full-width and acts as the page size
+              container (`container-type: inline-size`), so `cqw` units inside it
+              resolve to the scrollbar-excluded layout width. A full-bleed child
+              (the home hero) breaks out with `w-[100cqw]` +
+              `left-[calc(50%-50cqw)]` instead of `w-screen`: 100vw includes the
+              classic vertical scrollbar, which made the hero protrude past the
+              right edge by the scrollbar width. `100cqw` never overshoots, so no
+              root-level overflow clip is needed to contain it. The centred,
+              max-width content column lives on the inner wrapper, preserving
+              every route's content geometry exactly. */}
+          <main className="page-shell page-container relative w-full">
+            <div className="mx-auto w-full max-w-[1460px] px-4 pb-24 sm:px-6 lg:px-8">
+              {children}
+            </div>
+          </main>
+          <Footer />
+        </MotionProvider>
       </body>
     </html>
   );

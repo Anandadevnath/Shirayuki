@@ -59,7 +59,7 @@ export function EpisodeList({
                 key={r.label}
                 onClick={() => setRange(i)}
                 className={cn(
-                  "shrink-0 rounded-sm px-3 py-1.5 font-mono text-xs transition-colors",
+                  "shrink-0 rounded-sm px-3 py-1.5 font-accent text-xs transition-colors",
                   i === range
                     ? "bg-frost-soft text-frost"
                     : "border border-line text-muted hover:text-snow",

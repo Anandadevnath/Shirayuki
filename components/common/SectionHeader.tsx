@@ -29,7 +29,7 @@ export function PageHeader({
     <header className={cn("flex flex-col gap-1.5", className)}>
       {eyebrow && <p className="text-sm font-medium text-frost">{eyebrow}</p>}
       <div className="flex items-end justify-between gap-4">
-        <h1 className="text-page font-display">{title}</h1>
+        <h1 className="text-page">{title}</h1>
         {children}
       </div>
       {lede && <p className="max-w-2xl text-desc text-muted">{lede}</p>}

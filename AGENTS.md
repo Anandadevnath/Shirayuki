@@ -34,6 +34,13 @@ node --test lib/api/proxy-guard.test.ts   # single file — node:test, NOT jest/
 - `/api/stream` and `/api/subtitle` are SSRF-guarded by `lib/api/proxy-guard.ts` (scheme, public host/IP, DNS re-resolution on every redirect hop, bounded timeout). Don't relax it; behavior is covered by `lib/api/proxy-guard.test.ts`. Both proxy routes deliberately send no permissive CORS headers.
 - Security headers and the CSP baseline live in `headers()` — don't strip them when editing config.
 
+## Motion (two systems — pick the right one)
+
+Two animation systems coexist on purpose; adding to the wrong one is the easiest mistake here.
+
+- **CSS (default).** Keyframes + the `html[data-anim="1"] [data-reveal]` viewer-observer system in `app/globals.css` and `lib/utils/reveal-observer.ts` handle entrance choreography, shimmer/skeletons, marquees and ambient drift. It is declarative, costs no JS per frame, and is the right choice for almost everything. `Reveal`/`data-reveal` elements are opacity-0 until the observer arms them — so **never wrap grid/rail cards (`components/anime/Grid.tsx`, `Rail.tsx`) in `Reveal`** or they render blank until hydration.
+- **Motion for React** (`motion` v14, imported as `motion/react`) is used **only where CSS is awkward or impossible**: pointer-driven motion (tilt/parallax/sheen), spring physics, `AnimatePresence` exits, and scroll-linked transforms read back per frame. It lives in `lib/motion/tokens.ts` (single source for durations/curves/springs/stagger — import from here, don't hand-pick numbers) and `components/motion/` (`MotionProvider`, `TiltCard`). Wrapped around the app in `app/layout.tsx`; `MotionProvider` sets `reducedMotion="user"`, the JS-side counterpart the CSS `@media (prefers-reduced-motion)` catch-all cannot reach. Keep Motion off touch/reduced-motion surfaces (gate with `lib/utils/useMediaQuery.ts` / `lib/utils/useReducedMotion.ts`); for primary CTAs use `TapLink`/`TapButton` from `components/motion/tappable.tsx`, secondary controls keep the cheaper CSS `.press`.
+
 ## Routes & conventions
 
 - Browse pages live in `app/(browse)/` (az, category, genre, schedule, search); detail is `app/anime/[id]/` (JSON-LD); player is `app/watch/[id]/[ep]/`; `app/watch/[id]/page.tsx` resolves the resume episode server-side then client-redirects; `app/watchlist/` is local-only.
@@ -41,6 +48,6 @@ node --test lib/api/proxy-guard.test.ts   # single file — node:test, NOT jest/
 - Design tenet: one AnimeCard, one Nav, one Player — add variants, not duplicate components.
 - The Player is loaded `ssr: false` via `components/player/PlayerLoader.tsx`; keep `hls.js` out of the initial page bundle.
 - `/watch/*` is `noindex` by design: `app/robots.ts` disallows `/watch/` and `/api/`, and the page metadata reinforces it.
-- Dark-first OKLCH frost tokens and motion rules live in `app/globals.css`; respect `prefers-reduced-motion` for new motion. Design tokens and specs: `DESIGN.md`; the full plan is in `docs/`.
+- Dark-first OKLCH frost tokens and motion rules live in `app/globals.css`; design tokens and specs: `DESIGN.md`; the full plan is in `docs/`. Two motion systems coexist — see "Motion" below before adding animation.
 - Path alias: `@/*` maps to the repo root (no `src/` dir).
 - Most tracked files are not app code: `.agents/`, `.claude/`, `.kilo/` and `skills-lock.json` hold vendored agent skills, and `graphify-out/` is a generated knowledge graph. Don't edit these during feature work.

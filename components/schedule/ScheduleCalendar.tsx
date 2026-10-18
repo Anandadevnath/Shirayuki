@@ -59,17 +59,17 @@ export function ScheduleItemRow({
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <TypePill type={it.type} />
             {it.airTime && (
-              <span className="rounded bg-base/60 px-1 py-0.5 font-mono text-[11px] font-semibold text-frost">
+              <span className="rounded bg-base/60 px-1 py-0.5 font-accent text-[11px] font-semibold text-frost">
                 {it.airTime}
               </span>
             )}
             {it.episodeNumber && <span className="text-[11px] text-faint">{it.episodeNumber}</span>}
             {it.premiereDate ? (
-              <span className="font-mono text-[11px] font-semibold text-frost">
+              <span className="font-accent text-[11px] font-semibold text-frost">
                 {formatDate(it.premiereDate)}
               </span>
             ) : (
-              <span className="font-mono text-[11px] text-faint">Date TBD</span>
+              <span className="font-accent text-[11px] text-faint">Date TBD</span>
             )}
           </span>
         </span>
@@ -128,17 +128,17 @@ export function ScheduleItemCard({ it }: { it: ScheduleItem }) {
         <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
           <TypePill type={it.type} />
           {it.airTime && (
-            <span className="rounded bg-base/60 px-1 py-0.5 font-mono text-[11px] font-semibold text-frost">
+            <span className="rounded bg-base/60 px-1 py-0.5 font-accent text-[11px] font-semibold text-frost">
               {it.airTime}
             </span>
           )}
           {it.episodeNumber && <span className="text-[11px] text-faint">{it.episodeNumber}</span>}
           {it.premiereDate ? (
-            <span className="font-mono text-[11px] font-semibold text-frost">
+            <span className="font-accent text-[11px] font-semibold text-frost">
               {formatDate(it.premiereDate)}
             </span>
           ) : (
-            <span className="font-mono text-[11px] text-faint">Date TBD</span>
+            <span className="font-accent text-[11px] text-faint">Date TBD</span>
           )}
           {it.isUpcoming && (
             <span className="rounded-[var(--radius-btn)] bg-frost-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-frost">
@@ -271,7 +271,7 @@ export function ScheduleCalendar({
                 <span className={cn("text-[13px] font-bold leading-none", isActive ? "text-frost" : "text-snow")}>
                   {d.day}
                 </span>
-                <span className="mt-1 font-mono text-[10px] leading-none opacity-75">
+                <span className="mt-1 font-accent text-[10px] leading-none opacity-75">
                   {d.items.length} release{d.items.length === 1 ? "" : "s"}
                 </span>
               </button>
@@ -309,7 +309,7 @@ export function ScheduleCalendar({
         className="no-scrollbar snap-x-rail -mx-1 flex gap-4 overflow-x-auto scroll-pl-1 px-1 pb-4 pt-1 outline-none"
       >
         {isEmpty ? (
-          <p className="flex w-full items-center justify-center rounded-xl border border-line/70 bg-surface/40 px-4 py-10 text-center font-mono text-[11px] text-faint">
+          <p className="flex w-full items-center justify-center rounded-xl border border-line/70 bg-surface/40 px-4 py-10 text-center font-accent text-[11px] text-faint">
             No premieres scheduled for {day.day}
           </p>
         ) : (
@@ -317,7 +317,7 @@ export function ScheduleCalendar({
         )}
       </div>
 
-      <p className="mt-1 hidden font-mono text-[11px] text-faint sm:block">
+      <p className="mt-1 hidden font-accent text-[11px] text-faint sm:block">
         Click a weekday to see its releases
       </p>
     </div>

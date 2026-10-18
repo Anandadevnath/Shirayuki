@@ -74,12 +74,18 @@
   --shadow-neon: 0 6px 18px -8px oklch(0 0 0 / 0.6);
 
   /* Fonts (wired via next/font CSS vars in layout.tsx)
-     sans    = Inter      — UI + body
-     display = Manrope    — headings + titles (Zen Kaku = CJK fallback)
-     mono    = Geist Mono — sparing technical accent (eyebrows, kbd, counters) */
-  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+     sans    = Plus Jakarta Sans — UI + body
+     display = Manrope          — headings + titles (Zen Kaku = CJK fallback)
+     accent  = Space Grotesk    — spare technical accent (labels, kbd, counters)
+     The three roles are mutually exclusive: a component picks the role that
+     matches the *job* of the text, never a family name. */
+  --font-sans: var(--font-jakarta), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-manrope), var(--font-zen), ui-sans-serif, system-ui, sans-serif;
-  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+  --font-accent: var(--font-grotesk), var(--font-sans);
+  /* No genuine monospace anywhere in the UI (kbd keys, counters and clock
+     digits are all rendered by the accent face with `tabular-nums`), so
+     Tailwind's default `font-mono` is deliberately left un-overridden. Use
+     `font-accent` — not `font-mono` — for technical text. */
 
   /* Type scale — one role per line of text so components stop hand-rolling
      sizes. Each token is a full declaration (size / line-height /
@@ -88,6 +94,8 @@
      30 → 38 → 48) and use `clamp()` where the role must scale down on
      phones without a breakpoint. */
   --type-hero: clamp(1.875rem, 1.2rem + 2.6vw, 3rem);      /* 30 → 48 */
+  --type-display: 2rem;                                    /* 32 */
+  --type-display-sm: 2.4rem;                               /* 38.4 (≥640px) */
   --type-page: clamp(1.5rem, 1.2rem + 1vw, 1.875rem);      /* 24 → 30 */
   --type-section: clamp(1.25rem, 1.1rem + 0.5vw, 1.5rem);  /* 20 → 24 */
   --type-title: 1.0625rem;                                 /* 17 */
@@ -169,9 +177,25 @@
   .text-hero {
     font-family: var(--font-display);
     font-size: var(--type-hero);
-    font-weight: 700;
-    line-height: 1.1;
-    letter-spacing: -0.025em;
+    font-weight: 800;
+    line-height: 1.06;
+    letter-spacing: -0.03em;
+  }
+  /* Second display tier — the watch page's cinematic title block. Same
+     family, weight, leading and tracking as the hero so the two most
+     prominent titles on the site read as one tier; only the size step
+     differs (and keeps the deliberate 32 → 38.4px step at 640px rather
+     than going fluid, which would re-wrap the dense title block on
+     phones). */
+  .text-display {
+    font-family: var(--font-display);
+    font-size: var(--type-display);
+    font-weight: 800;
+    line-height: 1.06;
+    letter-spacing: -0.03em;
+  }
+  @media (min-width: 640px) {
+    .text-display { font-size: var(--type-display-sm); }
   }
   .text-page {
     font-family: var(--font-display);
@@ -225,28 +249,40 @@
     line-height: 1;
     letter-spacing: 0;
   }
-  /* Small decorative / technical label — the mono accent. Uppercase +
-     tracking live here so callers don't repeat them; reserve it for
-     eyebrows, kbd and counters, never body copy. */
+  /* Small decorative / technical label — the Space Grotesk accent.
+     Uppercase + tracking live here so callers don't repeat them; reserve it
+     for eyebrows, kbd and counters, never body copy. `tabular-nums` keeps
+     the clock/counter digits from shifting as they tick. */
   .text-label {
-    font-family: var(--font-mono);
+    font-family: var(--font-accent);
     font-size: var(--type-label);
     font-weight: 600;
     line-height: 1.2;
     text-transform: uppercase;
     letter-spacing: 0.14em;
+    font-variant-numeric: tabular-nums;
   }
   /* Uppercase UI label in the sans face — for structural labels that are
      not technical (panel eyebrows like "Anime Info", tab groups). Same
      tracking discipline as `.text-label` but stays in the readable UI
-     face so non-technical text doesn't read as code. */
+     face so non-technical text doesn't read as code. Weight stays at 600
+     rather than bold: 11px uppercase at 700 + wide tracking shouts. */
   .text-eyebrow {
     font-family: var(--font-sans);
     font-size: var(--type-label);
-    font-weight: 700;
+    font-weight: 600;
     line-height: 1.2;
     text-transform: uppercase;
-    letter-spacing: 0.16em;
+    letter-spacing: 0.15em;
+  }
+
+  /* The accent face is reserved for technical text, so its figures are
+     always tabular: counters, clocks, episode numbers and schedule dates
+     then hold a stable width without every call site repeating
+     `tabular-nums`. Chains with Tailwind's generated `.font-accent`
+     family utility (this rule sets the numeric variant, not the family). */
+  .font-accent {
+    font-variant-numeric: tabular-nums;
   }
 
   .glass {
@@ -936,32 +972,17 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
   animation: menu-in 0.2s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* Command palette. Backdrop fades while the panel rises a touch and
-   settles from 98.5% scale — the standard overlay choreography. The
-   close path adds `[data-closing]` variants so the transition out is
-   as intentional as the transition in (exit = 160ms). */
-@keyframes palette-backdrop-in {
-  from { opacity: 0; }
-  to   { opacity: 1; }
-}
-@keyframes palette-panel-in {
-  from { opacity: 0; transform: translate3d(0, 10px, 0) scale(0.985); }
-  to   { opacity: 1; transform: translate3d(0, 0, 0) scale(1); }
-}
-.palette-backdrop {
-  animation: palette-backdrop-in 0.19s ease-out both;
-}
-.palette-panel {
-  animation: palette-panel-in 0.26s cubic-bezier(0.16, 1, 0.3, 1) both;
-}
-.palette-backdrop[data-closing="1"],
-.palette-panel[data-closing="1"] {
-  animation: palette-backdrop-in 0.16s ease-in both reverse;
-}
-.palette-panel[data-closing="1"] {
-  animation-name: palette-panel-in;
-  /* reverse of the entrance reads as a clean settle-out */
-}
+/* Command palette — the enter/exit choreography now lives in Motion
+   (components/search/CommandPalette.tsx): AnimatePresence with `overlayPanel` /
+   `overlayBackdrop` from lib/motion/tokens.ts. The panel rises a touch and
+   settles from 98.5% scale, and the exit is a real reverse animation with no
+   timer involved. It moved out of CSS because a running CSS animation
+   outranks an inline style, so a Motion transform on these elements could
+   never have applied while the keyframes existed.
+
+   Note the reduced-motion path is now handled by MotionConfig
+   (`reducedMotion="user"`), which keeps the opacity fade and drops the rise
+   — the same guarantee the `[data-closing]` variant pair used to provide. */
 
 /* Press feedback — the shared micro-interaction for solid CTAs and
     toolbar buttons. Hover lift + active press on the same transform
@@ -1138,4 +1159,39 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
        intent explicit and keeps the delays from staggering in. */
     animation: none;
   }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Interactive card layer (Motion-for-React surfaces)
+
+   The transforms themselves are written from JS by
+   components/motion/TiltCard.tsx — two pointer-driven Motion values read
+   back through springs, so an interrupted tilt reroutes instead of
+   restarting and nothing re-renders on pointer move. Everything that can be
+   expressed in CSS is here instead.
+
+   `.tilt-card` is the tilting element itself (the caller's frame: rounded,
+   overflow-hidden, ring). Its CSS jobs are:
+     · `isolation: isolate` — contains the specular blend below so it can
+       only ever brighten its own card, never the page behind it;
+     · `transform-style: flat` is left alone; the perspective lives in the
+       Motion transform (`transformPerspective`), which is also what makes
+       the glow's translate read as depth rather than a flat slide.
+
+   `.tilt-glow` — the specular sheen. Hidden until hover/focus-within, then
+   crossfaded; `plus-lighter` composites it as LIGHT (white + white = white),
+   so the poster brightens and the title over it stays fully legible instead
+   of being veiled. Only ever rendered for fine pointers, so touch devices
+   pay nothing. ──────────────────────────────────────────────────────────── */
+.tilt-card {
+  isolation: isolate;
+}
+.tilt-glow {
+  opacity: 0;
+  mix-blend-mode: plus-lighter;
+  transition: opacity 300ms ease;
+}
+.tilt-card:hover > .tilt-glow,
+.tilt-card:focus-within > .tilt-glow {
+  opacity: 1;
 }

@@ -1,8 +1,8 @@
 "use client";
 
 import { useCallback, useEffect, useLayoutEffect, useRef, useState } from "react";
-import Link from "next/link";
 import Image from "next/image";
+import { motion, useScroll, useTransform } from "motion/react";
 import {
   Play,
   Plus,
@@ -14,6 +14,8 @@ import {
 } from "lucide-react";
 import type { SpotlightModel } from "@/lib/providers/types";
 import { EpBadges } from "@/components/anime/Badges";
+import { TapButton, TapLink, pressProps } from "@/components/motion/tappable";
+import { useReducedMotionSSR } from "@/lib/utils/useReducedMotion";
 import { truncate } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import { isInList, toggleList, WATCHLIST_EVENT } from "@/lib/watchlist/local";
@@ -34,15 +36,16 @@ function MyListButton({ anime }: { anime: SpotlightModel }) {
   }, [anime.id]);
 
   return (
-    <button
+    <TapButton
       type="button"
       onClick={() =>
         toggleList({ id: anime.id, title: anime.title, poster: anime.poster, type: anime.type })
       }
       aria-pressed={added}
       aria-label={`${added ? "Remove from" : "Add to"} My List: ${anime.title}`}
+      {...pressProps}
       className={cn(
-        "press text-btn flex h-11 items-center gap-2 rounded-[var(--radius-btn)] border px-5 backdrop-blur-md transition-colors",
+        "text-btn flex h-11 items-center gap-2 rounded-[var(--radius-btn)] border px-5 backdrop-blur-md transition-colors",
         added
           ? "border-frost/50 bg-frost-soft text-frost"
           : "border-line bg-base/30 text-snow hover:border-frost/40 hover:text-frost",
@@ -50,7 +53,7 @@ function MyListButton({ anime }: { anime: SpotlightModel }) {
     >
       {added ? <Check className="size-4" /> : <Plus className="size-4" />}
       {added ? "In My List" : "My List"}
-    </button>
+    </TapButton>
   );
 }
 
@@ -81,6 +84,29 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
   // Auto-advance pauses while hovered, focused, or dragging — single flag
   // mirrors LatestEpisodes so both carousels feel identical to the user.
   const [interacting, setInteracting] = useState(false);
+
+  // ── Scroll parallax ────────────────────────────────────────────────────
+  // As the hero leaves the viewport the art lags (moves down relative to the
+  // page) and the copy rises and fades, so the section reads as a scene the
+  // camera pulls out of rather than a flat block scrolling up. Transform-only,
+  // so the hero never reflows and never invalidates a paint; the values are
+  // only ever read by the `style` of the layers below, so nothing here causes
+  // a React re-render.
+  //
+  // Gated off entirely for reduced-motion users: `MotionConfig`'s
+  // `reducedMotion="user"` neutralises Motion's *animations*, but a motion
+  // value written straight to `style` is not an animation and would slip past
+  // it, so this channel carries its own gate.
+  const sectionRef = useRef<HTMLElement>(null);
+  const reduce = useReducedMotionSSR();
+
+  const { scrollYProgress } = useScroll({
+    target: sectionRef,
+    offset: ["start start", "end start"],
+  });
+  const artScrollY = useTransform(scrollYProgress, [0, 1], [0, 72]);
+  const copyScrollY = useTransform(scrollYProgress, [0, 1], [0, -48]);
+  const copyOpacity = useTransform(scrollYProgress, [0, 0.8], [1, 0.3]);
 
   // ── Initial-reveal gate ────────────────────────────────────────────────
   // `artReady` gates ONLY the heavy key art — not the copy. The hero's copy
@@ -249,6 +275,7 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
   // scrim sit behind the whole navbar instead of starting under it.
   return (
     <section
+      ref={sectionRef}
       className="relative left-[calc(50%-50cqw)] -mt-[calc(4rem_+_var(--space-page-y))] w-[100cqw] overflow-x-clip focus:outline-none focus-visible:ring-1 focus-visible:ring-frost/60 touch-pan-y select-none"
       role="group"
       aria-roledescription="carousel"
@@ -279,9 +306,16 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
             boundary row and the rows below it are the same continuous paint.
             pointer-events-none keeps the overhang from stealing hovers or
             swipes from the Trending cards riding above it. ── */}
-        <div
+        {/* The whole atmosphere plane (key art + blurred fill + aurora +
+            petals) is one parallax layer: it lags the scroll, so the copy in
+            front of it separates cleanly. Transform-only, and the layers
+            underneath keep their own CSS keyframes — Motion's transform lives
+            on this wrapper, never on an element that a CSS animation also
+            drives. */}
+        <motion.div
           aria-hidden
           className="art-dissolve pointer-events-none absolute inset-x-0 top-0 h-[calc(100%+12rem)]"
+          style={reduce ? undefined : { y: artScrollY }}
         >
           <div className="absolute inset-0">
             {list.map((s, idx) =>
@@ -364,7 +398,9 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
               drift on long transform-only loops (26s / 32s). They sit ABOVE
               the art and BELOW every scrim + text layer, so they read as
               ambient scene lighting, never as a veil over the copy, and are
-              frozen entirely under reduced-motion. ── */}
+              frozen entirely under reduced-motion. The drift keyframes stay on
+              the two children, and no transform is applied here, so nothing
+              can collide with a CSS-driven transform. ── */}
           <div aria-hidden className="absolute inset-0 overflow-hidden">
             <div className="aurora-a absolute -left-[12%] top-[12%] h-[62%] w-[55%] rounded-full bg-frost/[0.08] blur-[130px]" />
             <div className="aurora-b absolute -right-[10%] top-[38%] h-[58%] w-[46%] rounded-full bg-frost-deep/[0.08] blur-[140px]" />
@@ -392,7 +428,7 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
               />
             ))}
           </div>
-        </div>
+        </motion.div>
 
         {/* Cinematic scrims — a gentle vignette so the art reads as one calm
             scene: darker at the edges and base, lighter through the middle. The
@@ -500,7 +536,13 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
             NOT keyed — the buttons stay planted under the cursor between
             slide changes (remounting them both flickers the My List state
             and yanks click targets mid-interaction). ── */}
-        <div className="relative z-10 flex flex-1 items-center pb-[10vh]">
+        {/* The copy is the near plane: it rises and fades a little as the hero
+            scrolls away. The stagger choreography above is untouched (it is
+            CSS, keyed per slide). */}
+        <motion.div
+          className="relative z-10 flex flex-1 items-center pb-[10vh]"
+          style={reduce ? undefined : { y: copyScrollY, opacity: copyOpacity }}
+        >
           {/* This container is the SHARED content container — identical to
               <main>'s mx-auto max-w-[1460px] px-4 sm:px-6 lg:px-8 — so the
               hero title/copy/CTA block shares its exact left and right
@@ -527,7 +569,7 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
                 Featured
               </span>
               <span
-                className="font-mono text-[11px] font-medium tabular-nums text-snow/65"
+                className="font-accent text-[11px] font-medium tabular-nums text-snow/65"
                 style={{ writingMode: "vertical-rl" }}
               >
                 {String(active + 1).padStart(2, "0")} / {String(n).padStart(2, "0")}
@@ -612,17 +654,21 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
                   the stack's `gap-5` gives this row the largest beat (~32px),
                   lifting the actions clear of the descriptive copy. */}
               <div className="hero-in mt-3 flex flex-wrap items-center gap-3" style={heroDelay(430)}>
-                <Link
+                {/* Primary action: spring-backed hover/press (the `.press` CSS
+                    class it used to carry is superseded by the same feedback
+                    done with springs). */}
+                <TapLink
                   href={`/watch/${a.id}`}
-                  className="press text-btn flex h-11 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 text-base"
+                  {...pressProps}
+                  className="text-btn flex h-11 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 text-base"
                 >
                   <Play className="size-4 fill-current" /> Watch Now
-                </Link>
+                </TapLink>
                 <MyListButton anime={a} />
               </div>
             </div>
           </div>
-        </div>
+        </motion.div>
       </div>
     </section>
   );
