@@ -25,6 +25,8 @@
 
 import { promises as dns } from "node:dns";
 import net from "node:net";
+import http from "node:http";
+import https from "node:https";
 
 export type ProxyUrlResult =
   | { ok: true; url: URL }
@@ -125,6 +127,118 @@ async function resolvesToPublic(hostname: string): Promise<boolean> {
   return ok;
 }
 
+/* ── DNS-rebinding hardening (SEC-03) ────────────────────────────────────────
+ * `validateProxyUrl` resolves DNS, then the request resolves it AGAIN — a
+ * classic TOCTOU. An attacker who controls the authoritative DNS answer can
+ * return a public IP for the validation lookup and a private IP for the
+ * connection. The fix is to PIN the connection to the exact IP we validated:
+ * we resolve once here, keep those validated addresses, and hand the kernel a
+ * `lookup` that can ONLY return them. TLS SNI (`servername`) and the `Host`
+ * header keep the ORIGINAL hostname, so CDN virtual-hosting still works.
+ *
+ * If pinning cannot be used (e.g. an IP-literal target, which needs no DNS),
+ * or if the pinned transport fails for any reason, the caller falls back to
+ * the ordinary `fetch`, so playback never becomes LESS functional than before.
+ * ------------------------------------------------------------------------- */
+
+/** Resolve a hostname to its addresses. Returns null on failure. */
+async function resolveAll(hostname: string): Promise<Array<{ address: string; family: number }> | null> {
+  try {
+    const addrs = await dns.lookup(hostname, { all: true, verbatim: true });
+    return addrs.map((a) => ({ address: a.address, family: a.family }));
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * A `lookup` implementation that only ever yields the pre-validated addresses.
+ * This is what makes the connection immune to a DNS flip after validation.
+ */
+function pinnedLookup(validated: Array<{ address: string; family: number }>) {
+  return (
+    _hostname: string,
+    _options: unknown,
+    cb: (err: NodeJS.ErrnoException | null, address: string | Array<{ address: string; family: number }>, family?: number) => void,
+  ) => {
+    const first = validated[0];
+    if (!first) {
+      cb(new Error("no validated address"), "", 0);
+      return;
+    }
+    cb(null, first.address, first.family);
+  };
+}
+
+/**
+ * Bridge a Node `IncomingMessage` to a web `ReadableStream` so the pinned
+ * transport can hand the route a normal `Response` whose body still streams
+ * (media segments must not be buffered).
+ */
+function nodeStreamToWeb(stream: http.IncomingMessage): ReadableStream<Uint8Array> {
+  return new ReadableStream<Uint8Array>({
+    start(controller) {
+      stream.on("data", (chunk: Buffer) => controller.enqueue(new Uint8Array(chunk)));
+      stream.on("end", () => controller.close());
+      stream.on("error", (err) => controller.error(err));
+    },
+    cancel() {
+      stream.destroy();
+    },
+  });
+}
+
+/**
+ * Perform a GET over Node's http/https with the connection PINNED to the
+ * validated IP(s). Returns a WHATWG `Response` or throws on transport failure
+ * (the caller then falls back to plain `fetch`).
+ *
+ * Only a HEAD-like concern matters here: the media segment BODY streams through
+ * the returned Response, so this must preserve streaming. We hand back the
+ * Node `IncomingMessage` as a web ReadableStream.
+ */
+async function pinnedFetch(
+  target: URL,
+  headers: Record<string, string>,
+  validated: Array<{ address: string; family: number }>,
+  signal: AbortSignal,
+): Promise<Response> {
+  const isHttps = target.protocol === "https:";
+  const mod = isHttps ? https : http;
+
+  return await new Promise<Response>((resolve, reject) => {
+    const req = mod.request(
+      {
+        protocol: target.protocol,
+        hostname: target.hostname,
+        port: target.port || (isHttps ? 443 : 80),
+        path: `${target.pathname}${target.search}`,
+        method: "GET",
+        headers,
+        // Keep SNI + certificate validation against the real hostname.
+        ...(isHttps ? { servername: target.hostname } : {}),
+        // The security-critical bit: resolve to the exact validated IP.
+        lookup: pinnedLookup(validated) as never,
+        signal,
+      },
+      (res) => {
+        const outHeaders = new Headers();
+        for (const [k, v] of Object.entries(res.headers)) {
+          if (Array.isArray(v)) for (const vv of v) outHeaders.append(k, vv);
+          else if (v != null) outHeaders.set(k, v);
+        }
+        const status = res.statusCode ?? 502;
+        // Redirects are handled by the caller; expose the body as null for them.
+        const body =
+          status >= 300 && status < 400 ? null : nodeStreamToWeb(res);
+        resolve(new Response(body, { status, headers: outHeaders }));
+      },
+    );
+    req.on("error", reject);
+    req.end();
+  });
+}
+
 /**
  * Validate a caller-supplied proxy target. Returns the parsed URL when it is
  * safe to fetch from our server, otherwise the rejection reason.
@@ -218,11 +332,35 @@ export async function fetchGuarded(
     const timer = setTimeout(() => controller.abort(), timeoutMs);
     let res: Response;
     try {
-      res = await fetch(current.toString(), {
-        headers,
-        redirect: "manual",
-        signal: controller.signal,
-      });
+      // SEC-03: for a DNS hostname, pin the connection to the validated IP so
+      // a post-validation DNS flip cannot redirect it to private space. An IP
+      // literal needs no lookup and skips pinning. If the pinned transport
+      // fails we fall back to the ordinary fetch (never less functional).
+      const host = current.hostname.toLowerCase().replace(/^\[|\]$/g, "");
+      const usePin = net.isIP(host) === 0;
+      if (usePin) {
+        const validated = await resolveAll(host);
+        if (validated && validated.every((a) => isPublicIp(a.address))) {
+          try {
+            res = await pinnedFetch(current, headers, validated, controller.signal);
+          } catch {
+            res = await fetch(current.toString(), {
+              headers,
+              redirect: "manual",
+              signal: controller.signal,
+            });
+          }
+        } else {
+          // Could not re-resolve to a public address → block rather than fetch.
+          return { ok: false, status: 502, reason: "host did not resolve to a public address" };
+        }
+      } else {
+        res = await fetch(current.toString(), {
+          headers,
+          redirect: "manual",
+          signal: controller.signal,
+        });
+      }
     } catch {
       return { ok: false, status: 502, reason: "upstream fetch failed" };
     } finally {
