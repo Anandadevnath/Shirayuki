@@ -146,11 +146,17 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "application/vnd.apple.mpegurl",
-        // VOD playlists are stable for the lifetime of the upload. Short
-        // fresh window + stale-while-revalidate lets the edge serve the
-        // cached rewritten playlist to repeat viewers without an upstream
-        // round-trip, while still picking up upstream changes within ~5 min.
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        // SEC-05: the rewritten body embeds the caller's `referer` in every
+        // segment URI, so a playlist fetched WITH a referer is caller-specific
+        // and must NOT be shared-cached (two callers with the same url but
+        // different referers would otherwise share one entry and the second
+        // would get the first's referer — a cross-provider/cross-referer
+        // leak, and a 403 risk). Without a referer the body is
+        // referer-independent and stays shareable. `private` keeps the browser
+        // free to reuse it while forbidding the shared edge cache.
+        "Cache-Control": referer
+          ? "private, max-age=60, stale-while-revalidate=300"
+          : "public, s-maxage=60, stale-while-revalidate=300",
       },
     });
   }

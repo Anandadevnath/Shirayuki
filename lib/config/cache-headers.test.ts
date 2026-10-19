@@ -81,3 +81,20 @@ test("ephemeral source + stream routes keep no-store caching", () => {
     "/api/sources must set no-store caching",
   );
 });
+
+test("playlist cache is referer-aware so it cannot cross referer contexts (SEC-05)", () => {
+  // The rewritten playlist body embeds the caller's referer in every segment
+  // URI. A playlist fetched WITH a referer must therefore be `private` (never
+  // shared-cached); without one it may stay shareable. Guard the branch exists.
+  const src = read("app/api/stream/route.ts");
+  assert.match(
+    src,
+    /referer\s*\?\s*"private, max-age=60/,
+    "a referer-bearing playlist must use a private cache policy",
+  );
+  assert.match(
+    src,
+    /:\s*"public, s-maxage=60, stale-while-revalidate=300"/,
+    "a referer-less playlist may keep the shared edge cache",
+  );
+});
