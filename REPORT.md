@@ -325,3 +325,144 @@ Ordered. Each states benefit, implementation risk, and player/design impact. **N
 ---
 
 *End of report. No application files were modified; this document is the sole artefact created.*
+
+---
+
+# Remediation Log (2026-10-19)
+
+This section records the follow-up remediation work against the findings above.
+Small, independently reviewable commits on `feat/favicon-logo`; each was gated on
+lint + typecheck + tests + build before the next.
+
+## What was fixed
+
+### 1. Bounded playlist/subtitle reads — SEC-02 (commit `fa53c8a`)
+**Finding:** `/api/stream` read playlists with `res.text()` and `/api/subtitle`
+read the whole VTT body with no byte cap → memory-exhaustion DoS from a hostile
+upstream.
+**Root cause:** the body was fully buffered before any size was known.
+**Fix:** new leaf module `lib/api/bounded-body.ts` — a declared-`Content-Length`
+pre-check plus a reader that enforces the cap **while reading** and cancels the
+upstream once exceeded. Playlists cap at 4 MiB, subtitles at 2 MiB; oversized →
+`413`, read error → `502`.
+**Critical difference from the reverted attempt:** ONLY the text branches are
+bounded. The HLS media segment path still streams `res.body` straight through,
+byte-for-byte unchanged — the earlier revert happened because it wrapped the
+segment body.
+**Files:** `lib/api/bounded-body.ts` (+ test), `app/api/stream/route.ts`,
+`app/api/subtitle/route.ts`.
+**Tests:** `lib/api/bounded-body.test.ts` (10) — declared-size accept/reject,
+unknown-length, mid-read abort of multi-MB bodies, exact-cap boundary, read
+failure distinct from over-size.
+
+### 2. Scoped rate limiting — SEC-01 (commit `7ce3739`)
+**Why the first attempt was reverted:** it applied a per-REQUEST gate to every
+`/api/stream` call, including every HLS **segment**. One episode fires hundreds
+of segment requests, so the gate throttled normal viewing and (with Upstash) put
+a serial round-trip on the hottest path.
+**Fix:** the limiter is applied ONLY to the open relay's **entry points** —
+manifest/playlist fetches (inside the `isPlaylist` branch) and `/api/subtitle`.
+**The media segment branch has no limiter and still streams `res.body`** — real
+playback never touches it. Pluggable fixed window: in-memory per-instance
+fallback (always on) + optional distributed Upstash Redis; **fail-open** when the
+store is unreachable so a false 429 can never break an episode load. Generous
+defaults (120 manifest / 60 s, 60 subtitle / 60 s per client), keyed on the
+platform `x-real-ip` (rightmost-XFF fallback), hashed.
+**Files:** `lib/api/rate-limit.ts` (+ test), `app/api/stream/route.ts`,
+`app/api/subtitle/route.ts`.
+**Tests:** `lib/api/rate-limit.test.ts` (12) — window allow/deny/reset,
+per-scope isolation, generous-burst-under-limit, sustained-abuse-denied,
+fail-open, key derivation.
+
+### 3. DNS rebinding (SSRF) — SEC-03 (commit `89575fb`)
+**Finding:** `validateProxyUrl` resolved DNS and `fetch` resolved it again — a
+TOCTOU an attacker controlling the DNS answer could flip public→private.
+**Fix:** for hostname targets the guarded fetch now resolves once, requires every
+address to be public, and connects through a Node `http`/`https` request whose
+`lookup` can only return the validated addresses. TLS SNI (`servername`) and the
+`Host` header keep the original hostname, so CDN virtual hosting still works; the
+media body still streams (segments are not buffered). On any pinned-transport
+failure it falls back to the ordinary `fetch` — never less functional, only more
+constrained. IP literals skip pinning. Redirect-hop re-validation unchanged.
+**Files:** `lib/api/proxy-guard.ts` (+ test).
+**Tests:** `proxy-guard.test.ts` 15 pass (added private-resolving hostname
+rejection + hostname-validated-before-fetch).
+
+### 4. Playlist cache isolation — SEC-05 (commit `4193aef`)
+**Finding:** the rewritten playlist body embeds the caller's `referer` in every
+segment URI, but the response was `public, s-maxage=60` keyed only on the URL —
+two callers with different referers could share one entry.
+**Fix:** a playlist fetched WITH a referer is now `private` (browser may reuse,
+shared edge cache may not); without a referer the body is referer-independent and
+keeps the shared cache.
+**Files:** `app/api/stream/route.ts`, `lib/config/cache-headers.test.ts`.
+
+### 5. CSP review — SEC-04/07/08 (no change)
+Reviewed the enforced policy against the player's actual resource use. Verified
+by source that hls.js loads media through the same-origin `/api/stream`, the
+segment body is fed to MSE (`media-src 'self' blob:`), the hls worker is a blob
+URL (`worker-src 'self' blob:`), subtitles are fetched from the same-origin
+`/api/subtitle` (not the raw CDN URL — `Player.tsx:770`), and posters use the
+allowed `img-src https:`. **No verified change was warranted**, and the report
+explicitly warns against removing any of these directives. Left as-is.
+
+### 6. Cleanup — DS-01 / SEC-10 / SEC-11 (commit `4f62fdd`)
+- **SnowLayer (DS-01):** `onVisibility` scheduled a new RAF without cancelling
+  the pending one, so a chain surviving a hide could run alongside the new one.
+  Now cancels before every state change — exactly one loop per canvas.
+- **AGENTS.md (SEC-10):** corrected the stale claim that a `headers()` rule
+  edge-caches `/` and `/watch/*` (the home route uses `revalidate = 60`;
+  `/watch/*` is uncacheable).
+- **CI (SEC-11):** trigger on pushes to every branch, not just `main`/`master`.
+- **Dev advisories (SEC-09):** `npm audit --omit=dev` → **0 vulnerabilities**.
+  The 5 `high`s are the `eslint-config-next` toolchain (dev-only). No
+  force-upgrade, per the report's guidance.
+
+## Verification (what was actually run)
+
+| Check | Result |
+|---|---|
+| `npm run typecheck` | exit 0 |
+| `npm run lint` | exit 0 |
+| `npm test` | **81 pass / 0 fail** (was 56; +25 new) |
+| `npm run build` | exit 0 |
+| `npm audit --omit=dev` | 0 vulnerabilities |
+
+**End-to-end server-side playback chain** (local production build `next start`,
+live provider `hls.dramahot.top`):
+
+| Step | Result |
+|---|---|
+| Master playlist (with referer) | `200`, `Cache-Control: private, max-age=60…` (SEC-05) |
+| Variant playlist | `200`, 53 KB |
+| **Media segment** | `200`, 593 KB, valid MPEG-TS (`0x47` sync) — streamed |
+| Subtitle `.vtt` | `200`, 20 KB, `text/vtt` |
+| SSRF probes (metadata / localhost / file / creds / private / IPv4-mapped) | all `400` |
+| Manifest abuse (130 rapid, limit 120) | 120 × `200`, 10 × `429` |
+| Segment burst (30 requests, limit 5) | **0 × `429`** — segments never limited |
+
+## Verification limits — NOT claimed
+
+- **Real-browser playback was NOT performed.** No browser is available in this
+  environment (Chrome not installed for the integrated browser). The server-side
+  chain above proves the proxy/limits/cache/pinning serve manifest, segment and
+  subtitle bytes correctly, but does **not** prove hls.js rendering, seeking,
+  episode switching, subtitle rendering, or failover in a browser.
+- **Edge/CDN cache behaviour on the live deployment was NOT verified** (local
+  `next start` only). `scripts/verify-cache-headers.mjs` remains the post-deploy
+  check.
+- **DNS-rebinding pinning was verified against one live CDN** (TLS/SNI
+  preserved); other CDNs with unusual TLS setups were not exercised.
+- **`.github/workflows/ci.yml` could not be pushed** — the automation token
+  lacks the `workflow` scope; the file is committed locally.
+
+## Remaining / accepted risk
+
+- **Distributed rate limiting is opt-in** — without Upstash env vars the limit
+  is per-instance. Code-complete; deployment-complete only with credentials.
+- **Open-relay by design (SEC-04)** — mitigated (not closed) by the scoped
+  limiter; a hostname allowlist remains infeasible due to CDN rotation.
+- **CSP `unsafe-inline` script-src / broad `img-src https:` (SEC-07/08)** —
+  deliberate, required for Next hydration and rotating posters.
+- **Dev-only npm advisories (SEC-09)** — accepted pending an upstream bump.
+
