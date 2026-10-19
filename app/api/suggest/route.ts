@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
 import { suggest, safe } from "@/lib/api";
-import { SWR_60 } from "@/lib/api/proxy-responses";
 
 export async function GET(request: Request) {
   const q = new URL(request.url).searchParams.get("q")?.trim() ?? "";
@@ -15,7 +14,7 @@ export async function GET(request: Request) {
     { results: res.data.slice(0, 8) },
     {
       headers: {
-        "Cache-Control": SWR_60,
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
       },
     },
   );

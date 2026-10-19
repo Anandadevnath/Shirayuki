@@ -1,28 +1,35 @@
 import type { NextRequest } from "next/server";
 import { fetchGuarded, sanitizeReferer } from "@/lib/api/proxy-guard";
-import { readTextWithinLimit } from "@/lib/api/playlist";
-import { MAX_SUBTITLE_BYTES, withinDeclaredSize } from "@/lib/api/rate-limit";
-import { proxyOptions, enforceRateLimit } from "@/lib/api/proxy-responses";
 
 export const runtime = "nodejs";
 
-/** Preflight handler (shared — see lib/api/proxy-responses.ts). */
+/** Preflight handler kept for protocol clarity — it answers WITHOUT any
+ *  `Access-Control-Allow-*` headers, so cross-origin requests are refused. */
 export function OPTIONS() {
-  return proxyOptions();
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Range, Content-Type",
+      "Access-Control-Max-Age": "86400",
+    },
+  });
 }
 
-/** Proxy external .vtt subtitles (CORS) so `<SubtitleOverlay>` can load them.
- *  Some CDNs gate the .vtt behind the same `Referer` as the video, so an
- *  optional `referer` param is forwarded upstream (the browser cannot set it
- *  cross-origin).
+/** Proxy external .vtt subtitle files (CORS) so `<SubtitleOverlay>` can load
+ *  them. Some hosting CDNs (e.g. hls.dramahot.top for hianime's ZokoAnime
+ *  server) gate the .vtt behind the same `Referer` as the video stream and 403
+ *  without it. Accept an optional `referer` param (mirroring /api/stream) and
+ *  forward it upstream — the browser cannot set Referer cross-origin, so this
+ *  is the only way the subtitle fetch can carry it.
  *
- *  SECURITY: same SSRF guard as /api/stream (redirect hops re-validated);
- *  `referer` sanitized; no wildcard CORS. The body stays `text/vtt`, so a
- *  hostile upstream payload is inert. */
+ *  SECURITY: same SSRF exposure as /api/stream — `url` is caller-controlled,
+ *  so it goes through `lib/api/proxy-guard.ts` (scheme + private/DNS checks)
+ *  with every redirect hop re-validated, and `referer` is sanitized. No
+ *  wildcard CORS: all consumers load this same-origin, so `ACAO: *` would only
+ *  expose an open relay. The body stays `text/vtt` (never HTML), so a hostile
+ *  upstream payload is inert in this response. */
 export async function GET(req: NextRequest) {
-  const limited = await enforceRateLimit(req, "subtitle");
-  if (limited) return limited;
-
   const url = new URL(req.url);
   const target = url.searchParams.get("url");
   const referer = sanitizeReferer(url.searchParams.get("referer")) ?? "";
@@ -47,15 +54,7 @@ export async function GET(req: NextRequest) {
 
   if (!res.ok) return new Response(`Upstream ${res.status}`, { status: res.status });
 
-  // Refuse an oversized subtitle; the cap is enforced while reading so a
-  // chunked upstream is not fully buffered.
-  if (!withinDeclaredSize(res.headers.get("content-length"), MAX_SUBTITLE_BYTES)) {
-    return new Response("Subtitle too large", { status: 413 });
-  }
-  const text = await readTextWithinLimit(res.body, MAX_SUBTITLE_BYTES);
-  if (text === null) {
-    return new Response("Subtitle too large", { status: 413 });
-  }
+  const text = await res.text();
   const body = text.startsWith("WEBVTT") ? text : `WEBVTT\n\n${text}`;
   return new Response(body, {
     headers: {

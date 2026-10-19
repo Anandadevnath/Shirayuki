@@ -1,34 +1,70 @@
 import type { NextRequest } from "next/server";
 import { fetchGuarded, sanitizeReferer } from "@/lib/api/proxy-guard";
-import { rewritePlaylist, capStream, readTextWithinLimit } from "@/lib/api/playlist";
-import {
-  MAX_PLAYLIST_BYTES,
-  MAX_SEGMENT_BYTES,
-  withinDeclaredSize,
-} from "@/lib/api/rate-limit";
-import { proxyOptions, enforceRateLimit, SWR_60 } from "@/lib/api/proxy-responses";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** First-party HLS proxy: fetches upstream with the `Referer` the embed hosts
- *  require, rewrites playlist URIs back through this proxy, streams segments.
+/** First-party HLS proxy. The embed hosts gate streams behind a `Referer` the
+ *  browser can't set, and serve cross-origin. We fetch upstream with the right
+ *  headers, rewrite playlist URIs back through this proxy, and stream segments.
  *
- *  SECURITY: `url` is caller-controlled, so every target — including each
- *  redirect hop — passes the SSRF guard (lib/api/proxy-guard.ts); `referer` is
- *  sanitized. No permissive CORS header: all consumers load same-origin, so a
- *  wildcard ACAO would only make this an open relay. Rate-limited per client
- *  and byte-capped (SEC-01) so it cannot be used as free bandwidth. */
+ *  SECURITY: the `url` parameter is caller-controlled, so every target —
+ *  including each redirect hop — must pass the SSRF guard in
+ *  `lib/api/proxy-guard.ts` (scheme/host/DNS checks against private and
+ *  link-local ranges). The `referer` parameter is sanitized before it is
+ *  forwarded upstream. There is deliberately NO permissive CORS header: all
+ *  consumers (the player, hls.js, native Safari HLS) load these URLs
+ *  same-origin, so a wildcard `Access-Control-Allow-Origin` would only turn
+ *  this deployment into an open relay for third-party sites. */
 
-/** Preflight handler (shared — see lib/api/proxy-responses.ts). */
+/** Preflight handler kept for protocol clarity — it answers WITHOUT any
+ *  `Access-Control-Allow-*` headers, so cross-origin requests are refused. */
 export function OPTIONS() {
-  return proxyOptions();
+  return new Response(null, {
+    status: 204,
+    headers: {
+      "Access-Control-Allow-Methods": "GET, OPTIONS",
+      "Access-Control-Allow-Headers": "Range, Content-Type",
+      "Access-Control-Max-Age": "86400",
+    },
+  });
+}
+
+function proxied(absUrl: string, referer: string, origin: string): string {
+  const u = new URL("/api/stream", origin);
+  u.searchParams.set("url", absUrl);
+  if (referer) u.searchParams.set("referer", referer);
+  return u.pathname + "?" + u.searchParams.toString();
+}
+
+function rewritePlaylist(
+  text: string,
+  playlistUrl: string,
+  referer: string,
+  origin: string,
+): string {
+  const base = new URL(playlistUrl);
+  const resolve = (uri: string) => new URL(uri, base).toString();
+
+  return text
+    .split("\n")
+    .map((line) => {
+      const trimmed = line.trim();
+      if (!trimmed) return line;
+
+      // URI="..." attributes (EXT-X-KEY, EXT-X-MAP, etc.)
+      if (trimmed.startsWith("#")) {
+        return line.replace(/URI="([^"]+)"/g, (_m, uri) => {
+          return `URI="${proxied(resolve(uri), referer, origin)}"`;
+        });
+      }
+      // Bare URI line (variant playlist or segment)
+      return proxied(resolve(trimmed), referer, origin);
+    })
+    .join("\n");
 }
 
 export async function GET(req: NextRequest) {
-  const limited = await enforceRateLimit(req, "stream");
-  if (limited) return limited;
-
   const { searchParams, origin } = new URL(req.url);
   const target = searchParams.get("url");
   const referer = sanitizeReferer(searchParams.get("referer")) ?? "";
@@ -67,33 +103,22 @@ export async function GET(req: NextRequest) {
     ctype.includes("vnd.apple.mpegurl");
 
   if (isPlaylist) {
-    // Refuse an oversized playlist; readTextWithinLimit enforces the cap while
-    // reading so a chunked upstream is not fully buffered.
-    if (!withinDeclaredSize(res.headers.get("content-length"), MAX_PLAYLIST_BYTES)) {
-      return new Response("Playlist too large", { status: 413 });
-    }
-    const text = await readTextWithinLimit(res.body, MAX_PLAYLIST_BYTES);
-    if (text === null) {
-      return new Response("Playlist too large", { status: 413 });
-    }
+    const text = await res.text();
     const rewritten = rewritePlaylist(text, upstream.toString(), referer, origin);
     return new Response(rewritten, {
       status: 200,
       headers: {
         "Content-Type": "application/vnd.apple.mpegurl",
-        "Cache-Control": SWR_60,
+        // VOD playlists are stable for the lifetime of the upload. Short
+        // fresh window + stale-while-revalidate lets the edge serve the
+        // cached rewritten playlist to repeat viewers without an upstream
+        // round-trip, while still picking up upstream changes within ~5 min.
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
       },
     });
   }
 
   // Segment / key / init — stream bytes through, preserve range semantics.
-  // Reject a declared-oversized segment before any bytes move; chunked bodies
-  // are capped while streaming.
-  if (!withinDeclaredSize(res.headers.get("content-length"), MAX_SEGMENT_BYTES)) {
-    res.body?.cancel().catch(() => {});
-    return new Response("Segment too large", { status: 413 });
-  }
-
   const out = new Headers();
   const passthrough = ["content-type", "content-length", "content-range", "accept-ranges"];
   for (const h of passthrough) {
@@ -103,8 +128,5 @@ export async function GET(req: NextRequest) {
   if (!out.has("content-type")) out.set("content-type", "video/mp2t");
   out.set("Cache-Control", "public, max-age=3600");
 
-  return new Response(capStream(res.body, MAX_SEGMENT_BYTES), {
-    status: res.status,
-    headers: out,
-  });
+  return new Response(res.body, { status: res.status, headers: out });
 }
