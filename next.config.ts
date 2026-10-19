@@ -30,6 +30,10 @@ const POSTER_HOSTS = [
   "myanimelist.net",
 ];
 
+/** Dev server (webpack HMR) evaluates modules via eval, so the CSP below must
+ *  allow 'unsafe-eval' in development. Production builds never use eval. */
+const isDev = process.env.NODE_ENV !== "production";
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: process.cwd(),
@@ -105,6 +109,11 @@ const nextConfig: NextConfig = {
           //     the home hero preloads a raw CDN URL (app/page.tsx).
           //   media-src/connect-src 'self' blob: — HLS/media and fetch all go
           //     through the first-party /api/* proxies, never cross-origin.
+          //
+          // `'unsafe-eval'` is added in DEVELOPMENT only: Next's dev server /
+          // webpack HMR runtime evaluates modules via eval, which the strict
+          // policy blocks (EvalError). Production never uses eval, so the
+          // shipped policy stays strict.
           {
             key: "Content-Security-Policy",
             value: [
@@ -113,7 +122,7 @@ const nextConfig: NextConfig = {
               "base-uri 'self'",
               "frame-ancestors 'self'",
               "form-action 'self'",
-              "script-src 'self' 'unsafe-inline'",
+              isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self' 'unsafe-inline'",
               "img-src 'self' data: blob: https:",
               "media-src 'self' blob:",
               "connect-src 'self'",
