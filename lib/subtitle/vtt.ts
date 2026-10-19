@@ -41,7 +41,7 @@ export function parseVtt(src: string): VttCue[] {
     if (lines.length < 2) continue;
 
     // Find the timing line (skip optional cue id on first line)
-    let timingIdx = lines.findIndex((l) => TIMING.test(l));
+    const timingIdx = lines.findIndex((l) => TIMING.test(l));
     if (timingIdx === -1) continue;
     const timingLine = lines[timingIdx]!;
     const m = timingLine.match(

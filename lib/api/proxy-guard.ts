@@ -171,7 +171,6 @@ export async function validateProxyUrl(raw: string | null | undefined): Promise<
  */
 export function sanitizeReferer(raw: string | null | undefined): string | null {
   if (!raw) return null;
-  // eslint-disable-next-line no-control-regex
   if (/[\u0000-\u001f\u007f]/.test(raw)) return null;
   try {
     const url = new URL(raw);

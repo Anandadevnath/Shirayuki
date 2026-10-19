@@ -14,28 +14,32 @@ import { ErrorState } from "@/components/common/States";
 import HomeSkeleton from "./loading";
 import { Suspense } from "react";
 
-// Home is rendered dynamically (not statically prerendered) on purpose.
+// Home is statically regenerated on the EDGE with a short ISR window.
 //
-// Data caching lives in the provider's `getHome()` which fetches with
-// `revalidate: 900` + `tags: ["home"]` — Next's data-layer fetch cache is what
-// keeps this fast across visits. The ROUTE itself is dynamic so a build-time
-// fetch outcome is never baked into a static page.
+// SEC-02 / PERF-06 remediation: this route previously used
+// `export const dynamic = "force-dynamic"`, which made Next.js emit
+// `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate` on
+// the HTML response. That framework-emitted directive won over the
+// `next.config.ts` `headers()` rule in production, so the intended
+// `s-maxage`/`stale-while-revalidate` edge cache never took effect and every
+// visitor paid a full serverless render + both upstream fetches.
 //
-// Why: hianime.at is a fragile upstream and intermittently responds 402
-// ("Payment required" bot-gate) to the API's scrapes. With `revalidate = 900`
-// at the route level, a single bad response at build time was frozen into the
-// ISR page for a full 15-minute window — every build during a flaky spell baked
-// an ErrorState home. Dynamic rendering means a failed fetch simply
-// falls through to the next request and self-heals the moment the API recovers.
-// Trade-off: the page no longer participates in route-level HTTP caching /
-// back-forward cache, since the provider fetch cache carries the 15-min window.
+// We now use `revalidate = 60` instead. Next.js then emits the correct shared
+// cache directive itself (`s-maxage=60, stale-while-revalidate=...`) and the
+// edge serves the rendered HTML to all but the first request per window, with
+// background revalidation.
 //
-// Note on fetch caching: as of Next 15, `force-dynamic` (or `dynamic`) only
-// disables caching for fetches that have NO explicit cache config. Our provider
-// fetches pass an explicit `next.revalidate`, so the Data Cache is still used —
-// this route is dynamic per-request but the upstream hop is served from cache
-// within its revalidate window.
-export const dynamic = "force-dynamic";
+// The original reason for `force-dynamic` still holds and is preserved: a
+// flaky upstream must never bake a bad page into a long-lived static entry.
+// The window is deliberately SHORT (60s, not the 900s that was tried before):
+// a transient upstream failure can survive for at most 60 seconds, after which
+// the next request re-renders. The provider fetch layer additionally carries
+// its own `revalidate: 900` + `tags: ["home"]` Data Cache and the `safe()`
+// error containment, so a failed upstream hop renders the existing ErrorState
+// for one 60s window and self-heals — it does not compound across requests.
+//
+// `dynamicParams` is irrelevant here (no dynamic segment on "/").
+export const revalidate = 60;
 
 /* ── Required vs optional home data ──────────────────────────────────────────
  * The home board is revealed as ONE unit: every section (Spotlight, Trending,

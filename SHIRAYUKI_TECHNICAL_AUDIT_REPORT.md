@@ -7,6 +7,41 @@
 **Audit type:** Read-only static review + safe live checks. No code, config, dependency, or deployment changes were made.
 **Auditor stance:** Senior Next.js architecture / performance / security review.
 
+> **REMEDIATION UPDATE (2026-10-19).** A separate remediation pass has since
+> addressed the P0/P1 findings and the safe P2 items. See
+> `SHIRAYUKI_REMEDIATION_REPORT.md` for full detail. Per-finding status is
+> annotated inline below. Summary:
+>
+> - **SEC-02 / PERF-06 — FIXED (locally verified).** Root cause confirmed:
+>   `force-dynamic` emits `Cache-Control: no-store` that neither `headers()` nor
+>   middleware can override. Home now uses `export const revalidate = 60` and
+>   serves `x-nextjs-cache: HIT` + `s-maxage=60`. The `/watch/*` routes cannot be
+>   shared-cached (ephemeral tokens / unbounded segment) and were left dynamic
+>   with the misleading config removed.
+> - **SEC-01 — FIXED (locally verified).** Per-client rate limiting
+>   (`429` + `Retry-After`), response-size ceilings, and a streaming byte cap
+>   added to `/api/stream` and `/api/subtitle`. Distributed limiting is opt-in
+>   via Upstash env vars (documented in `.env.example`).
+> - **PERF-04 — FIXED.** `icon.png` 202 KB → 26 KB; `apple-icon.png` 34 KB → 7 KB.
+> - **SEC-05 — FIXED.** `npm run lint` is now a non-interactive ESLint CLI
+>   (exit 0); GitHub Actions CI added (lint + typecheck + test + build + bundle
+>   budget). 76 unit tests pass (was 51).
+> - **SEC-04 — PARTIALLY FIXED.** CSP now enforces all non-script directives
+>   (img/media/connect/font/style/worker/object/base/frame/form). `script-src`
+>   is *not* enforced because a nonce policy conflicts with the 60s shared edge
+>   cache; a report-only script policy is deployed instead.
+> - **PERF-01 / PERF-03 — PARTIALLY FIXED (unmeasured).** Mobile-only blur
+>   reductions for `.glass` (20→10px) and the ambient blobs (140–150→70px).
+>   Lighthouse was not re-run (no browser available); re-measurement is a
+>   required follow-up on a preview deploy.
+> - **PERF-02 — NOT APPLICABLE AS STATED.** The 217 KB chunk is React DOM +
+>   `scheduler` (the App Router framework baseline loaded by every route); it is
+>   not removable application code. No fabricated optimization was applied.
+> - **Code quality — dead `headroom-ai` dependency REMOVED.**
+>
+> Still unverified: production behaviour (needs post-deploy `npm run verify:cache`),
+> real browser playback under CSP, Lighthouse scores, backend API internals.
+
 ---
 
 ## Section 1 — Executive summary
@@ -37,11 +72,11 @@ The weaknesses are concentrated in three places, not spread thinly:
 - The `motion` v14 (Motion for React) dependency appears to add weight relative to its usage; `headroom-ai` is a declared dependency with **zero usage** (dead dependency).
 
 ### Highest-priority recommended actions
-1. **Fix the production caching** so `/` and `/watch/*` actually emit the intended `s-maxage`/`stale-while-revalidate` header (root cause: `force-dynamic` + `next.config` `headers()` precedence). — P0/P1
-2. **Add rate limiting / request ceilings to `/api/stream` and `/api/subtitle`.** — P1
-3. **Cut the 212 KB unused chunk** and reduce the aggressive blur/backdrop-filter usage on mobile surfaces. — P1
-4. **Shrink `app/icon.png`** and route it through the image pipeline. — P2
-5. **Stand up real CI** (lint via ESLint CLI, typecheck, test) and remove the dead `headroom-ai` dependency. — P2
+1. ~~**Fix the production caching**~~ — **DONE** (home now `revalidate = 60`; `/watch/*` correctly left dynamic). — P0/P1
+2. ~~**Add rate limiting / request ceilings to `/api/stream` and `/api/subtitle`.**~~ — **DONE** (opt-in distributed via Upstash). — P1
+3. ~~**Cut the 212 KB unused chunk**~~ — **investigated: it is the React DOM framework baseline, not removable.** Mobile blur cost **reduced** (unmeasured). — P1
+4. ~~**Shrink `app/icon.png`**~~ — **DONE** (202 KB → 26 KB). — P2
+5. ~~**Stand up real CI**~~ & ~~remove the dead `headroom-ai` dependency~~ — **DONE**. — P2
 
 ### What could not be inspected
 - The **backend repository** for `shirayuki-anime-api-ruby.vercel.app` was **not available**. Only its externally observable behaviour (headers, status codes, response times) was measured. Its source, dependency tree, caching, and rate-limiting internals are **unverified**.
@@ -145,7 +180,14 @@ docs/        design + plan notes
 ### SEC-01 — `/api/stream` is an unauthenticated open relay to any public URL, with no rate limiting
 - **Severity:** Medium
 - **Confidence:** High
-- **Status:** Confirmed
+- **Status:** ~~Confirmed~~ **FIXED (locally verified, 2026-10-19).** Per-client
+  rate limiting (`429` + `Retry-After`), response-size ceilings, and a streaming
+  byte cap now protect `/api/stream` and `/api/subtitle`. Distributed limiting
+  (`lib/api/rate-limit.ts`) uses Upstash Redis when configured, with a
+  per-instance fallback otherwise. Verified locally: 3 requests allowed → `429`
+  with `Retry-After: 60`; independent per-IP buckets. Remaining: set
+  `UPSTASH_REDIS_REST_URL`/`_TOKEN` for global enforcement. See
+  `SHIRAYUKI_REMEDIATION_REPORT.md` §3 (Phase 2).
 - **Component:** `app/api/stream/route.ts`, `lib/api/proxy-guard.ts`
 - **Evidence:** Live probe (safe, single request):
   ```
@@ -166,7 +208,17 @@ docs/        design + plan notes
 ### SEC-02 — Production HTML caching header is silently overridden; `/` and `/watch/*` ship `no-store`
 - **Severity:** Medium (availability/cost; also undermines the documented cache design)
 - **Confidence:** High
-- **Status:** Confirmed
+- **Status:** ~~Confirmed~~ **FIXED for `/` (locally verified, 2026-10-19);
+  `/watch/*` intentionally dynamic.** Root cause confirmed by experiment:
+  `force-dynamic` emits `Cache-Control: no-store`, which **neither**
+  `next.config.ts` `headers()` **nor** middleware can override (a middleware-set
+  header value was provably discarded). Fix: home now uses
+  `export const revalidate = 60`, so Next emits `s-maxage=60, swr=…` itself
+  (local repeat request returns `x-nextjs-cache: HIT`). The `/watch/*` routes
+  cannot be shared-cached — `/watch/[id]/[ep]` embeds a per-request ephemeral
+  stream token and `/watch/[id]` sits under an unbounded dynamic segment — so
+  the misleading config was removed and the routes documented as dynamic.
+  Post-deploy verification: `npm run verify:cache`.
 - **Component:** `next.config.ts:117-144` vs `app/page.tsx:38`, `app/watch/[id]/[ep]/page.tsx:12`
 - **Evidence:** Deployed responses on two consecutive home requests:
   ```
@@ -201,7 +253,16 @@ docs/        design + plan notes
 ### SEC-04 — CSP omits `script-src`, `style-src`, and `img-src`
 - **Severity:** Low
 - **Confidence:** High
-- **Status:** Confirmed (by design, per code comment)
+- **Status:** ~~Confirmed (by design, per code comment)~~ **PARTIALLY FIXED
+  (2026-10-19).** The CSP now enforces `default-src 'self'`, `img-src`,
+  `media-src`, `connect-src`, `font-src`, `style-src`, `worker-src` in addition
+  to the original `object-src`/`base-uri`/`frame-ancestors`/`form-action`. A
+  `Content-Security-Policy-Report-Only: script-src 'self' 'unsafe-inline'` header
+  is deployed to observe violations. **`script-src` is deliberately NOT
+  enforced:** a nonce-based policy is incompatible with the home page's 60s
+  shared edge cache (every visitor would receive the same nonce). Enforcing it
+  requires hashing the fixed inline scripts or a different render architecture —
+  see `SHIRAYUKI_REMEDIATION_REPORT.md` §6.
 - **Component:** `next.config.ts:107`
 - **Evidence:** `Content-Security-Policy: object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'` — no `default-src`/`script-src`.
 - **Impact:** The policy blocks plugin/base/form/frame vectors (good), but does not constrain script or image sources. It is a hardening gap, not an active vulnerability — XSS breakout is already prevented elsewhere (JSON-LD escaping, no unsanitised HTML except controlled inline scripts).
@@ -211,7 +272,12 @@ docs/        design + plan notes
 ### SEC-05 — `next lint` is broken; no CI enforcement
 - **Severity:** Low (process/regression risk)
 - **Confidence:** High
-- **Status:** Confirmed
+- **Status:** ~~Confirmed~~ **FIXED (2026-10-19).** `next lint` replaced with the
+  ESLint CLI (`eslint .`) using `eslint@9.39.5` + `eslint-config-next@15.5.28`
+  (flat config in `eslint.config.mjs`). `npm run lint` now exits 0
+  non-interactively. All previously reported issues were fixed. A GitHub Actions
+  workflow (`.github/workflows/ci.yml`) runs lint + typecheck + test + build +
+  a bundle-size budget. Tests: 76 pass (was 51).
 - **Component:** `package.json:15`, absent ESLint config
 - **Evidence:** `npm run lint` prints the interactive "How would you like to configure ESLint?" prompt and hangs/awaits input.
 - **Impact:** No lint-based safety net; hooks/`any`/unsafe patterns can regress silently. Combined with no CI, only `tsc` + 51 unit tests guard the build.
@@ -245,6 +311,16 @@ docs/        design + plan notes
 
 ### PERF-02 — A 212 KB JavaScript chunk is entirely unused on the home page
 - **Route/component:** `/` build output; `.next/static/chunks/ed9f2dc4-1b30afa125168b53.js`
+- **Status:** ~~Confirmed~~ **NOT APPLICABLE AS STATED (investigated 2026-10-19).**
+  Direct inspection of the build shows `ed9f2dc4…js` contains **React DOM +
+  `scheduler`** — the App Router client runtime loaded by *every* route — and
+  `1255…js` (65.9 KB) is Next's router client runtime. Lighthouse's
+  `unused-javascript` heuristic flags React's cold paths, but this is the
+  framework baseline, not removable application code. `hls.js` is already
+  isolated in its own lazy chunk, `zustand` in a small dedicated chunk, and
+  lucide icons are tree-shaken via `optimizePackageImports`. **No
+  application-level barrel bloat was found**, so no optimization was applied
+  (rather than a speculative one that cannot help).
 - **Evidence:** Lighthouse mobile `unused-javascript`: `ed9f2dc4…js` = **212 KB wasted / 212 KB total** (100% unused); `708…js` 34 KB wasted; `1255…js` 32 KB wasted. Build output lists the shared "First Load JS" at 340 KB for every route, with `ed9f2dc4…` at 217 KB reported in the budget table.
 - **User-visible impact:** Directly inflates TBT (5,490 ms) and TTI.
 - **Likely root cause:** A shared chunk (likely the `motion`/Motion graph and/or lucide/zustand barrel content pulled into the shared First Load bundle) is loaded but not exercised on the home route.
@@ -254,6 +330,13 @@ docs/        design + plan notes
 
 ### PERF-03 — Heavy `Style & Layout` on mobile (blur/backdrop-filter/gradients)
 - **Route/component:** `app/globals.css`, cinematic surfaces (`backdrop-filter`, gradients, 25 keyframes), `SnowLayer` canvas
+- **Status:** ~~Confirmed~~ **PARTIALLY FIXED (2026-10-19, unmeasured).**
+  Mobile-only (`≤767px`) reductions: `.glass` backdrop blur 20px → 10px, and the
+  three ambient blobs 140–150px → 70px blur at 36rem → 22rem. Desktop/tablet
+  visuals are unchanged. `SnowLayer` was deliberately left untouched (its
+  lifecycle / reduced-motion / idle-throttle safeguards retained) because no
+  device evidence justified a change. **Not re-measured** — no browser is
+  available in the remediation environment.
 - **Evidence:** Lighthouse mobile `mainthread-work-breakdown`: **Other 7,478 ms**, **Style & Layout 6,123 ms**, Rendering 1,761 ms, Script Evaluation 1,569 ms. `app/globals.css` contains ~15 `backdrop-filter`/`blur(` usages and 25 `@keyframes`. Bootup-time attributes 4,957 ms to one chunk and ~7.7 s to `/`.
 - **User-visible impact:** Janky scrolling and slow interaction on throttled CPUs, despite `CLS 0`.
 - **Likely root cause:** Layered frosted-glass panels and ambient effects force repeated style recalculation/compositing.
@@ -263,6 +346,11 @@ docs/        design + plan notes
 
 ### PERF-04 — `app/icon.png` is 202 KB and served unoptimized
 - **Component:** `app/icon.png`
+- **Status:** ~~Confirmed~~ **FIXED (2026-10-19).** Re-encoded as 256-colour
+  palette PNGs (transparency + artwork preserved; measured mean channel error
+  0.89/255). `app/icon.png` **202,660 B → 26,479 B**; `app/apple-icon.png`
+  **34,603 B → 7,021 B** (verified via the locally-served bytes). ~203 KB saved
+  per visitor.
 - **Evidence:** File is **198 KB, 512×512 PNG**; production serves `/icon.png` at **199 KB** (Lighthouse network list). `app/apple-icon.png` is 34 KB (180×180).
 - **User-visible impact:** A ~200 KB favicon is downloaded by every visitor; adds to total transfer and competes with the LCP image.
 - **Optimization:** Re-export as a smaller, palette-quantised PNG (and/or provide correctly sized icon variants). Next serves `app/icon.png` as-is unless sized appropriately.
@@ -331,13 +419,13 @@ docs/        design + plan notes
 - Accessibility is a real strength: Lighthouse a11y **100**; the drawer uses `role="dialog"`, `aria-modal`, Escape-to-close, and focus management (`components/layout/NavDrawer.tsx`).
 
 **Issues**
-1. **Dead dependency:** `headroom-ai` is declared with zero usage — remove it to reduce install surface and supply-chain footprint.
-2. **Broken linting / no CI:** see SEC-05. Type-check + unit tests are the only gates.
-3. **Deployment/config drift:** the `headers()` cache rules do not take effect (SEC-02) — a documented intent that silently fails. This class of bug needs a production verification step.
-4. **Client-component weight:** 27 `"use client"` files; `Player.tsx` is 1,249 lines and `Spotlight.tsx` 656 lines — large but cohesive. Watch for bundle growth around Motion.
-5. **Duplication with drift risk:** `RankedGrid` (grid class string) and `RankedGridSkeleton` mirror the same column tiers in two files; a mismatch would cause skeleton→content layout shift. Low risk today, worth documenting.
-6. **No E2E / integration tests** for the critical playback path (failover, SSRF proxy, stream rewrite).
-7. `npm outdated` shows several majors behind (`next` 15→16, `react` 19.2→19.3 available, `zod` 3→4, `typescript` 5.9→7.0) — validate before upgrading; zod 4 in particular is a breaking change.
+1. **Dead dependency:** `headroom-ai` is declared with zero usage — **REMOVED (2026-10-19).**
+2. **Broken linting / no CI:** see SEC-05. — **FIXED (2026-10-19).**
+3. **Deployment/config drift:** the `headers()` cache rules do not take effect (SEC-02) — a documented intent that silently fails. This class of bug needs a production verification step. — **FIXED for `/` + post-deploy `verify:cache` script added.**
+4. **Client-component weight:** 27 `"use client"` files; `Player.tsx` is 1,249 lines and `Spotlight.tsx` 656 lines — large but cohesive. Watch for bundle growth around Motion. — unchanged.
+5. **Duplication with drift risk:** `RankedGrid` (grid class string) and `RankedGridSkeleton` mirror the same column tiers in two files; a mismatch would cause skeleton→content layout shift. Low risk today, worth documenting. — unchanged.
+6. **No E2E / integration tests** for the critical playback path (failover, SSRF proxy, stream rewrite). — **PARTIALLY ADDRESSED:** pure cores now unit-tested (rate limiter, playlist rewrite, size caps); route-level/E2E still open.
+7. `npm outdated` shows several majors behind (`next` 15→16, `react` 19.2→19.3 available, `zod` 3→4, `typescript` 5.9→7.0) — validate before upgrading; zod 4 in particular is a breaking change. — unchanged (no upgrades made).
 
 **Unsafe typing:** none found — no `any`, `as any`, or `<any>` in `app/`, `components/`, or `lib/`.
 
@@ -411,25 +499,30 @@ Shared First Load JS            340 kB
 
 ## Section 8 — Prioritized remediation roadmap
 
+> **STATUS (2026-10-19):** items 1, 2, 5, 6, 7 and the dead-dependency item are
+> **DONE**; item 4 (JS) was **investigated and found not applicable** (framework
+> baseline); item 3 was **partially done** (mobile blur reductions, unmeasured);
+> item 8 (CSP `script-src`) remains **blocked** by the edge-cache/nonce conflict.
+
 ### P0 — Immediate
 *(No confirmed critical security or reliability defect requiring immediate hotfix. The items below are the highest-leverage fixes and should start immediately.)*
-- **SEC-02 / PERF-06** — Make the `/` and `/watch/*` cache headers actually effective in production (or remove the misleading config). Verify with `curl -sI`.
+- **SEC-02 / PERF-06** — ~~Make the `/` and `/watch/*` cache headers actually effective~~ **DONE for `/`**; `/watch/*` documented as intentionally dynamic. Verify with `curl -sI` (or `npm run verify:cache`) post-deploy.
 
 ### P1 — High priority
-- **SEC-01** — Add rate limiting + size/concurrency ceilings to `/api/stream` and `/api/subtitle`.
-- **PERF-02** — Eliminate the 212 KB unused JS chunk (identify owner, code-split).
-- **PERF-01 / PERF-03** — Reduce mobile main-thread cost (blur/backdrop-filter/gradient audit; verify `motion` is not in shared First Load JS).
-- **SEC-03** — Constrain upstream API CORS + add rate limiting (requires backend repo access).
+- **SEC-01** — ~~Add rate limiting + size/concurrency ceilings to `/api/stream` and `/api/subtitle`~~ **DONE** (set Upstash env vars for global enforcement).
+- **PERF-02** — ~~Eliminate the 212 KB unused JS chunk~~ **N/A: verified to be the React DOM framework baseline.**
+- **PERF-01 / PERF-03** — **PARTIALLY DONE** — mobile blur/ambient reductions applied; **re-measure** on a preview.
+- **SEC-03** — Constrain upstream API CORS + add rate limiting (still requires backend repo access — **OPEN**).
 
 ### P2 — Medium priority
-- **PERF-04** — Shrink `app/icon.png` (and `apple-icon.png`) and serve appropriately sized icons.
-- **SEC-05** — Fix linting (ESLint CLI/config) and add a CI workflow running typecheck + test (+ lint).
-- **Code quality** — Remove the dead `headroom-ai` dependency.
-- **SEC-04** — Add nonce-based `script-src` + `img-src`/`style-src` CSP (carefully, with playback testing).
-- **Testing** — Add integration tests for the proxy routes and the playback failover path.
+- **PERF-04** — ~~Shrink `app/icon.png`~~ **DONE** (202 KB → 26 KB; 34 KB → 7 KB).
+- **SEC-05** — ~~Fix linting and add CI~~ **DONE** (ESLint CLI + GitHub Actions + bundle budget).
+- **Code quality** — ~~Remove the dead `headroom-ai` dependency~~ **DONE**.
+- **SEC-04** — ~~Add nonce-based `script-src`~~ **PARTIALLY DONE** (all non-script directives enforced; script policy report-only; enforcement blocked by edge cache).
+- **Testing** — **PARTIALLY DONE** — 25 unit tests added (rate limiter, playlist rewriting, size caps, cache config); route-level/E2E playback tests remain **OPEN** (needs an alias-resolving harness).
 
 ### P3 — Optional polish
-- **PERF-05** — Verify hero banner optimization path.
+- **PERF-05** — ~~Verify hero banner optimization path~~ **VERIFIED correct** (`next/image` + `priority` + server preload). No change needed.
 - Address Lighthouse **SEO 92** if the penalty is unintended.
 - Document the `RankedGrid`/`RankedGridSkeleton` column-tier coupling.
 - Plan dependency upgrades (Next 16, zod 4, TypeScript 7) as a coordinated, tested effort — not piecemeal.

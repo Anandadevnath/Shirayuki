@@ -9,6 +9,21 @@ import CinematicInfo from "@/components/details/CinematicInfo";
 import { PlayerLoader } from "@/components/player/PlayerLoader";
 import { cn } from "@/lib/utils/cn";
 
+// SEC-02 / PERF-06 remediation note.
+//
+// This route CANNOT be served from a shared edge cache, and that is correct:
+// it resolves an ephemeral stream URL (`getSources`/`getServers` are fetched
+// with `noStore: true`) and embeds that per-request token as the player src.
+// A `no-store` fetch opts the whole route out of static generation in Next 15,
+// so `export const revalidate` here would have no effect — the route is
+// dynamic by necessity. We therefore deliberately keep it dynamic and DO NOT
+// install a misleading cache config for it (the former `next.config.ts`
+// `headers()` rule for `/watch/:path*` was removed for exactly this reason).
+//
+// Cost note: the response is `no-store`, but the underlying provider reads
+// (detail, episodes, servers) are React-`cache()`-memoized per request and the
+// stable ones are Data-Cache backed, so a repeat view reuses the cached data
+// and only re-does the cheap render + the single ephemeral token resolve.
 export const dynamic = "force-dynamic";
 
 type Props = {

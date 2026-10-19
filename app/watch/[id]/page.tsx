@@ -14,6 +14,14 @@ import { WatchRedirectClient } from "./WatchRedirectClient";
  * the client island just chooses the target episode and replaces the URL.
  *
  * No API, endpoint, schema, or provider change. Pure frontend addition.
+ *
+ * Cacheability (SEC-02 / PERF-06): an earlier attempt added
+ * `export const revalidate = 60` here, but it is a no-op — this route sits under
+ * an UNBOUNDED dynamic segment (`[id]`) with no `generateStaticParams`, so
+ * Next always renders it on demand and emits `Cache-Control: no-store`. It is
+ * therefore left dynamic on purpose, with no misleading cache config. The only
+ * edge-cached HTML route in the app is `/` (see app/page.tsx). The episode-list
+ * read below is still Data-Cache backed, so a repeat view is cheap.
  */
 export default async function WatchRedirect({
   params,

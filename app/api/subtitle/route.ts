@@ -1,19 +1,14 @@
 import type { NextRequest } from "next/server";
 import { fetchGuarded, sanitizeReferer } from "@/lib/api/proxy-guard";
+import { readTextWithinLimit } from "@/lib/api/playlist";
+import { MAX_SUBTITLE_BYTES, withinDeclaredSize } from "@/lib/api/rate-limit";
+import { proxyOptions, enforceRateLimit } from "@/lib/api/proxy-responses";
 
 export const runtime = "nodejs";
 
-/** Preflight handler kept for protocol clarity — it answers WITHOUT any
- *  `Access-Control-Allow-*` headers, so cross-origin requests are refused. */
+/** Preflight handler (shared implementation — see lib/api/proxy-responses.ts). */
 export function OPTIONS() {
-  return new Response(null, {
-    status: 204,
-    headers: {
-      "Access-Control-Allow-Methods": "GET, OPTIONS",
-      "Access-Control-Allow-Headers": "Range, Content-Type",
-      "Access-Control-Max-Age": "86400",
-    },
-  });
+  return proxyOptions();
 }
 
 /** Proxy external .vtt subtitle files (CORS) so `<SubtitleOverlay>` can load
@@ -30,6 +25,10 @@ export function OPTIONS() {
  *  expose an open relay. The body stays `text/vtt` (never HTML), so a hostile
  *  upstream payload is inert in this response. */
 export async function GET(req: NextRequest) {
+  // SEC-01: same abuse posture as /api/stream — rate-limit before any work.
+  const limited = await enforceRateLimit(req, "subtitle");
+  if (limited) return limited;
+
   const url = new URL(req.url);
   const target = url.searchParams.get("url");
   const referer = sanitizeReferer(url.searchParams.get("referer")) ?? "";
@@ -54,7 +53,17 @@ export async function GET(req: NextRequest) {
 
   if (!res.ok) return new Response(`Upstream ${res.status}`, { status: res.status });
 
-  const text = await res.text();
+  // SEC-01: a subtitle is text; refuse an implausibly large one. The declared
+  // `Content-Length` is a fast pre-check, and `readTextWithinLimit` enforces
+  // the ceiling DURING the read so a chunked (unknown-length) upstream is
+  // aborted rather than fully buffered into memory.
+  if (!withinDeclaredSize(res.headers.get("content-length"), MAX_SUBTITLE_BYTES)) {
+    return new Response("Subtitle too large", { status: 413 });
+  }
+  const text = await readTextWithinLimit(res.body, MAX_SUBTITLE_BYTES);
+  if (text === null) {
+    return new Response("Subtitle too large", { status: 413 });
+  }
   const body = text.startsWith("WEBVTT") ? text : `WEBVTT\n\n${text}`;
   return new Response(body, {
     headers: {

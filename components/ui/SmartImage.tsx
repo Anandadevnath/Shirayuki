@@ -43,6 +43,7 @@ type LoadState =
 export function SmartImage({
   className,
   wrapperClassName,
+  alt,
   onLoad,
   onError,
   ...props
@@ -71,6 +72,9 @@ export function SmartImage({
       <Image
         {...props}
         ref={ref}
+        // `alt` is destructured out of `props` and passed explicitly so
+        // jsx-a11y/alt-text can statically see it (a bare spread hides it).
+        alt={alt}
         // Crossfade only for a network decode this session; a cached bitmap is
         // already painted under the shimmer and must not replay an entrance.
         className={cn(

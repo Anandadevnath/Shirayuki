@@ -170,7 +170,6 @@ export function normalizePath(href: string): string {
  */
 export function assertNavUniqueness(
   navbar: NavItem[] = NAVBAR_ITEMS,
-  groups: NavGroup[] = DRAWER_GROUPS,
 ): void {
   const occurrences = (items: NavItem[]) => {
     const seen = new Map<string, string>();

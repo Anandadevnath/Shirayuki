@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
-  Star, Tv, Clock, Film, Calendar, Building2, Play, Plus,
+  Star, Tv, Clock, Film, Calendar, Building2, Plus,
   Share2, Check, Sparkles, Award, Languages, Activity,
 } from "lucide-react";
 import type { AnimeDetail } from "@/lib/providers/types";
@@ -218,7 +218,6 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
   const episodesValue = formatEpisodes(anime.episodes);
   const durationValue = formatDuration(anime.duration);
   const studio = anime.studios?.[0] ?? "—";
-  const allStudios = (anime.studios ?? []).join(", ") || "—";
   const type = anime.type ?? "TV";
   const genres = anime.genres ?? [];
   const status = anime.status ?? "";
