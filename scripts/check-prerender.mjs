@@ -1,21 +1,10 @@
 #!/usr/bin/env node
 /**
- * Prerender sanity check for the home route.
- *
- * `app/page.tsx` uses `export const revalidate = 60`, so `/` is prerendered at
- * build time. If the build-time upstream fetch fails, the prerender bakes the
- * `<ErrorState>` ("Something melted") into the static HTML — and CI, building
- * with a dummy API, could not tell a good build from a broken one.
- *
- * This script inspects the generated home HTML and fails if it looks like the
- * error state or the loading skeleton rather than real board content.
- *
- * It runs in CI after `npm run build`. When CI is intentionally built without a
- * live API, pass `--allow-unreachable` to downgrade "error state" to a warning
- * (still fails on a truly empty/blank document).
- *
- * Usage:
- *   node scripts/check-prerender.mjs [--allow-unreachable]
+ * Prerender sanity check for the home route. `/` is prerendered at build time
+ * (revalidate = 60), so a build-time upstream failure would bake the ErrorState
+ * into the static HTML while CI stayed green. Fails if the generated home HTML
+ * looks like the error state or is blank. With `--allow-unreachable`, an error
+ * state is a warning instead of a failure (for CI builds with a dummy API).
  */
 
 import { readFileSync, existsSync } from "node:fs";

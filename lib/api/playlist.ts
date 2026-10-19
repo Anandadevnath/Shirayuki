@@ -1,10 +1,8 @@
 /**
- * Pure HLS playlist rewriting for the first-party stream proxy.
- *
- * Extracted from `app/api/stream/route.ts` so it is directly unit-testable
- * under `node --test` (the route itself imports the `@/`-aliased provider graph,
- * whose extensionless imports Node cannot resolve — see AGENTS.md). No provider
- * or framework imports live here, so this module loads standalone.
+ * Pure HLS playlist rewriting + bounded body readers for the first-party stream
+ * proxy. No provider/framework imports, so it is unit-testable under
+ * `node --test` (the routes import the `@/`-aliased provider graph, which Node
+ * cannot resolve).
  */
 
 /** Build a same-origin proxy URL for an upstream absolute URL. */
@@ -15,10 +13,8 @@ export function proxied(absUrl: string, referer: string, origin: string): string
   return u.pathname + "?" + u.searchParams.toString();
 }
 
-/**
- * Rewrite every URI in an HLS playlist (bare lines + `URI="..."` attributes)
- * through the proxy, resolving relative URIs against the playlist's own URL.
- */
+/** Rewrite every URI in a playlist (bare lines + `URI="..."` attributes)
+ *  through the proxy, resolving relatives against the playlist's own URL. */
 export function rewritePlaylist(
   text: string,
   playlistUrl: string,
@@ -33,26 +29,16 @@ export function rewritePlaylist(
     .map((line) => {
       const trimmed = line.trim();
       if (!trimmed) return line;
-
-      // URI="..." attributes (EXT-X-KEY, EXT-X-MAP, etc.)
       if (trimmed.startsWith("#")) {
-        return line.replace(/URI="([^"]+)"/g, (_m, uri) => {
-          return `URI="${proxied(resolve(uri), referer, origin)}"`;
-        });
+        return line.replace(/URI="([^"]+)"/g, (_m, uri) => `URI="${proxied(resolve(uri), referer, origin)}"`);
       }
-      // Bare URI line (variant playlist or segment)
       return proxied(resolve(trimmed), referer, origin);
     })
     .join("\n");
 }
 
-/**
- * Wrap an upstream byte stream so at most `max` bytes are relayed, and the
- * upstream is cancelled the moment the ceiling is hit. Keeps streaming
- * behaviour (no full buffering) while bounding the worst case for a hostile or
- * accidentally huge target. Lives here (not in the route) so it is unit
- * testable and so `route.ts` exports nothing but its handlers.
- */
+/** Relay at most `max` bytes, cancelling the upstream once the ceiling is hit
+ *  (no buffering). `null` body passes through. */
 export function capStream(
   body: ReadableStream<Uint8Array> | null,
   max: number,
@@ -71,11 +57,7 @@ export function capStream(
         total += value.byteLength;
         if (total > max) {
           controller.error(new Error("segment exceeded size ceiling"));
-          try {
-            await reader.cancel();
-          } catch {
-            /* already closed */
-          }
+          await reader.cancel().catch(() => {});
           return;
         }
         controller.enqueue(value);
@@ -89,17 +71,9 @@ export function capStream(
   });
 }
 
-/**
- * Read a text body while enforcing a byte ceiling DURING the read, so an
- * oversized (or chunked, no-`Content-Length`) upstream is aborted before the
- * whole payload is buffered into memory. Returns `null` when the ceiling is
- * exceeded (the caller responds 413). This replaces the previous
- * `await res.text()` + post-hoc `text.length > max` check, which buffered the
- * entire body first and therefore could not bound memory.
- *
- * Non-text upstreams are still handled by `capStream` on the segment path.
- * Lives here so both proxy routes share one implementation (no drift).
- */
+/** Read a text body while enforcing `max` DURING the read, so a chunked
+ *  (no `Content-Length`) upstream is aborted instead of fully buffered.
+ *  Returns `null` when the ceiling is exceeded or the read fails. */
 export async function readTextWithinLimit(
   body: ReadableStream<Uint8Array> | null,
   max: number,
@@ -120,8 +94,7 @@ export async function readTextWithinLimit(
       chunks.push(value);
     }
   } catch {
-    // Upstream read error — fall back to whatever arrived, or null if none.
-    if (!chunks.length) return null;
+    return null;
   }
   const merged = new Uint8Array(total);
   let offset = 0;

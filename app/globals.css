@@ -291,15 +291,10 @@
     -webkit-backdrop-filter: blur(20px) saturate(1.15);
     border: 1px solid color-mix(in oklch, var(--color-frost) 14%, transparent);
   }
-  /* PERF-03: backdrop-filter is the single most expensive paint on the page,
-     and the home board stacks ~10 `.glass` panels (each a full-width surface
-     with a 20px blur). On a throttled mobile CPU that dominates "Style &
-     Layout". At <= 767px we cut the blur radius roughly in half — visually
-     near-identical for a frosted panel (the frost reads as a soft tint, not a
-     measurable blur radius) but materially cheaper per composited layer. The
-     desktop/tablet look is byte-for-byte unchanged (this rule does not apply
-     above 767px). Prefer a cheaper radius over removing frost so the Shirayuki
-     identity is preserved. */
+  /* PERF-03: backdrop-filter is the priciest paint here and the home board
+     stacks ~10 blur(20px) panels. At <=767px halve the radius (visually
+     near-identical for a frost tint, materially cheaper to composite);
+     desktop is unchanged. */
   @media (max-width: 767px) {
     .glass {
       backdrop-filter: blur(10px) saturate(1.12);
@@ -1165,15 +1160,11 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
 .ambient-drift-2 { animation: aurora-drift-b 38s ease-in-out infinite; }
 .ambient-drift-3 { animation: aurora-drift-a 44s ease-in-out infinite reverse; }
 
-/* PERF-03: the ambient field is three fixed ~36rem blobs each blurred by
-   140–150px. Blur cost grows with radius AND layer area, and on a throttled
-   mobile GPU three full-viewport 150px blurs dominate compositing. At <=767px
-   reduce the radius sharply and shrink the blobs. The glows are 4–7% opacity
-   tint, so the perceptual result is still a soft frost wash — the Shirayuki
-   backdrop identity is preserved, not removed. Desktop is unchanged. */
+/* PERF-03: the ambient field is three fixed blobs blurred by 140–150px; three
+   full-viewport blurs dominate mobile compositing. At <=767px cut the radius
+   and size (still a soft frost wash at 4–7% opacity). Desktop unchanged. */
 @media (max-width: 767px) {
-  /* Higher specificity (0,2,0) than Tailwind's single-class blur utility so
-     the override wins regardless of stylesheet order. */
+  /* Higher specificity than Tailwind's single-class blur utility. */
   .ambient-field .ambient-blob {
     --tw-blur: blur(70px);
     filter: var(--tw-blur);

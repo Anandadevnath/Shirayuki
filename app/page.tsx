@@ -14,31 +14,13 @@ import { ErrorState } from "@/components/common/States";
 import HomeSkeleton from "./loading";
 import { Suspense } from "react";
 
-// Home is statically regenerated on the EDGE with a short ISR window.
-//
-// SEC-02 / PERF-06 remediation: this route previously used
-// `export const dynamic = "force-dynamic"`, which made Next.js emit
-// `Cache-Control: private, no-cache, no-store, max-age=0, must-revalidate` on
-// the HTML response. That framework-emitted directive won over the
-// `next.config.ts` `headers()` rule in production, so the intended
-// `s-maxage`/`stale-while-revalidate` edge cache never took effect and every
-// visitor paid a full serverless render + both upstream fetches.
-//
-// We now use `revalidate = 60` instead. Next.js then emits the correct shared
-// cache directive itself (`s-maxage=60, stale-while-revalidate=...`) and the
-// edge serves the rendered HTML to all but the first request per window, with
-// background revalidation.
-//
-// The original reason for `force-dynamic` still holds and is preserved: a
-// flaky upstream must never bake a bad page into a long-lived static entry.
-// The window is deliberately SHORT (60s, not the 900s that was tried before):
-// a transient upstream failure can survive for at most 60 seconds, after which
-// the next request re-renders. The provider fetch layer additionally carries
-// its own `revalidate: 900` + `tags: ["home"]` Data Cache and the `safe()`
-// error containment, so a failed upstream hop renders the existing ErrorState
-// for one 60s window and self-heals — it does not compound across requests.
-//
-// `dynamicParams` is irrelevant here (no dynamic segment on "/").
+// Edge-cached with a short ISR window (SEC-02). The former
+// `force-dynamic` made Next emit `Cache-Control: no-store`, which overrode the
+// `next.config.ts` `headers()` rule, so nothing was cached. `revalidate = 60`
+// makes Next emit the shared `s-maxage`/`stale-while-revalidate` directive
+// itself. The window is deliberately short so a flaky upstream cannot bake a
+// bad page for long — the provider layer's own `revalidate: 900` Data Cache and
+// `safe()` containment handle recovery within one window.
 export const revalidate = 60;
 
 /* ── Required vs optional home data ──────────────────────────────────────────
@@ -48,11 +30,11 @@ export const revalidate = 60;
  * payloads before it renders any section — the schedule is no longer a separate
  * streaming island that pops in late while the rest is already on screen.
  *
- * Home is dynamic per-request (see the note above the export). Both fetches are
- * started CONCURRENTLY, then awaited together. If the schedule is slow, the
- * board waits for it (bounded — see the deadlines below); if it fails or times
- * out, the schedule section is simply omitted and the rest still renders. If
- * the required home payload fails, the page-level ErrorState is shown.
+ * Both fetches are started CONCURRENTLY, then awaited together. If the schedule
+ * is slow, the board waits for it (bounded — see the deadlines below); if it
+ * fails or times out, the schedule section is simply omitted and the rest still
+ * renders. If the required home payload fails, the page-level ErrorState is
+ * shown.
  */
 export default function HomePage() {
   // Start BOTH upstream requests immediately, in parallel, at the top of the

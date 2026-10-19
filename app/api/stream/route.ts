@@ -6,37 +6,26 @@ import {
   MAX_SEGMENT_BYTES,
   withinDeclaredSize,
 } from "@/lib/api/rate-limit";
-import { proxyOptions, enforceRateLimit, PLAYLIST_CACHE_CONTROL } from "@/lib/api/proxy-responses";
+import { proxyOptions, enforceRateLimit, SWR_60 } from "@/lib/api/proxy-responses";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
-/** First-party HLS proxy. The embed hosts gate streams behind a `Referer` the
- *  browser can't set, and serve cross-origin. We fetch upstream with the right
- *  headers, rewrite playlist URIs back through this proxy, and stream segments.
+/** First-party HLS proxy: fetches upstream with the `Referer` the embed hosts
+ *  require, rewrites playlist URIs back through this proxy, streams segments.
  *
- *  SECURITY: the `url` parameter is caller-controlled, so every target —
- *  including each redirect hop — must pass the SSRF guard in
- *  `lib/api/proxy-guard.ts` (scheme/host/DNS checks against private and
- *  link-local ranges). The `referer` parameter is sanitized before it is
- *  forwarded upstream. There is deliberately NO permissive CORS header: all
- *  consumers (the player, hls.js, native Safari HLS) load these URLs
- *  same-origin, so a wildcard `Access-Control-Allow-Origin` would only turn
- *  this deployment into an open relay for third-party sites.
- *
- *  ABUSE RESISTANCE (SEC-01): because this route relays caller-chosen public
- *  URLs, it is rate-limited per client (distributed when Upstash is configured,
- *  per-instance otherwise — see lib/api/rate-limit.ts) and bounds the bytes it
- *  will relay, so the deployment cannot be turned into a free bandwidth relay. */
+ *  SECURITY: `url` is caller-controlled, so every target — including each
+ *  redirect hop — passes the SSRF guard (lib/api/proxy-guard.ts); `referer` is
+ *  sanitized. No permissive CORS header: all consumers load same-origin, so a
+ *  wildcard ACAO would only make this an open relay. Rate-limited per client
+ *  and byte-capped (SEC-01) so it cannot be used as free bandwidth. */
 
-/** Preflight handler (shared implementation — see lib/api/proxy-responses.ts). */
+/** Preflight handler (shared — see lib/api/proxy-responses.ts). */
 export function OPTIONS() {
   return proxyOptions();
 }
 
 export async function GET(req: NextRequest) {
-  // SEC-01: per-client rate limit before any upstream work. 429 carries a
-  // `Retry-After` but no internal detail.
   const limited = await enforceRateLimit(req, "stream");
   if (limited) return limited;
 
@@ -78,10 +67,8 @@ export async function GET(req: NextRequest) {
     ctype.includes("vnd.apple.mpegurl");
 
   if (isPlaylist) {
-    // SEC-01: a playlist is text; refuse an implausibly large one. The declared
-    // `Content-Length` is a fast pre-check, and `readTextWithinLimit` enforces
-    // the ceiling DURING the read so a chunked (unknown-length) upstream is
-    // aborted rather than fully buffered into memory.
+    // Refuse an oversized playlist; readTextWithinLimit enforces the cap while
+    // reading so a chunked upstream is not fully buffered.
     if (!withinDeclaredSize(res.headers.get("content-length"), MAX_PLAYLIST_BYTES)) {
       return new Response("Playlist too large", { status: 413 });
     }
@@ -94,20 +81,16 @@ export async function GET(req: NextRequest) {
       status: 200,
       headers: {
         "Content-Type": "application/vnd.apple.mpegurl",
-        "Cache-Control": PLAYLIST_CACHE_CONTROL,
+        "Cache-Control": SWR_60,
       },
     });
   }
 
   // Segment / key / init — stream bytes through, preserve range semantics.
-  // SEC-01: refuse a segment the upstream declares as over the ceiling before
-  // any bytes move; chunked (unknown-length) bodies are capped while streaming.
+  // Reject a declared-oversized segment before any bytes move; chunked bodies
+  // are capped while streaming.
   if (!withinDeclaredSize(res.headers.get("content-length"), MAX_SEGMENT_BYTES)) {
-    try {
-      res.body?.cancel();
-    } catch {
-      /* body may already be unusable */
-    }
+    res.body?.cancel().catch(() => {});
     return new Response("Segment too large", { status: 413 });
   }
 

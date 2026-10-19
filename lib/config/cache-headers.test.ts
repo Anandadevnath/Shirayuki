@@ -5,20 +5,12 @@ import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
 /**
- * Cache-header regression guard (SEC-02 / PERF-06).
- *
- * The production bug was that the intended shared-cache directive never reached
- * the edge: `export const dynamic = "force-dynamic"` made Next emit
- * `Cache-Control: no-store` and that won over the `next.config.ts` `headers()`
- * rule. The fix is to express the intent with `export const revalidate = 60`
- * (which makes Next emit the correct `s-maxage`/`swr` itself) for the routes
- * that CAN be edge-cached, and to NOT install a misleading cache rule for the
- * route that legitimately cannot (the watch player, whose `no-store` source
- * fetch forces dynamic rendering).
- *
- * These assertions are source-level and deterministic, so they run in CI
- * without a deployment. A separate script (`scripts/verify-cache-headers.mjs`)
- * performs the live post-deploy check.
+ * Cache-header regression guard (SEC-02): the intended shared-cache directive
+ * never reached the edge because `force-dynamic` emitted `no-store` that
+ * overrode the `headers()` config. The fix is a route-level `revalidate = 60`
+ * for the cacheable route (/), and no misleading cache config for the routes
+ * that must stay dynamic (/watch/*). Source-level, so it runs in CI without a
+ * deployment; `scripts/verify-cache-headers.mjs` does the live check.
  */
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");

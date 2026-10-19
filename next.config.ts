@@ -95,48 +95,16 @@ const nextConfig: NextConfig = {
           // The player page embeds third-party HLS streams; pin frame ancestors
           // to ourselves even though /watch is noindex.
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
-          // CSP (SEC-04 hardening):
-          //   object-src     — blocks <object>/<embed> plugin injection
-          //   base-uri       — neutralises a hostile <base> hijacking relative
-          //                    URLs (asset/redirect hijack)
-          //   frame-ancestors — clickjacking (doubles as modern X-Frame-Options)
-          //   form-action    — blocks form-post exfiltration to attacker origins
-          //   default-src    — fallback for any directive we did not name
-          //   img-src        — same-origin (the next/image optimiser serves
-          //                    most posters via /_next/image) PLUS `https:`
-          //                    because (a) the home hero preloads a raw
-          //                    upstream CDN poster server-side (app/page.tsx)
-          //                    and (b) the Player poster uses a plain <img> for
-          //                    non-allowlisted hosts. An exact host allowlist is
-          //                    impossible here: poster CDNs rotate upstream.
-          //                    `data:`/`blob:` cover inline/fallback images.
-          //   media-src      — same-origin + blob (hls.js feeds MSE from
-          //                    /api/stream; blobs cover the SourceBuffer path)
-          //   connect-src    — same-origin fetch/XHR: the player only calls
-          //                    /api/sources, /api/stream, /api/subtitle
-          //   font-src       — same-origin (next/font self-hosts every face)
-          //   style-src      — 'unsafe-inline' is required by Next's inlined
-          //                    critical CSS and Motion's inline style props;
-          //                    without a nonce pipeline we cannot tighten it.
-          //   worker-src     — hls.js can spawn a worker from a blob URL
-          //   script-src     — 'self' 'unsafe-inline' (see note below).
-          //
-          // Why script-src is 'unsafe-inline' rather than absent or nonce-based:
-          //   · ABSENT is unsafe-but-not-secure: if `script-src` is omitted,
-          //     `default-src 'self'` becomes the script fallback and blocks ALL
-          //     inline <script> tags. Next.js App Router inlines its hydration /
-          //     flight bootstrap (~130 inline scripts in the built HTML) plus the
-          //     `data-anim` reveal script in app/layout.tsx — blocking them
-          //     renders the page but breaks hydration, animations and all
-          //     interactivity. So `script-src` MUST be declared.
-          //   · NONCE-based is currently incompatible with the home page's 60s
-          //     SHARED EDGE CACHE (see app/page.tsx): every visitor in the window
-          //     would receive the same nonce, defeating its purpose, or the cache
-          //     must be disabled (undoing SEC-02/PERF-06).
-          // Until the nonce/cache conflict is resolved architecturally, we
-          // declare `script-src 'self' 'unsafe-inline'` so the app hydrates.
-          // XSS breakout is still mitigated by the escaped JSON-LD
-          // (lib/utils/jsonld.ts) and the absence of unsanitised inline HTML.
+          // CSP (SEC-04). `script-src 'self' 'unsafe-inline'` is required: with
+          // `script-src` absent, `default-src` is the script fallback and blocks
+          // all inline <script> (Next's hydration/flight bootstrap + the
+          // data-anim reveal script in app/layout.tsx), breaking hydration. A
+          // nonce policy conflicts with the home page's 60s shared edge cache
+          // (one nonce per cached response), so it is a future step.
+          //   img-src `https:` — posters load from rotating upstream CDNs and
+          //     the home hero preloads a raw CDN URL (app/page.tsx).
+          //   media-src/connect-src 'self' blob: — HLS/media and fetch all go
+          //     through the first-party /api/* proxies, never cross-origin.
           {
             key: "Content-Security-Policy",
             value: [
@@ -154,36 +122,17 @@ const nextConfig: NextConfig = {
               "worker-src 'self' blob:",
             ].join("; "),
           },
-          // (No report-only script header: the enforced script-src is already
-          // 'unsafe-inline' for the reasons above, so a report-only twin would
-          // be identical and misleading. When a hash/nonce pipeline lands, add
-          // the report-only variant to observe violations before enforcing.)
-          // Deny powerful features the app never uses (mic/camera/geolocation/
-          // payment sensors) — limits the blast radius of any injected script.
+          // Deny powerful features the app never uses — limits the blast radius
+          // of any injected script.
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), browsing-topics=()" },
-          // HTTPS-only transport for one year. Browsers ignore this header
-          // when it arrives over plain http (e.g. localhost dev), so it is
-          // safe to declare unconditionally in next.config.
+          // HTTPS-only transport for one year (ignored over plain http).
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
         ],
       },
-      // ── Cache headers ──────────────────────────────────────────────────────
-      // There are deliberately NO `Cache-Control` `headers()` rules here
-      // (SEC-02 / PERF-06 remediation).
-      //
-      // The former rules for "/" and "/watch/:path*" were ineffective: a
-      // `headers()` rule cannot beat the framework's own `Cache-Control:
-      // no-store` (emitted for `force-dynamic` / unbounded-dynamic-segment
-      // renders), so the intended SWR policy never reached production and the
-      // deployment shipped `no-store` on every HTML route.
-      //
-      // The correct, framework-honoured mechanism is a route-level
-      // `export const revalidate = 60`, which makes Next emit
-      // `s-maxage=60, stale-while-revalidate=...` itself. That is now used on
-      // the ONE HTML route that can be edge-cached — the home page (see
-      // app/page.tsx). The /watch routes cannot be cached (unbounded dynamic
-      // segment + per-request ephemeral stream tokens) and stay dynamic on
-      // purpose. Ephemeral API responses keep their own route-level `no-store`.
+      // No `Cache-Control` rules here (SEC-02): a `headers()` rule cannot beat
+      // the framework's own `Cache-Control: no-store` for dynamic routes, so
+      // the home page uses a route-level `export const revalidate = 60`
+      // (app/page.tsx) instead. `/watch/*` stays dynamic by necessity.
     ];
   },
 };

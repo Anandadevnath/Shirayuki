@@ -1,18 +1,9 @@
 #!/usr/bin/env node
 /**
- * Bundle-size budget check (SEC-05 / PERF-02).
- *
- * Guards against silent growth of First Load JS. It reads the build Next just
- * produced (`.next/app-build-manifest.json`) and, for each page route, computes
- * the GZIP size of the union of the chunks that route loads — which is what the
- * browser actually downloads and what Next prints as "First Load JS".
- *
- * Run AFTER `npm run build`:
- *   node scripts/check-bundle-size.mjs
- *
- * Budgets are set a little above the current baseline so ordinary work does not
- * trip them, but a real regression does. To re-baseline intentionally, raise
- * the numbers here and explain why in the PR.
+ * Bundle-size budget check. Reads `.next/app-build-manifest.json` (run
+ * `npm run build` first) and fails if any page route's summed gzip chunk weight
+ * exceeds its budget. The sum is a relative drift metric, not Next's exact
+ * "First Load JS" label.
  */
 
 import { readFileSync, existsSync } from "node:fs";
@@ -22,14 +13,8 @@ import { gzipSync } from "node:zlib";
 const NEXT_DIR = ".next";
 const MANIFEST = join(NEXT_DIR, "app-build-manifest.json");
 
-// KB budgets for a route's summed gzip chunk weight (the manifest lists every
-// chunk the route references; the sum is a stable RELATIVE metric — we use it
-// to detect drift, not to mirror Next's exact "First Load JS" label).
-// Baseline 2026-10: home ~418 KB, browse pages ~401 KB, static pages ~337 KB.
-const BUDGET_KB = {
-  default: 470, // any page route
-  max: 520, // hard ceiling for any single route
-};
+// Baseline 2026-10: home ~418 KB, browse ~401 KB, static ~337 KB.
+const BUDGET_KB = { default: 470, max: 520 };
 
 const gzipCache = new Map();
 

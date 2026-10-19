@@ -1,20 +1,13 @@
 #!/usr/bin/env node
 /**
- * Post-deploy cache-header verification (SEC-02 / PERF-06).
+ * Post-deploy cache-header verification (SEC-02). Asserts the DEPLOYED site
+ * emits the intended shared-cache policy, which the build cannot observe. Not
+ * part of the PR gate (needs a live deployment). Exit 0 = pass.
  *
- * The production regression this guards against was invisible to the build:
- * the code "looked" right but the deployed route shipped `Cache-Control:
- * no-store`. This script asserts the DEPLOYED site actually emits the intended
- * shared-cache policy. It is intentionally NOT part of the PR gate (it needs a
- * live deployment); run it after a deploy, or wire it into a post-deploy job.
+ * Usage: node scripts/verify-cache-headers.mjs [baseUrl]
+ *        BASE_URL=https://example.vercel.app node scripts/verify-cache-headers.mjs
  *
- * Usage:
- *   node scripts/verify-cache-headers.mjs [baseUrl]
- *   BASE_URL=https://example.vercel.app node scripts/verify-cache-headers.mjs
- *
- * Exit code 0 = every assertion passed. Non-zero = a mismatch (details printed).
- *
- * NOTE: it issues a small, bounded number of GETs (2 per route) — no flooding.
+ * Issues a small, bounded number of GETs (2 per route) — no flooding.
  */
 
 const base = (process.argv[2] || process.env.BASE_URL || "https://shirayuki-livid.vercel.app").replace(/\/$/, "");
@@ -41,7 +34,7 @@ function check(name, cond, detail) {
   if (cond) {
     console.log(`  ✔ ${name}`);
   } else {
-    console.log(`  �’ ${name} — ${detail}`);
+    console.log(`  \u2717 ${name} — ${detail}`);
     failures.push(`${name}: ${detail}`);
   }
 }
