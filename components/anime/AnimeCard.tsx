@@ -18,11 +18,16 @@ export const AnimeCard = memo(function AnimeCard({
   variant = "poster",
   className,
   style,
+  badge,
 }: {
   anime: AnimeCardModel;
   variant?: "poster" | "row";
   className?: string;
   style?: React.CSSProperties;
+  /** Optional overlay for the bottom-left corner of the poster frame — used by
+   *  RankedGrid to seat the oversized chart number. Purely additive: passing
+   *  nothing yields the same markup every other surface already renders. */
+  badge?: React.ReactNode;
 }) {
   if (variant === "row") {
     return (
@@ -158,8 +163,21 @@ export const AnimeCard = memo(function AnimeCard({
           </div>
           {topRight}
 
+          {/* Ranked chart number (opt-in). Sits in the bottom-left, seated in
+              the same corner scrim as the title; the title is nudged right by
+              the numeral's width so the two never collide. Omitted entirely on
+              every unranked surface. */}
+          {badge != null && (
+            <div className="absolute bottom-3 left-3.5 z-[1]">{badge}</div>
+          )}
+
           {/* Bottom content */}
-          <div className="absolute inset-x-0 bottom-0 p-3.5">
+          <div
+            className={cn(
+              "absolute inset-x-0 bottom-0 p-3.5",
+              badge != null && "pl-14 sm:pl-16",
+            )}
+          >
             <h3 className="text-title line-clamp-2 text-snow [text-shadow:0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost group-focus-visible:text-frost">
               {anime.title}
             </h3>

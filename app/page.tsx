@@ -195,10 +195,15 @@ async function HomeBoard({
             <Top10Tabs buckets={home.top10} />
           </div>
 
-          {/* Top Upcoming — the last ranked section on the board, rendered with
-              the SAME ranked marquee as Trending so the two rails share one
-              design and animation. No "See all" link: the upstream hianime.at
-              has no dedicated /upcoming listing page. */}
+          {/* Top Upcoming — the last ranked section on the board. Unlike
+              Trending (a drifting single-row marquee), it renders the SAME
+              ranked cards in a multi-row GRID so the 15 upstream titles land
+              as ~3 stacked rows: same cards, same design language, same
+              ranking numbers, more of them visible at once. It shares the
+              <Trending> shell purely for the section header (eyebrow, icon,
+              accent bar) and adopts the grid layout instead of the marquee.
+              No "See all" link: the upstream hianime.at has no dedicated
+              /upcoming listing page. */}
           <Trending
             items={home.upcoming}
             title="Top Upcoming"
@@ -207,6 +212,7 @@ async function HomeBoard({
             ariaLabelPrefix="Upcoming"
             id="upcoming-heading"
             offsetClassName="mt-0"
+            layout="grid"
           />
         </div>
     </div>

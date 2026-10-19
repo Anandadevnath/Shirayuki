@@ -177,6 +177,34 @@ export function TrendingSkeleton({
   );
 }
 
+// ── Ranked poster grid (mirrors components/anime/Grid's RankedGrid) ───────────
+export function RankedGridSkeleton({
+  cards = 15,
+  className,
+}: {
+  cards?: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        "grid grid-cols-2 gap-x-3.5 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6",
+        className,
+      )}
+    >
+      {Array.from({ length: cards }).map((_, i) => (
+        <div
+          key={i}
+          className="reveal relative"
+          style={revealDelay(Math.min(i, 11) * 45)}
+        >
+          <Skeleton className="aspect-[3/4] w-full rounded-[1.25rem] ring-1 ring-line/80" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Latest Episodes coverflow (centred hero poster, side posters fanned) ──────
 export function LatestEpisodesSkeleton() {
   return (

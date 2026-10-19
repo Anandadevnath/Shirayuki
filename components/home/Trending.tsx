@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { SmartImage } from "@/components/ui/SmartImage";
+import { RankedGrid } from "@/components/anime/Grid";
 import { cn } from "@/lib/utils/cn";
 import { useReducedMotionSSR } from "@/lib/utils/useReducedMotion";
 
@@ -146,6 +147,13 @@ type MarqueeSectionProps = {
   id?: string;
   /** hero-overlap pull-up (Trending only); 0 for mid-page sections */
   offsetClassName?: string;
+  /** Presentation. "marquee" (default) is the drifting train rail Trending
+   *  uses; "grid" swaps in the multi-row RankedGrid for Top Upcoming. The
+   *  header, eyebrow, icon and a11y label semantics are identical either way. */
+  layout?: "marquee" | "grid";
+  /** Show the manual nudge arrows. Ignored when `layout="grid"` (there is no
+   *  rail to nudge, so they are not rendered at all). */
+  showArrows?: boolean;
 };
 
 export function Trending({
@@ -156,6 +164,8 @@ export function Trending({
   ariaLabelPrefix = "Trending",
   id = "trending-heading",
   offsetClassName = "-mt-48",
+  layout = "marquee",
+  showArrows = true,
 }: MarqueeSectionProps) {
   const reduce = useReducedMotionSSR();
   const trackRef = useRef<HTMLDivElement>(null);
@@ -458,26 +468,34 @@ export function Trending({
 
         {/* Manual nudge arrows — frost-glass back / frost-filled forward, the
             same pairing the rest of the site uses. They drive the live marquee
-            (or the reduced-motion rail) by ~a viewport per press. */}
-        <div className="ml-auto flex shrink-0 gap-2">
-          <button
-            onClick={() => onArrow(-1)}
-            aria-label={`Scroll ${title} left`}
-            className="grid size-9 place-items-center rounded-full glass text-muted transition-[color,border-color,transform] duration-200 hover:border-frost/40 hover:text-snow active:scale-90"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
-          <button
-            onClick={() => onArrow(1)}
-            aria-label={`Scroll ${title} right`}
-            className="grid size-9 place-items-center rounded-full bg-frost text-base transition-transform duration-200 hover:scale-105 active:scale-90"
-          >
-            <ChevronRight className="size-4" />
-          </button>
-        </div>
+            (or the reduced-motion rail) by ~a viewport per press. Suppressed
+            for the grid presentation (nothing to scroll). */}
+        {showArrows && layout === "marquee" && (
+          <div className="ml-auto flex shrink-0 gap-2">
+            <button
+              onClick={() => onArrow(-1)}
+              aria-label={`Scroll ${title} left`}
+              className="grid size-9 place-items-center rounded-full glass text-muted transition-[color,border-color,transform] duration-200 hover:border-frost/40 hover:text-snow active:scale-90"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <button
+              onClick={() => onArrow(1)}
+              aria-label={`Scroll ${title} right`}
+              className="grid size-9 place-items-center rounded-full bg-frost text-base transition-transform duration-200 hover:scale-105 active:scale-90"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {reduce ? (
+      {layout === "grid" ? (
+        // Multi-row ranked grid — Top Upcoming. Cards render at their natural
+        // poster aspect inside a responsive column grid, so the section grows
+        // downward and the footer flows after it with no fixed height.
+        <RankedGrid items={items} />
+      ) : reduce ? (
         // Static, manually scrollable rail for reduced-motion users.
         // The extra top padding gives the hover-lift and its shadow clearance:
         // `overflow-x-auto` also clips the y-axis, so a tight top pad would cut
