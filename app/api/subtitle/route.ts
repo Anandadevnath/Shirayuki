@@ -1,5 +1,10 @@
 import type { NextRequest } from "next/server";
 import { fetchGuarded, sanitizeReferer } from "@/lib/api/proxy-guard";
+import {
+  MAX_SUBTITLE_BYTES,
+  readTextWithinLimit,
+  withinDeclaredSize,
+} from "@/lib/api/bounded-body";
 
 export const runtime = "nodejs";
 
@@ -54,8 +59,20 @@ export async function GET(req: NextRequest) {
 
   if (!res.ok) return new Response(`Upstream ${res.status}`, { status: res.status });
 
-  const text = await res.text();
-  const body = text.startsWith("WEBVTT") ? text : `WEBVTT\n\n${text}`;
+  // SEC-02: bound the subtitle body (text/vtt is small). Reject rather than
+  // buffer an oversized upstream into memory.
+  if (!withinDeclaredSize(res.headers.get("content-length"), MAX_SUBTITLE_BYTES)) {
+    res.body?.cancel().catch(() => {});
+    return new Response("Subtitle too large", { status: 413 });
+  }
+  const bounded = await readTextWithinLimit(res.body, MAX_SUBTITLE_BYTES);
+  if (!bounded.ok) {
+    return new Response(
+      bounded.reason === "too_large" ? "Subtitle too large" : "Upstream read failed",
+      { status: bounded.reason === "too_large" ? 413 : 502 },
+    );
+  }
+  const body = bounded.text.startsWith("WEBVTT") ? bounded.text : `WEBVTT\n\n${bounded.text}`;
   return new Response(body, {
     headers: {
       "Content-Type": "text/vtt; charset=utf-8",

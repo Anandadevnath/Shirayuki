@@ -1,5 +1,10 @@
 import type { NextRequest } from "next/server";
 import { fetchGuarded, sanitizeReferer } from "@/lib/api/proxy-guard";
+import {
+  MAX_PLAYLIST_BYTES,
+  readTextWithinLimit,
+  withinDeclaredSize,
+} from "@/lib/api/bounded-body";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -103,8 +108,22 @@ export async function GET(req: NextRequest) {
     ctype.includes("vnd.apple.mpegurl");
 
   if (isPlaylist) {
-    const text = await res.text();
-    const rewritten = rewritePlaylist(text, upstream.toString(), referer, origin);
+    // SEC-02: bound the playlist body. Playlists are text and tiny, so a
+    // declared-oversized (or over-limit while reading) body is a bad upstream,
+    // not a real playlist — reject rather than buffer it into memory. Media
+    // segments below are NOT bounded here; they keep streaming.
+    if (!withinDeclaredSize(res.headers.get("content-length"), MAX_PLAYLIST_BYTES)) {
+      res.body?.cancel().catch(() => {});
+      return new Response("Playlist too large", { status: 413 });
+    }
+    const bounded = await readTextWithinLimit(res.body, MAX_PLAYLIST_BYTES);
+    if (!bounded.ok) {
+      return new Response(
+        bounded.reason === "too_large" ? "Playlist too large" : "Upstream read failed",
+        { status: bounded.reason === "too_large" ? 413 : 502 },
+      );
+    }
+    const rewritten = rewritePlaylist(bounded.text, upstream.toString(), referer, origin);
     return new Response(rewritten, {
       status: 200,
       headers: {
