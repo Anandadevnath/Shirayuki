@@ -5,6 +5,11 @@ import {
   readTextWithinLimit,
   withinDeclaredSize,
 } from "@/lib/api/bounded-body";
+import {
+  checkRateLimit,
+  clientKey,
+  DEFAULT_MANIFEST_LIMIT,
+} from "@/lib/api/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -108,6 +113,19 @@ export async function GET(req: NextRequest) {
     ctype.includes("vnd.apple.mpegurl");
 
   if (isPlaylist) {
+    // SEC-01: rate-limit the OPEN-RELAY entry point. Manifest/playlist fetches
+    // are the abuse surface (a script looping the relay); real playback makes
+    // few of them per session. SEGMENTS DO NOT PASS THROUGH HERE — the media
+    // branch below has no limiter — so a segment flood (normal playback) is
+    // never throttled. Generous default (120/60s per client).
+    const rl = await checkRateLimit(clientKey(req, "manifest"), DEFAULT_MANIFEST_LIMIT);
+    if (!rl.allowed) {
+      return new Response("Too many requests", {
+        status: 429,
+        headers: { "Retry-After": String(rl.retryAfterSeconds) },
+      });
+    }
+
     // SEC-02: bound the playlist body. Playlists are text and tiny, so a
     // declared-oversized (or over-limit while reading) body is a bad upstream,
     // not a real playlist — reject rather than buffer it into memory. Media
