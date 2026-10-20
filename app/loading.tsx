@@ -54,7 +54,7 @@ export default function Loading() {
                   className="reveal"
                   style={revealDelay(Math.min(i, 9) * 45)}
                 >
-                  <div className="aspect-[3/4] w-full rounded-[1.25rem] bg-surface-2 shimmer-loop ring-1 ring-line/80" />
+                  <div className="aspect-[3/4] w-full rounded-[0.875rem] bg-surface-2 shimmer-loop ring-1 ring-line/80" />
                 </div>
               ))}
             </div>

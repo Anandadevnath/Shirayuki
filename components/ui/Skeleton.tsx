@@ -47,7 +47,7 @@ export function CardSkeleton({
 }) {
   return (
     <div className={className} style={style}>
-      <Skeleton className="aspect-[3/4] w-full rounded-[1.25rem] ring-1 ring-line/80" />
+      <Skeleton className="aspect-[3/4] w-full rounded-[0.875rem] ring-1 ring-line/80" />
     </div>
   );
 }
@@ -188,7 +188,11 @@ export function RankedGridSkeleton({
   return (
     <div
       className={cn(
-        "grid grid-cols-2 gap-x-3.5 gap-y-7 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6",
+        // MUST mirror RankedGrid's denser column ladder (one step past <Grid>):
+        // Top Upcoming spans the full board, so its poster width is tuned to
+        // match the Latest Completed cards. A mismatch here makes the
+        // skeleton→board swap visibly jump.
+        "grid grid-cols-2 gap-x-3.5 gap-y-7 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7",
         className,
       )}
     >
@@ -198,7 +202,7 @@ export function RankedGridSkeleton({
           className="reveal relative"
           style={revealDelay(Math.min(i, 11) * 45)}
         >
-          <Skeleton className="aspect-[3/4] w-full rounded-[1.25rem] ring-1 ring-line/80" />
+          <Skeleton className="aspect-[3/4] w-full rounded-[0.875rem] ring-1 ring-line/80" />
         </div>
       ))}
     </div>
