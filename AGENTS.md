@@ -1,18 +1,22 @@
 # AGENTS.md — Shirayuki
 
-Anime streaming client: Next.js 15 (App Router, RSC), React 19, TypeScript 5.7 strict, Tailwind v4, zod, zustand, hls.js. Deployed to Vercel (Singapore region). npm only — the repo ships `package-lock.json`, no pnpm/yarn lockfile. Node is pinned `24.x` in `package.json` engines. `headroom-ai` is a declared dependency with **zero usage anywhere in source** — ignore it rather than hunting for where it's wired in.
+Anime streaming client: Next.js 15 (App Router, RSC), React 19, TypeScript 5.7 strict, Tailwind v4, zod, zustand, hls.js. Deployed to Vercel (Singapore region). npm only — the repo ships `package-lock.json`, no pnpm/yarn lockfile. Node is pinned `24.x` in `package.json` engines.
 
 ## Commands
 
 ```bash
 npm run dev          # http://localhost:3000
 npm run build        # next build — run before claiming a routing/config change is safe
-npm run typecheck    # tsc --noEmit — the real verification gate
-npm test             # node --test "lib/**/*.test.ts" "app/**/*.test.ts" (51 tests)
+npm run typecheck    # tsc --noEmit
+npm test             # node --test "lib/**/*.test.ts" "app/**/*.test.ts" (81 tests)
+npm run lint         # eslint . (ESLint 9 flat config in eslint.config.mjs)
 node --test lib/api/proxy-guard.test.ts   # single file — node:test, NOT jest/vitest
+npm run bundle:check   # scripts/check-bundle-size.mjs — needs a prior `next build`
+npm run prerender:check  # scripts/check-prerender.mjs — asserts home HTML isn't ErrorState/blank
+npm run verify:cache     # scripts/verify-cache-headers.mjs — needs a LIVE deploy, not CI
 ```
 
-- **`npm run lint` does not work.** It runs `next lint`, but ESLint is not in devDependencies and no config exists, so it hangs on an interactive "How would you like to configure ESLint?" prompt. There is also no Prettier and no CI/pre-commit config, so `typecheck` + `test` are the only gates — run both before claiming anything is done.
+- **Run `lint` -> `typecheck` -> `test` -> `build` before claiming work is done.** `.github/workflows/ci.yml` runs exactly those plus `bundle:check` and `prerender:check` on every branch push and PR (the `verify:cache` header assertion is deliberately post-deploy only). `npm run lint` works now — a flat-config `eslint.config.mjs` replaced the old broken `next lint` invocation; do not switch it back to `next lint`. There is still no Prettier and no pre-commit hook.
 - Tests execute `.ts` directly (Node 24 native type stripping — no build step or loader), so **test files import relatively with an explicit extension** (`./concurrency.ts`, `./sanitize.ts`). The `@/*` alias and extensionless imports do not resolve under `node --test`. For the same reason, import leaf modules only: `lib/api/index.ts` pulls the provider graph, whose extensionless imports Node cannot resolve — that's why `safe`/`withTimeout` live in `lib/api/concurrency.ts` and are re-exported from the facade.
 
 ## Environment
@@ -46,7 +50,7 @@ Two animation systems coexist on purpose; adding to the wrong one is the easiest
 
 - Browse pages live in `app/(browse)/` (az, category, genre, schedule, search); detail is `app/anime/[id]/` (JSON-LD); player is `app/watch/[id]/[ep]/`; `app/watch/[id]/page.tsx` resolves the resume episode server-side then client-redirects; `app/watchlist/` is local-only.
 - API routes: `/api/stream`, `/api/subtitle`, `/api/suggest`, `/api/search-index`, and `/api/sources` (client-side source resolver for the player's mid-playback failover). There is **no `/api/schedule`** — the README mentions one, but the schedule is fetched server-side in `app/(browse)/schedule/page.tsx`.
-- Design tenet: one AnimeCard, one Nav, one Player — add variants, not duplicate components.
+- Design tenet: one AnimeCard, one Nav, one Player — add variants, not duplicate components. Ranked listings (Top Upcoming/Trending) reuse one client `components/anime/RankedGrid.tsx` that measures its live column count via `lib/utils/useGridColumns.ts` (default 6) instead of a per-breakpoint CSS guess, so "Top N + View more" collapses to whole rows with no partial row; render grid/rail cards through `components/anime/Grid.tsx`/`Rail.tsx` (both feed `SmartImage.tsx` for posters) rather than new grids.
 - **Navigation is one typed config**: `lib/nav/config.ts` is the single source for both the desktop rail and the drawer. `NAVBAR_ITEMS` render in the rail (`hidden md:flex`); `DRAWER_GROUPS` + `visibleDrawerGroups(railVisible)` resolve what the drawer shows. The **hamburger is intentionally visible at EVERY breakpoint** (`components/layout/Nav.tsx` has no `md:hidden` on it) and the drawer (`components/layout/NavDrawer.tsx`) is a modal at all widths — do not re-hide either behind a breakpoint. The invariant is *no simultaneously-visible duplicate*: when the rail is on screen (`railVisible`, a `(min-width:768px)` matchMedia in Nav.tsx) the drawer drops its "Navigate" group; when the rail is hidden the drawer supplies those links. `assertNavUniqueness()` throws at module load if a path duplicates across either presentation — don't bypass it, and add destinations by editing the config, never by adding `<Link>`s to Nav/NavDrawer directly.
 - The legal pages `app/terms`, `app/privacy`, `app/dmca` (via `components/common/LegalPage.tsx`) exist because the footer + drawer link to them; the categories used in the config (`/category/{slug}`) are all live upstream ids.
 - The Player is loaded `ssr: false` via `components/player/PlayerLoader.tsx`; keep `hls.js` out of the initial page bundle.

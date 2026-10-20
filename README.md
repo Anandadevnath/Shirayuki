@@ -98,17 +98,22 @@ npm run dev          # → http://localhost:3000
 
 ### NPM scripts
 
-| Command             | What it does                                              |
-| ------------------- | --------------------------------------------------------- |
-| `npm run dev`       | Dev server with HMR                                       |
-| `npm run build`     | Production build                                          |
-| `npm start`         | Serve the production build                                |
-| `npm run typecheck` | `tsc --noEmit` — **the real verification gate**           |
-| `npm test`          | `node --test` over `lib/**` and `app/**` (not jest/vitest) |
+| Command                  | What it does                                                       |
+| ------------------------ | ------------------------------------------------------------------ |
+| `npm run dev`            | Dev server with HMR                                                 |
+| `npm run build`          | Production build                                                    |
+| `npm start`              | Serve the production build                                         |
+| `npm run lint`           | `eslint .` (ESLint 9 flat config, `eslint.config.mjs`)              |
+| `npm run typecheck`      | `tsc --noEmit`                                                      |
+| `npm test`               | `node --test` over `lib/**` and `app/**` (not jest/vitest)         |
+| `npm run bundle:check`   | Bundle-size budget — needs a prior `npm run build`                 |
+| `npm run prerender:check`| Assert the prerendered home HTML isn't the ErrorState/blank        |
+| `npm run verify:cache`   | Assert cache headers on a **live deploy** (not CI)                 |
 
-> **`npm run lint` does not work.** It runs `next lint`, but ESLint is not a
-> dependency and no config exists, so it hangs on an interactive setup prompt.
-> Use `npm run typecheck` (and `npm test`) to verify changes.
+**Verify in this order:** `npm run lint` → `npm run typecheck` → `npm test` →
+`npm run build`. CI (`.github/workflows/ci.yml`) runs exactly those four plus
+`bundle:check` and `prerender:check` on every branch push and PR;
+`verify:cache` is deliberately post-deploy only.
 
 Run a single test file:
 
@@ -204,9 +209,11 @@ failover** (so a dying source can swap servers without a page reload).
 ## ❄ Performance & resilience
 
 - **Concurrent server fetches.** Independent requests run in parallel, with a
-  **required vs optional** strategy: the home board waits for its required
-  `getHome()` payload while the optional schedule streams in its own Suspense
-  island; detail/watch start all independent calls together. Genuine sequential
+  **required vs optional** strategy: the home board starts `getHome()` and
+  `getSchedule()` concurrently and awaits **both** before rendering any section,
+  so the whole board reveals as one unit (the schedule is not a late-streaming
+  island). If the optional schedule fails or times out it is simply omitted;
+  detail/watch start all independent calls together. Genuine sequential
   dependencies (server failover) stay sequential, each with a `withTimeout`
   bound so nothing can hang.
 - **Shared request layer** (`lib/api`): typed `Result<T,E>`, request
@@ -274,17 +281,19 @@ shirayuki/
 │  └─ manifest.ts · robots.ts · error.tsx · loading.tsx · not-found.tsx
 │
 ├─ components/
-│  ├─ anime/ · common/ · details/ · home/ · layout/ · player/ · schedule/ · search/ · ui/
+│  ├─ anime/ · common/ · details/ · home/ · layout/ · motion/ · player/ · schedule/ · search/ · ui/
 │  └─  → ONE AnimeCard · ONE Nav · ONE Player (variants, not duplicates)
 │
 ├─ lib/
 │  ├─ api/                ← facade · fetch wrapper · retry · dedupe · concurrency · proxy-guard
 │  ├─ providers/          ← swappable · Zod-validated · normalized (hianime)
+│  ├─ nav/                ← typed nav config (rail + drawer, one source)
+│  ├─ motion/             ← Motion-for-React tokens (durations/curves/springs)
 │  ├─ player/             ← bounded recovery policy
 │  ├─ progress/           ← local-first Continue Watching
 │  ├─ stores/             ← zustand: prefs
 │  ├─ subtitle/           ← .vtt helpers
-│  ├─ storage/ · utils/ · watchlist/
+│  ├─ storage/ · utils/ · watchlist/ · completed/
 │  └─ (never crashes a page — Result<T,E> wrapper)
 │
 ├─ public/logos/          ← brand mark · wordmark
@@ -320,7 +329,7 @@ Path alias: `@/*` maps to the repo root (no `src/` directory).
 | Framework    | Next.js 15 (App Router · RSC · streaming SSR)       |
 | Language     | TypeScript 5.7 (strict)                             |
 | UI           | React 19 · Tailwind v4                              |
-| Motion       | CSS transitions/keyframes · respects `prefers-reduced-motion` |
+| Motion       | CSS keyframes + viewport observer · `motion` (Motion for React) where CSS can't reach · respects `prefers-reduced-motion` |
 | Streaming    | `hls.js` + native HLS (Safari) · first-party proxy  |
 | State        | `zustand` (prefs) · local-first progress            |
 | Validation   | `zod` (raw provider → normalized model)             |
@@ -372,7 +381,7 @@ git checkout -b feat/your-thing
 npm install
 npm run dev
 # make it good
-npm run typecheck && npm test
+npm run lint && npm run typecheck && npm test && npm run build
 git commit -m "feat: your thing"
 git push origin feat/your-thing
 ```
