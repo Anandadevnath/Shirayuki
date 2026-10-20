@@ -1,8 +1,6 @@
-import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
-import { getGenres, safe } from "@/lib/api";
 
 const QUICK_LINKS = [
   { href: "/category/most-popular", label: "Popular" },
@@ -35,11 +33,14 @@ function Social({ href, label, children }: { href: string; label: string; childr
   );
 }
 
-export async function Footer() {
+export function Footer() {
   const year = new Date().getFullYear();
 
   return (
-    <footer className="relative z-10 mt-20 overflow-hidden border-t border-line/70">
+    // No top margin: the page shell's own bottom run-out (`pb-24` on <main>)
+    // already seats the footer. A margin here stacked on it and left a doubled
+    // blank band between the last section and the footer's hairline.
+    <footer className="relative z-10 overflow-hidden border-t border-line/70">
       {/* Frost top hairline + ambient bloom behind the brand. */}
       <div
         aria-hidden
@@ -47,7 +48,7 @@ export async function Footer() {
       />
       <div
         aria-hidden
-        className="pointer-events-none absolute left-1/2 top-[-7rem] h-72 w-[60rem] max-w-[92vw] -translate-x-1/2 rounded-full opacity-20 blur-3xl"
+        className="pointer-events-none absolute left-1/2 top-[-7rem] h-72 w-[60rem] max-w-[92vw] -translate-x-1/2 rounded-full opacity-10 blur-3xl"
         style={{ background: "radial-gradient(closest-side, var(--color-frost-deep), transparent)" }}
       />
 
@@ -55,7 +56,7 @@ export async function Footer() {
         {/* ── Brand ── */}
         <div className="flex flex-col items-center gap-5 text-center">
           <div className="flex translate-x-5 items-center sm:translate-x-8">
-            <span className="relative h-20 w-[4.5rem] shrink-0 drop-shadow-[0_6px_24px_rgba(120,180,255,0.25)] sm:h-24 sm:w-20">
+            <span className="relative h-20 w-[4.5rem] shrink-0 sm:h-24 sm:w-20">
               <Image
                 src="/logos/shirayuki2.png"
                 alt=""
@@ -75,7 +76,7 @@ export async function Footer() {
             </span>
           </div>
 
-          <p className="max-w-md text-sm leading-relaxed text-muted">
+          <p className="text-desc max-w-md text-muted">
             Your destination for streaming anime in pure focus — thousands of episodes in HD,
             skip-intro, and continue-watching. No ads.
           </p>
@@ -114,21 +115,15 @@ export async function Footer() {
           ))}
         </nav>
 
-        {/* ── Browse by genre — streamed independently so the static
-            footer chrome (links, AZ, socials, legal) ships in the first
-            byte and the genre chips paint in via Suspense. ── */}
-        <Suspense
-          fallback={
-            <div className="mt-9 flex flex-wrap justify-center gap-2" aria-hidden>
-              {Array.from({ length: 8 }).map((_, i) => (
-                <div key={i} className="h-8 w-20 rounded-md bg-surface-2 shimmer-loop" />
-              ))}
-            </div>
-          }
-        >
-          <FooterGenres />
-        </Suspense>
-        <div className="mt-6 flex flex-wrap justify-center gap-1.5" aria-label="Browse A-Z">
+        {/* ── Alphabetical browse ──
+            The former genre-chip block lived above this row; it was removed
+            because the full 48-genre taxonomy duplicated the browse surface
+            and left a large dead band at the foot of the page. The A–Z row
+            stays — it is the footer's one compact browse affordance — and the
+            quick-links block above now sits directly against it, so the
+            spacing reads as one centred cluster rather than a gap where the
+            chips used to be. */}
+        <nav className="mt-8 flex flex-wrap justify-center gap-1.5" aria-label="Browse A–Z">
           {AZ.map((l) => (
             <Link
               key={l}
@@ -138,10 +133,10 @@ export async function Footer() {
               {azLabel(l)}
             </Link>
           ))}
-        </div>
+        </nav>
 
         {/* ── Bottom bar ── */}
-        <div className="mt-11 flex flex-col gap-3 border-t border-line/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
+        <div className="mt-12 flex flex-col gap-3 border-t border-line/60 pt-6 sm:flex-row sm:items-center sm:justify-between">
           <p className="text-xs text-faint">
             © {year} <span className="font-semibold text-muted">Shirayuki</span>. All rights reserved.
           </p>
@@ -153,35 +148,11 @@ export async function Footer() {
             ))}
           </div>
         </div>
-        <p className="mt-3 text-[11px] leading-relaxed text-faint">
+        <p className="text-caption mt-3 text-faint">
           Shirayuki does not store any files on its server. All content is provided by
           non-affiliated third parties. For educational / demo use only.
         </p>
       </div>
     </footer>
-  );
-}
-
-/**
- * Genre chip row — extracted as a separate async server component so the
- * main Footer (and the rest of the layout above it) doesn't block on the
- * upstream call. Wrapped in <Suspense> in the parent.
- */
-async function FooterGenres() {
-  const res = await safe(getGenres);
-  const genres = res.ok ? res.data : [];
-  if (genres.length === 0) return null;
-  return (
-    <div className="mt-9 flex flex-wrap justify-center gap-2">
-      {genres.map((g) => (
-        <Link
-          key={g.slug}
-          href={`/genre/${g.slug}`}
-          className="rounded-md border border-line bg-base/40 px-3 py-1.5 text-sm text-muted transition-colors hover:border-frost/40 hover:bg-frost-soft hover:text-frost"
-        >
-          {g.name}
-        </Link>
-      ))}
-    </div>
   );
 }

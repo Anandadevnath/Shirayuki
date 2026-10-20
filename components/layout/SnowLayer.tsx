@@ -71,13 +71,18 @@ export function SnowLayer() {
     }
 
     function onVisibility() {
-      running = !document.hidden;
-      if (running) {
-        lastPaint = 0; // paint immediately on resume
-        raf = requestAnimationFrame(frame);
-      } else {
-        cancelAnimationFrame(raf);
+      // DS-01 fix: cancel ANY pending frame before changing state, then either
+      // resume (fresh chain) or stop. Without the cancel, a chain scheduled by
+      // `frame()`'s self-schedule could survive the hide and run alongside the
+      // new one started on the next show — two RAF loops against one canvas.
+      cancelAnimationFrame(raf);
+      if (document.hidden) {
+        running = false;
+        return;
       }
+      running = true;
+      lastPaint = 0; // paint immediately on resume
+      raf = requestAnimationFrame(frame);
     }
 
     size();

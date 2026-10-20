@@ -240,6 +240,12 @@ export async function getServers(
   episodeId: string,
   ep: number,
 ): Promise<ServersModel> {
+  // Docs: /episode/servers?episodeId=<hash>. The upstream param has flip-flopped
+  // (bare `episodeId` → `animeEpisodeId`+`ep` → back to bare `episodeId`); the
+  // current API accepts the bare episodeId hash and 404s on `animeEpisodeId`.
+  // Worse, `animeEpisodeId=<numeric>&ep=<n>` "succeeds" but resolves by POSITION
+  // and silently returns the WRONG episode's servers, so the bare hash is the
+  // only scheme that is both accepted and exact.
   const path = `${V2}/episode/servers?episodeId=${encodeURIComponent(episodeId)}`;
   const { data } = await apiFetch(path, S.envelope(S.serversData), { noStore: true });
 
@@ -287,6 +293,8 @@ export async function getSources(
   server: string,
   category: string,
 ): Promise<SourcesModel | null> {
+  // Docs: /episode/sources?episodeId=<hash>&server=..&category=.. — same param
+  // flip-flop as getServers; the bare episodeId hash is the accepted + exact form.
   const path = `${V2}/episode/sources?episodeId=${encodeURIComponent(
     episodeId,
   )}&server=${encodeURIComponent(server)}&category=${encodeURIComponent(category)}`;

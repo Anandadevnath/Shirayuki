@@ -10,15 +10,18 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
-    "test": "node --test \"lib/**/*.test.ts\" \"app/**/*.test.ts\""
+    "test": "node --test \"lib/**/*.test.ts\" \"app/**/*.test.ts\"",
+    "bundle:check": "node scripts/check-bundle-size.mjs",
+    "prerender:check": "node scripts/check-prerender.mjs",
+    "verify:cache": "node scripts/verify-cache-headers.mjs"
   },
   "dependencies": {
     "clsx": "^2.1.1",
-    "headroom-ai": "^0.22.4",
     "hls.js": "^1.6.15",
     "lucide-react": "^0.562.0",
+    "motion": "^14.3.0",
     "next": "^15.5.28",
     "react": "^19.2.0",
     "react-dom": "^19.2.0",
@@ -31,6 +34,8 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.2.5",
     "@types/react-dom": "^19.2.3",
+    "eslint": "9.39.5",
+    "eslint-config-next": "15.5.28",
     "tailwindcss": "^4.1.18",
     "typescript": "^5.7.0"
   },

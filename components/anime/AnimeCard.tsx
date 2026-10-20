@@ -4,6 +4,7 @@ import { memo } from "react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { cn } from "@/lib/utils/cn";
 import { SmartImage } from "@/components/ui/SmartImage";
+import { TiltCard } from "@/components/motion/TiltCard";
 import { EpBadges, TypePill } from "./Badges";
 
 /**
@@ -16,12 +17,36 @@ export const AnimeCard = memo(function AnimeCard({
   anime,
   variant = "poster",
   className,
+  titleClassName,
   style,
+  badge,
+  topLeftBadge,
+  revealRowClassName,
 }: {
   anime: AnimeCardModel;
   variant?: "poster" | "row";
   className?: string;
+  /** Opt-in refinement for the poster title only. Merged AFTER the base
+   *  `text-title line-clamp-2` classes, so a caller can tighten line-height /
+   *  wrapping for its own surface without touching the shared default that
+   *  every other grid, rail and panel relies on. Undefined = unchanged markup. */
+  titleClassName?: string;
   style?: React.CSSProperties;
+  /** Optional overlay for the bottom-left corner of the poster frame — used by
+   *  RankedGrid to seat the oversized chart number. Purely additive: passing
+   *  nothing yields the same markup every other surface already renders. */
+  badge?: React.ReactNode;
+  /** Optional overlay for the TOP-LEFT corner of the poster frame — mirrors
+   *  `badge` (bottom-left). Used by RankedGrid to seat the rank chip in the slot
+   *  the top-left <EpBadges> normally occupy. Purely additive: passing nothing
+   *  yields the same markup every other surface already renders. */
+  topLeftBadge?: React.ReactNode;
+  /** Opt-in refinement for the hover-reveal meta row (Watch / type / score).
+   *  Merged AFTER the row's base classes so a caller can keep it single-line on
+   *  narrow surfaces (e.g. Top Upcoming's denser grid) without touching the
+   *  shared default every other grid, rail and panel relies on. Undefined =
+   *  unchanged markup. */
+  revealRowClassName?: string;
 }) {
   if (variant === "row") {
     return (
@@ -39,7 +64,7 @@ export const AnimeCard = memo(function AnimeCard({
           )}
         </span>
         <span className="min-w-0 flex-1">
-          <span className="line-clamp-2 text-sm font-medium text-snow group-hover:text-frost">
+          <span className="text-title line-clamp-2 text-snow group-hover:text-frost">
             {anime.title}
           </span>
           <span className="mt-1 flex items-center gap-2">
@@ -98,26 +123,33 @@ export const AnimeCard = memo(function AnimeCard({
       <div className="relative transform-gpu transition-transform duration-300 ease-out group-hover:-translate-y-1.5 group-focus-visible:-translate-y-1.5 group-active:translate-y-[-0.375rem]">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-[1.25rem] shadow-[var(--shadow-soft)]"
+          className="pointer-events-none absolute inset-0 rounded-[0.875rem] shadow-[var(--shadow-soft)]"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-[1.25rem] opacity-0 shadow-[var(--shadow-frost)] transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
+          className="pointer-events-none absolute inset-0 rounded-[0.875rem] opacity-0 shadow-[var(--shadow-frost)] transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
         />
 
         {/* Frame: static `ring-1 ring-line` so the resting state is identical
-            to before, plus a sibling overlay that paints the frosted hover
-            ring at opacity-0 → 100%. Avoids the box-shadow transition
+            to before, plus a sibling overlay that paints a restrained frosted
+            hover ring at opacity-0 → 100%. Avoids the box-shadow transition
             (which forces a full repaint of the card body on every hover
-            frame) while preserving the visual. */}
-        <div className="relative aspect-[3/4] overflow-hidden rounded-[1.25rem] bg-surface-2 ring-1 ring-line/80">
-          {/* Frosted hover ring — opacity cross-fade, GPU-composited. Also
-              lands on keyboard focus so the focus target is unmistakable
-              even while the browser's default outline is clipped by the
-              card frame. */}
+            frame) while preserving the visual.
+
+            The frame is the pointer-tilt surface (`TiltCard`): on a fine
+            pointer the whole card leans a few degrees toward the cursor with
+            a soft specular sheen, and springs back on leave. Touch devices and
+            reduced-motion users get the exact same static frame — the tilt is
+            gated inside TiltCard and adds nothing to the markup when off. */}
+        <TiltCard className="relative aspect-[3/4] overflow-hidden rounded-[0.875rem] bg-surface-2 ring-1 ring-line/80">
+          {/* Frosted hover ring — opacity cross-fade, GPU-composited. A single
+              1px hairline in frost rather than a bright 2px halo, so the edge
+              reads as a crisp border, not a glow. Also lands on keyboard focus
+              so the focus target is unmistakable even while the browser's
+              default outline is clipped by the card frame. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[1.25rem] ring-2 ring-frost/60 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
+            className="pointer-events-none absolute inset-0 rounded-[0.875rem] ring-1 ring-frost/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
           />
           {/* Poster — gentle cinematic push-in on hover/focus (1.05: reads
               as a breath, not a zoom; transform-only so rails and grids
@@ -144,15 +176,35 @@ export const AnimeCard = memo(function AnimeCard({
             className="pointer-events-none absolute inset-x-0 bottom-0 h-3/5 bg-gradient-to-t from-base via-base/75 to-transparent opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
           />
 
-          {/* Top badges */}
+          {/* Top-left overlay — an incoming `topLeftBadge` (e.g. RankedGrid's
+              rank chip) takes the slot, otherwise the normal EpBadges render.
+              Upcoming cards carry empty EpBadges, so the chip never collides. */}
           <div className="absolute left-2.5 top-2.5">
-            <EpBadges sub={anime.episodes.sub} dub={anime.episodes.dub} />
+            {topLeftBadge ?? <EpBadges sub={anime.episodes.sub} dub={anime.episodes.dub} />}
           </div>
           {topRight}
 
+          {/* Ranked chart number (opt-in). Sits in the bottom-left, seated in
+              the same corner scrim as the title; the title is nudged right by
+              the numeral's width so the two never collide. Omitted entirely on
+              every unranked surface. */}
+          {badge != null && (
+            <div className="absolute bottom-3 left-3.5 z-[1]">{badge}</div>
+          )}
+
           {/* Bottom content */}
-          <div className="absolute inset-x-0 bottom-0 p-3.5">
-            <h3 className="line-clamp-2 text-sm font-semibold leading-snug tracking-tight text-snow [text-shadow:0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost group-focus-visible:text-frost">
+          <div
+            className={cn(
+              "absolute inset-x-0 bottom-0 p-3.5",
+              badge != null && "pl-14 sm:pl-16",
+            )}
+          >
+            <h3
+              className={cn(
+                "text-title line-clamp-2 text-snow [text-shadow:0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost group-focus-visible:text-frost",
+                titleClassName,
+              )}
+            >
               {anime.title}
             </h3>
 
@@ -169,12 +221,17 @@ export const AnimeCard = memo(function AnimeCard({
                 (`pointer: coarse`) so type/score are readable and Watch is
                 reachable without a hover ritual; the reduced-motion variant
                 flattens the movement. */}
-            <div className="flex translate-y-1 transform-gpu items-center gap-2 pt-2.5 opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 [@media(pointer:coarse)]:translate-y-0 [@media(pointer:coarse)]:opacity-100 motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-frost to-frost-deep px-3 py-1 text-[11px] font-bold text-base shadow-[var(--shadow-neon)]">
+            <div
+              className={cn(
+                "flex translate-y-1 transform-gpu items-center gap-2 pt-2.5 opacity-0 transition-[transform,opacity] duration-300 ease-out group-hover:translate-y-0 group-hover:opacity-100 group-focus-visible:translate-y-0 group-focus-visible:opacity-100 [@media(pointer:coarse)]:translate-y-0 [@media(pointer:coarse)]:opacity-100 motion-reduce:transition-none motion-reduce:translate-y-0 motion-reduce:opacity-100",
+                revealRowClassName,
+              )}
+            >
+              <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-btn)] bg-frost px-3 py-1 text-[11px] font-semibold text-base">
                 <Play className="size-3 translate-x-px fill-current" /> Watch
               </span>
               {anime.type && (
-                <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-snow/90">
+                <span className="rounded-[var(--radius-btn)] border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-snow/90">
                   {anime.type}
                 </span>
               )}
@@ -185,7 +242,7 @@ export const AnimeCard = memo(function AnimeCard({
               )}
             </div>
           </div>
-        </div>
+        </TiltCard>
       </div>
     </Link>
   );

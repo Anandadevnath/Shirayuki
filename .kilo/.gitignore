@@ -1,0 +1,9 @@
+node_modules
+package.json
+package-lock.json
+pnpm-lock.yaml
+bun.lock
+yarn.lock
+.gitignore
+agent-manager.json# Holds live API keys (e.g. BROWSERBASE_API_KEY) in plaintext — never commit.
+kilo.jsonc

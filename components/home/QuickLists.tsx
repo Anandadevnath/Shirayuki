@@ -12,7 +12,7 @@ export function QuickLists({ completed }: { completed: AnimeCardModel[] }) {
   if (!completed.length) return null;
 
   return (
-    <section className="laser-frame glass flex min-w-0 flex-col rounded-lg p-4 sm:p-5">
+    <section className="laser-frame laser-live glass flex min-w-0 flex-col rounded-lg p-4 sm:p-5">
       <CinematicHeader title="Latest Completed" eyebrow="Finished">
         <Link
           href="/category/latest-completed"

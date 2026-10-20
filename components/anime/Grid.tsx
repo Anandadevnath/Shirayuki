@@ -1,19 +1,32 @@
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { AnimeCard } from "./AnimeCard";
-import { Reveal } from "@/components/ui/Reveal";
 
+/**
+ * Poster grid.
+ *
+ * Cards render VISIBLE from the first paint — they are deliberately NOT wrapped
+ * in <Reveal>. A hiding wrapper starts every card at `opacity: 0` pre-hydration
+ * (the `html[data-anim="1"] [data-reveal]:not([data-shown])` rule), which means
+ * the route skeleton's poster placeholders are replaced by an *invisible* grid
+ * for the hydration window: the user sees the shimmering skeleton, then a black
+ * hole, then the cards fade in — the first-load "flicker". The card's own
+ * `bg-surface-2` frame + the SmartImage shimmer are the correct placeholder and
+ * must stay on screen; the image's load-driven crossfade (SmartImage) is the
+ * single entrance. Keeping the frame visible eliminates both the blank window
+ * and the double opacity fade (wrapper rise + image fade).
+ *
+ * The visual cascade is preserved where it is safe — inside each card's
+ * crossfade — while the grid itself never blinks out.
+ *
+ * NOTE: the ranked sibling <RankedGrid> lives in ./RankedGrid ("use client")
+ * because it measures its live column count and drives the collapse toggle; it
+ * is intentionally NOT defined here so this module stays a server component.
+ */
 export function Grid({ items }: { items: AnimeCardModel[] }) {
   return (
     <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
-      {items.map((a, i) => (
-        // Cinematic cascade, viewport-gated: each card rises once when it
-        // actually reaches the viewport (shared IntersectionObserver —
-        // see components/ui/Reveal). 28ms per index caps the visible
-        // stagger; cards already on-screen at mount cascade immediately,
-        // so above-fold grids keep their load-in rhythm.
-        <Reveal key={a.id} delay={Math.min(i, 11) * 28}>
-          <AnimeCard anime={a} />
-        </Reveal>
+      {items.map((a) => (
+        <AnimeCard key={a.id} anime={a} />
       ))}
     </div>
   );

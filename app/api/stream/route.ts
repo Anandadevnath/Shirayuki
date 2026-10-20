@@ -1,5 +1,15 @@
 import type { NextRequest } from "next/server";
 import { fetchGuarded, sanitizeReferer } from "@/lib/api/proxy-guard";
+import {
+  MAX_PLAYLIST_BYTES,
+  readTextWithinLimit,
+  withinDeclaredSize,
+} from "@/lib/api/bounded-body";
+import {
+  checkRateLimit,
+  clientKey,
+  DEFAULT_MANIFEST_LIMIT,
+} from "@/lib/api/rate-limit";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -103,17 +113,50 @@ export async function GET(req: NextRequest) {
     ctype.includes("vnd.apple.mpegurl");
 
   if (isPlaylist) {
-    const text = await res.text();
-    const rewritten = rewritePlaylist(text, upstream.toString(), referer, origin);
+    // SEC-01: rate-limit the OPEN-RELAY entry point. Manifest/playlist fetches
+    // are the abuse surface (a script looping the relay); real playback makes
+    // few of them per session. SEGMENTS DO NOT PASS THROUGH HERE — the media
+    // branch below has no limiter — so a segment flood (normal playback) is
+    // never throttled. Generous default (120/60s per client).
+    const rl = await checkRateLimit(clientKey(req, "manifest"), DEFAULT_MANIFEST_LIMIT);
+    if (!rl.allowed) {
+      return new Response("Too many requests", {
+        status: 429,
+        headers: { "Retry-After": String(rl.retryAfterSeconds) },
+      });
+    }
+
+    // SEC-02: bound the playlist body. Playlists are text and tiny, so a
+    // declared-oversized (or over-limit while reading) body is a bad upstream,
+    // not a real playlist — reject rather than buffer it into memory. Media
+    // segments below are NOT bounded here; they keep streaming.
+    if (!withinDeclaredSize(res.headers.get("content-length"), MAX_PLAYLIST_BYTES)) {
+      res.body?.cancel().catch(() => {});
+      return new Response("Playlist too large", { status: 413 });
+    }
+    const bounded = await readTextWithinLimit(res.body, MAX_PLAYLIST_BYTES);
+    if (!bounded.ok) {
+      return new Response(
+        bounded.reason === "too_large" ? "Playlist too large" : "Upstream read failed",
+        { status: bounded.reason === "too_large" ? 413 : 502 },
+      );
+    }
+    const rewritten = rewritePlaylist(bounded.text, upstream.toString(), referer, origin);
     return new Response(rewritten, {
       status: 200,
       headers: {
         "Content-Type": "application/vnd.apple.mpegurl",
-        // VOD playlists are stable for the lifetime of the upload. Short
-        // fresh window + stale-while-revalidate lets the edge serve the
-        // cached rewritten playlist to repeat viewers without an upstream
-        // round-trip, while still picking up upstream changes within ~5 min.
-        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+        // SEC-05: the rewritten body embeds the caller's `referer` in every
+        // segment URI, so a playlist fetched WITH a referer is caller-specific
+        // and must NOT be shared-cached (two callers with the same url but
+        // different referers would otherwise share one entry and the second
+        // would get the first's referer — a cross-provider/cross-referer
+        // leak, and a 403 risk). Without a referer the body is
+        // referer-independent and stays shareable. `private` keeps the browser
+        // free to reuse it while forbidding the shared edge cache.
+        "Cache-Control": referer
+          ? "private, max-age=60, stale-while-revalidate=300"
+          : "public, s-maxage=60, stale-while-revalidate=300",
       },
     });
   }

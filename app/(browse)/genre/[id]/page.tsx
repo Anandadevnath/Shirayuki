@@ -3,6 +3,7 @@ import { getGenre, safe } from "@/lib/api";
 import { titleize } from "@/lib/utils/format";
 import { Grid } from "@/components/anime/Grid";
 import { Pagination } from "@/components/common/Pagination";
+import { PageHeader } from "@/components/common/SectionHeader";
 import { EmptyState, ErrorState } from "@/components/common/States";
 
 type Props = {
@@ -22,9 +23,8 @@ export default async function GenrePage({ params, searchParams }: Props) {
   const res = await safe(() => getGenre(id, pageNum));
 
   return (
-    <div className="pt-4">
-      <p className="text-sm text-frost">Genre</p>
-      <h1 className="mb-6 mt-1 text-2xl font-bold">{titleize(id)}</h1>
+    <div className="flex flex-col gap-[var(--space-header)]">
+      <PageHeader eyebrow="Genre" title={titleize(id)} />
       {!res.ok ? (
         <ErrorState retryHref={`/genre/${encodeURIComponent(id)}`} />
       ) : !res.data.results.length ? (

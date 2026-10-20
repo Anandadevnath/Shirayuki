@@ -208,8 +208,13 @@ const FlowCard = memo(function FlowCard({
         <div className="absolute inset-x-0 bottom-0 p-4 sm:p-5">
           <h3
             className={cn(
-              "line-clamp-2 font-semibold leading-snug tracking-tight text-snow [text-shadow:0_1px_10px_rgba(0,0,0,0.95)] transition-opacity duration-500",
-              active ? "text-base sm:text-lg" : "text-sm opacity-0",
+              "text-title line-clamp-2 text-snow [text-shadow:0_1px_10px_rgba(0,0,0,0.95)] transition-opacity duration-500",
+              // The featured card's title is a size step up from the rail's
+              // `.text-title` default, so the explicit size wins the merge —
+              // keep the weight too, or the one visible title in this rail
+              // (side cards stay at opacity-0) renders lighter than every
+              // poster card title on the site.
+              active ? "text-[1.125rem] font-semibold sm:text-[1.25rem]" : "opacity-0",
             )}
           >
             {anime.title}
@@ -223,11 +228,11 @@ const FlowCard = memo(function FlowCard({
           >
             <div className="overflow-hidden">
               <div className="flex items-center gap-2 pt-3">
-                <span className="watch-pill-spring inline-flex items-center gap-1.5 rounded-full bg-gradient-to-br from-frost to-frost-deep px-3.5 py-1.5 text-xs font-bold text-base shadow-[var(--shadow-neon)]">
+                <span className="watch-pill-spring inline-flex items-center gap-1.5 rounded-[var(--radius-btn)] bg-frost px-3.5 py-1.5 text-xs font-semibold text-base">
                   <Play className="size-3.5 translate-x-px fill-current" /> Watch
                 </span>
                 {anime.type && (
-                  <span className="rounded-full border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-snow/90">
+                  <span className="rounded-[var(--radius-btn)] border border-white/10 bg-white/10 px-2.5 py-1 text-[11px] font-semibold text-snow/90">
                     {anime.type}
                   </span>
                 )}

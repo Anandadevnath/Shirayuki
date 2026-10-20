@@ -47,7 +47,7 @@ export function CardSkeleton({
 }) {
   return (
     <div className={className} style={style}>
-      <Skeleton className="aspect-[3/4] w-full rounded-[1.25rem] ring-1 ring-line/80" />
+      <Skeleton className="aspect-[3/4] w-full rounded-[0.875rem] ring-1 ring-line/80" />
     </div>
   );
 }
@@ -97,12 +97,19 @@ export function GridSkeleton({ count = 18 }: { count?: number }) {
 // ── Spotlight hero (full-bleed art + copy block + CTAs) ───────────────────────
 export function SpotlightSkeleton() {
   return (
-    <section className="relative left-1/2 w-screen -translate-x-1/2 -mt-24 overflow-hidden">
+    // The pull-up must match Spotlight's exactly (see the note there): the
+    // header plus `.page-shell`'s top inset is what sits above the hero, so
+    // anything less leaves a strip of bare page background behind the navbar
+    // and makes the hero jump when the real artwork takes over.
+    <section className="relative left-[calc(50%-50cqw)] -mt-[calc(4rem_+_var(--space-page-y))] w-[100cqw] overflow-hidden">
       <div className="relative flex h-[94svh] min-h-[min(680px,94svh)] max-h-[1120px] w-full flex-col">
         <div className="absolute inset-0 bg-surface-2 shimmer-loop" />
-        {/* Match the hero scrims so the skeleton sits in the same light. */}
-        <div className="absolute inset-0 bg-gradient-to-r from-base/90 via-base/35 to-base/60" />
-        <div className="absolute inset-x-0 bottom-0 h-[36%] bg-gradient-to-t from-base/85 from-6% via-base/30 via-32% to-transparent" />
+        {/* Match the hero scrims so the skeleton sits in the same light — the
+            same three layers, same opacities, as <Spotlight>: copy-side
+            readability bed, shallow base vignette, navbar band. */}
+        <div className="absolute inset-0 bg-gradient-to-r from-base/95 via-base/55 via-45% to-base/45 lg:to-base/15" />
+        <div className="absolute inset-x-0 bottom-0 h-[32%] bg-gradient-to-t from-base/45 via-base/12 to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/80 via-base/45 via-38% to-transparent" />
         <div className="relative z-10 flex flex-1 items-center pb-[8vh]">
           <div className="mx-auto w-full max-w-[1460px] px-4 sm:px-6 lg:px-8">
             <div className="flex max-w-xl flex-col gap-5 reveal">
@@ -128,21 +135,38 @@ export function SpotlightSkeleton() {
 }
 
 // ── Trending rail (editorial header + landscape ranked cards) ─────────────────
-export function TrendingSkeleton({ cards = 6 }: { cards?: number }) {
+export function TrendingSkeleton({
+  cards = 6,
+  offsetClassName = "-mt-48",
+}: {
+  cards?: number;
+  /** hero-overlap pull-up; `-mt-48` matches the hero-adjacent <Trending>,
+   *  `mt-0` for mid/bottom-page marquees such as Top Upcoming */
+  offsetClassName?: string;
+}) {
+  // The pull-up mirrors the real <Trending> section's hero-overlap so the
+  // route skeleton sits at the same Y as the content that replaces it — without
+  // it the swap pushed the whole board up by 12rem (the vertical jump).
   return (
-    <section className="relative">
-      <div className="mb-4 flex items-center gap-3">
-        <Skeleton className="h-9 w-1 rounded-full" />
-        <div className="space-y-2">
-          <Skeleton className="h-3 w-24 rounded" />
-          <Skeleton className="h-6 w-32 rounded-md" />
+    <section className={cn("relative", offsetClassName)}>
+      <div className="mb-5 flex items-end gap-4">
+        <div className="flex items-center gap-3">
+          <Skeleton className="h-10 w-1 rounded-full" />
+          <div className="space-y-2">
+            <Skeleton className="h-3 w-24 rounded" />
+            <Skeleton className="h-6 w-32 rounded-md" />
+          </div>
+        </div>
+        <div className="ml-auto hidden shrink-0 gap-2 sm:flex">
+          <Skeleton className="size-9 rounded-full" />
+          <Skeleton className="size-9 rounded-full" />
         </div>
       </div>
-      <div className="flex gap-3.5 overflow-hidden px-0.5 pb-4 pt-3">
+      <div className="flex gap-3.5 overflow-hidden px-0.5 py-1">
         {Array.from({ length: cards }).map((_, i) => (
           <div
             key={i}
-            className="reveal w-44 shrink-0 sm:w-52 md:w-56"
+            className="reveal relative w-44 shrink-0 sm:w-52 md:w-56"
             style={revealDelay(i * 70)}
           >
             <Skeleton className="aspect-[3/2] w-full rounded-2xl" />
@@ -153,13 +177,45 @@ export function TrendingSkeleton({ cards = 6 }: { cards?: number }) {
   );
 }
 
+// ── Ranked poster grid (mirrors components/anime/Grid's RankedGrid) ───────────
+export function RankedGridSkeleton({
+  cards = 12,
+  className,
+}: {
+  cards?: number;
+  className?: string;
+}) {
+  return (
+    <div
+      className={cn(
+        // MUST mirror RankedGrid's denser column ladder (one step past <Grid>):
+        // Top Upcoming spans the full board, so its poster width is tuned to
+        // match the Latest Completed cards. A mismatch here makes the
+        // skeleton→board swap visibly jump.
+        "grid grid-cols-2 gap-x-3.5 gap-y-7 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7",
+        className,
+      )}
+    >
+      {Array.from({ length: cards }).map((_, i) => (
+        <div
+          key={i}
+          className="reveal relative"
+          style={revealDelay(Math.min(i, 11) * 45)}
+        >
+          <Skeleton className="aspect-[3/4] w-full rounded-[0.875rem] ring-1 ring-line/80" />
+        </div>
+      ))}
+    </div>
+  );
+}
+
 // ── Latest Episodes coverflow (centred hero poster, side posters fanned) ──────
 export function LatestEpisodesSkeleton() {
   return (
     <section className="relative">
       <div className="mb-4 flex flex-col items-center gap-2.5">
         <Skeleton className="h-3 w-20 rounded" />
-        <Skeleton className="h-7 w-56 rounded-md" />
+        <Skeleton className="h-8 w-56 rounded-md" />
       </div>
       <div className="relative grid h-[43vw] max-h-[296px] min-h-[224px] w-full place-items-center">
         {/* Fanned side posters echoing the coverflow geometry. */}
@@ -216,20 +272,28 @@ export function PanelSkeleton({
   rows = 5,
   posterClass = "h-16 w-12",
   rank = false,
+  footer = false,
   className,
 }: {
   rows?: number;
   posterClass?: string;
   /** Render rank numeral placeholders (Top 10 style rows). */
   rank?: boolean;
+  /** Reserve the "View more" footer row (Discover columns have one; Top 10
+   *  does not) so the panel height matches the real section it stands in for. */
+  footer?: boolean;
   className?: string;
 }) {
   return (
     <section className={cn("glass flex flex-col rounded-lg p-4 sm:p-5", className)}>
-      <Skeleton className="mb-3 h-6 w-36 rounded-md" />
-      <Stagger count={rows} className="flex flex-col divide-y divide-line/40">
+      {/* Header: DiscoverColumn uses `mb-1 font-display text-lg` (24px line +
+       *  4px margin); Top 10's tabbed header is a touch taller. h-6/mb-1 keeps
+       *  the common case within a couple of px. */}
+      <Skeleton className="mb-1 h-6 w-36 rounded-md" />
+      <Stagger count={rows} className="flex flex-1 flex-col divide-y divide-line/40">
         {() => <ListRowSkeleton posterClass={posterClass} rank={rank} />}
       </Stagger>
+      {footer && <Skeleton className="mt-3 h-5 w-24 rounded" />}
     </section>
   );
 }

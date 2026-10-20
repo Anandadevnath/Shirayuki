@@ -14,6 +14,10 @@ import { WatchRedirectClient } from "./WatchRedirectClient";
  * the client island just chooses the target episode and replaces the URL.
  *
  * No API, endpoint, schema, or provider change. Pure frontend addition.
+ *
+ * Left dynamic (SEC-02): it sits under an unbounded `[id]` segment with no
+ * `generateStaticParams`, so Next always renders on demand. The episode-list
+ * read is Data-Cache backed, so a repeat view is cheap.
  */
 export default async function WatchRedirect({
   params,

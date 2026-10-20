@@ -3,6 +3,41 @@ import type { ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
 
 /**
+ * Page-level header used by every browse / grid route (search, genre,
+ * category, A–Z, watchlist, schedule). Consolidates the eyebrow + title +
+ * optional lede rhythm that was previously hand-rolled per page, so the
+ * header-to-content gap is one value everywhere (`--space-header`).
+ *
+ * `eyebrow` renders the small frost label; `lede` is an optional muted
+ * paragraph under the title. Both are optional — a bare title is valid.
+ */
+export function PageHeader({
+  title,
+  eyebrow,
+  lede,
+  children,
+  className,
+}: {
+  title: ReactNode;
+  eyebrow?: ReactNode;
+  lede?: ReactNode;
+  /** right-aligned controls (rare on page headers) */
+  children?: ReactNode;
+  className?: string;
+}) {
+  return (
+    <header className={cn("flex flex-col gap-1.5", className)}>
+      {eyebrow && <p className="text-sm font-medium text-frost">{eyebrow}</p>}
+      <div className="flex items-end justify-between gap-4">
+        <h1 className="text-page">{title}</h1>
+        {children}
+      </div>
+      {lede && <p className="max-w-2xl text-desc text-muted">{lede}</p>}
+    </header>
+  );
+}
+
+/**
  * The single section header used across the home page (and beyond) so every
  * rail / grid / panel shares one rhythm: a small frost eyebrow, a display
  * title, then an optional "See all" link and/or controls on the right.
@@ -27,11 +62,9 @@ export function SectionHeader({
     <div className={cn("mb-4 flex items-end justify-between gap-4", className)}>
       <div className="min-w-0">
         {eyebrow && (
-          <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-frost">
-            {eyebrow}
-          </span>
+          <span className="text-label block text-frost">{eyebrow}</span>
         )}
-        <h2 className="font-display text-xl font-extrabold leading-tight sm:text-2xl">{title}</h2>
+        <h2 className="text-section">{title}</h2>
       </div>
       {(href || children) && (
         <div className="flex shrink-0 items-center gap-2">
@@ -73,18 +106,11 @@ export function CinematicHeader({
   return (
     <div className={cn("mb-4 flex flex-col items-center gap-2.5 text-center", className)}>
       {eyebrow && (
-        <span className="font-mono text-[11px] font-semibold uppercase tracking-[0.3em] text-frost">
-          {eyebrow}
-        </span>
+        <span className="text-label text-frost">{eyebrow}</span>
       )}
       <div className="flex w-full items-center justify-center gap-4 sm:gap-6">
         <span className="h-px flex-1 bg-gradient-to-r from-transparent via-frost/40 to-frost/70" />
-        <h2
-          className={cn(
-            "shrink-0 font-display text-xl font-extrabold leading-tight tracking-tight sm:text-2xl",
-            titleClassName,
-          )}
-        >
+        <h2 className={cn("text-section shrink-0", titleClassName)}>
           {title}
         </h2>
         <span className="h-px flex-1 bg-gradient-to-l from-transparent via-frost/40 to-frost/70" />

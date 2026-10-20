@@ -1,4 +1,7 @@
-import { getHome, getSchedule, safe } from "@/lib/api";
+import { getHome, getSchedule, withTimeout } from "@/lib/api";
+import type { Result } from "@/lib/providers/types";
+import type { HomeModel, ScheduleModel } from "@/lib/providers/types";
+import { Flame, CalendarClock } from "lucide-react";
 import { Spotlight } from "@/components/home/Spotlight";
 import { ContinueWatching } from "@/components/home/ContinueWatching";
 import { Trending } from "@/components/home/Trending";
@@ -7,43 +10,73 @@ import { QuickLists } from "@/components/home/QuickLists";
 import { DiscoverColumns } from "@/components/home/DiscoverColumns";
 import { Top10Tabs } from "@/components/home/Top10Tabs";
 import { ReleaseSchedule } from "@/components/home/ReleaseSchedule";
-import { Rail } from "@/components/anime/Rail";
-import { Reveal } from "@/components/ui/Reveal";
 import { ErrorState } from "@/components/common/States";
+import HomeSkeleton from "./loading";
+import { Suspense } from "react";
 
-// Home is rendered dynamically (not statically prerendered) on purpose.
-//
-// Data caching lives in the provider's `getHome()` which fetches with
-// `revalidate: 900` + `tags: ["home"]` — Next's data-layer fetch cache is what
-// keeps this fast across visits. The ROUTE itself is dynamic so a build-time
-// fetch outcome is never baked into a static page.
-//
-// Why: hianime.at is a fragile upstream and intermittently responds 402
-// ("Payment required" bot-gate) to the API's scrapes. With `revalidate = 900`
-// at the route level, a single bad response at build time was frozen into the
-// ISR page for a full 15-minute window — every build during a flaky spell baked
-// an ErrorState home. Dynamic rendering means a failed fetch simply
-// falls through to the next request and self-heals the moment the API recovers.
-// Trade-off: the page no longer participates in route-level HTTP caching /
-// back-forward cache, since the provider fetch cache carries the 15-min window.
-export const dynamic = "force-dynamic";
+// Edge-cached with a short ISR window (SEC-02). The former
+// `force-dynamic` made Next emit `Cache-Control: no-store`, which overrode the
+// `next.config.ts` `headers()` rule, so nothing was cached. `revalidate = 60`
+// makes Next emit the shared `s-maxage`/`stale-while-revalidate` directive
+// itself. The window is deliberately short so a flaky upstream cannot bake a
+// bad page for long — the provider layer's own `revalidate: 900` Data Cache and
+// `safe()` containment handle recovery within one window.
+export const revalidate = 60;
 
-export default async function HomePage() {
-  // The v2 home payload's featured["Latest Completed"] fetches a full 50-title
-  // list, so we cap it so the grid fills out to roughly the Top 10 panel's height.
+/* ── Required vs optional home data ──────────────────────────────────────────
+ * The home board is revealed as ONE unit: every section (Spotlight, Trending,
+ * Latest Episodes, Discover, Top 10, and the Release calendar) appears together
+ * once the data is ready. To make that true, the board waits for BOTH upstream
+ * payloads before it renders any section — the schedule is no longer a separate
+ * streaming island that pops in late while the rest is already on screen.
+ *
+ * Both fetches are started CONCURRENTLY, then awaited together. If the schedule
+ * is slow, the board waits for it (bounded — see the deadlines below); if it
+ * fails or times out, the schedule section is simply omitted and the rest still
+ * renders. If the required home payload fails, the page-level ErrorState is
+ * shown.
+ */
+export default function HomePage() {
+  // Start BOTH upstream requests immediately, in parallel, at the top of the
+  // request, so the board waits on the SLOWER of the two rather than a serial
+  // waterfall. `withTimeout` converts each into a promise that always settles
+  // (success, error, or explicit timeout) — the render can never hang.
   //
-  // Schedule is fetched in parallel: it's an independent endpoint served from
-  // the API's own cache (`revalidate: 1800`), so it adds ~0 latency on top of
-  // `getHome`. A schedule failure never takes the home down — the section is
-  // simply skipped (`scheduleRes.ok` gate below).
-  const [res, scheduleRes] = await Promise.all([
-    safe(getHome),
-    safe(getSchedule),
-  ]);
+  // The schedule (a slow ~7s cold scrape) and the home payload now share a
+  // single reveal: the board is not sent until both settle, so no section ever
+  // arrives after the others. Both deadlines are generous enough to let a
+  // slow-but-alive upstream finish, while still bounding the worst case.
+  const homePromise = withTimeout(getHome(), 20_000, "home");
+  const schedulePromise = withTimeout(getSchedule(), 12_000, "schedule");
+
+  return (
+    <div>
+      <Suspense fallback={<HomeSkeleton />}>
+        <HomeBoard homePromise={homePromise} schedulePromise={schedulePromise} />
+      </Suspense>
+    </div>
+  );
+}
+
+/**
+ * The whole home board, rendered as one unit. Awaits BOTH payloads (home +
+ * schedule) before rendering anything, so every section reveals together and a
+ * late section never appears after the others.
+ */
+async function HomeBoard({
+  homePromise,
+  schedulePromise,
+}: {
+  homePromise: Promise<Result<HomeModel>>;
+  schedulePromise: Promise<Result<ScheduleModel>>;
+}) {
+  // Await the two payloads together. The board is held until both settle, so
+  // the sections below always arrive in a single render.
+  const [res, scheduleRes] = await Promise.all([homePromise, schedulePromise]);
 
   if (!res.ok) {
     return (
-      <div className="pt-10">
+      <div>
         <ErrorState retryHref="/" />
       </div>
     );
@@ -68,7 +101,11 @@ export default async function HomePage() {
   const lcpPoster = home.spotlight[0]?.poster ?? null;
 
   return (
-    <div>
+    /* The home hero is full-bleed and slides UNDER the fixed nav, so this
+       route neutralises the shared `.page-shell` top inset (it would push
+       the hero down by one page-y). Cancelling via the token — not a magic
+       pixel value — keeps the home offset tied to the global rhythm. */
+    <div style={{ marginTop: "calc(-1 * var(--space-page-y))" }}>
       {lcpPoster && (
         <link
           rel="preload"
@@ -81,9 +118,7 @@ export default async function HomePage() {
           fetchPriority="high"
         />
       )}
-      {home.spotlight.length > 0 && (
-        <Spotlight items={home.spotlight} />
-      )}
+      {home.spotlight.length > 0 && <Spotlight items={home.spotlight} />}
 
       {/* Document-level <h1> for the home page. The spotlight carousel
           surfaces an <h2> per slide (the anime title); screen readers and
@@ -92,70 +127,80 @@ export default async function HomePage() {
           the hero art stays uncluttered. */}
       <h1 className="sr-only">Browse, discover and watch anime — Sode no Shirayuki</h1>
 
-      {/* Section-level cascade — each board section rises once as it scrolls
-          into view (shared IntersectionObserver via <Reveal>; one-shot, so
-          scrolling back up never replays). Only the section as a whole is
-          observed — cards inside keep their own light entrance cadence —
-          keeping observer count flat regardless of home length. */}
-      <div className="relative z-10 flex flex-col gap-12">
-          {/* Trending keeps its hero-overlap position (v0 layout) so the home
-              page stays stable whether or not the user has watch history:
-              when Continue Watching has no items it returns null and Trending
-              simply rides below the hero — when it does have items, Continue
-              Watching renders AFTER Trending so Trending never shifts. */}
-          <Reveal>
-            <Trending items={home.trending} />
-          </Reveal>
+      {/* Section stack — ONE coordinated reveal. Every section renders
+          directly (no per-section <Reveal>), so the board appears all at
+          once: the whole tree is produced by a single server render that
+          already awaited BOTH the home and schedule payloads, and the swap
+          from the route skeleton to real content is a single crossfade.
 
-          <Reveal delay={60}>
-            <ContinueWatching />
-          </Reveal>
+          Sections are deliberately NOT wrapped individually in the
+          viewport-reveal wrapper — that made below-the-fold sections fade in
+          one at a time as the user scrolled, which read as "sections loading
+          late". They now share one reveal clock with the rest of the board.
+
+          The fine-grained cascade still lives INSIDE each rail (cards stagger
+          in DOM order); nothing is held behind another section. */}
+      <div className="section-stack relative z-10">
+          <Trending
+            items={home.trending}
+            title="Trending"
+            eyebrow="Hot right now"
+            icon={<Flame className="size-3.5 fill-frost/25" />}
+            ariaLabelPrefix="Trending"
+            id="trending-heading"
+            offsetClassName="-mt-48"
+          />
+
+          <ContinueWatching />
 
           {/* Card rails first — posters get room to breathe. Latest Episodes
               gets the cinematic 3D treatment (pointer-tilt floating posters). */}
-          <Reveal delay={120}>
-            <LatestEpisodes items={home.latestEpisodes} />
-          </Reveal>
+          <LatestEpisodes items={home.latestEpisodes} />
 
-          <Reveal delay={180}>
-            <DiscoverColumns
-              topAiring={home.topAiring}
-              mostPopular={home.mostPopular}
-              mostFavorite={home.mostFavorite}
-              newReleases={home.newReleases}
-              completed={home.completed}
-            />
-          </Reveal>
+          <DiscoverColumns
+            topAiring={home.topAiring}
+            mostPopular={home.mostPopular}
+            mostFavorite={home.mostFavorite}
+            newReleases={home.newReleases}
+            completed={home.completed}
+          />
 
-          {/* Top Upcoming — the last ranked section on the upstream home. Sits
-              between the discovery columns and the Latest Completed / Top 10
-              pair, mirroring hianime's own section order. No "See all" link:
-              the upstream hianime.at has no dedicated /upcoming listing page. */}
-          <Reveal delay={220}>
-            <Rail title="Top Upcoming" eyebrow="Premieres" items={home.upcoming} />
-          </Reveal>
-
-          {/* Release Calendar — the weekly premiere-grid teaser for /schedule.
-              Renders only when the schedule endpoint succeeded; a failure
-              silently drops this section (see scheduleRes gate above). */}
-          {scheduleRes.ok && (
-            <Reveal delay={260}>
-              <ReleaseSchedule data={scheduleRes.data} />
-            </Reveal>
-          )}
+          {/* Release calendar — rendered INLINE from the schedule payload the
+              board already awaited above (no Suspense island), so it appears
+              together with every other section instead of popping in late. A
+              failed / timed-out schedule just omits this section. */}
+          {scheduleRes.ok && <ReleaseSchedule data={scheduleRes.data} />}
 
           {/* Latest Completed (left) and the Top 10 list (right) are two separate
               glass containers side by side. They stretch to a shared height (the
               taller of the two) and the left poster grid distributes its rows to
               fill, so neither panel is left with dead space. Stacks on mobile. */}
-          <Reveal
-            delay={300}
-            className="grid grid-cols-1 items-stretch gap-x-6 gap-y-12 lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]"
-          >
+          <div className="grid grid-cols-1 items-stretch gap-x-6 gap-y-[var(--space-section)] lg:grid-cols-[minmax(0,1fr)_clamp(300px,24vw,340px)]">
             <QuickLists completed={completed} />
 
             <Top10Tabs buckets={home.top10} />
-          </Reveal>
+          </div>
+
+          {/* Top Upcoming — the last ranked section on the board. Unlike
+              Trending (a drifting single-row marquee), it renders the SAME
+              ranked cards in a multi-row GRID so the 15 upstream titles land
+              as ~3 stacked rows: same cards, same design language, same
+              ranking numbers, more of them visible at once. It shares the
+              <Trending> shell purely for the section header (eyebrow, icon,
+              accent bar) and adopts the grid layout instead of the marquee.
+              No "See all" link: the upstream hianime.at has no dedicated
+              /upcoming listing page. */}
+          <Trending
+            items={home.upcoming}
+            title="Top Upcoming"
+            eyebrow="Premieres"
+            icon={<CalendarClock className="size-3.5 text-frost/70" />}
+            ariaLabelPrefix="Upcoming"
+            id="upcoming-heading"
+            offsetClassName="mt-0"
+            layout="grid"
+            gridVisibleRows={2}
+          />
         </div>
     </div>
   );

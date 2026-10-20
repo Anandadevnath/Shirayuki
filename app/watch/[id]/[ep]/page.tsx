@@ -2,13 +2,16 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Captions, Mic, ServerCog } from "lucide-react";
-import { getAnime, getEpisodes, getServers, getSources, safe } from "@/lib/api";
+import { getAnime, getEpisodes, getServers, getSources, safe, withTimeout } from "@/lib/api";
 import type { ServerModel, SourcesModel } from "@/lib/providers/types";
 import { ErrorState } from "@/components/common/States";
 import CinematicInfo from "@/components/details/CinematicInfo";
 import { PlayerLoader } from "@/components/player/PlayerLoader";
 import { cn } from "@/lib/utils/cn";
 
+// Dynamic by necessity (SEC-02): this route resolves an ephemeral stream URL
+// (`getSources`/`getServers` are `noStore`), which opts it out of static
+// generation, so it cannot be shared-cached. No misleading cache config here.
 export const dynamic = "force-dynamic";
 
 type Props = {
@@ -33,9 +36,17 @@ const safeDecode = (seg: string): string => {
 export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const { id, ep } = await params;
   const episodeId = safeDecode(ep);
-  const res = await safe(() => getAnime(id));
-  const title = res.ok && res.data ? res.data.title : "Watch";
-  return { title: `${title} · EP ${epNumberOf(episodeId)}`, robots: { index: false } };
+  // Resolve title + the real episode number together; the number is NOT
+  // derivable from the opaque id hash, so it must come from the episode list.
+  const [animeRes, epsRes] = await Promise.all([
+    safe(() => getAnime(id)),
+    safe(() => getEpisodes(id)),
+  ]);
+  const title = animeRes.ok && animeRes.data ? animeRes.data.title : "Watch";
+  const num =
+    (epsRes.ok && epsRes.data.episodes.find((e) => e.episodeId === episodeId)?.number) ||
+    epNumberOf(episodeId);
+  return { title: `${title} · EP ${num}`, robots: { index: false } };
 }
 
 export default async function WatchPage({ params, searchParams }: Props) {
@@ -74,9 +85,18 @@ export default async function WatchPage({ params, searchParams }: Props) {
     : [];
   let chosen: ServerModel | null = preferred;
   let sources: SourcesModel | null = null;
+  // Server failover is a genuine SEQUENTIAL dependency: each candidate must be
+  // tried (and fail) before the next is meaningful, so this cannot be raced.
+  // To keep it from ever hanging the render on a stalled server, each attempt
+  // gets an explicit deadline (12s) — long enough for the client's own retry
+  // budget, short enough that a dead server only costs one bounded wait before
+  // the loop moves on. Once a source resolves, the loop breaks and the player
+  // renders; nothing after it waits on the remaining servers.
   for (const candidate of ordered) {
-    const res = await safe(() =>
+    const res = await withTimeout(
       getSources(episodeId, epNum, candidate.nameId, category),
+      12_000,
+      `sources:${candidate.nameId}`,
     );
     if (res.ok && res.data) {
       chosen = candidate;
@@ -116,6 +136,18 @@ export default async function WatchPage({ params, searchParams }: Props) {
                 outro={sources.outro}
                 nextHref={nextHref}
                 referer={sources.referer}
+                // Alternate servers for this episode (same category), minus the
+                // one now playing. Lets the player fail over MID-PLAYBACK
+                // without a navigation when the active source dies, preserving
+                // the user's timestamp. Empty when there is only one server.
+                failover={{
+                  episodeId,
+                  episodeNumber: epNum,
+                  category,
+                  servers: ordered
+                    .filter((s) => s.nameId !== chosen?.nameId)
+                    .map((s) => ({ name: s.name, nameId: s.nameId })),
+                }}
                 meta={{
                   animeId: id,
                   title: anime.title,
@@ -142,8 +174,8 @@ export default async function WatchPage({ params, searchParams }: Props) {
 
           {/* ── Title strip ─────────────────────────────────────────── */}
           <div className="border-t border-line/60 bg-surface/60 px-5 py-4 sm:px-6">
-            <h1 className="text-xl font-bold text-snow sm:text-2xl">{anime.title}</h1>
-            <p className="mt-0.5 text-sm text-muted">
+            <h1 className="text-title text-snow sm:text-[1.375rem]">{anime.title}</h1>
+            <p className="text-meta mt-0.5 text-muted">
               Episode {epNum}
               {episodes[currentIdx]?.title ? ` · ${episodes[currentIdx]?.title}` : ""}
             </p>
@@ -152,7 +184,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
           {/* ── Server switcher (transparent + glassy) ──────────────── */}
           <div className="space-y-3 border-t border-line/60 bg-surface/50 px-5 py-4 sm:px-6">
             <div className="flex flex-wrap items-center gap-3">
-              <span className="flex items-center gap-1.5 text-xs text-faint">
+              <span className="text-caption flex items-center gap-1.5 text-faint">
                 <Captions className="size-3.5" /> Subtitles / Dub
               </span>
               <div className="flex gap-1">
@@ -190,7 +222,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
 
             {pool.length > 0 && (
               <div className="flex flex-wrap items-center gap-3">
-                <span className="flex items-center gap-1.5 text-xs text-faint">
+                <span className="text-caption flex items-center gap-1.5 text-faint">
                   <ServerCog className="size-3.5" /> Server
                 </span>
                 <div className="flex flex-wrap gap-1">
@@ -217,10 +249,10 @@ export default async function WatchPage({ params, searchParams }: Props) {
         {/* ── Episode Sidebar (height syncs with player) ──────────── */}
         <aside className="laser-frame glass flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md">
           <div className="flex items-center justify-between border-b border-line/60 bg-surface/60 px-5 py-4">
-            <h2 className="text-sm font-semibold text-snow">
+            <h2 className="text-title text-snow">
               Episodes <span className="text-faint">({episodes.length})</span>
             </h2>
-            <span className="font-mono text-[10px] uppercase tracking-widest text-faint">
+            <span className="text-eyebrow text-faint">
               {category.toUpperCase()}
             </span>
           </div>
@@ -230,7 +262,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
                 key={e.episodeId}
                 href={`/watch/${id}/${encodeURIComponent(e.episodeId)}`}
                 className={cn(
-                  "hover-snap flex items-center gap-3 rounded-md px-2.5 py-2 text-sm",
+                  "hover-snap text-meta flex items-center gap-3 rounded-md px-2.5 py-2",
                   e.episodeId === episodeId
                     ? "bg-frost-soft text-frost"
                     : "text-muted hover:bg-surface-2/70 hover:text-snow",
@@ -238,7 +270,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
               >
                 <span
                   className={cn(
-                    "grid size-7 shrink-0 place-items-center rounded-sm font-mono text-xs",
+                    "grid size-7 shrink-0 place-items-center rounded-sm font-accent text-xs",
                     e.episodeId === episodeId
                       ? "bg-frost/20 text-frost"
                       : "bg-base text-faint",

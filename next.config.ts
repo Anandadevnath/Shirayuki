@@ -30,6 +30,10 @@ const POSTER_HOSTS = [
   "myanimelist.net",
 ];
 
+/** Dev server (webpack HMR) evaluates modules via eval, so the CSP below must
+ *  allow 'unsafe-eval' in development. Production builds never use eval. */
+const isDev = process.env.NODE_ENV !== "production";
+
 const nextConfig: NextConfig = {
   reactStrictMode: true,
   outputFileTracingRoot: process.cwd(),
@@ -95,36 +99,49 @@ const nextConfig: NextConfig = {
           // The player page embeds third-party HLS streams; pin frame ancestors
           // to ourselves even though /watch is noindex.
           { key: "X-Frame-Options", value: "SAMEORIGIN" },
-          // CSP baseline (security headers only — deliberately no script-src
-          // yet, since a strict one needs per-request nonces via middleware):
-          //   frame-ancestors — clickjacking (doubles as modern X-Frame-Options)
-          //   base-uri       — neutralises a hostile <base> hijacking relative
-          //                    URLs (asset/redirect hijack)
-          //   object-src     — blocks <object>/<embed> plugin injection
-          //   form-action    — blocks form-post exfiltration to attacker origins
-          //                    (the primary data-theft path if markup is ever
-          //                    injected)
-          { key: "Content-Security-Policy", value: "object-src 'none'; base-uri 'self'; frame-ancestors 'self'; form-action 'self'" },
-          // Deny powerful features the app never uses (mic/camera/geolocation/
-          // payment sensors) — limits the blast radius of any injected script.
+          // CSP (SEC-04). `script-src 'self' 'unsafe-inline'` is required: with
+          // `script-src` absent, `default-src` is the script fallback and blocks
+          // all inline <script> (Next's hydration/flight bootstrap + the
+          // data-anim reveal script in app/layout.tsx), breaking hydration. A
+          // nonce policy conflicts with the home page's 60s shared edge cache
+          // (one nonce per cached response), so it is a future step.
+          //   img-src `https:` — posters load from rotating upstream CDNs and
+          //     the home hero preloads a raw CDN URL (app/page.tsx).
+          //   media-src/connect-src 'self' blob: — HLS/media and fetch all go
+          //     through the first-party /api/* proxies, never cross-origin.
+          //
+          // `'unsafe-eval'` is added in DEVELOPMENT only: Next's dev server /
+          // webpack HMR runtime evaluates modules via eval, which the strict
+          // policy blocks (EvalError). Production never uses eval, so the
+          // shipped policy stays strict.
+          {
+            key: "Content-Security-Policy",
+            value: [
+              "default-src 'self'",
+              "object-src 'none'",
+              "base-uri 'self'",
+              "frame-ancestors 'self'",
+              "form-action 'self'",
+              isDev ? "script-src 'self' 'unsafe-inline' 'unsafe-eval'" : "script-src 'self' 'unsafe-inline'",
+              "img-src 'self' data: blob: https:",
+              "media-src 'self' blob:",
+              "connect-src 'self'",
+              "font-src 'self'",
+              "style-src 'self' 'unsafe-inline'",
+              "worker-src 'self' blob:",
+            ].join("; "),
+          },
+          // Deny powerful features the app never uses — limits the blast radius
+          // of any injected script.
           { key: "Permissions-Policy", value: "camera=(), microphone=(), geolocation=(), payment=(), usb=(), serial=(), browsing-topics=()" },
-          // HTTPS-only transport for one year. Browsers ignore this header
-          // when it arrives over plain http (e.g. localhost dev), so it is
-          // safe to declare unconditionally in next.config.
+          // HTTPS-only transport for one year (ignored over plain http).
           { key: "Strict-Transport-Security", value: "max-age=31536000; includeSubDomains" },
         ],
       },
-      {
-        // CDN-side cache for the watch page HTML. The page itself stays
-        // `force-dynamic` server-side (no stale rendering), but the response
-        // can be reused at the edge for a short window — the typical
-        // Lighthouse repeat-view case. 60s fresh + 5min SWR; same-URL repeat
-        // visits serve from the edge cache with zero render work.
-        source: "/watch/:path*",
-        headers: [
-          { key: "Cache-Control", value: "public, s-maxage=60, stale-while-revalidate=300" },
-        ],
-      },
+      // No `Cache-Control` rules here (SEC-02): a `headers()` rule cannot beat
+      // the framework's own `Cache-Control: no-store` for dynamic routes, so
+      // the home page uses a route-level `export const revalidate = 60`
+      // (app/page.tsx) instead. `/watch/*` stays dynamic by necessity.
     ];
   },
 };

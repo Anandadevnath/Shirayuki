@@ -1,10 +1,11 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
-import { Play, Flame, ChevronLeft, ChevronRight } from "lucide-react";
+import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { SmartImage } from "@/components/ui/SmartImage";
+import { RankedGrid } from "@/components/anime/RankedGrid";
 import { cn } from "@/lib/utils/cn";
 import { useReducedMotionSSR } from "@/lib/utils/useReducedMotion";
 
@@ -31,10 +32,13 @@ function TrendCard({
   s,
   rank,
   ariaHidden = false,
+  baseline,
 }: {
   s: AnimeCardModel;
   rank: number;
   ariaHidden?: boolean;
+  /** label prefix for the a11y rank announcement, e.g. "Trending" */
+  baseline: string;
 }) {
   const top3 = rank <= 3;
   return (
@@ -42,7 +46,7 @@ function TrendCard({
       href={`/anime/${s.id}`}
       // A11 fix: include the rank in the aria-label so screen readers
       // announce "Trending #1: Naruto" instead of just the title.
-      aria-label={`Trending #${rank}: ${s.title}`}
+      aria-label={`${baseline} #${rank}: ${s.title}`}
       aria-hidden={ariaHidden}
       tabIndex={ariaHidden ? -1 : undefined}
       className="group relative aspect-[3/2] w-44 shrink-0 transform-gpu transition-transform duration-300 hover:-translate-y-1 sm:w-52 md:w-56"
@@ -60,14 +64,14 @@ function TrendCard({
       <div
         className={cn(
           "relative h-full w-full overflow-hidden rounded-2xl ring-1",
-          top3 ? "ring-frost/40" : "ring-line",
+          top3 ? "ring-frost/35" : "ring-line",
         )}
       >
         <span
           aria-hidden
           className={cn(
             "pointer-events-none absolute inset-0 z-10 rounded-2xl ring-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
-            top3 ? "ring-frost" : "ring-frost/60",
+            top3 ? "ring-frost/60" : "ring-frost/50",
           )}
         />
 
@@ -92,7 +96,7 @@ function TrendCard({
 
         {/* Hover play affordance */}
         <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          <span className="grid size-11 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
+          <span className="grid size-11 scale-75 place-items-center rounded-full bg-base/70 text-frost ring-1 ring-frost/50 backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
             <Play className="size-5 fill-current" />
           </span>
         </span>
@@ -101,7 +105,7 @@ function TrendCard({
         <div className="absolute inset-x-0 bottom-0 flex items-end gap-2 p-2.5">
           <span
             className={cn(
-              "font-display text-4xl font-extrabold leading-[0.78] tracking-tight [text-shadow:0_2px_10px_rgba(0,0,0,0.8)] sm:text-5xl",
+              "font-display text-4xl font-bold leading-[0.82] tracking-tight [text-shadow:0_2px_10px_rgba(0,0,0,0.8)] sm:text-5xl",
               top3 ? "text-frost" : "text-snow",
             )}
             style={{
@@ -112,7 +116,7 @@ function TrendCard({
           >
             {rank}
           </span>
-          <span className="line-clamp-2 pb-0.5 text-left text-[12px] font-semibold leading-tight text-snow [text-shadow:0_1px_6px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
+          <span className="text-caption line-clamp-2 pb-0.5 text-left font-semibold leading-tight text-snow [text-shadow:0_1px_6px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost">
             {s.title}
           </span>
         </div>
@@ -122,13 +126,59 @@ function TrendCard({
 }
 
 /**
- * Trending rail — ranked landscape cards with oversized chart numbers. The rail
- * auto-drifts as an endless right-to-left marquee (a doubled track wrapped at
- * its half-width) and freezes the instant a pointer or touch lands on it.
- * Reduced-motion users get the original arrow-driven scroll rail instead.
+ * Ranked landscape marquee — the "train" rail. Cards carry an oversized chart
+ * number and the rail auto-drifts right-to-left as an endless marquee (a
+ * doubled track wrapped at its half-width); it freezes the instant a pointer or
+ * touch lands on it. Reduced-motion users get the arrow-driven scroll rail.
+ *
+ * Generalized so several home sections share one implementation: Trending
+ * passes its flame/flame copy, Top Upcoming passes its calendar/upcoming copy.
+ * Only the header copy and a11y label differ — the cards, drift, pause,
+ * drag and reduced-motion behaviour are identical by construction.
  */
-export function Trending({ items }: { items: AnimeCardModel[] }) {
+type MarqueeSectionProps = {
+  items: AnimeCardModel[];
+  title: string;
+  eyebrow: string;
+  /** lucide glyph rendered before the eyebrow text */
+  icon: ReactNode;
+  /** rank-announcement prefix, e.g. "Trending" → "Trending #3: …" */
+  ariaLabelPrefix?: string;
+  id?: string;
+  /** hero-overlap pull-up (Trending only); 0 for mid-page sections */
+  offsetClassName?: string;
+  /** Presentation. "marquee" (default) is the drifting train rail Trending
+   *  uses; "grid" swaps in the multi-row RankedGrid for Top Upcoming. The
+   *  header, eyebrow, icon and a11y label semantics are identical either way. */
+  layout?: "marquee" | "grid";
+  /** "grid" only: collapse the raster to this many WHOLE rows of the live
+   *  responsive column count, behind an inline "View more" / "Show less"
+   *  toggle. Undefined = render every item (no toggle); the toggle is hidden
+   *  when there is nothing to reveal. */
+  gridVisibleRows?: number;
+  /** Show the manual nudge arrows. Ignored when `layout="grid"` (there is no
+   *  rail to nudge, so they are not rendered at all). */
+  showArrows?: boolean;
+};
+
+export function Trending({
+  items,
+  title = "Trending",
+  eyebrow = "Hot right now",
+  icon,
+  ariaLabelPrefix = "Trending",
+  id = "trending-heading",
+  offsetClassName = "-mt-48",
+  layout = "marquee",
+  gridVisibleRows,
+  showArrows = true,
+}: MarqueeSectionProps) {
   const reduce = useReducedMotionSSR();
+  const [gridExpanded, setGridExpanded] = useState(false);
+  // How many cards the collapsed grid is actually rendering (reported by
+  // RankedGrid once the live column count is known), so the overflow toggle is
+  // shown only when there is genuinely something hidden.
+  const [gridVisibleCount, setGridVisibleCount] = useState<number | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
@@ -402,51 +452,104 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
     typeof s.rank === "number" ? s.rank : i + 1;
 
   return (
-    <section className="relative -mt-48">
+    <section className={cn("relative", offsetClassName)}>
       {/* Editorial header — frost accent bar + stacked eyebrow/title, with
           scroll arrows on the right (reduced-motion only). */}
-      <div className="mb-4 flex items-center gap-4">
-        <div className="flex items-center gap-3">
-          <span className="h-9 w-1 shrink-0 rounded-full bg-gradient-to-b from-frost to-frost-deep shadow-[var(--shadow-neon)]" />
-          <div className="min-w-0">
-            <span className="flex items-center gap-1.5 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-frost">
-              <span aria-hidden className="inline-flex">
-                <Flame className="size-3.5 fill-frost/25" />
-              </span>
-              Hot right now
+      <div className="mb-5 flex items-end gap-4">
+        <div className="relative flex items-center gap-3">
+          {/* Accent bar hangs in the shared container's left gutter
+              (-left-4 → occupies the 32px padding zone at lg, 16px at <lg)
+              so the heading TEXT starts at the same container edge as the
+              hero copy, the rails and every other section — alignment stays
+              exact across the homepage. */}
+          <span
+            aria-hidden
+            className="pointer-events-none absolute -left-4 top-1/2 h-10 w-1 -translate-y-1/2 rounded-full bg-gradient-to-b from-frost to-frost-deep"
+          />
+          <div className="min-w-0 space-y-1">
+            <span className="text-label flex items-center gap-1.5 text-frost">
+              {icon && <span aria-hidden className="inline-flex">{icon}</span>}
+              {eyebrow}
             </span>
-            <h2 className="font-display text-xl font-extrabold leading-tight tracking-tight sm:text-2xl">
-              Trending
+            <h2 id={id} className="text-section">
+              {title}
             </h2>
           </div>
         </div>
 
         {/* Manual nudge arrows — frost-glass back / frost-filled forward, the
             same pairing the rest of the site uses. They drive the live marquee
-            (or the reduced-motion rail) by ~a viewport per press. */}
-        <div className="ml-auto flex shrink-0 gap-1.5">
-          <button
-            onClick={() => onArrow(-1)}
-            aria-label="Scroll trending left"
-            className="grid size-8 place-items-center rounded-full glass text-muted transition-[color,border-color,transform] duration-200 hover:border-frost/40 hover:text-snow active:scale-90"
-          >
-            <ChevronLeft className="size-4" />
-          </button>
-          <button
-            onClick={() => onArrow(1)}
-            aria-label="Scroll trending right"
-            className="grid size-8 place-items-center rounded-full bg-frost text-base shadow-[var(--shadow-neon)] transition-transform duration-200 hover:scale-105 active:scale-90"
-          >
-            <ChevronRight className="size-4" />
-          </button>
-        </div>
+            (or the reduced-motion rail) by ~a viewport per press. Suppressed
+            for the grid presentation (nothing to scroll). */}
+        {showArrows && layout === "marquee" && (
+          <div className="ml-auto flex shrink-0 gap-2">
+            <button
+              onClick={() => onArrow(-1)}
+              aria-label={`Scroll ${title} left`}
+              className="grid size-9 place-items-center rounded-full glass text-muted transition-[color,border-color,transform] duration-200 hover:border-frost/40 hover:text-snow active:scale-90"
+            >
+              <ChevronLeft className="size-4" />
+            </button>
+            <button
+              onClick={() => onArrow(1)}
+              aria-label={`Scroll ${title} right`}
+              className="grid size-9 place-items-center rounded-full bg-frost text-base transition-transform duration-200 hover:scale-105 active:scale-90"
+            >
+              <ChevronRight className="size-4" />
+            </button>
+          </div>
+        )}
       </div>
 
-      {reduce ? (
+      {layout === "grid" ? (
+        // Responsive ranked grid — Top Upcoming. Same 2→6 column tracks as every
+        // browse surface; the collapsed view shows `gridVisibleRows` whole rows
+        // of the LIVE column count (measured by RankedGrid), so no partial row
+        // is ever cut. Expanding reveals the rest in place — no navigation and
+        // no refetch: the full `items` array is always in hand and only the
+        // rendered slice changes.
+        <>
+          <RankedGrid
+            items={items}
+            visibleRows={gridVisibleRows}
+            expanded={gridExpanded}
+            onVisibleCountChange={setGridVisibleCount}
+          />
+          {!gridExpanded &&
+            gridVisibleCount != null &&
+            gridVisibleCount < items.length && (
+              <div className="mt-7 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setGridExpanded(true)}
+                  aria-expanded={false}
+                  className="press text-btn flex h-10 items-center gap-2 rounded-[var(--radius-btn)] border border-line/60 bg-surface/50 px-5 text-muted transition-colors hover:border-frost/40 hover:text-frost"
+                >
+                  View more
+                </button>
+              </div>
+            )}
+          {gridExpanded && (
+            <div className="mt-7 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setGridExpanded(false)}
+                aria-expanded={gridExpanded}
+                className="press text-btn flex h-10 items-center gap-2 rounded-[var(--radius-btn)] border border-line/60 bg-surface/50 px-5 text-muted transition-colors hover:border-frost/40 hover:text-frost"
+              >
+                Show less
+              </button>
+            </div>
+          )}
+        </>
+      ) : reduce ? (
         // Static, manually scrollable rail for reduced-motion users.
-        <div ref={railRef} className="no-scrollbar flex gap-3.5 overflow-x-auto px-0.5 pb-4 pt-3">
+        // The extra top padding gives the hover-lift and its shadow clearance:
+        // `overflow-x-auto` also clips the y-axis, so a tight top pad would cut
+        // the lifted card off at the scroll-container edge.
+        <div ref={railRef} className="no-scrollbar flex gap-3.5 overflow-x-auto px-0.5 pb-1 pt-3">
           {items.map((s, idx) => (
-            <TrendCard key={`${s.id}-${idx}`} s={s} rank={rankOf(s, idx)} />
+            <TrendCard key={`${s.id}-${idx}`} s={s} rank={rankOf(s, idx)} baseline={ariaLabelPrefix} />
           ))}
         </div>
       ) : (
@@ -462,15 +565,17 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
             // `pan-y`: vertical swipes scroll the page, horizontal swipes are
             // captured by the touch-drag handler (see the touch effect above).
             touchAction: "pan-y",
+            // Narrow edge fade: enough to seat the rail against the container
+            // edge without swallowing the first/last card's artwork at rest.
             WebkitMaskImage:
-              "linear-gradient(to right, transparent 0, black 120px, black calc(100% - 120px), transparent 100%)",
+              "linear-gradient(to right, transparent 0, black 48px, black calc(100% - 48px), transparent 100%)",
             maskImage:
-              "linear-gradient(to right, transparent 0, black 120px, black calc(100% - 120px), transparent 100%)",
+              "linear-gradient(to right, transparent 0, black 48px, black calc(100% - 48px), transparent 100%)",
           }}
         >
           <div
             ref={trackRef}
-            className="trend-marquee flex w-max gap-3.5 px-0.5 pb-4 pt-3"
+            className="trend-marquee flex w-max gap-3.5 px-0.5 py-1"
           >
             {/* Doubled track: the second copy is decorative (hidden from a11y).
                 Both copies stay mounted so the seamless loop anchor exists,
@@ -480,10 +585,10 @@ export function Trending({ items }: { items: AnimeCardModel[] }) {
                 they translate into the viewport, so the LCP/INP path never
                 pays for them upfront. */}
             {items.map((s, idx) => (
-              <TrendCard key={`a-${s.id}-${idx}`} s={s} rank={rankOf(s, idx)} />
+              <TrendCard key={`a-${s.id}-${idx}`} s={s} rank={rankOf(s, idx)} baseline={ariaLabelPrefix} />
             ))}
             {items.map((s, idx) => (
-              <TrendCard key={`b-${s.id}-${idx}`} s={s} rank={rankOf(s, idx)} ariaHidden />
+              <TrendCard key={`b-${s.id}-${idx}`} s={s} rank={rankOf(s, idx)} ariaHidden baseline={ariaLabelPrefix} />
             ))}
           </div>
         </div>

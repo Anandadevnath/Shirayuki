@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useState } from "react";
 import Link from "next/link";
 import { Play, X } from "lucide-react";
 import { listProgress, removeProgress, type WatchEntry } from "@/lib/progress/local";
@@ -14,10 +14,21 @@ import { SmartImage } from "@/components/ui/SmartImage";
 // all" link below the rail reveals overflow if the user wants more.
 const RAIL_LIMIT = 12;
 
+/**
+ * localStorage reads are synchronous, so hydrate the rail in a LAYOUT effect:
+ * the rows land in the same pre-paint commit as the rest of the board, which
+ * keeps this section from inserting itself mid-page AFTER the first paint and
+ * shoving every section below it downward (the vertical jump that read as
+ * "sections loading late"). SSR renders null — useLayoutEffect is avoided on
+ * the server via the isomorphic alias so no hydration warning is emitted.
+ */
+const useIsoLayoutEffect =
+  typeof window !== "undefined" ? useLayoutEffect : useEffect;
+
 export function ContinueWatching() {
   const [items, setItems] = useState<WatchEntry[]>([]);
 
-  useEffect(() => {
+  useIsoLayoutEffect(() => {
     setItems(listProgress());
   }, []);
 

@@ -3,6 +3,7 @@ import { Search as SearchIcon } from "lucide-react";
 import { search, safe } from "@/lib/api";
 import { Grid } from "@/components/anime/Grid";
 import { Pagination } from "@/components/common/Pagination";
+import { PageHeader } from "@/components/common/SectionHeader";
 import { EmptyState, ErrorState } from "@/components/common/States";
 
 type SP = { searchParams: Promise<{ q?: string; page?: string }> };
@@ -18,13 +19,14 @@ export default async function SearchPage({ searchParams }: SP) {
   const pageNum = Math.max(1, Number(page) || 1);
 
   return (
-    <div className="pt-4">
-      <h1 className="mb-5 text-2xl font-bold">Search</h1>
-      {/* Refined focus state: the field's border warms to frost and picks up
-          a soft glow while typing — CSS-only, no JS, works with autofill. */}
+    <div className="flex flex-col gap-[var(--space-header)]">
+      <PageHeader title="Search" />
+      {/* Refined focus state: the field's border warms to frost and the
+          surface lifts on a soft, colourless shadow while typing — CSS-only,
+          no JS, works with autofill. */}
       <form
         action="/search"
-        className="mb-8 flex items-center gap-2 rounded-md border border-line bg-surface/60 px-4 transition-[border-color,box-shadow] duration-200 ease-out focus-within:border-frost/40 focus-within:shadow-[var(--shadow-frost)]"
+        className="flex items-center gap-2 rounded-md border border-line bg-surface/60 px-4 transition-[border-color,box-shadow] duration-200 ease-out focus-within:border-frost/50 focus-within:shadow-[var(--shadow-soft)]"
       >
         <SearchIcon className="size-4 text-faint" />
         <input

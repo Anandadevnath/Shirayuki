@@ -77,7 +77,7 @@ export function SeasonRail({
               <div
                 className={cn(
                   "relative h-full w-full overflow-hidden rounded-2xl bg-surface-2 ring-1",
-                  isCurrent ? "ring-frost" : top3 ? "ring-frost/40" : "ring-line",
+                  isCurrent ? "ring-frost/60" : top3 ? "ring-frost/35" : "ring-line",
                 )}
               >
                 {/* Hover ring crossfade — frost edge without a box-shadow repaint */}
@@ -86,7 +86,7 @@ export function SeasonRail({
                     aria-hidden
                     className={cn(
                       "pointer-events-none absolute inset-0 z-10 rounded-2xl ring-1 opacity-0 transition-opacity duration-300 group-hover:opacity-100",
-                      top3 ? "ring-frost" : "ring-frost/60",
+                      top3 ? "ring-frost/60" : "ring-frost/50",
                     )}
                   />
                 )}
@@ -120,14 +120,14 @@ export function SeasonRail({
 
                 {/* Current season pill (top-left) — mirrors Trending's "Hot" */}
                 {isCurrent && (
-                  <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-frost/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-base shadow-[var(--shadow-neon)]">
+                  <span className="absolute left-2 top-2 flex items-center gap-1 rounded-md bg-frost/90 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-base">
                     <Play className="size-2.5 fill-current" /> Current
                   </span>
                 )}
 
                 {/* Hover play affordance */}
                 <span className="absolute inset-0 grid place-items-center opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                  <span className="grid size-11 scale-75 place-items-center rounded-full bg-frost/90 text-base shadow-[var(--shadow-neon)] backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
+                  <span className="grid size-11 scale-75 place-items-center rounded-full bg-base/70 text-frost ring-1 ring-frost/50 backdrop-blur-sm transition-transform duration-300 group-hover:scale-100">
                     <Play className="size-5 fill-current" />
                   </span>
                 </span>
@@ -136,7 +136,7 @@ export function SeasonRail({
                 <div className="absolute inset-x-0 bottom-0 flex flex-col gap-0.5 p-2.5">
                   <span
                     className={cn(
-                      "font-display text-xl font-extrabold leading-none tracking-tight [text-shadow:0_2px_8px_rgba(0,0,0,0.85)] sm:text-2xl",
+                      "font-display text-xl font-bold leading-none tracking-tight [text-shadow:0_2px_8px_rgba(0,0,0,0.85)] sm:text-2xl",
                       isCurrent || top3 ? "text-frost" : "text-snow",
                     )}
                     style={{

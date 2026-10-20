@@ -111,7 +111,7 @@ export interface SeasonModel {
 export interface EpisodeModel {
   number: number;
   title: string | null;
-  episodeId: string; // AnimeX format: "<animeId>:<ep>" e.g. "147105:1"
+  episodeId: string; // opaque provider episode id (format drifts — never parse it)
   isFiller?: boolean;
 }
 

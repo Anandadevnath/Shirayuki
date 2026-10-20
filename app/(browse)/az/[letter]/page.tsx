@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { getAZ, safe } from "@/lib/api";
 import { Grid } from "@/components/anime/Grid";
 import { Pagination } from "@/components/common/Pagination";
+import { PageHeader } from "@/components/common/SectionHeader";
 import { EmptyState, ErrorState } from "@/components/common/States";
 
 /**
@@ -28,14 +29,12 @@ export default async function BrowsePage({ params, searchParams }: Props) {
   const res = await safe(() => getAZ(current, pageNum));
 
   return (
-    <div className="pt-4">
-      <p className="text-sm text-frost">Catalogue</p>
-      <h1 className="mb-1 mt-1 text-2xl font-bold">Browse all anime</h1>
-      {res.ok && (
-        <p className="mb-6 text-sm text-muted">
-          {res.data.totalPages.toLocaleString()} pages · sorted by popularity
-        </p>
-      )}
+    <div className="flex flex-col gap-[var(--space-header)]">
+      <PageHeader
+        eyebrow="Catalogue"
+        title="Browse all anime"
+        lede={res.ok ? `${res.data.totalPages.toLocaleString()} pages · sorted by popularity` : undefined}
+      />
 
       {!res.ok ? (
         <ErrorState retryHref={`/az/${encodeURIComponent(current)}`} />

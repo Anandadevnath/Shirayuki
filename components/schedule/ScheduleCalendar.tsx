@@ -59,22 +59,22 @@ export function ScheduleItemRow({
           <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
             <TypePill type={it.type} />
             {it.airTime && (
-              <span className="rounded bg-base/60 px-1 py-0.5 font-mono text-[11px] font-semibold text-frost">
+              <span className="rounded bg-base/60 px-1 py-0.5 font-accent text-[11px] font-semibold text-frost">
                 {it.airTime}
               </span>
             )}
             {it.episodeNumber && <span className="text-[11px] text-faint">{it.episodeNumber}</span>}
             {it.premiereDate ? (
-              <span className="font-mono text-[11px] font-semibold text-frost">
+              <span className="font-accent text-[11px] font-semibold text-frost">
                 {formatDate(it.premiereDate)}
               </span>
             ) : (
-              <span className="font-mono text-[11px] text-faint">Date TBD</span>
+              <span className="font-accent text-[11px] text-faint">Date TBD</span>
             )}
           </span>
         </span>
         {showComing && it.isUpcoming && (
-          <span className="shrink-0 self-start rounded-full bg-frost-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-frost">
+          <span className="shrink-0 self-start rounded-[var(--radius-btn)] bg-frost-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-frost">
             Coming
           </span>
         )}
@@ -94,7 +94,7 @@ export function ScheduleItemCard({ it }: { it: ScheduleItem }) {
       className="group block w-[44vw] shrink-0 snap-start sm:w-[24vw] md:w-[200px]"
     >
       <div className="relative transform-gpu transition-transform duration-300 ease-out group-hover:-translate-y-1.5 group-focus-visible:-translate-y-1.5 group-active:translate-y-[-0.375rem]">
-        <div className="relative aspect-[3/4] overflow-hidden rounded-[1.25rem] bg-surface-2 ring-1 ring-line/80">
+        <div className="relative aspect-[3/4] overflow-hidden rounded-[0.875rem] bg-surface-2 ring-1 ring-line/80">
           <div className="absolute inset-0 transform-gpu transition-transform duration-300 ease-out group-hover:scale-[1.05] group-focus-visible:scale-[1.05]">
             {it.poster ? (
               <SmartImage
@@ -113,7 +113,7 @@ export function ScheduleItemCard({ it }: { it: ScheduleItem }) {
               over bright art (same treatment as AnimeCard). */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[1.25rem] ring-2 ring-frost/60 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
+            className="pointer-events-none absolute inset-0 rounded-[0.875rem] ring-1 ring-frost/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
           />
           <div
             aria-hidden
@@ -128,20 +128,20 @@ export function ScheduleItemCard({ it }: { it: ScheduleItem }) {
         <span className="mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1">
           <TypePill type={it.type} />
           {it.airTime && (
-            <span className="rounded bg-base/60 px-1 py-0.5 font-mono text-[11px] font-semibold text-frost">
+            <span className="rounded bg-base/60 px-1 py-0.5 font-accent text-[11px] font-semibold text-frost">
               {it.airTime}
             </span>
           )}
           {it.episodeNumber && <span className="text-[11px] text-faint">{it.episodeNumber}</span>}
           {it.premiereDate ? (
-            <span className="font-mono text-[11px] font-semibold text-frost">
+            <span className="font-accent text-[11px] font-semibold text-frost">
               {formatDate(it.premiereDate)}
             </span>
           ) : (
-            <span className="font-mono text-[11px] text-faint">Date TBD</span>
+            <span className="font-accent text-[11px] text-faint">Date TBD</span>
           )}
           {it.isUpcoming && (
-            <span className="rounded-full bg-frost-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-frost">
+            <span className="rounded-[var(--radius-btn)] bg-frost-soft px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-frost">
               Coming
             </span>
           )}
@@ -262,7 +262,7 @@ export function ScheduleCalendar({
                 aria-controls="schedule-panel"
                 onClick={() => select(i)}
                 className={cn(
-                  "flex shrink-0 flex-col items-start rounded-lg border px-3 py-1.5 text-left transition-colors",
+                  "flex shrink-0 flex-col items-start rounded-[var(--radius-btn)] border px-3 py-1.5 text-left transition-colors",
                   isActive
                     ? "border-frost/50 bg-frost-soft text-frost"
                     : "border-line/60 bg-surface/40 text-muted hover:border-frost/30 hover:text-snow",
@@ -271,7 +271,7 @@ export function ScheduleCalendar({
                 <span className={cn("text-[13px] font-bold leading-none", isActive ? "text-frost" : "text-snow")}>
                   {d.day}
                 </span>
-                <span className="mt-1 font-mono text-[10px] leading-none opacity-75">
+                <span className="mt-1 font-accent text-[10px] leading-none opacity-75">
                   {d.items.length} release{d.items.length === 1 ? "" : "s"}
                 </span>
               </button>
@@ -309,7 +309,7 @@ export function ScheduleCalendar({
         className="no-scrollbar snap-x-rail -mx-1 flex gap-4 overflow-x-auto scroll-pl-1 px-1 pb-4 pt-1 outline-none"
       >
         {isEmpty ? (
-          <p className="flex w-full items-center justify-center rounded-xl border border-line/70 bg-surface/40 px-4 py-10 text-center font-mono text-[11px] text-faint">
+          <p className="flex w-full items-center justify-center rounded-xl border border-line/70 bg-surface/40 px-4 py-10 text-center font-accent text-[11px] text-faint">
             No premieres scheduled for {day.day}
           </p>
         ) : (
@@ -317,7 +317,7 @@ export function ScheduleCalendar({
         )}
       </div>
 
-      <p className="mt-1 hidden font-mono text-[11px] text-faint sm:block">
+      <p className="mt-1 hidden font-accent text-[11px] text-faint sm:block">
         Click a weekday to see its releases
       </p>
     </div>

@@ -4,12 +4,14 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Menu, Search, X } from "lucide-react";
+import { Search } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils/cn";
 // Eagerly import only the tiny prefetch helper; the full CommandPalette stays
 // in a lazy chunk and no longer inflates the initial Nav bundle.
 import { prefetchSearchIndex } from "@/lib/search";
+import { NAVBAR_ITEMS, isActive } from "@/lib/nav/config";
+import { NavDrawer } from "@/components/layout/NavDrawer";
 
 // The search palette is only revealed on ⌘K / click, so keep it out of the
 // initial JS bundle and mount it lazily the first time it's opened.
@@ -18,13 +20,10 @@ const CommandPalette = dynamic(
   { ssr: false },
 );
 
-const LINKS = [
-  { href: "/", label: "Home" },
-  { href: "/category/most-popular", label: "Popular" },
-  { href: "/category/top-airing", label: "Airing" },
-  { href: "/schedule", label: "Schedule" },
-  { href: "/az/all", label: "Browse" },
-];
+// Matches the Tailwind `md` breakpoint the horizontal rail is bound to
+// (`hidden md:flex`). Kept as a literal so the JS `railVisible` state and the
+// CSS class can never disagree.
+const RAIL_QUERY = "(min-width: 768px)";
 
 export function Nav() {
   const pathname = usePathname();
@@ -32,12 +31,17 @@ export function Nav() {
   const [menuOpen, setMenuOpen] = useState(false);
   // Latches true on first open so the lazy chunk mounts once, then stays.
   const [paletteMounted, setPaletteMounted] = useState(false);
+  // True once the viewport is wide enough for the horizontal rail. Drives the
+  // drawer's destination set so a rail link is never also shown in the drawer
+  // while the rail is on screen. SSR-safe: false on the server / first paint,
+  // corrected in an effect — matching the rail's own CSS default (hidden).
+  const [railVisible, setRailVisible] = useState(false);
   // The header's "scrolled" state toggles `glass` (backdrop-filter blur).
   // We mutate a CSS variable directly on the header so the swap happens
-  // without a React re-render on every scroll tick — the threshold is a
-  // single boolean, but a scroll handler firing dozens of times per second
-  // would otherwise cause the Nav subtree to re-render with it.
+  // without a React re-render on every scroll tick.
   const headerRef = useRef<HTMLElement>(null);
+  // Focus target for the drawer — restored when the drawer closes.
+  const drawerTriggerRef = useRef<HTMLButtonElement>(null);
 
   const openPalette = useCallback(() => {
     setPaletteMounted(true);
@@ -48,27 +52,27 @@ export function Nav() {
     const el = headerRef.current;
     if (!el) return;
     const onScroll = () => {
-      const scrolled = window.scrollY > 8;
-      // Single DOM write per scroll tick — no React reconciliation, no
-      // subtree re-render. The CSS transition on the header still gives
-      // the same 300ms color/glass cross-fade as before.
-      el.dataset.scrolled = scrolled ? "1" : "0";
+      el.dataset.scrolled = window.scrollY > 8 ? "1" : "0";
     };
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  // Track the rail breakpoint so the drawer knows whether its "Navigate" group
+  // would duplicate a visible navbar link.
+  useEffect(() => {
+    const mq = window.matchMedia(RAIL_QUERY);
+    const sync = () => setRailVisible(mq.matches);
+    sync();
+    mq.addEventListener("change", sync);
+    return () => mq.removeEventListener("change", sync);
+  }, []);
+
   // Pre-warm the local search index in the background so the first ⌘K
   // resolves instantly from a synchronous in-memory scan rather than waiting
-  // on the network. The endpoint is server-cached so this is cheap.
-  //
-  // The fetch is deferred via `requestIdleCallback` (with a setTimeout
-  // fallback) so it never competes with the LCP image fetch on the home /
-  // detail / watch routes — the index bytes can arrive a few seconds later
-  // and the user's first ⌘K still lands on a warm cache. We also skip the
-  // prefetch entirely on `/watch/*`, where the user is focused on the
-  // player and won't open the palette mid-session.
+  // on the network. Deferred via requestIdleCallback (setTimeout fallback) so
+  // it never competes with the LCP image fetch; skipped on /watch/*.
   useEffect(() => {
     if (pathname.startsWith("/watch/")) return;
     const ric = (cb: () => void, timeout: number) => {
@@ -87,14 +91,13 @@ export function Nav() {
         e.preventDefault();
         openPalette();
       }
-      if (e.key === "Escape") setMenuOpen(false);
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, [openPalette]);
 
-  // Close the mobile menu whenever navigation lands on a new route — the
-  // panel links push to a new pathname, so this doubles as "close on select".
+  // Close the drawer whenever navigation lands on a new route — the drawer
+  // links push a new pathname, so this doubles as "close on select".
   useEffect(() => {
     setMenuOpen(false);
   }, [pathname]);
@@ -104,22 +107,24 @@ export function Nav() {
       <header
         ref={headerRef}
         /* `data-scrolled` is flipped from the scroll handler above — no React
-           state, no per-scroll re-render. The two CSS rules in globals.css
-           (`.nav-glass` baseline + `header[data-scrolled="1"]` enhancement)
-           toggle the visual based on the dataset value. Both rules are
-           unlayered so they always outrank Tailwind's `bg-*` utilities that
-           ship inside `@layer utilities` — the previous `bg-transparent`
-           utility was the source of the deploy-only blur regression. */
+           state, no per-scroll re-render. The two unlayered CSS rules in
+           globals.css (`.nav-glass` baseline + `header[data-scrolled="1"]`)
+           toggle the visual from the dataset value and always outrank
+           Tailwind's layered `bg-*` utilities. */
         data-scrolled="0"
         className="nav-glass sticky top-0 z-40 w-full transition-[background-color,backdrop-filter,-webkit-backdrop-filter,border-color] duration-300"
       >
-        <nav className="mx-auto flex h-16 w-full max-w-[1460px] items-center gap-2 px-4 sm:px-6 lg:px-8" aria-label="Primary">
+        <nav
+          className="mx-auto flex h-16 w-full max-w-[1460px] items-center gap-1.5 px-4 sm:px-6 lg:gap-3 lg:px-8"
+          aria-label="Primary"
+        >
+          {/* ── Left: brand ── */}
           <Link
             href="/"
-            className="group flex items-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
+            className="group flex shrink-0 items-center rounded-sm focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
             aria-label="Shirayuki — Home"
           >
-            <span className="relative h-16 w-14 shrink-0 drop-shadow-[0_4px_16px_rgba(120,180,255,0.25)]">
+            <span className="relative h-16 w-14 shrink-0">
               <Image
                 src="/logos/shirayuki2.png"
                 alt=""
@@ -136,34 +141,26 @@ export function Nav() {
                 fill
                 sizes="240px"
                 className="object-contain object-left"
-                /* The text logo is a non-critical chrome asset: deferring it
-                   keeps the LCP image's preload slot free, so the spot­light
-                   poster starts downloading a frame earlier. The image still
-                   paints once it lands — just after the hero. */
               />
             </span>
           </Link>
 
-          <ul className="hidden items-center gap-1 md:flex">
-            {LINKS.map((l) => {
-              const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
+          {/* ── Center: primary rail (wide viewports) ── */}
+          <ul className="ml-1 hidden items-center gap-0.5 md:flex lg:ml-3">
+            {NAVBAR_ITEMS.map((l) => {
+              const active = isActive(pathname, l.href);
               return (
-                <li key={l.href}>
+                <li key={l.id}>
                   <Link
                     href={l.href}
                     aria-current={active ? "page" : undefined}
                     className={cn(
-                      "relative inline-flex items-center rounded-sm px-3 py-2 text-sm font-medium transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost",
-                      "nav-link-glow",
-                      active
-                        ? "text-snow"
-                        : "text-muted hover:text-snow",
+                      "text-meta nav-link-glow relative inline-flex items-center rounded-sm px-2.5 py-2 transition-colors duration-200 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost lg:px-3",
+                      active ? "text-snow" : "text-muted hover:text-snow",
                     )}
                   >
                     {l.label}
-                    {/* Active frost underline — draws in via transform-origin
-                        so the animation is GPU-only (no layout). Sits inside
-                        the link's flex flow so it scales with the parent. */}
+                    {/* Active frost underline — GPU-only transform draw-in. */}
                     <span
                       aria-hidden
                       className={cn(
@@ -177,93 +174,83 @@ export function Nav() {
             })}
           </ul>
 
-          <button
-            onClick={openPalette}
-            className="nav-cta-glass group ml-auto flex items-center gap-2 rounded-sm border border-line/70 px-3 py-2 text-sm text-faint transition-[border-color,color,background-color,backdrop-filter] duration-200 ease-out hover:border-frost/50 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
-            aria-label="Search anime"
-            // A7 fix: expose the keyboard shortcut as a structured attribute
-            // so screen readers can announce it consistently.
-            aria-keyshortcuts="Meta+K Control+K"
-          >
-            <Search className="size-4 transition-colors duration-200 group-hover:text-frost" />
-            <span className="hidden lg:inline">Search anime…</span>
-            <kbd className="ml-2 hidden rounded border border-line bg-base px-1.5 py-0.5 font-mono text-[10px] text-faint lg:inline">
-              ⌘K
-            </kbd>
-          </button>
+          {/* ── Right: search + always-visible hamburger ── */}
+          <div className="ml-auto flex items-center gap-1.5 lg:gap-2">
+            <button
+              onClick={openPalette}
+              className="nav-cta-glass group text-meta flex items-center gap-2 rounded-sm border border-line/70 px-2.5 py-2 text-faint transition-[border-color,color,background-color,backdrop-filter] duration-200 ease-out hover:border-frost/50 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost lg:px-3"
+              aria-label="Search anime"
+              aria-keyshortcuts="Meta+K Control+K"
+            >
+              <Search className="size-4 transition-colors duration-200 group-hover:text-frost" />
+              <span className="hidden xl:inline">Search anime…</span>
+              <kbd className="ml-2 hidden rounded border border-line bg-base px-1.5 py-0.5 font-accent text-[10px] text-faint xl:inline">
+                ⌘K
+              </kbd>
+            </button>
 
-          {/* Mobile-only menu toggle — the primary links are hidden below md,
-              so this is the only way to reach Popular / Airing /
-              Browse on a phone. */}
-          <button
-            onClick={() => setMenuOpen((v) => !v)}
-            className="nav-cta-glass group flex items-center rounded-sm border border-line/70 p-2 text-faint transition-[border-color,color,background-color,backdrop-filter] duration-200 ease-out hover:border-frost/50 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost md:hidden"
-            aria-label={menuOpen ? "Close menu" : "Open menu"}
-            aria-expanded={menuOpen}
-            /* No `aria-controls` — the drawer is a sibling that's `md:hidden`
-               (not in the layout tree above the breakpoint), so referencing
-               it from a button that's visible at every breakpoint creates a
-               dangling ARIA relationship on md+ viewports. The drawer keeps
-               its `id="mobile-nav"` for in-page anchor targeting. */
-          >
-            {menuOpen ? (
-              <X className="size-5 transition-colors duration-200 group-hover:text-frost" />
-            ) : (
-              <Menu className="size-5 transition-colors duration-200 group-hover:text-frost" />
-            )}
-          </button>
-        </nav>
-
-        {/* Mobile navigation drawer. Kept mounted and animated with the
-            `grid-template-rows: 0fr → 1fr` technique: the row animates
-            smoothly between collapsed and auto height with no max-height
-            guessing, so the drawer glides open/closed at any content size
-            (max-h transitions jerk when content exceeds the cap). Links
-            stagger in with 40ms delay steps on open; on close they fade
-            immediately (delay 0) so the drawer never feels laggy. `pointer-
-            events-none` when closed so it never traps taps. Hidden entirely
-            at md+ where the inline links return. */}
-        <div
-          id="mobile-nav"
-          data-open={menuOpen ? "1" : "0"}
-          /* Fades at rest too: the collapsed 0fr row still paints the inner
-             glass panel's 2px of border, which would read as a stray
-             hairline under the header when closed. */
-          className="grid border-line/60 opacity-0 transition-[grid-template-rows,opacity] duration-300 ease-out md:hidden data-[open=0]:grid-rows-[0fr] data-[open=1]:grid-rows-[1fr] data-[open=1]:border-t data-[open=1]:opacity-100"
-          aria-hidden={!menuOpen}
-        >
-          <div className="glass overflow-hidden" style={{ pointerEvents: menuOpen ? undefined : "none" }}>
-            <ul className="mx-auto flex w-full max-w-[1460px] flex-col gap-1 px-4 py-3 sm:px-6">
-              {LINKS.map((l, i) => {
-                const active = l.href === "/" ? pathname === "/" : pathname.startsWith(l.href);
-                return (
-                  <li key={l.href}>
-                    <Link
-                      href={l.href}
-                      aria-current={active ? "page" : undefined}
-                      tabIndex={menuOpen ? undefined : -1}
-                      style={{ transitionDelay: menuOpen ? `${80 + i * 40}ms` : "0ms" }}
-                      className={cn(
-                        "block translate-y-1 rounded-sm px-3 py-2.5 text-sm font-medium opacity-0 transition-[opacity,translate,background-color,color] duration-300 ease-out focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost",
-                        menuOpen && "translate-y-0 opacity-100",
-                        active
-                          ? "bg-frost-soft text-frost"
-                          : "text-muted hover:bg-surface-2/70 hover:text-snow",
-                      )}
-                    >
-                      {l.label}
-                    </Link>
-                  </li>
-                );
-              })}
-            </ul>
+            {/* Hamburger — ALWAYS visible at every breakpoint (desktop, tablet,
+                mobile). It opens the drawer, which supplies secondary
+                categories, utilities and legal destinations (and, on narrow
+                viewports, the rail destinations the rail cannot fit). */}
+            <button
+              ref={drawerTriggerRef}
+              onClick={() => setMenuOpen((v) => !v)}
+              className="nav-cta-glass group flex items-center rounded-sm border border-line/70 p-2 text-faint transition-[border-color,color,background-color,backdrop-filter] duration-200 ease-out hover:border-frost/50 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
+              aria-label={menuOpen ? "Close navigation menu" : "Open navigation menu"}
+              aria-expanded={menuOpen}
+              aria-haspopup="dialog"
+              aria-controls="site-nav-drawer"
+            >
+              <HamburgerIcon open={menuOpen} />
+            </button>
           </div>
-        </div>
+        </nav>
       </header>
+
+      <NavDrawer
+        open={menuOpen}
+        onClose={() => setMenuOpen(false)}
+        pathname={pathname}
+        railVisible={railVisible}
+        triggerRef={drawerTriggerRef}
+      />
 
       {paletteMounted && (
         <CommandPalette open={paletteOpen} onOpenChange={setPaletteOpen} />
       )}
     </>
+  );
+}
+
+/**
+ * Three-line hamburger that morphs into an X when the drawer is open. Two
+ * spans rotate, the middle bar fades/shrinks — a `transform`+`opacity`-only
+ * animation (compositor friendly, no layout). The 40px hit area is the button
+ * padding; the icon itself stays a crisp 20px. Reduced-motion is handled by
+ * the global CSS catch-all since this rides `transition-*`, not Motion.
+ */
+function HamburgerIcon({ open }: { open: boolean }) {
+  return (
+    <span aria-hidden className="relative block size-5">
+      <span
+        className={cn(
+          "absolute left-0 top-1/2 block h-0.5 w-5 -translate-y-1/2 rounded-full bg-current transition-[transform,opacity] duration-300 ease-out",
+          open ? "rotate-45" : "-translate-y-[6px]",
+        )}
+      />
+      <span
+        className={cn(
+          "absolute left-0 top-1/2 block h-0.5 w-5 -translate-y-1/2 rounded-full bg-current transition-[transform,opacity] duration-200 ease-out",
+          open ? "scale-x-0 opacity-0" : "opacity-100",
+        )}
+      />
+      <span
+        className={cn(
+          "absolute left-0 top-1/2 block h-0.5 w-5 -translate-y-1/2 rounded-full bg-current transition-[transform,opacity] duration-300 ease-out",
+          open ? "-rotate-45" : "translate-y-[6px]",
+        )}
+      />
+    </span>
   );
 }

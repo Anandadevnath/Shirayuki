@@ -1,10 +1,10 @@
 import { CalendarDays } from "lucide-react";
 import type { Metadata } from "next";
-import { getSchedule, safe } from "@/lib/api";
+import { getSchedule, withTimeout } from "@/lib/api";
 import type { AnimeCardModel, ScheduleItem, ScheduleWeekday } from "@/lib/providers/types";
 import { Grid } from "@/components/anime/Grid";
 import { ErrorState } from "@/components/common/States";
-import { SectionHeader } from "@/components/common/SectionHeader";
+import { PageHeader, SectionHeader } from "@/components/common/SectionHeader";
 import { ScheduleCalendar, ScheduleItemRow } from "@/components/schedule/ScheduleCalendar";
 import { WEEK_ORDER } from "@/lib/utils/schedule";
 
@@ -33,11 +33,14 @@ function toCard(it: ScheduleItem): AnimeCardModel {
 }
 
 export default async function SchedulePage() {
-  const res = await safe(getSchedule);
+  // The schedule is a heavy scrape (~7s cold). Bound it so the route always
+  // settles: on a stalled upstream the deadline resolves to a typed failure and
+  // the page renders its ErrorState instead of holding the skeleton forever.
+  const res = await withTimeout(getSchedule(), 20_000, "schedule");
 
   if (!res.ok) {
     return (
-      <div className="pt-10">
+      <div>
         <ErrorState retryHref="/schedule" />
       </div>
     );
@@ -59,7 +62,7 @@ export default async function SchedulePage() {
 
   if (!hasWeek && !hasUpcoming && !hasAiring) {
     return (
-      <div className="pt-10">
+      <div>
         <ErrorState
           retryHref="/schedule"
           message="No schedule data could be fetched right now — the provider may not have published any for this season."
@@ -69,33 +72,37 @@ export default async function SchedulePage() {
   }
 
   return (
-    <div className="pt-4">
-      <header className="mb-8 flex flex-col gap-2">
-        <span className="flex items-center gap-2 font-mono text-[11px] font-semibold uppercase tracking-[0.22em] text-frost">
-          <CalendarDays className="size-3.5" /> Release Calendar
-        </span>
-        <h1 className="font-display text-3xl font-extrabold leading-tight">Schedule</h1>
-        <p className="max-w-2xl text-sm text-muted">
-          Weekday-premiere calendar for announced titles, an up-next list and the currently
-          airing crop — derived from HiAnime listing data (no broadcast times are published
-          upstream, so the calendar shows premiere days only).
-          {s.updatedAt && (
-            <span className="mt-1 block font-mono text-[11px] text-faint">
-              Updated {new Date(s.updatedAt).toLocaleString()}
-            </span>
-          )}
-        </p>
-      </header>
+    <div className="flex flex-col gap-[var(--space-section)]">
+      <PageHeader
+        eyebrow={
+          <span className="text-label flex items-center gap-2 text-frost">
+            <CalendarDays className="size-3.5" /> Release Calendar
+          </span>
+        }
+        title="Schedule"
+        lede={
+          <>
+            Weekday-premiere calendar for announced titles, an up-next list and the
+            currently airing crop — derived from HiAnime listing data (no broadcast
+            times are published upstream, so the calendar shows premiere days only).
+            {s.updatedAt && (
+              <span className="mt-1 block font-accent text-[11px] text-faint">
+                Updated {new Date(s.updatedAt).toLocaleString()}
+              </span>
+            )}
+          </>
+        }
+      />
 
       {hasWeek && (
-        <section className="mb-12">
+        <section>
           <SectionHeader eyebrow="Weekly" title="Premieres by weekday" />
           <ScheduleCalendar days={orderedWeek} />
         </section>
       )}
 
       {hasUpcoming && (
-        <section className="mb-12">
+        <section>
           <SectionHeader eyebrow="Up next" title="Upcoming premieres" />
           <div className="rounded-xl border border-line/70 bg-surface/40 p-4">
             <ul className="-mx-2 flex flex-col gap-0.5">
@@ -108,7 +115,7 @@ export default async function SchedulePage() {
       )}
 
       {hasAiring && (
-        <section className="mb-6">
+        <section>
           {/* Airing titles have no weekday upstream (their Aired window has
               started), so they read as a poster grid rather than calendar
               rows — same card language as the rest of the site. */}

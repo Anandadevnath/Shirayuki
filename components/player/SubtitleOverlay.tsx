@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { parseVtt, findCue, type VttCue } from "@/lib/subtitle/vtt";
 
 interface SubtitleOverlayProps {
