@@ -199,6 +199,7 @@ async function HomeBoard({
             id="upcoming-heading"
             offsetClassName="mt-0"
             layout="grid"
+            gridVisibleRows={2}
           />
         </div>
     </div>

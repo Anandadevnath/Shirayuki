@@ -62,11 +62,12 @@ export default function Loading() {
           <PanelSkeleton rows={10} posterClass="h-20 w-14" rank />
         </div>
 
-        {/* Top Upcoming — the board's last section, rendered as a multi-row
-            ranked GRID (not the Trending marquee), so the placeholder mirrors
-            RankedGrid's columns and row count. The header keeps the same
-            geometry as <Trending> (offsetClassName="mt-0": no hero pull-up),
-            so nothing shifts when the real cards land. */}
+        {/* Top Upcoming — the board's last section, rendered as a ranked GRID
+            (not the Trending marquee), collapsed to a two-row preview, so the
+            placeholder mirrors RankedGrid's responsive columns and row count.
+            The header keeps the same geometry as <Trending>
+            (offsetClassName="mt-0": no hero pull-up), so nothing shifts when
+            the real cards land. */}
         <section className="relative mt-0">
           <div className="mb-5 flex items-end gap-4">
             <div className="flex items-center gap-3">

@@ -17,12 +17,18 @@ export const AnimeCard = memo(function AnimeCard({
   anime,
   variant = "poster",
   className,
+  titleClassName,
   style,
   badge,
 }: {
   anime: AnimeCardModel;
   variant?: "poster" | "row";
   className?: string;
+  /** Opt-in refinement for the poster title only. Merged AFTER the base
+   *  `text-title line-clamp-2` classes, so a caller can tighten line-height /
+   *  wrapping for its own surface without touching the shared default that
+   *  every other grid, rail and panel relies on. Undefined = unchanged markup. */
+  titleClassName?: string;
   style?: React.CSSProperties;
   /** Optional overlay for the bottom-left corner of the poster frame — used by
    *  RankedGrid to seat the oversized chart number. Purely additive: passing
@@ -178,7 +184,12 @@ export const AnimeCard = memo(function AnimeCard({
               badge != null && "pl-14 sm:pl-16",
             )}
           >
-            <h3 className="text-title line-clamp-2 text-snow [text-shadow:0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost group-focus-visible:text-frost">
+            <h3
+              className={cn(
+                "text-title line-clamp-2 text-snow [text-shadow:0_1px_8px_rgba(0,0,0,0.9)] transition-colors group-hover:text-frost group-focus-visible:text-frost",
+                titleClassName,
+              )}
+            >
               {anime.title}
             </h3>
 

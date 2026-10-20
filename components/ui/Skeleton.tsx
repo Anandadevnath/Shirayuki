@@ -179,7 +179,7 @@ export function TrendingSkeleton({
 
 // ── Ranked poster grid (mirrors components/anime/Grid's RankedGrid) ───────────
 export function RankedGridSkeleton({
-  cards = 15,
+  cards = 12,
   className,
 }: {
   cards?: number;

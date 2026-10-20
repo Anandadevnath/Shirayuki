@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useRef, type ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { Play, ChevronLeft, ChevronRight } from "lucide-react";
 import type { AnimeCardModel } from "@/lib/providers/types";
 import { SmartImage } from "@/components/ui/SmartImage";
-import { RankedGrid } from "@/components/anime/Grid";
+import { RankedGrid } from "@/components/anime/RankedGrid";
 import { cn } from "@/lib/utils/cn";
 import { useReducedMotionSSR } from "@/lib/utils/useReducedMotion";
 
@@ -151,6 +151,11 @@ type MarqueeSectionProps = {
    *  uses; "grid" swaps in the multi-row RankedGrid for Top Upcoming. The
    *  header, eyebrow, icon and a11y label semantics are identical either way. */
   layout?: "marquee" | "grid";
+  /** "grid" only: collapse the raster to this many WHOLE rows of the live
+   *  responsive column count, behind an inline "View more" / "Show less"
+   *  toggle. Undefined = render every item (no toggle); the toggle is hidden
+   *  when there is nothing to reveal. */
+  gridVisibleRows?: number;
   /** Show the manual nudge arrows. Ignored when `layout="grid"` (there is no
    *  rail to nudge, so they are not rendered at all). */
   showArrows?: boolean;
@@ -165,9 +170,15 @@ export function Trending({
   id = "trending-heading",
   offsetClassName = "-mt-48",
   layout = "marquee",
+  gridVisibleRows,
   showArrows = true,
 }: MarqueeSectionProps) {
   const reduce = useReducedMotionSSR();
+  const [gridExpanded, setGridExpanded] = useState(false);
+  // How many cards the collapsed grid is actually rendering (reported by
+  // RankedGrid once the live column count is known), so the overflow toggle is
+  // shown only when there is genuinely something hidden.
+  const [gridVisibleCount, setGridVisibleCount] = useState<number | null>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const wrapRef = useRef<HTMLDivElement>(null);
   const railRef = useRef<HTMLDivElement>(null);
@@ -455,7 +466,7 @@ export function Trending({
             aria-hidden
             className="pointer-events-none absolute -left-4 top-1/2 h-10 w-1 -translate-y-1/2 rounded-full bg-gradient-to-b from-frost to-frost-deep"
           />
-          <div className="min-w-0">
+          <div className="min-w-0 space-y-1">
             <span className="text-label flex items-center gap-1.5 text-frost">
               {icon && <span aria-hidden className="inline-flex">{icon}</span>}
               {eyebrow}
@@ -491,10 +502,46 @@ export function Trending({
       </div>
 
       {layout === "grid" ? (
-        // Multi-row ranked grid — Top Upcoming. Cards render at their natural
-        // poster aspect inside a responsive column grid, so the section grows
-        // downward and the footer flows after it with no fixed height.
-        <RankedGrid items={items} />
+        // Responsive ranked grid — Top Upcoming. Same 2→6 column tracks as every
+        // browse surface; the collapsed view shows `gridVisibleRows` whole rows
+        // of the LIVE column count (measured by RankedGrid), so no partial row
+        // is ever cut. Expanding reveals the rest in place — no navigation and
+        // no refetch: the full `items` array is always in hand and only the
+        // rendered slice changes.
+        <>
+          <RankedGrid
+            items={items}
+            visibleRows={gridVisibleRows}
+            expanded={gridExpanded}
+            onVisibleCountChange={setGridVisibleCount}
+          />
+          {!gridExpanded &&
+            gridVisibleCount != null &&
+            gridVisibleCount < items.length && (
+              <div className="mt-7 flex justify-center">
+                <button
+                  type="button"
+                  onClick={() => setGridExpanded(true)}
+                  aria-expanded={false}
+                  className="press text-btn flex h-10 items-center gap-2 rounded-[var(--radius-btn)] border border-line/60 bg-surface/50 px-5 text-muted transition-colors hover:border-frost/40 hover:text-frost"
+                >
+                  View more
+                </button>
+              </div>
+            )}
+          {gridExpanded && (
+            <div className="mt-7 flex justify-center">
+              <button
+                type="button"
+                onClick={() => setGridExpanded(false)}
+                aria-expanded={gridExpanded}
+                className="press text-btn flex h-10 items-center gap-2 rounded-[var(--radius-btn)] border border-line/60 bg-surface/50 px-5 text-muted transition-colors hover:border-frost/40 hover:text-frost"
+              >
+                Show less
+              </button>
+            </div>
+          )}
+        </>
       ) : reduce ? (
         // Static, manually scrollable rail for reduced-motion users.
         // The extra top padding gives the hover-lift and its shadow clearance:
