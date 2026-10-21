@@ -5,8 +5,8 @@ import Link from "next/link";
 import { Play, Film, Clapperboard } from "lucide-react";
 import { getAnime, getEpisodes, getHome, getAnimeSeasons, getAnimeArt, safe, withTimeout } from "@/lib/api";
 import { SeasonRail } from "@/components/details/SeasonRail";
-import { ArtGallery } from "@/components/details/ArtGallery";
 import { CastSection } from "@/components/details/CastSection";
+import { DetailBackdrop } from "@/components/details/DetailBackdrop";
 import { Rail } from "@/components/anime/Rail";
 import { EpBadges } from "@/components/anime/Badges";
 import { TiltCard } from "@/components/motion/TiltCard";
@@ -53,8 +53,8 @@ export default async function AnimePage({ params }: Params) {
   const firstEp = episodes[0]?.episodeId;
 
   // Seasons + interleaved movies (provider timeline) and the /art bundle
-  // (franchise posters, cast). Optional — every block
-  // below guards on presence so a partial failure degrades gracefully.
+  // (cast). Optional — every block below guards on presence so a
+  // partial failure degrades gracefully.
   const seasons = seasonsRes.ok ? seasonsRes.data?.filter(Boolean) ?? [] : [];
   const art = artRes.ok && artRes.data ? artRes.data : null;
   const upcoming = homeRes.ok ? homeRes.data.upcoming : [];
@@ -85,25 +85,11 @@ export default async function AnimePage({ params }: Params) {
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
 
-      {/* Anime-specific backdrop. Sits between the Ambient layer (-z-10) and
-          the page content (z auto) so the art whispers through without
-          competing with the panels. */}
-      <div className="pointer-events-none fixed inset-0 z-[-5] overflow-hidden">
-        {backgroundSrc && (
-          <Image
-            src={backgroundSrc}
-            alt=""
-            fill
-            priority
-            sizes="100vw"
-            quality={50}
-            className="object-cover opacity-40 blur-2xl saturate-125"
-          />
-        )}
-        <div className="absolute inset-0 bg-base/70" />
-        <div className="absolute inset-0 bg-gradient-to-b from-base/40 via-base/60 to-base" />
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,_rgba(255,255,255,0.06),_transparent_60%)]" />
-      </div>
+      {/* Anime-specific cinematic backdrop. Sits between the Ambient layer
+          (-z-10) and the page content (z auto). Fixed, so it spans the whole
+          scroll length with no hero/lower-section cutoff, and it re-renders
+          per route so navigating to another anime swaps the art. */}
+      <DetailBackdrop src={backgroundSrc} />
 
       <nav className="mb-6 flex items-center gap-1.5 text-xs text-muted">
         <Link href="/" className="transition-colors hover:text-snow">Home</Link>
@@ -260,12 +246,6 @@ export default async function AnimePage({ params }: Params) {
         {seasons.length > 0 && (
           <div>
             <SeasonRail items={seasons} currentId={id} />
-          </div>
-        )}
-
-        {art && art.art.length > 0 && (
-          <div>
-            <ArtGallery items={art.art} currentId={id} />
           </div>
         )}
 

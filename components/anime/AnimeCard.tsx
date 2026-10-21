@@ -123,11 +123,11 @@ export const AnimeCard = memo(function AnimeCard({
       <div className="relative transform-gpu transition-transform duration-300 ease-out group-hover:-translate-y-1.5 group-focus-visible:-translate-y-1.5 group-active:translate-y-[-0.375rem]">
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-[0.875rem] shadow-[var(--shadow-soft)]"
+          className="pointer-events-none absolute inset-0 rounded-[0.5rem] shadow-[var(--shadow-soft)]"
         />
         <div
           aria-hidden
-          className="pointer-events-none absolute inset-0 rounded-[0.875rem] opacity-0 shadow-[var(--shadow-frost)] transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
+          className="pointer-events-none absolute inset-0 rounded-[0.5rem] opacity-0 shadow-[var(--shadow-frost)] transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
         />
 
         {/* Frame: static `ring-1 ring-line` so the resting state is identical
@@ -141,7 +141,7 @@ export const AnimeCard = memo(function AnimeCard({
             a soft specular sheen, and springs back on leave. Touch devices and
             reduced-motion users get the exact same static frame — the tilt is
             gated inside TiltCard and adds nothing to the markup when off. */}
-        <TiltCard className="relative aspect-[3/4] overflow-hidden rounded-[0.875rem] bg-surface-2 ring-1 ring-line/80">
+        <TiltCard className="relative aspect-[3/4] overflow-hidden rounded-[0.5rem] bg-surface-2 ring-1 ring-line/80">
           {/* Frosted hover ring — opacity cross-fade, GPU-composited. A single
               1px hairline in frost rather than a bright 2px halo, so the edge
               reads as a crisp border, not a glow. Also lands on keyboard focus
@@ -149,7 +149,7 @@ export const AnimeCard = memo(function AnimeCard({
               default outline is clipped by the card frame. */}
           <div
             aria-hidden
-            className="pointer-events-none absolute inset-0 rounded-[0.875rem] ring-1 ring-frost/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
+            className="pointer-events-none absolute inset-0 rounded-[0.5rem] ring-1 ring-frost/50 opacity-0 transition-opacity duration-300 ease-out group-hover:opacity-100 group-focus-visible:opacity-100"
           />
           {/* Poster — gentle cinematic push-in on hover/focus (1.05: reads
               as a breath, not a zoom; transform-only so rails and grids

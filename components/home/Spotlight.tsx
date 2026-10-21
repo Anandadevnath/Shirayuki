@@ -432,26 +432,38 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
               · through the copy column the tint is unchanged from the design
                 (0.95 → 0.55 at 45%) — the paragraph keeps the bed it was
                 tuned against, at every breakpoint;
-              · past it, `lg:` lets the veil fall to 0.15 instead of holding a
-                ~45% tint across the whole frame. That held tint is what made
-                every slide read muddy: at 1440px it covered ~60% of the
-                artwork at 45–50% black, i.e. the picture was showing at
+              · past it, the veil falls toward 0.30 (`lg:` 0.12) instead of
+                holding a ~45% tint across the whole frame. That held tint is
+                what made every slide read muddy: at 1440px it covered ~60% of
+                the artwork at 45–50% black, i.e. the picture was showing at
                 little over half strength before the art filter even applied.
-              The tail only opens from `lg` up because below that the synopsis
-              spans the full width and still sits under the tail. */}
-          <div className="absolute inset-0 bg-gradient-to-r from-base/95 via-base/55 via-45% to-base/45 lg:to-base/15" />
+              The tail now opens in TWO stages. Tailwind's `via-*` utilities
+              write a SINGLE `--tw-gradient-via`/`--tw-gradient-via-position`
+              pair, so a multi-stop falloff cannot be expressed with doubled
+              `via-*` classes — an arbitrary `linear-gradient()` is used so
+              every stop is explicit. Stops: the copy bed holds 0.55 out to
+              45%, eases to 0.30 by 70% (past the synopsis column at every
+              width), then to 0.18 at the right edge. Holding a flat 0.45 to
+              the edge on small screens is what stacked the middle band into
+              the muddy read in the bug report — the fix is to let the art
+              through, not add a new layer. `lg:` then drops the far edge to
+              0.12 via a second overlay, since at ≥1024px the copy column is
+              a smaller fraction of a much wider frame. */}
+          <div className="absolute inset-0 bg-[linear-gradient(to_right,color-mix(in_oklch,var(--color-base)_95%,transparent),color-mix(in_oklch,var(--color-base)_55%,transparent)_45%,color-mix(in_oklch,var(--color-base)_30%,transparent)_70%,color-mix(in_oklch,var(--color-base)_18%,transparent))]" />
+          <div className="absolute inset-0 hidden bg-[linear-gradient(to_right,transparent_60%,color-mix(in_oklch,var(--color-base)_12%,transparent))] lg:block" />
           {/* Bottom atmosphere — a light vignette at the hero's base. Dissolves
               with the group above, so it can never read as a step where the
               hero ends: the artwork tail beneath it continues smoothly into
               the Trending overlap. Kept deliberately shallow — it darkens the
-              artwork, not any copy. */}
-          <div className="absolute inset-x-0 bottom-0 h-[32%] bg-gradient-to-t from-base/45 via-base/12 to-transparent" />
+              artwork, not any copy. Trimmed from base/45 so it stops stacking
+              extra black onto the horizontal scrim's already-faded base. */}
+          <div className="absolute inset-x-0 bottom-0 h-[32%] bg-gradient-to-t from-base/35 via-base/10 to-transparent" />
         </div>
         {/* Top band — the navbar is fully transparent at scroll 0
             (`.nav-glass`), so this is the ONLY thing keeping the nav labels
             readable while the hero art passes behind them. It fades out well
             before the copy starts, so it darkens the sky, never the title. */}
-        <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/80 via-base/45 via-38% to-transparent" />
+        <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/80 via-base/40 via-38% to-transparent" />
 
         {/* ── Art placeholder — sits BENEATH the copy (z-0), mirroring the
             route-level SpotlightSkeleton's backdrop so the skeleton → board
