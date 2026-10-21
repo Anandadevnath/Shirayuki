@@ -52,21 +52,18 @@ export function DetailBackdrop({ src }: { src: string | null }) {
         />
       )}
 
-      {/* Header scrim — a light top-down dim so the navbar + breadcrumb stay
-          readable where the art is brightest (the navbar is transparent until
-          it scrolls, per .nav-glass). */}
-      <div className="absolute inset-x-0 top-0 h-56 bg-gradient-to-b from-base/80 via-base/35 to-transparent" />
-
-      {/* Primary scrim — vertically weighted dark tint. The art stays
-          visible behind the hero, then the page dissolves into solid base
-          through the lower two-thirds. */}
-      <div className="absolute inset-0 bg-gradient-to-b from-base/55 via-base/75 to-base" />
-
-      {/* Left-to-right scrim — deepens the inset side the content column
-          sits on and lets the right edge read as a soft falloff. */}
-      <div className="absolute inset-0 bg-gradient-to-r from-base/70 via-base/20 to-base/45" />
-
-      {/* Edge vignette — subtle corner darkening, no hard ring. */}
+      {/* Scrim stack — three controlled layers, no abrupt band:
+          1. Vertical fade: raw art stays visible behind the hero (top), then
+             dissolves to solid `base` through the lower third, so lower
+             sections seat on a calm field.
+          2. Horizontal tint: deepens the content-column side and softens the
+             outer edge.
+          3. Vignette: subtle corner darkening, no hard ring.
+          The former separate header scrim was folded into layer 1 — the
+          vertical fade is strong enough over the top that the navbar and
+          breadcrumb stay legible without a fourth overlay. */}
+      <div className="absolute inset-0 bg-gradient-to-b from-base/45 via-base/70 to-base" />
+      <div className="absolute inset-0 bg-gradient-to-r from-base/70 via-base/15 to-base/45" />
       <div className="absolute inset-0 bg-[radial-gradient(115%_90%_at_50%_38%,transparent_38%,var(--color-base)_100%)]" />
     </div>
   );

@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils/cn";
 import { revealDelay } from "@/lib/utils/reveal";
 import { isInList as isInListLocal, toggleList, WATCHLIST_EVENT } from "@/lib/watchlist/local";
 import { COMPLETED_EVENT, isCompleted, setCompleted } from "@/lib/completed/local";
+import { ReadMore } from "./ReadMore";
 
 /**
  * The slice of the normalized detail model this panel renders. Derived from the
@@ -157,47 +158,6 @@ function RatingBadge({ score, malScore }: { score: number | null | undefined; ma
       {malScore && !hasScore && (
         <span className="text-[10px] uppercase tracking-wider text-faint">MAL</span>
       )}
-    </div>
-  );
-}
-
-function ReadMore({ text }: { text: string }) {
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <div className="space-y-1.5">
-      <p
-        className={cn(
-          "text-desc text-muted/90",
-          expanded ? "" : "overflow-hidden",
-        )}
-        style={
-          expanded
-            ? undefined
-            : {
-                display: "-webkit-box",
-                WebkitLineClamp: 5,
-                WebkitBoxOrient: "vertical",
-              }
-        }
-      >
-        {text}
-      </p>
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="text-meta inline-flex items-center gap-1 font-semibold text-frost transition-colors hover:text-snow"
-      >
-        {expanded ? "Read less" : "Read more"}
-        <span
-          className={cn(
-            "transition-transform duration-300",
-            expanded ? "rotate-180" : "rotate-0",
-          )}
-          aria-hidden
-        >
-          ▾
-        </span>
-      </button>
     </div>
   );
 }

@@ -1,17 +1,24 @@
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import Image from "next/image";
-import Link from "next/link";
-import { Play, Film, Clapperboard } from "lucide-react";
-import { getAnime, getEpisodes, getHome, getAnimeSeasons, getAnimeArt, safe, withTimeout } from "@/lib/api";
-import { SeasonRail } from "@/components/details/SeasonRail";
-import { CastSection } from "@/components/details/CastSection";
+import { Suspense } from "react";
+import {
+  getAnime,
+  getEpisodes,
+  getAnimeSeasons,
+  getAnimeArt,
+  safe,
+} from "@/lib/api";
 import { DetailBackdrop } from "@/components/details/DetailBackdrop";
-import { Rail } from "@/components/anime/Rail";
-import { EpBadges } from "@/components/anime/Badges";
-import { TiltCard } from "@/components/motion/TiltCard";
-import { truncate, slugify } from "@/lib/utils/format";
+import { HeroSection } from "@/components/details/HeroSection";
+import { DetailsInfo } from "@/components/details/DetailsInfo";
+import { NextEpisodeSection } from "@/components/details/NextEpisodeSection";
+import { EpisodeExplorer } from "@/components/details/EpisodeExplorer";
+import { CharacterCarousel } from "@/components/details/CharacterCarousel";
+import { FranchiseTimeline } from "@/components/details/FranchiseTimeline";
+import { truncate } from "@/lib/utils/format";
 import { jsonLdHtml } from "@/lib/utils/jsonld";
+import { isAiringStatus, yearFromAired } from "@/lib/utils/detail";
+import { Skeleton } from "@/components/ui/Skeleton";
 
 type Params = { params: Promise<{ id: string }> };
 
@@ -33,36 +40,31 @@ export async function generateMetadata({ params }: Params): Promise<Metadata> {
 
 export default async function AnimePage({ params }: Params) {
   const { id } = await params;
-  // Every request is independent, so they are ALL started together. `getAnime`
-  // is the only REQUIRED call — the rest are optional rails that degrade to
-  // hidden sections. `getHome` here is a heavyweight full-home scrape used only
-  // for the "Upcoming" rail, so it carries an explicit deadline: if the home
-  // data cache is cold and the upstream is slow, the detail page must still
-  // render its own content on time instead of waiting on an optional rail.
-  const [detailRes, epRes, seasonsRes, artRes, homeRes] = await Promise.all([
+
+  // Phase 1 — every call is independent and none blocks on the schedule.
+  // `getAnime` is the only REQUIRED call (notFound on failure); the rest are
+  // optional sections that hide gracefully on failure.
+  const [detailRes, epRes, seasonsRes, artRes] = await Promise.all([
     safe(() => getAnime(id)),
     safe(() => getEpisodes(id)),
     safe(() => getAnimeSeasons(id)),
     safe(() => getAnimeArt(id)),
-    withTimeout(getHome(), 6_000, "home"),
   ]);
 
   if (!detailRes.ok || !detailRes.data) notFound();
   const a = detailRes.data;
   const episodes = epRes.ok ? epRes.data.episodes : [];
-  const firstEp = episodes[0]?.episodeId;
-
-  // Seasons + interleaved movies (provider timeline) and the /art bundle
-  // (cast). Optional — every block below guards on presence so a
-  // partial failure degrades gracefully.
+  const firstEpisode = episodes[0] ?? null;
   const seasons = seasonsRes.ok ? seasonsRes.data?.filter(Boolean) ?? [] : [];
   const art = artRes.ok && artRes.data ? artRes.data : null;
-  const upcoming = homeRes.ok ? homeRes.data.upcoming : [];
 
-  const japanese = a.jname;
-  const aired = a.aired;
-  const premieredYear = a.year ? String(a.year) : null;
-  const malScore = a.malScore;
+  // The "Next episode" card is a streamed island (see NextEpisodeSection): the
+  // heavy schedule scrape must never block the page's first paint, so it is
+  // only rendered for airing titles and its 8s-capped await lives inside a
+  // `<Suspense>` boundary below. Completed/upcoming titles skip it entirely.
+  const airing = isAiringStatus(a.status);
+
+  const year = yearFromAired(a.aired);
 
   const jsonLd = {
     "@context": "https://schema.org",
@@ -70,7 +72,7 @@ export default async function AnimePage({ params }: Params) {
     name: a.title,
     description: a.description ?? undefined,
     image: a.poster ?? undefined,
-    datePublished: a.year ? String(a.year) : undefined,
+    datePublished: year ?? undefined,
   };
 
   // HiAnime currently serves cover === poster. Preferring cover keeps the
@@ -85,187 +87,56 @@ export default async function AnimePage({ params }: Params) {
         dangerouslySetInnerHTML={{ __html: jsonLdHtml(jsonLd) }}
       />
 
-      {/* Anime-specific cinematic backdrop. Sits between the Ambient layer
-          (-z-10) and the page content (z auto). Fixed, so it spans the whole
-          scroll length with no hero/lower-section cutoff, and it re-renders
-          per route so navigating to another anime swaps the art. */}
+      {/* The single fixed artwork layer for the whole page. No section
+          introduces a second background image or scrim stack. */}
       <DetailBackdrop src={backgroundSrc} />
 
-      <nav className="mb-6 flex items-center gap-1.5 text-xs text-muted">
-        <Link href="/" className="transition-colors hover:text-snow">Home</Link>
-        <span>·</span>
-        <Link href="/category/tv" className="transition-colors hover:text-snow">TV</Link>
-        <span>·</span>
-        <span className="truncate text-snow">{a.title}</span>
-      </nav>
-
-      <div className="grid gap-5 lg:grid-cols-[1fr_320px]">
-        {/* Panel 1 — poster, title, badges, description, actions */}
-        <section className="glass relative overflow-hidden rounded-2xl p-5 sm:p-7">
-          <div className="flex flex-col gap-6 sm:flex-row">
-            <TiltCard
-              maxTilt={5}
-              liftY={-4}
-              hoverScale={1.015}
-              perspective={640}
-              className="relative mx-auto aspect-[2/3] w-40 shrink-0 overflow-hidden rounded-lg ring-1 ring-line shadow-[var(--shadow-soft)] sm:mx-0 sm:w-52"
-            >
-              {a.poster && (
-                <Image src={a.poster} alt={a.title} fill sizes="208px" className="object-cover" />
-              )}
-              {/* Poster-edge light, matching the other key-art surfaces. */}
-              <div className="pointer-events-none absolute inset-x-0 top-0 h-1/3 bg-gradient-to-b from-white/6 to-transparent" />
-            </TiltCard>
-
-            <div className="flex-1 pt-1 sm:pt-0">
-              <h1 className="text-page">
-                {a.title}
-              </h1>
-
-              <div className="text-meta mt-3 flex flex-wrap items-center gap-2 text-muted">
-                {a.rating && (
-                  <span className="rounded-sm border border-line bg-surface/60 px-2 py-1 font-semibold text-snow">
-                    {a.rating}
-                  </span>
-                )}
-                {malScore && (
-                  <span className="rounded-sm bg-frost-soft px-2 py-1 font-semibold text-frost">
-                    <span className="font-accent">MAL</span> {malScore}
-                  </span>
-                )}
-                <span className="font-accent text-faint">·</span>
-                {a.type && (
-                  <span className="flex items-center gap-1 rounded-sm border border-line px-2 py-1">
-                    <Film className="size-3" /> {a.type}
-                  </span>
-                )}
-                <span className="font-accent text-faint">·</span>
-                {premieredYear && (
-                  <span className="rounded-sm border border-line px-2 py-1 font-accent">
-                    {premieredYear}
-                  </span>
-                )}
-                <EpBadges sub={a.episodes.sub} dub={a.episodes.dub} />
-              </div>
-
-              {a.description && (
-                <p className="text-desc mt-4 max-w-3xl text-muted">
-                  {truncate(a.description, 420)}
-                </p>
-              )}
-
-              <div className="mt-5 flex flex-wrap gap-3">
-                <Link
-                  href={firstEp ? `/watch/${id}/${encodeURIComponent(firstEp)}` : `/watch/${id}`}
-                  className="press text-btn flex h-10 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 text-base"
-                >
-                  <Play className="size-4 fill-current" /> Watch now
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
-
-        {/* Panel 2 — anime info sidecar */}
-        <aside className="glass relative overflow-hidden rounded-2xl p-5 sm:p-6">
-          <h2 className="text-eyebrow mb-4 text-frost">
-            Anime Info
-          </h2>
-
-          <dl className="space-y-2.5 text-xs">
-            {japanese && (
-              <div className="flex gap-2">
-                <dt className="w-20 shrink-0 font-semibold text-muted">Japanese</dt>
-                <dd className="flex-1 text-snow">{japanese}</dd>
-              </div>
-            )}
-            {aired && (
-              <div className="flex gap-2">
-                <dt className="w-20 shrink-0 font-semibold text-muted">Aired</dt>
-                <dd className="flex-1 text-snow">{aired}</dd>
-              </div>
-            )}
-            {premieredYear && (
-              <div className="flex gap-2">
-                <dt className="w-20 shrink-0 font-semibold text-muted">Premiered</dt>
-                <dd className="flex-1 text-snow">{premieredYear}</dd>
-              </div>
-            )}
-            {a.duration != null && (
-              <div className="flex gap-2">
-                <dt className="w-20 shrink-0 font-semibold text-muted">Duration</dt>
-                <dd className="flex-1 text-snow">{a.duration} min</dd>
-              </div>
-            )}
-            {a.status && (
-              <div className="flex gap-2">
-                <dt className="w-20 shrink-0 font-semibold text-muted">Status</dt>
-                <dd className="flex-1 text-snow">{a.status}</dd>
-              </div>
-            )}
-            {malScore && (
-              <div className="flex gap-2">
-                <dt className="w-20 shrink-0 font-semibold text-muted">MAL Score</dt>
-                <dd className="flex-1 font-accent text-snow">{malScore}</dd>
-              </div>
-            )}
-          </dl>
-
-          {a.genres.length > 0 && (
-            <div className="mt-5 border-t border-line/60 pt-4">
-              <dt className="mb-2 text-xs font-semibold text-muted">Genres</dt>
-              <div className="flex flex-wrap gap-1.5">
-                {a.genres.map((g) => (
-                  <Link
-                    key={g}
-                    href={`/genre/${slugify(g)}`}
-                    className="rounded-sm border border-line bg-surface/50 px-2 py-0.5 text-[11px] text-muted transition-colors hover:border-frost/40 hover:text-frost"
-                  >
-                    {g}
-                  </Link>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {a.studios.length > 0 && (
-            <div className="mt-5 border-t border-line/60 pt-4">
-              <dt className="mb-2 flex items-center gap-1 text-xs font-semibold text-muted">
-                <Clapperboard className="size-3" /> Studios
-              </dt>
-              <dd className="text-xs text-snow">{a.studios.join(", ")}</dd>
-            </div>
-          )}
-        </aside>
+      {/* Hero + info sidecar share one row: poster/title/actions on the left,
+          the compact "Anime Info" panel beside it on desktop (stacked on
+          mobile) — the page's original detail layout. The streamed
+          "Next episode" strip sits at the top of the sidecar as current-state
+          context (its schedule scrape streams in, never blocking first paint). */}
+      <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_340px]">
+        <HeroSection anime={a} animeId={id} firstEpisode={firstEpisode} />
+        <DetailsInfo
+          anime={a}
+          staff={art?.staff}
+          company={art?.company}
+          nextEpisode={
+            airing ? (
+              <Suspense fallback={<NextEpisodeSkeleton />}>
+                <NextEpisodeSection animeId={id} />
+              </Suspense>
+            ) : null
+          }
+        />
       </div>
 
-      {/* Trailing detail sections (franchise, art, cast, related, upcoming)
-          share one vertical rhythm via `.section-stack`, offset from the
-          hero/info grid by the global section gap. */}
       <div className="section-stack mt-[var(--space-section)]">
-        {seasons.length > 0 && (
-          <div>
-            <SeasonRail items={seasons} currentId={id} />
-          </div>
-        )}
+        {episodes.length > 0 && <EpisodeExplorer animeId={id} episodes={episodes} />}
 
         {art && art.characters.length > 0 && (
-          <div>
-            <CastSection characters={art.characters} charactersTotal={art.charactersTotal} />
-          </div>
+          <CharacterCarousel
+            characters={art.characters}
+            charactersTotal={art.charactersTotal}
+          />
         )}
 
-        {a.recommended.length > 0 && (
-          <div>
-            <Rail title="Related" items={a.recommended} />
-          </div>
-        )}
+        {seasons.length > 1 && <FranchiseTimeline items={seasons} currentId={id} />}
+      </div>
+    </div>
+  );
+}
 
-        {upcoming.length > 0 && (
-          <div>
-            <Rail title="Upcoming" eyebrow="Fresh Premieres" items={upcoming} href="/schedule" />
-          </div>
-        )}
+/** Placeholder matching NextEpisodeCard's footprint while the schedule
+ *  streams in, so the strip's arrival causes no layout shift. */
+function NextEpisodeSkeleton() {
+  return (
+    <div className="mb-4 flex items-start gap-2 rounded-sm border border-frost/25 bg-frost-soft/50 px-3 py-2.5">
+      <Skeleton className="mt-0.5 size-3.5 shrink-0 rounded-sm" />
+      <div className="flex flex-col gap-1.5">
+        <Skeleton className="h-2.5 w-20" />
+        <Skeleton className="h-3 w-28" />
       </div>
     </div>
   );
