@@ -40,7 +40,7 @@ export function WatchlistClient() {
         </p>
         <Link
           href="/"
-          className="press text-btn mt-2 flex h-10 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-4 text-base"
+          className="press text-btn mt-2 flex h-10 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-4 on-frost"
         >
           <Play className="size-4 fill-current" /> Browse anime
         </Link>

@@ -33,7 +33,7 @@ export default async function SearchPage({ searchParams }: SP) {
           name="q"
           defaultValue={query}
           placeholder="Search anime…"
-          className="h-12 w-full bg-transparent text-base outline-none placeholder:text-faint"
+          className="h-12 w-full bg-transparent text-body text-snow outline-none placeholder:text-faint"
           aria-label="Search anime"
           autoFocus
         />

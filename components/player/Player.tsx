@@ -800,7 +800,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
             </p>
             <button
               onClick={retry}
-              className="mt-1 flex items-center gap-2 rounded-sm bg-frost px-4 py-2 text-sm font-semibold text-base transition-transform hover:scale-[1.04] motion-reduce:transition-none"
+              className="mt-1 flex items-center gap-2 rounded-sm bg-frost px-4 py-2 text-sm font-semibold on-frost transition-transform hover:scale-[1.04] motion-reduce:transition-none"
             >
               <RotateCcw className="size-4" /> Retry
             </button>
@@ -848,7 +848,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
             <div className="flex gap-2">
               <button
                 onClick={goNext}
-                className="rounded-sm bg-frost px-4 py-2 text-sm font-semibold text-base transition-transform hover:scale-[1.04]"
+                className="rounded-sm bg-frost px-4 py-2 text-sm font-semibold on-frost transition-transform hover:scale-[1.04]"
               >
                 Play now
               </button>

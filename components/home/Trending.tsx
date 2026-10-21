@@ -493,7 +493,7 @@ export function Trending({
             <button
               onClick={() => onArrow(1)}
               aria-label={`Scroll ${title} right`}
-              className="grid size-9 place-items-center rounded-full bg-frost text-base transition-transform duration-200 hover:scale-105 active:scale-90"
+              className="grid size-9 place-items-center rounded-full bg-frost on-frost transition-transform duration-200 hover:scale-105 active:scale-90"
             >
               <ChevronRight className="size-4" />
             </button>

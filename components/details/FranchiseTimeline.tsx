@@ -97,7 +97,7 @@ export function FranchiseTimeline({
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-base via-base/40 to-transparent" />
 
                 {isCurrent && (
-                  <span className="absolute left-2 bottom-2 z-10 flex items-center gap-1 rounded-md bg-frost/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-base">
+                  <span className="absolute left-2 bottom-2 z-10 flex items-center gap-1 rounded-md bg-frost/90 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wider on-frost">
                     <Play className="size-2.5 fill-current" /> Now viewing
                   </span>
                 )}

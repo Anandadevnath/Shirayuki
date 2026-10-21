@@ -654,7 +654,7 @@ export function Spotlight({ items }: { items: SpotlightModel[] }) {
                 <TapLink
                   href={`/watch/${a.id}`}
                   {...pressProps}
-                  className="text-btn flex h-11 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 text-base"
+                  className="text-btn flex h-11 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 on-frost"
                 >
                   <Play className="size-4 fill-current" /> Watch Now
                 </TapLink>

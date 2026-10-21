@@ -7,7 +7,7 @@ export function GenreCloud({ genres }: { genres: GenreModel[] }) {
 
   return (
     <section className="glass rounded-lg p-4 sm:p-5">
-      <h2 className="mb-3 text-base font-bold sm:text-lg">Browse by Genre</h2>
+      <h2 className="mb-3 text-title text-snow">Browse by Genre</h2>
       <div className="flex flex-wrap gap-2">
         {genres.map((g) => (
           <Link

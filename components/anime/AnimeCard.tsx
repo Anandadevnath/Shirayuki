@@ -227,7 +227,7 @@ export const AnimeCard = memo(function AnimeCard({
                 revealRowClassName,
               )}
             >
-              <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-btn)] bg-frost px-3 py-1 text-[11px] font-semibold text-base">
+              <span className="inline-flex items-center gap-1.5 rounded-[var(--radius-btn)] bg-frost px-3 py-1 text-[11px] font-semibold on-frost">
                 <Play className="size-3 translate-x-px fill-current" /> Watch
               </span>
               {anime.type && (

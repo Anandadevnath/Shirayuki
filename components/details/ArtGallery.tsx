@@ -61,7 +61,7 @@ export function ArtGallery({
 
             {/* Current marker */}
             {isCurrent(a) && (
-              <span className="absolute left-1.5 top-1.5 rounded-sm bg-frost/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-base">
+              <span className="absolute left-1.5 top-1.5 rounded-sm bg-frost/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider on-frost">
                 Current
               </span>
             )}

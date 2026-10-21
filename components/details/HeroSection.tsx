@@ -42,7 +42,10 @@ export function HeroSection({
 
   return (
     <section>
-      <nav className="mb-5 flex items-center gap-1.5 text-xs text-muted">
+      {/* Breadcrumb sits directly over the blurred backdrop art, so it carries
+          a faint type-lift shadow — the same guard the hero title uses — to
+          stay legible even where the artwork is bright. */}
+      <nav className="mb-5 flex items-center gap-1.5 text-xs text-muted [text-shadow:0_1px_10px_rgba(0,0,0,0.85)]">
         <Link href="/" className="transition-colors hover:text-snow">
           Home
         </Link>
@@ -165,7 +168,7 @@ export function HeroSection({
             {canWatch ? (
               <Link
                 href={watchHref}
-                className="press text-btn inline-flex h-10 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 text-base"
+                className="press text-btn inline-flex h-10 items-center gap-2 rounded-[var(--radius-btn)] bg-frost px-5 on-frost"
               >
                 <Play className="size-4 fill-current" /> Watch now
               </Link>
