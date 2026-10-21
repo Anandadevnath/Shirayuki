@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useLayoutEffect, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Play, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Play, X } from "lucide-react";
 import { listProgress, removeProgress, type WatchEntry } from "@/lib/progress/local";
 import { formatTime } from "@/lib/utils/format";
 import { revealDelay } from "@/lib/utils/reveal";
@@ -27,6 +27,7 @@ const useIsoLayoutEffect =
 
 export function ContinueWatching() {
   const [items, setItems] = useState<WatchEntry[]>([]);
+  const railRef = useRef<HTMLDivElement>(null);
 
   useIsoLayoutEffect(() => {
     setItems(listProgress());
@@ -39,13 +40,36 @@ export function ContinueWatching() {
     setItems(listProgress());
   }
 
+  const scrollRail = (dir: 1 | -1) => {
+    const el = railRef.current;
+    if (!el) return;
+    el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: "smooth" });
+  };
+
   const visible = items.slice(0, RAIL_LIMIT);
   const overflow = items.length - visible.length;
 
   return (
     <section>
-      <SectionHeader title="Continue Watching" eyebrow="Jump back in" />
-      <div className="no-scrollbar flex gap-3 overflow-x-auto px-0.5 py-1">
+      <SectionHeader title="Continue Watching" eyebrow="Jump back in">
+        <div className="flex shrink-0 gap-2">
+          <button
+            onClick={() => scrollRail(-1)}
+            aria-label="Scroll Continue Watching left"
+            className="grid size-9 place-items-center rounded-full glass text-muted transition-[color,border-color,transform] duration-200 hover:border-frost/40 hover:text-snow active:scale-90"
+          >
+            <ChevronLeft className="size-4" />
+          </button>
+          <button
+            onClick={() => scrollRail(1)}
+            aria-label="Scroll Continue Watching right"
+            className="grid size-9 place-items-center rounded-full bg-frost text-base transition-transform duration-200 hover:scale-105 active:scale-90"
+          >
+            <ChevronRight className="size-4" />
+          </button>
+        </div>
+      </SectionHeader>
+      <div ref={railRef} className="no-scrollbar flex gap-3 overflow-x-auto px-0.5 py-1">
         {visible.map((e, i) => {
           const pct = Math.min(100, Math.round((e.seconds / e.duration) * 100));
           return (
