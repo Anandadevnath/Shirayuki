@@ -245,6 +245,17 @@ export interface VoiceActorModel {
   url: string | null;
 }
 
+/**
+ * A voice actor viewed person-first: the VA plus every character they voice on
+ * this title. Derived from the character rows by `groupVoiceActors` (one VA
+ * can voice several characters, and the same character row repeats per VA), so
+ * the "Voice Actors" rail shows one card per person rather than per role.
+ */
+export interface VoiceActorProfileModel extends VoiceActorModel {
+  /** Characters this VA voices on the title, in first-appearance order. */
+  characters: { id: string | null; name: string | null; role: string | null }[];
+}
+
 export interface CharacterModel {
   id: string | null;
   slug: string | null;
@@ -286,6 +297,10 @@ export interface AnimeArtBundle {
   art: ArtItem[];
   characters: CharacterModel[];
   charactersTotal: number;
+  /** Person-first view of the cast: one entry per unique voice actor across
+   *  the (deduped) character rows, each carrying the character(s) they voice.
+   *  Derived by `groupVoiceActors` — see lib/providers/hianime/cast.ts. */
+  voiceActors: VoiceActorProfileModel[];
   /** Deduped studio + producer credits (exact name+kind pairs collapsed). */
   staff: StaffCredit[];
   /** The provider's primary company for the title, when returned. */

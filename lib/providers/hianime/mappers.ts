@@ -21,6 +21,7 @@ import type {
   StaffCredit,
 } from "../types";
 import { dedupeCharacters } from "./characters";
+import { groupVoiceActors } from "./cast";
 
 type Raw = z.infer<typeof rawCard>;
 
@@ -240,6 +241,9 @@ export function toArtBundle(d: ArtData): AnimeArtBundle {
     })),
     characters,
     charactersTotal: d.charactersTotal ?? (d.characters?.length ?? 0),
+    // Person-first cast view — one entry per unique VA across the deduped
+    // character rows (a VA can voice several characters).
+    voiceActors: groupVoiceActors(characters),
     staff,
     company,
   };

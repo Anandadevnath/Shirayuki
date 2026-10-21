@@ -112,13 +112,25 @@ export default function AnimeDetailLoading() {
           </ul>
         </section>
 
-        {/* Characters — mobile rail, desktop grid */}
+        {/* Characters rail — same fixed-width portrait card as Voice Actors */}
         <section>
           <SectionHead />
-          <div className="no-scrollbar flex gap-3 overflow-hidden">
+          <div className="flex gap-4 overflow-hidden pt-3">
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={i} className="flex w-36 shrink-0 flex-col gap-2 sm:w-full">
+              <div key={i} className="w-36 shrink-0 sm:w-40">
                 <div className="aspect-[3/4] w-full rounded-[0.5rem] bg-surface-2 shimmer-loop ring-1 ring-line" />
+              </div>
+            ))}
+          </div>
+        </section>
+
+        {/* Voice Actors rail — square VA portraits */}
+        <section>
+          <SectionHead />
+          <div className="flex gap-4 overflow-hidden pt-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={i} className="w-36 shrink-0 sm:w-40">
+                <div className="aspect-square w-full rounded-[0.5rem] bg-surface-2 shimmer-loop ring-1 ring-line" />
               </div>
             ))}
           </div>
@@ -136,6 +148,23 @@ export default function AnimeDetailLoading() {
             ))}
           </div>
         </section>
+
+        {/* Discovery rails (Trending / Ongoing) — poster cards. Rendered only
+            for airing titles at stream time; the skeleton draws the common
+            case and each section's height is held. */}
+        {["Trending", "Ongoing"].map((label) => (
+          <section key={label}>
+            <SectionHead />
+            <div className="flex gap-4 overflow-hidden pt-3">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div
+                  key={i}
+                  className="aspect-[2/3] w-44 shrink-0 rounded-[0.5rem] bg-surface-2 shimmer-loop ring-1 ring-line sm:w-52 md:w-56"
+                />
+              ))}
+            </div>
+          </section>
+        ))}
       </div>
     </div>
   );

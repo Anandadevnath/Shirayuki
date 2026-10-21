@@ -14,7 +14,9 @@ import { DetailsInfo } from "@/components/details/DetailsInfo";
 import { NextEpisodeSection } from "@/components/details/NextEpisodeSection";
 import { EpisodeExplorer } from "@/components/details/EpisodeExplorer";
 import { CharacterCarousel } from "@/components/details/CharacterCarousel";
+import { VoiceActorRail } from "@/components/details/VoiceActorRail";
 import { FranchiseTimeline } from "@/components/details/FranchiseTimeline";
+import { DiscoverySections } from "@/components/details/DiscoverySections";
 import { truncate } from "@/lib/utils/format";
 import { jsonLdHtml } from "@/lib/utils/jsonld";
 import { isAiringStatus, yearFromAired } from "@/lib/utils/detail";
@@ -122,7 +124,22 @@ export default async function AnimePage({ params }: Params) {
           />
         )}
 
+        {art && art.voiceActors.length > 0 && (
+          <VoiceActorRail voiceActors={art.voiceActors} />
+        )}
+
         {seasons.length > 1 && <FranchiseTimeline items={seasons} currentId={id} />}
+
+        {/* Discovery rails — schedule-derived (Trending + Ongoing), shown only
+            for airing titles since that is when the schedule is fetched. The
+            island's `getSchedule()` call dedupes with NextEpisodeSection's via
+            React cache(), so the page still costs one schedule scrape. Streamed
+            behind Suspense so it never blocks first paint. */}
+        {airing && (
+          <Suspense fallback={<DiscoverySkeleton />}>
+            <DiscoverySections animeId={id} />
+          </Suspense>
+        )}
       </div>
     </div>
   );
@@ -139,5 +156,30 @@ function NextEpisodeSkeleton() {
         <Skeleton className="h-3 w-28" />
       </div>
     </div>
+  );
+}
+
+/** Placeholder for the streamed discovery rails — matches a rail's header +
+ *  poster row so the arrival causes no layout shift. */
+function DiscoverySkeleton() {
+  return (
+    <>
+      {["Trending", "Ongoing"].map((label) => (
+        <section key={label}>
+          <div className="mb-4 flex flex-col gap-1.5">
+            <Skeleton className="h-2.5 w-16" />
+            <Skeleton className="h-6 w-40" />
+          </div>
+          <div className="flex gap-4 overflow-hidden pt-3">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div
+                key={i}
+                className="aspect-[2/3] w-44 shrink-0 rounded-[0.5rem] bg-surface-2 shimmer-loop ring-1 ring-line sm:w-52 md:w-56"
+              />
+            ))}
+          </div>
+        </section>
+      ))}
+    </>
   );
 }
