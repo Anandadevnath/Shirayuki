@@ -17,13 +17,22 @@ import { cn } from "@/lib/utils/cn";
  *
  * Hidden by the page when the franchise has fewer than two entries (a lone
  * "season" is not a timeline).
+ *
+ * `linkBase` picks the destination route: `"anime"` (default) opens the
+ * sibling's detail page — used on `/anime/[id]`; `"watch"` opens
+ * `/watch/{id}`, the resume-redirect route that server-resolves the episode
+ * list and replaces into the player — used on the watch page. A season entry
+ * carries no first-episode id (`SeasonModel`), so `/watch/{id}` resume is the
+ * only correct watch-flow target; we never fabricate an episode id.
  */
 export function FranchiseTimeline({
   items,
   currentId,
+  linkBase = "anime",
 }: {
   items: SeasonModel[];
   currentId?: string;
+  linkBase?: "anime" | "watch";
 }) {
   if (!items?.length) return null;
 
@@ -47,7 +56,7 @@ export function FranchiseTimeline({
         return (
           <Link
             key={s.id}
-            href={`/anime/${s.id}`}
+            href={`/${linkBase}/${s.id}`}
             style={revealDelay(Math.min(i, 9) * 60)}
             className="reveal group block w-44 shrink-0 snap-start sm:w-52 md:w-56"
           >

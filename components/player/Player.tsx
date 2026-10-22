@@ -707,7 +707,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
   return (
     <div
       ref={wrapRef}
-      className="group relative aspect-video w-full overflow-hidden rounded-t-md bg-black ring-1 ring-line"
+      className="group relative aspect-video w-full overflow-hidden rounded-t-md bg-black ring-1 ring-white/10"
       onMouseMove={nudgeUI}
       onMouseLeave={() => playing && !upNextVisible && setShowUI(false)}
       onFocus={() => setShowUI(true)}
@@ -866,13 +866,13 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
       {/* Controls */}
       <div
         className={cn(
-          "absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/90 to-transparent px-3 pb-3 pt-16 transition-opacity duration-200 ease-out sm:px-4",
+          "absolute inset-x-0 bottom-0 z-20 bg-gradient-to-t from-black/95 via-black/50 to-transparent px-3 pb-3 pt-16 transition-opacity duration-200 ease-out sm:px-4",
           showUI ? "opacity-100" : "pointer-events-none opacity-0",
         )}
       >
         {/* Scrubber — keyboard-focusable, ARIA slider pattern */}
         <div
-          className="group/bar relative mb-3 h-1.5 cursor-pointer rounded-full bg-white/20 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
+          className="group/bar relative mb-3 h-2 cursor-pointer rounded-full bg-white/25 shadow-[0_0_0_1px_rgba(255,255,255,0.08)] focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
           role="slider"
           tabIndex={0}
           aria-orientation="horizontal"
@@ -908,8 +908,8 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
             }
           }}
         >
-          <div className="absolute inset-y-0 left-0 rounded-full bg-white/20 transition-[width] duration-100" style={{ width: `${bufPct}%` }} />
-          <div className="absolute inset-y-0 left-0 rounded-full bg-frost transition-[width] duration-100" style={{ width: `${pct}%` }} />
+          <div className="absolute inset-y-0 left-0 rounded-full bg-white/25 transition-[width] duration-100" style={{ width: `${bufPct}%` }} />
+          <div className="absolute inset-y-0 left-0 rounded-full bg-frost shadow-[0_0_10px_-2px_var(--color-frost)] transition-[width] duration-100" style={{ width: `${pct}%` }} />
           {intro && duration > 0 && (
             <span
               className="absolute inset-y-0 bg-warning/70"
@@ -936,7 +936,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
             onClick={togglePlay}
             aria-label={playing ? "Pause (K)" : "Play (K)"}
             aria-pressed={playing}
-            className="grid size-9 place-items-center rounded-sm transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8"
+            className="grid size-9 place-items-center rounded-sm transition-[transform,background-color] duration-150 hover:scale-110 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8"
           >
             {playing ? <Pause className="size-5 fill-current" /> : <Play className="size-5 fill-current" />}
           </button>
@@ -944,7 +944,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
             <button
               onClick={goNext}
               aria-label="Next episode (N)"
-              className="hidden grid size-9 place-items-center rounded-sm transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:grid sm:size-8"
+              className="hidden grid size-9 place-items-center rounded-sm transition-[transform,background-color] duration-150 hover:scale-110 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:grid sm:size-8"
             >
               <SkipForward className="size-5" />
             </button>
@@ -953,14 +953,14 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
           <button
             onClick={() => seekBy(-10)}
             aria-label="Rewind 10 seconds (J)"
-            className="grid size-9 place-items-center rounded-sm transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8"
+            className="grid size-9 place-items-center rounded-sm transition-[transform,background-color] duration-150 hover:scale-110 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8"
           >
             <SkipBack className="size-4" />
           </button>
           <button
             onClick={() => seekBy(10)}
             aria-label="Forward 10 seconds (L)"
-            className="grid size-9 place-items-center rounded-sm transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8"
+            className="grid size-9 place-items-center rounded-sm transition-[transform,background-color] duration-150 hover:scale-110 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8"
           >
             <SkipForward className="size-4" />
           </button>
@@ -976,7 +976,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
               onClick={toggleMute}
               aria-label={isMuted ? "Unmute (M)" : "Mute (M)"}
               aria-pressed={isMuted}
-              className="grid size-9 place-items-center rounded-sm transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8"
+              className="grid size-9 place-items-center rounded-sm transition-[transform,background-color] duration-150 hover:scale-110 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8"
             >
               {isMuted ? <VolumeX className="size-5" /> : <Volume2 className="size-5" />}
             </button>
@@ -1034,7 +1034,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
             {/* C8 fix: current quality chip. Always visible so the user
              can see what they're getting, not just the settings panel. */}
             <span
-              className="hidden rounded-sm border border-line/60 bg-base/40 px-1.5 py-0.5 font-accent text-[10px] font-semibold uppercase tracking-wider text-faint sm:inline-block"
+              className="hidden rounded-sm border border-white/15 bg-base/60 px-1.5 py-0.5 font-accent text-[10px] font-semibold uppercase tracking-wider text-muted backdrop-blur-sm sm:inline-block"
               aria-live="polite"
               aria-label={`Current quality: ${level === -1 ? "Auto" : `${currentLevelHeight ?? ""}p`}`}
             >
@@ -1047,7 +1047,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
                 aria-label="Settings"
                 aria-expanded={settings}
                 aria-haspopup="menu"
-                className="grid size-9 place-items-center rounded-sm transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8"
+                className="grid size-9 place-items-center rounded-sm transition-[transform,background-color] duration-150 hover:scale-110 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8"
               >
                 <Settings className="size-5" />
               </button>
@@ -1143,7 +1143,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
             <button
               onClick={togglePip}
               aria-label="Picture in picture (P)"
-              className="hidden grid size-9 place-items-center rounded-sm transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost sm:grid sm:size-8 motion-reduce:transition-none"
+              className="hidden grid size-9 place-items-center rounded-sm transition-[transform,background-color] duration-150 hover:scale-110 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost sm:grid sm:size-8 motion-reduce:transition-none"
             >
               <PictureInPicture2 className="size-5" />
             </button>
@@ -1151,14 +1151,14 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
               onClick={toggleCaptions}
               aria-label={captionsOn ? "Hide captions (C)" : "Show captions (C)"}
               aria-pressed={captionsOn}
-              className={cn("grid size-9 place-items-center rounded-sm transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8", captionsOn && "text-frost")}
+              className={cn("grid size-9 place-items-center rounded-sm transition-[transform,background-color] duration-150 hover:scale-110 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8", captionsOn && "text-frost")}
             >
               <Captions className="size-5" />
             </button>
             <button
               onClick={toggleFs}
               aria-label={fs ? "Exit fullscreen (F)" : "Fullscreen (F)"}
-              className="grid size-9 place-items-center rounded-sm transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8"
+              className="grid size-9 place-items-center rounded-sm transition-[transform,background-color] duration-150 hover:scale-110 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost motion-reduce:transition-none sm:size-8"
             >
               {fs ? <Minimize className="size-5" /> : <Maximize className="size-5" />}
             </button>
@@ -1168,7 +1168,7 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
                 onClick={() => setShowHelp((s) => !s)}
                 aria-label="Keyboard shortcuts (?)"
                 aria-expanded={showHelp}
-                className="hidden grid size-9 place-items-center rounded-sm transition-transform duration-150 hover:scale-110 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost sm:grid sm:size-8 motion-reduce:transition-none"
+                className="hidden grid size-9 place-items-center rounded-sm transition-[transform,background-color] duration-150 hover:scale-110 hover:bg-white/10 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost sm:grid sm:size-8 motion-reduce:transition-none"
               >
                 <Keyboard className="size-4" />
               </button>

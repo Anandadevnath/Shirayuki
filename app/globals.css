@@ -422,6 +422,35 @@
       -webkit-backdrop-filter: blur(10px) saturate(1.12);
     }
   }
+  /* ── Watch-page hero glass ─────────────────────────────────────────────
+     Scoped refinement for the two primary panels on /watch/[id]/[ep] (the
+     player frame and the episode sidebar). Applied ON TOP of `.glass`, it
+     leans the panel denser and adds a brighter lit rim + a deeper contact
+     shadow so the player and sidebar seat distinctly against the full-bleed
+     blurred artwork — without going opaque or flat.
+
+     All watch-page readability work lives HERE, not in `.glass`, so every
+     other route's glass panels are untouched (the base `.glass` values are
+     unchanged). This also owns its own `backdrop-filter` so the panel gets a
+     stronger blur than the shared default; `box-shadow` is set here (never on
+     `.glass`) so it cannot override the `shadow-[var(--shadow-frost)]`
+     utility on existing `.glass` elements. Denser fill only; the art still
+     reads through, and text contrast only improves. */
+  .watch-glass {
+    background: color-mix(in oklch, var(--color-base) 66%, transparent);
+    backdrop-filter: blur(22px) saturate(1.2);
+    -webkit-backdrop-filter: blur(22px) saturate(1.2);
+    border-color: color-mix(in oklch, var(--color-frost) 18%, rgba(255, 255, 255, 0.12));
+    box-shadow:
+      var(--shadow-soft),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  @media (max-width: 767px) {
+    .watch-glass {
+      backdrop-filter: blur(14px) saturate(1.15);
+      -webkit-backdrop-filter: blur(14px) saturate(1.15);
+    }
+  }
   /* Snappy hover for items inside .glass panels — keeps transition cheap
      enough that backdrop-filter doesn't have to repaint on every frame. */
   .hover-snap {
