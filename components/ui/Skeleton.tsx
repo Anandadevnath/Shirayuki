@@ -38,6 +38,11 @@ function Stagger({
 }
 
 // ── Poster card (matches AnimeCard "cinematic": 3/4 frame, folded caption) ────
+// The frame geometry MUST mirror AnimeCard's poster frame exactly: 3/4 aspect,
+// `rounded-[0.5rem]` (the card radius, kept in sync across the hover/shadow
+// overlays), and the same `ring-1 ring-line/80` hairline. A stale radius here
+// makes the placeholder box visibly differ from the arriving card → a corner
+// jump on the skeleton→grid swap.
 export function CardSkeleton({
   className,
   style,
@@ -47,7 +52,7 @@ export function CardSkeleton({
 }) {
   return (
     <div className={className} style={style}>
-      <Skeleton className="aspect-[3/4] w-full rounded-[0.875rem] ring-1 ring-line/80" />
+      <Skeleton className="aspect-[3/4] w-full rounded-[0.5rem] ring-1 ring-line/80" />
     </div>
   );
 }
@@ -81,14 +86,16 @@ export function RailSkeleton({ cards = 7 }: { cards?: number }) {
 
 // ── Responsive poster Grid (matches components/anime/Grid) ────────────────────
 export function GridSkeleton({ count = 18 }: { count?: number }) {
+  // No per-card `.reveal` stagger here. A route skeleton is a *placeholder*,
+  // not content: it must be stable and evenly shimmering from frame 0. A
+  // staggered mount animation is still mid-flight when data resolves, and the
+  // fast commit that swaps in the real <Grid> tears out those moving nodes →
+  // the perceived "instant / flicker" cut. `.shimmer-loop` (on the shared
+  // <Skeleton> primitive) is the only motion; the entering grid owns the fade.
   return (
     <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {Array.from({ length: count }).map((_, i) => (
-        <CardSkeleton
-          key={i}
-          className="reveal"
-          style={revealDelay(Math.min(i, 11) * 45)}
-        />
+        <CardSkeleton key={i} />
       ))}
     </div>
   );
@@ -202,7 +209,7 @@ export function RankedGridSkeleton({
           className="reveal relative"
           style={revealDelay(Math.min(i, 11) * 45)}
         >
-          <Skeleton className="aspect-[3/4] w-full rounded-[0.875rem] ring-1 ring-line/80" />
+          <Skeleton className="aspect-[3/4] w-full rounded-[0.5rem] ring-1 ring-line/80" />
         </div>
       ))}
     </div>

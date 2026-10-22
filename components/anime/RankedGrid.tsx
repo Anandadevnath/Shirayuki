@@ -76,7 +76,13 @@ export function RankedGrid({
         // matched it to. QuickLists' panel is roughly half the board, so its
         // 5-up row and this 7-up board row land at near-identical poster widths
         // (~190px at xl). Keep this denser ladder if you touch the columns.
-        "grid grid-cols-2 gap-x-3.5 gap-y-7 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7",
+        //
+        // `.grid-in`: the same opacity-only one-shot entrance as <Grid>, so the
+        // arriving ranked grid cross-fades in as ONE unit and masks the
+        // per-image decode burst. Additive only — cards stay visible from frame
+        // 0, and being a pure CSS class it plays on mount identically in this
+        // client component and the server <Grid>.
+        "grid-in grid grid-cols-2 gap-x-3.5 gap-y-7 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7",
       )}
     >
       {shown.map((a, i) => {

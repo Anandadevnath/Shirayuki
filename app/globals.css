@@ -925,6 +925,27 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
   animation: enter-fade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
+/* One-unit entrance for an arriving poster grid (<Grid>). The grid mounts
+   AFTER data resolves, so a single wrapper fade reads as the block arriving —
+   it masks the per-image optimizer decode burst (every SmartImage still owns
+   its own shimmer→bitmap cross-fade) without touching the cards themselves.
+   Opacity-only, ON PURPOSE: a container transform (translate/scale) would
+   perturb every child's rounded frame mid-decode and reintroduce the
+   "grid shake" documented at the `.image-stack` note above. Plays once on
+   mount; the global reduced-motion catch-all flattens it (explicit guard
+   below keeps it readable). Never gate the cards behind this — an opacity-0
+   wrapper pre-hydration is the first-load flicker this repo avoids. */
+@keyframes grid-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.grid-in {
+  animation: grid-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .grid-in { animation: none; }
+}
+
 /* Tab panel swap — a quick 4px settle when a tab's content changes
    (Top 10 periods, schedule weekdays). Short and small so swapping
    reads as a state change, not a page transition. Replays via React
