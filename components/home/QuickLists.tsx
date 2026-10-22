@@ -24,8 +24,11 @@ export function QuickLists({ completed }: { completed: AnimeCardModel[] }) {
       {/* Grid flows top-down with uniform row/column gaps so the cards "perfectly
           adjust" to the panel — no uneven content-between stretching the gap
           between row 1 and row 2. Slightly tighter column gap makes the cards
-          a touch wider so they fill more of the panel width. */}
-      <div className="grid flex-1 grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          a touch wider so they fill more of the panel width. `.grid-in` is the
+          same opacity-only one-shot entrance as <Grid>: additive (never a
+          hidden-until-hydrated wrapper), so the grid cross-fades in as ONE unit
+          and the cards stay visible from frame 0. */}
+      <div className="grid-in grid flex-1 grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         {completed.map((a) => (
           <AnimeCard key={a.id} anime={a} />
         ))}

@@ -274,6 +274,11 @@ const animeArtSummary = z
   .object({ id: str, slug: str, title: str, jname: str, poster: str, description: str })
   .passthrough();
 
+/** Studio / producer credit row (`artists[]` and `company`). */
+const staffCreditData = z
+  .object({ name: str, slug: str, kind: str, url: str })
+  .passthrough();
+
 export const artData = z
   .object({
     source: str,
@@ -281,6 +286,8 @@ export const artData = z
     art: z.array(artItemData).default([]),
     characters: z.array(characterItemData).default([]),
     charactersTotal: z.number().default(0),
+    artists: z.array(staffCreditData).default([]),
+    company: staffCreditData.nullable().optional(),
   })
   .passthrough();
 export type ArtData = z.infer<typeof artData>;
@@ -288,3 +295,4 @@ export type ArtItemData = z.infer<typeof artItemData>;
 export type CharacterItemData = z.infer<typeof characterItemData>;
 export type VoiceActorItemData = z.infer<typeof voiceActorData>;
 export type AnimeArtSummaryData = z.infer<typeof animeArtSummary>;
+export type StaffCreditData = z.infer<typeof staffCreditData>;

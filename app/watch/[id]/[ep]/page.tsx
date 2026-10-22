@@ -1,11 +1,16 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
+import { Suspense } from "react";
 import { Captions, Mic, ServerCog } from "lucide-react";
-import { getAnime, getEpisodes, getServers, getSources, safe, withTimeout } from "@/lib/api";
+import { getAnime, getAnimeSeasons, getEpisodes, getServers, getSources, safe, withTimeout } from "@/lib/api";
 import type { ServerModel, SourcesModel } from "@/lib/providers/types";
 import { ErrorState } from "@/components/common/States";
+import { Skeleton } from "@/components/ui/Skeleton";
 import CinematicInfo from "@/components/details/CinematicInfo";
+import { EpisodeSidebar } from "@/components/details/EpisodeSidebar";
+import { DetailBackdrop } from "@/components/details/DetailBackdrop";
+import { FranchiseTimeline } from "@/components/details/FranchiseTimeline";
 import { PlayerLoader } from "@/components/player/PlayerLoader";
 import { cn } from "@/lib/utils/cn";
 
@@ -120,12 +125,23 @@ export default async function WatchPage({ params, searchParams }: Props) {
     return `/watch/${id}/${encodeURIComponent(episodeId)}?cat=${c}&server=${target}`;
   };
 
+  // HiAnime currently serves cover === poster. Preferring cover keeps the
+  // backdrop contract identical to the detail page's (`app/anime/[id]`).
+  const backgroundSrc = anime.cover ?? anime.poster ?? null;
+
   return (
     <>
+      {/* The single fixed artwork layer for the whole route — the immersive
+          blurred banner behind the player. No second background image or scrim
+          stack anywhere else on this page. */}
+      <DetailBackdrop src={backgroundSrc} />
+
       {/* ============== Row 1: Player + Episode Sidebar (synced height) ============== */}
       <div className="grid items-stretch gap-6 lg:grid-cols-[1fr_360px]">
+        {/* ── Left column: player, then the episode-meta panel ─────── */}
+        <div className="flex min-w-0 flex-col gap-4">
         {/* ── Player container ──────────────────────────────────────── */}
-        <div className="laser-frame laser-live glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
+        <div className="laser-frame glass watch-glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
           <div className="relative">
             {playerSrc && sources ? (
               <PlayerLoader
@@ -171,9 +187,17 @@ export default async function WatchPage({ params, searchParams }: Props) {
               </div>
             )}
           </div>
+        </div>
 
+        {/* ── Episode Meta panel (title + SUB/DUB + server) ────────── */}
+        {/* Separate laser-edged glass panel below the player, rather than a
+            strip inside the player frame. It carries the single `.laser-live`
+            spinning comet for this viewport (the player keeps the static
+            `laser-frame` aura), so the animated border lives here while the
+            one-comet-per-viewport paint-cost guardrail still holds. */}
+        <div className="laser-frame laser-live glass watch-glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
           {/* ── Title strip ─────────────────────────────────────────── */}
-          <div className="border-t border-line/60 bg-surface/60 px-5 py-4 sm:px-6">
+          <div className="border-b border-white/10 bg-surface/40 px-5 py-4 backdrop-blur-sm sm:px-6">
             <h1 className="text-title text-snow sm:text-[1.375rem]">{anime.title}</h1>
             <p className="text-meta mt-0.5 text-muted">
               Episode {epNum}
@@ -182,12 +206,12 @@ export default async function WatchPage({ params, searchParams }: Props) {
           </div>
 
           {/* ── Server switcher (transparent + glassy) ──────────────── */}
-          <div className="space-y-3 border-t border-line/60 bg-surface/50 px-5 py-4 sm:px-6">
+          <div className="space-y-3 bg-surface/30 px-5 py-4 backdrop-blur-sm sm:px-6">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-caption flex items-center gap-1.5 text-faint">
                 <Captions className="size-3.5" /> Subtitles / Dub
               </span>
-              <div className="flex gap-1">
+              <div className="flex gap-1.5">
                 {servers.sub.length > 0 && (
                   <Link
                     // M4 fix: pass the currently-selected server if it
@@ -195,10 +219,10 @@ export default async function WatchPage({ params, searchParams }: Props) {
                     // the user's server choice across category switches.
                     href={swHref("sub", preferred?.nameId)}
                     className={cn(
-                      "flex items-center gap-1 rounded-sm px-3 py-1 text-xs transition-colors",
+                      "flex items-center gap-1 rounded-sm border px-3 py-1 text-xs transition-colors",
                       category === "sub"
-                        ? "bg-frost-soft text-frost"
-                        : "border border-line/60 text-muted hover:text-snow",
+                        ? "border-frost/60 bg-frost-soft font-semibold text-frost"
+                        : "border-white/10 bg-base/40 text-muted hover:border-frost/40 hover:bg-base/60 hover:text-snow",
                     )}
                   >
                     <Captions className="size-3" /> SUB
@@ -208,10 +232,10 @@ export default async function WatchPage({ params, searchParams }: Props) {
                   <Link
                     href={swHref("dub", preferred?.nameId)}
                     className={cn(
-                      "flex items-center gap-1 rounded-sm px-3 py-1 text-xs transition-colors",
+                      "flex items-center gap-1 rounded-sm border px-3 py-1 text-xs transition-colors",
                       category === "dub"
-                        ? "bg-frost-soft text-frost"
-                        : "border border-line/60 text-muted hover:text-snow",
+                        ? "border-frost/60 bg-frost-soft font-semibold text-frost"
+                        : "border-white/10 bg-base/40 text-muted hover:border-frost/40 hover:bg-base/60 hover:text-snow",
                     )}
                   >
                     <Mic className="size-3" /> DUB
@@ -225,16 +249,16 @@ export default async function WatchPage({ params, searchParams }: Props) {
                 <span className="text-caption flex items-center gap-1.5 text-faint">
                   <ServerCog className="size-3.5" /> Server
                 </span>
-                <div className="flex flex-wrap gap-1">
+                <div className="flex flex-wrap gap-1.5">
                   {pool.map((s) => (
                     <Link
                       key={s.nameId}
                       href={swHref(category, s.nameId)}
                       className={cn(
-                        "rounded-sm px-3 py-1 text-xs transition-colors",
+                        "rounded-sm border px-3 py-1 text-xs transition-colors",
                         s.nameId === chosen?.nameId
-                          ? "bg-frost-soft text-frost"
-                          : "border border-line/60 text-muted hover:text-snow",
+                          ? "border-frost/60 bg-frost-soft font-semibold text-frost"
+                          : "border-white/10 bg-base/40 text-muted hover:border-frost/40 hover:bg-base/60 hover:text-snow",
                       )}
                     >
                       {s.name}
@@ -245,55 +269,70 @@ export default async function WatchPage({ params, searchParams }: Props) {
             )}
           </div>
         </div>
+        </div>
 
         {/* ── Episode Sidebar (height syncs with player) ──────────── */}
-        <aside className="laser-frame glass flex min-h-0 min-w-0 flex-col overflow-hidden rounded-md">
-          <div className="flex items-center justify-between border-b border-line/60 bg-surface/60 px-5 py-4">
-            <h2 className="text-title text-snow">
-              Episodes <span className="text-faint">({episodes.length})</span>
-            </h2>
-            <span className="text-eyebrow text-faint">
-              {category.toUpperCase()}
-            </span>
-          </div>
-          <div className="no-scrollbar scroll-frost max-h-[640px] flex-1 space-y-1 overflow-y-auto p-2 sm:max-h-[640px] max-sm:max-h-[420px]">
-            {episodes.map((e) => (
-              <Link
-                key={e.episodeId}
-                href={`/watch/${id}/${encodeURIComponent(e.episodeId)}`}
-                className={cn(
-                  "hover-snap text-meta flex items-center gap-3 rounded-md px-2.5 py-2",
-                  e.episodeId === episodeId
-                    ? "bg-frost-soft text-frost"
-                    : "text-muted hover:bg-surface-2/70 hover:text-snow",
-                )}
-              >
-                <span
-                  className={cn(
-                    "grid size-7 shrink-0 place-items-center rounded-sm font-accent text-xs",
-                    e.episodeId === episodeId
-                      ? "bg-frost/20 text-frost"
-                      : "bg-base text-faint",
-                  )}
-                >
-                  {e.number}
-                </span>
-                <span className="line-clamp-1 flex-1">
-                  {e.title ?? `Episode ${e.number}`}
-                </span>
-                {e.isFiller && (
-                  <span className="shrink-0 rounded-sm bg-warning/15 px-1.5 py-0.5 text-[10px] text-warning">
-                    F
-                  </span>
-                )}
-              </Link>
-            ))}
-          </div>
-        </aside>
+        <EpisodeSidebar
+          animeId={id}
+          episodes={episodes}
+          currentEpisodeId={episodeId}
+          category={category}
+          // Hrefs built here with the existing `swHref` (URL-level SUB/DUB
+          // switch) so no routing logic moves into the client component.
+          subHref={servers.sub.length ? swHref("sub", preferred?.nameId) : null}
+          dubHref={servers.dub.length ? swHref("dub", preferred?.nameId) : null}
+        />
       </div>
 
-      {/* ============== Row 2: Full-width Anime Details (Cinematic) ============== */}
-      <CinematicInfo anime={anime} category={category} epNum={displayEp} />
+      {/* ============== Rows 2+: franchise, details ============== */}
+      <div className="section-stack mt-[var(--space-section)]">
+        {/* Franchise / watch order. Streamed behind Suspense (see
+            <FranchiseRail>): the seasons scrape must never gate the player's
+            first paint, so it awaits inside the island, not the page. */}
+        <Suspense fallback={<FranchiseRailSkeleton />}>
+          <FranchiseRail animeId={id} />
+        </Suspense>
+
+        {/* ============== Anime Details (Cinematic) ============== */}
+        <CinematicInfo anime={anime} category={category} epNum={displayEp} />
+      </div>
     </>
+  );
+}
+
+/**
+ * Streamed franchise island. `AnimeDetail.seasons` is hardcoded to [] by the
+ * mapper, so the ordered timeline comes from its own ISR-cached getter
+ * (`getAnimeSeasons`, tag `seasons:${id}`), awaited HERE rather than in the
+ * page's blocking `Promise.all` — the player renders before this resolves.
+ * Hidden below two entries (a lone "season" is not a timeline) and hidden
+ * entirely on failure, matching the detail page.
+ */
+async function FranchiseRail({ animeId }: { animeId: string }) {
+  const res = await safe(() => getAnimeSeasons(animeId));
+  const seasons = res.ok ? res.data?.filter(Boolean) ?? [] : [];
+  if (seasons.length <= 1) return null;
+  return <FranchiseTimeline items={seasons} currentId={animeId} linkBase="watch" />;
+}
+
+/** Placeholder matching the franchise rail's footprint (header + landscape
+ *  poster row) while the seasons scrape streams in, so its arrival causes no
+ *  layout shift. */
+function FranchiseRailSkeleton() {
+  return (
+    <section>
+      <div className="mb-4 flex flex-col gap-1.5">
+        <Skeleton className="h-2.5 w-16 rounded" />
+        <Skeleton className="h-6 w-36 rounded-md" />
+      </div>
+      <div className="flex gap-4 overflow-hidden pt-3">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div
+            key={i}
+            className="aspect-[3/2] w-44 shrink-0 rounded-[0.5rem] bg-surface-2 shimmer-loop ring-1 ring-line sm:w-52 md:w-56"
+          />
+        ))}
+      </div>
+    </section>
   );
 }

@@ -9,9 +9,9 @@ import { cn } from "@/lib/utils/cn";
 /**
  * Franchise art gallery — every poster in the franchise (detail poster +
  * sibling seasons/movies), deduped server-side. Shares the visual rhythm of
- * the SeasonRail (frost ring on the current entry) but drops the numbers, so
- * the strip reads as the pure art companion to the chronological timeline.
- * The rail is a poster-strip, not a list of poster links.
+ * the FranchiseTimeline (frost ring on the current entry) but drops the
+ * numbers, so the strip reads as the pure art companion to the chronological
+ * timeline. The rail is a poster-strip, not a list of poster links.
  */
 export function ArtGallery({
   items,
@@ -61,7 +61,7 @@ export function ArtGallery({
 
             {/* Current marker */}
             {isCurrent(a) && (
-              <span className="absolute left-1.5 top-1.5 rounded-sm bg-frost/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider text-base">
+              <span className="absolute left-1.5 top-1.5 rounded-sm bg-frost/90 px-1.5 py-0.5 text-[9px] font-bold uppercase tracking-wider on-frost">
                 Current
               </span>
             )}

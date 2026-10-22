@@ -12,17 +12,21 @@
   --color-overlay: oklch(0.11 0.012 250 / 0.55);
   --color-line: oklch(0.26 0.015 250);
 
-  /* Foreground — snow */
-  --color-snow: oklch(0.97 0.004 240);
-  --color-muted: oklch(0.74 0.012 245);
-  /* A4 fix: bumped from 0.62 to 0.70 to clear WCAG AA (4.5:1) against
-   `--color-base` (oklch 0.07). Previously ~3.2:1, now ~4.7:1. Used for
-   timestamps, secondary meta, footer credits. */
-  --color-faint: oklch(0.7 0.012 248);
+  /* Foreground — snow.
+     WCAG note: `muted` and `faint` were previously BELOW AA (3.7:1 and
+     2.9:1) on every surface — the secondary text across the whole app was
+     illegible. Both are now solved against `--color-surface-2` (the lightest
+     dark step, the worst case), so every dark surface clears AA (4.5:1).
+     Hierarchy is carried by the type scale + weight, NOT by dimming text
+     below the AA floor. `lib/utils/contrast.test.ts` locks these floors in. */
+  --color-snow: oklch(0.97 0.004 240);   /* ~17:1 on base — AAA */
+  --color-muted: oklch(0.82 0.014 245);  /* ~6.3:1 on surface-2 — AA */
+  --color-faint: oklch(0.78 0.014 248);  /* ~4.8:1 on surface-2 — AA */
 
   /* Brand — frost */
   --color-frost: oklch(0.82 0.12 215);
-  --color-frost-deep: oklch(0.64 0.15 245);
+  /* Raised from 0.64 (was 2.6:1 — illegible even as large text) to clear AA. */
+  --color-frost-deep: oklch(0.74 0.13 245);
   --color-frost-soft: oklch(0.82 0.12 215 / 0.14);
 
   /* Whisper accent */
@@ -106,6 +110,45 @@
   --type-label: 0.6875rem;                                 /* 11 */
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Theme surface map — theme-independence for text colour.
+
+   Shirayuki ships dark-only today (`html { color-scheme: dark }`), but the
+   auto-contrast roles (`.on-frost`, `.text-auto`, …) resolve their ink from
+   the CURRENT token values at compute time. That means a second theme only
+   has to swap the colour tokens below — every role re-resolves on its own,
+   with zero component changes.
+
+   The light palette is defined here, ready to be activated by setting
+   `data-theme="light"` on <html> (or wiring next-themes). It is intentionally
+   not applied by default; `prefers-color-scheme` is left dark-first because
+   the product is designed dark. The values are chosen so the SAME contrast
+   floors hold (dark ink on light surfaces, light ink where needed).
+   ───────────────────────────────────────────────────────────── */
+[data-theme="light"] {
+  --color-base: oklch(0.98 0.004 250);
+  --color-surface: oklch(0.95 0.006 250);
+  --color-surface-2: oklch(0.91 0.008 250);
+  --color-overlay: oklch(0.98 0.004 250 / 0.65);
+  --color-line: oklch(0.85 0.01 250);
+
+  /* Ink darkens; muted/faint keep the same ≥4.5:1 floors on the light steps
+     while stepping DOWN from snow so the hierarchy still reads (0.22 → 0.45 →
+     0.55 gives ~18 / ~10 / ~7:1 against the lightest surface). */
+  --color-snow: oklch(0.22 0.02 250);
+  --color-muted: oklch(0.45 0.02 250);
+  --color-faint: oklch(0.55 0.02 250);
+
+  --color-frost: oklch(0.52 0.12 230);
+  --color-frost-deep: oklch(0.44 0.13 240);
+  --color-frost-soft: oklch(0.52 0.12 230 / 0.12);
+
+  --color-sakura: oklch(0.55 0.09 350);
+  --color-success: oklch(0.5 0.13 165);
+  --color-warning: oklch(0.55 0.12 75);
+  --color-danger: oklch(0.5 0.18 25);
+}
+
 @layer base {
   * {
     border-color: var(--color-line);
@@ -174,6 +217,84 @@
      family + size + line-height + tracking (+ weight where the role owns
      one) so components never hand-pick a size and weight again. Colour is
      left to the caller (text-snow / text-muted / text-faint). */
+
+  /* ── text-base collision fix (CRITICAL) ────────────────────────────────
+     `@theme` defines `--color-base`, so Tailwind generates a `.text-base
+     { color: var(--color-base) }` colour utility — which SHADOWS Tailwind's
+     built-in `text-base` font-size utility (the generated colour rule wins,
+     and no font-size `.text-base` is emitted at all).
+
+     The fallout was silent and opposite:
+       • `bg-frost … text-base` buttons got dark ink by luck (fine);
+       • `text-base font-bold` headings (RankList, GenreCloud) rendered
+         near-black on the dark canvas — INVISIBLE;
+       • `text-base` search inputs rendered dark text in a dark field —
+         invisible typing (1:1 contrast, verified).
+
+     Restore the font-size meaning. Declared after the framework import, so
+     it wins source order; `@utility` guarantees it outranks generated
+     utilities regardless of order. Only the FONT SIZE is restored — any
+     element that needs dark ink on a bright surface must say so explicitly
+     via `.on-frost` (below), never by leaning on this name. */
+  .text-base {
+    font-size: var(--type-body); /* 0.9375rem / 15px */
+    line-height: 1.6;
+  }
+
+  /* ── Auto-contrast text roles ────────────────────────────────────────
+     Dynamic foregrounds that stay legible on ANY background by resolving
+     the ink at compute time instead of hard-coding it.
+
+     Structure: the base rule ships a STATIC fallback ink (dark on the bright
+     frost family), then `@supports (color: color-contrast(...))` upgrades it
+     to the compute-time version. Splitting them into a `@supports` block is
+     required — stacking two `color:` declarations in one rule lets the
+     minifier drop the fallback (verified: Lightning CSS kept only the
+     `color-contrast()` line, leaving older Safari with NO colour).
+
+     Why this exists: hand-paired `bg-frost text-snow` produced 2.1:1
+     (white on bright frost — illegible). These roles make the correct ink
+     automatic, so a call site can't pick the wrong one. A future light theme
+     only redefines the colour tokens; every role re-resolves unchanged. */
+  .on-frost {
+    --_bg: var(--color-frost);
+    color: var(--color-base); /* static fallback: dark ink on bright frost */
+  }
+  .on-frost-soft {
+    --_bg: var(--color-frost);
+    color: var(--color-frost); /* static fallback: frost on its own 14% tint */
+  }
+  .on-warning {
+    --_bg: var(--color-warning);
+    color: var(--color-base); /* static fallback: dark ink on warning */
+  }
+  /* Generic: opt any element into auto ink against its own resolved
+     background. Defaults to the canvas surface, hence light ink. */
+  .text-auto {
+    --_bg: var(--color-base);
+    color: var(--color-snow);
+  }
+
+  @supports (color: color-contrast(#000 vs #fff, #eee)) {
+    .on-frost {
+      color: color-contrast(var(--_bg) vs var(--color-base), var(--color-snow));
+    }
+    .on-frost-soft {
+      /* Resolve the tinted surface inline here (not via a color-mix inside
+         color-contrast(), which the minifier cannot parse). */
+      color: color-contrast(
+        color-mix(in oklch, var(--color-frost) 14%, var(--color-base))
+          vs var(--color-frost), var(--color-base)
+      );
+    }
+    .on-warning {
+      color: color-contrast(var(--_bg) vs var(--color-base), var(--color-snow));
+    }
+    .text-auto {
+      color: color-contrast(var(--_bg) vs var(--color-base), var(--color-snow));
+    }
+  }
+
   .text-hero {
     font-family: var(--font-display);
     font-size: var(--type-hero);
@@ -299,6 +420,35 @@
     .glass {
       backdrop-filter: blur(10px) saturate(1.12);
       -webkit-backdrop-filter: blur(10px) saturate(1.12);
+    }
+  }
+  /* ── Watch-page hero glass ─────────────────────────────────────────────
+     Scoped refinement for the two primary panels on /watch/[id]/[ep] (the
+     player frame and the episode sidebar). Applied ON TOP of `.glass`, it
+     leans the panel denser and adds a brighter lit rim + a deeper contact
+     shadow so the player and sidebar seat distinctly against the full-bleed
+     blurred artwork — without going opaque or flat.
+
+     All watch-page readability work lives HERE, not in `.glass`, so every
+     other route's glass panels are untouched (the base `.glass` values are
+     unchanged). This also owns its own `backdrop-filter` so the panel gets a
+     stronger blur than the shared default; `box-shadow` is set here (never on
+     `.glass`) so it cannot override the `shadow-[var(--shadow-frost)]`
+     utility on existing `.glass` elements. Denser fill only; the art still
+     reads through, and text contrast only improves. */
+  .watch-glass {
+    background: color-mix(in oklch, var(--color-base) 66%, transparent);
+    backdrop-filter: blur(22px) saturate(1.2);
+    -webkit-backdrop-filter: blur(22px) saturate(1.2);
+    border-color: color-mix(in oklch, var(--color-frost) 18%, rgba(255, 255, 255, 0.12));
+    box-shadow:
+      var(--shadow-soft),
+      inset 0 1px 0 rgba(255, 255, 255, 0.06);
+  }
+  @media (max-width: 767px) {
+    .watch-glass {
+      backdrop-filter: blur(14px) saturate(1.15);
+      -webkit-backdrop-filter: blur(14px) saturate(1.15);
     }
   }
   /* Snappy hover for items inside .glass panels — keeps transition cheap
@@ -709,7 +859,16 @@ header[data-scrolled="1"] {
    The comet is GATED behind `.laser-live`: only one element per viewport gets
    the spinning comet, while every `.laser-frame` keeps the static frost aura
    (`::before`) so the frost-edge identity is unchanged at rest. Stacking >1
-   spinning conic+filter in a viewport was a top paint cost on scroll. */
+   spinning conic+filter in a viewport was a top paint cost on scroll.
+
+   Shape note: a conic gradient distributes its angles evenly around the
+   centre, so on a very wide, short panel (the episode-meta strip) the same
+   angular wedge maps to a long smear across the top/bottom edges and almost
+   no travel on the short sides — the comet looked like it "covered only some
+   of the border". Two fixes keep it legible on any aspect ratio:
+   · the bright head is a NARROW band (a real comet, not a broad wash), and
+   · the full ring carries a faint frost base tint, so no part of the border
+     ever reads as unlit while the comet is elsewhere. */
 .laser-frame.laser-live::after {
   content: "";
   position: absolute;
@@ -719,13 +878,15 @@ header[data-scrolled="1"] {
   padding: 1.5px;
   background: conic-gradient(
     from var(--laser-angle) at 50% 50%,
-    transparent 0deg,
-    transparent 55deg,
-    color-mix(in oklch, var(--color-frost-deep) 45%, transparent) 120deg,
-    color-mix(in oklch, var(--color-frost) 70%, transparent) 145deg,
-    color-mix(in oklch, var(--color-snow) 80%, transparent) 152deg,
-    transparent 165deg,
-    transparent 360deg
+    /* Faint always-on base so the whole ring reads as a lit frost edge. */
+    color-mix(in oklch, var(--color-frost-deep) 18%, transparent) 0deg,
+    color-mix(in oklch, var(--color-frost-deep) 14%, transparent) 300deg,
+    /* Comet tail — short, faint. */
+    color-mix(in oklch, var(--color-frost) 50%, transparent) 330deg,
+    /* Bright head — narrow so it stays a comet on wide panels. */
+    color-mix(in oklch, var(--color-frost) 88%, transparent) 351deg,
+    color-mix(in oklch, var(--color-snow) 95%, transparent) 355deg,
+    color-mix(in oklch, var(--color-frost) 70%, transparent) 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
@@ -802,6 +963,27 @@ html[data-anim="1"] [data-reveal="fade"]:not([data-shown]) {
 }
 .enter-fade {
   animation: enter-fade 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* One-unit entrance for an arriving poster grid (<Grid>). The grid mounts
+   AFTER data resolves, so a single wrapper fade reads as the block arriving —
+   it masks the per-image optimizer decode burst (every SmartImage still owns
+   its own shimmer→bitmap cross-fade) without touching the cards themselves.
+   Opacity-only, ON PURPOSE: a container transform (translate/scale) would
+   perturb every child's rounded frame mid-decode and reintroduce the
+   "grid shake" documented at the `.image-stack` note above. Plays once on
+   mount; the global reduced-motion catch-all flattens it (explicit guard
+   below keeps it readable). Never gate the cards behind this — an opacity-0
+   wrapper pre-hydration is the first-load flicker this repo avoids. */
+@keyframes grid-in {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+.grid-in {
+  animation: grid-in 0.45s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@media (prefers-reduced-motion: reduce) {
+  .grid-in { animation: none; }
 }
 
 /* Tab panel swap — a quick 4px settle when a tab's content changes

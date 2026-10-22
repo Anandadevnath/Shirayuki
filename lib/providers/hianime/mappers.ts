@@ -1,11 +1,12 @@
 import type { z } from "zod";
 import type {
+  ArtData,
+  CharacterItemData,
   DetailData,
   ScheduleData,
   rawCard,
   SeasonData,
-  ArtData,
-  CharacterItemData,
+  StaffCreditData,
 } from "./schemas";
 import type {
   AnimeCardModel,
@@ -17,7 +18,10 @@ import type {
   SpotlightModel,
   AnimeArtBundle,
   CharacterModel,
+  StaffCredit,
 } from "../types";
+import { dedupeCharacters } from "./characters";
+import { groupVoiceActors } from "./cast";
 
 type Raw = z.infer<typeof rawCard>;
 
@@ -115,6 +119,7 @@ export function toDetail(d: DetailData): AnimeDetail {
     malScore: typeof d.malScore === "number" && d.malScore > 0 ? String(d.malScore) : null,
     genres: Array.isArray(d.genres) ? d.genres.filter((s): s is string => !!s) : [],
     studios: Array.isArray(d.studios) ? d.studios.filter((s): s is string => !!s) : [],
+    producers: Array.isArray(d.producers) ? d.producers.filter((s): s is string => !!s) : [],
     episodes: {
       sub: d.episodes?.sub ?? null,
       dub: d.episodes?.dub ?? null,
@@ -190,7 +195,34 @@ function toCharacter(r: CharacterItemData): CharacterModel {
   };
 }
 
+function toStaffCredit(r: StaffCreditData, fallbackKind: "studio" | "producer"): StaffCredit | null {
+  const name = cleanStr(r.name);
+  if (!name) return null;
+  const kind = r.kind === "studio" || r.kind === "producer" ? r.kind : fallbackKind;
+  return { name, slug: r.slug ?? null, kind, url: r.url ?? null };
+}
+
 export function toArtBundle(d: ArtData): AnimeArtBundle {
+  // Collapse the repeated character rows (one per billed VA) into one card per
+  // character, collecting each character's full VA set. See dedupeCharacters.
+  const characters = dedupeCharacters((d.characters ?? []).map(toCharacter));
+
+  // `artists[]` mixes studios + producers; dedupe exact name+kind pairs so a
+  // studio that is also credited as a producer keeps ONE row per role, while
+  // two distinct entities sharing a name across kinds (rare) both survive.
+  const seen = new Set<string>();
+  const staff: StaffCredit[] = [];
+  for (const raw of d.artists ?? []) {
+    const credit = toStaffCredit(raw, "studio");
+    if (!credit) continue;
+    const key = `${credit.kind}:${credit.slug ?? credit.name}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    staff.push(credit);
+  }
+
+  const company = d.company ? toStaffCredit(d.company, "producer") : null;
+
   return {
     source: cleanStr(d.source),
     anime: {
@@ -207,7 +239,12 @@ export function toArtBundle(d: ArtData): AnimeArtBundle {
       poster: a.poster ?? null,
       title: a.title ?? null,
     })),
-    characters: (d.characters ?? []).map(toCharacter),
+    characters,
     charactersTotal: d.charactersTotal ?? (d.characters?.length ?? 0),
+    // Person-first cast view — one entry per unique VA across the deduped
+    // character rows (a VA can voice several characters).
+    voiceActors: groupVoiceActors(characters),
+    staff,
+    company,
   };
 }

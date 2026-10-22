@@ -228,7 +228,7 @@ const FlowCard = memo(function FlowCard({
           >
             <div className="overflow-hidden">
               <div className="flex items-center gap-2 pt-3">
-                <span className="watch-pill-spring inline-flex items-center gap-1.5 rounded-[var(--radius-btn)] bg-frost px-3.5 py-1.5 text-xs font-semibold text-base">
+                <span className="watch-pill-spring inline-flex items-center gap-1.5 rounded-[var(--radius-btn)] bg-frost px-3.5 py-1.5 text-xs font-semibold on-frost">
                   <Play className="size-3.5 translate-x-px fill-current" /> Watch
                 </span>
                 {anime.type && (

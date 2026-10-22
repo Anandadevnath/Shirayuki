@@ -74,7 +74,7 @@ export function RankList({
   return (
     <section className={cn("glass rounded-lg p-4 sm:p-5", className)} aria-label={title}>
       <div className="mb-3 flex items-center justify-between gap-3">
-        <h2 className="text-base font-bold sm:text-lg">{title}</h2>
+        <h2 className="text-title text-snow">{title}</h2>
         {action ??
           (href && (
             <Link

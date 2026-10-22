@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
-  Star, Tv, Clock, Film, Calendar, Building2, Plus,
+  Star, Tv, Clock, Calendar, Building2, Plus,
   Share2, Check, Sparkles, Award, Languages, Activity,
 } from "lucide-react";
 import type { AnimeDetail } from "@/lib/providers/types";
@@ -12,6 +12,7 @@ import { cn } from "@/lib/utils/cn";
 import { revealDelay } from "@/lib/utils/reveal";
 import { isInList as isInListLocal, toggleList, WATCHLIST_EVENT } from "@/lib/watchlist/local";
 import { COMPLETED_EVENT, isCompleted, setCompleted } from "@/lib/completed/local";
+import { ReadMore } from "./ReadMore";
 
 /**
  * The slice of the normalized detail model this panel renders. Derived from the
@@ -144,64 +145,6 @@ function StatCard({
   );
 }
 
-function RatingBadge({ score, malScore }: { score: number | null | undefined; malScore: string | null | undefined }) {
-  const hasScore = typeof score === "number" && score > 0;
-  const display = hasScore ? score!.toFixed(1) : malScore ?? "—";
-  return (
-    <div className="relative inline-flex items-center gap-2 rounded-md border border-warning/30 bg-gradient-to-br from-warning/15 via-warning/5 to-transparent px-3 py-1.5 shadow-[var(--shadow-soft)]">
-      <Star className="size-4 fill-warning text-warning" />
-      <span className="text-lg font-bold leading-none text-snow tabular-nums">
-        {display}
-        {hasScore && <span className="text-[10px] font-medium text-faint">/10</span>}
-      </span>
-      {malScore && !hasScore && (
-        <span className="text-[10px] uppercase tracking-wider text-faint">MAL</span>
-      )}
-    </div>
-  );
-}
-
-function ReadMore({ text }: { text: string }) {
-  const [expanded, setExpanded] = useState(false);
-  return (
-    <div className="space-y-1.5">
-      <p
-        className={cn(
-          "text-desc text-muted/90",
-          expanded ? "" : "overflow-hidden",
-        )}
-        style={
-          expanded
-            ? undefined
-            : {
-                display: "-webkit-box",
-                WebkitLineClamp: 5,
-                WebkitBoxOrient: "vertical",
-              }
-        }
-      >
-        {text}
-      </p>
-      <button
-        type="button"
-        onClick={() => setExpanded((v) => !v)}
-        className="text-meta inline-flex items-center gap-1 font-semibold text-frost transition-colors hover:text-snow"
-      >
-        {expanded ? "Read less" : "Read more"}
-        <span
-          className={cn(
-            "transition-transform duration-300",
-            expanded ? "rotate-180" : "rotate-0",
-          )}
-          aria-hidden
-        >
-          ▾
-        </span>
-      </button>
-    </div>
-  );
-}
-
 /* ── main component ─────────────────────────────────────────────── */
 
 export default function CinematicInfo({ anime, category, epNum }: CinematicInfoProps) {
@@ -262,7 +205,7 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
                 hoverScale={1.01}
                 liftY={-4}
                 perspective={640}
-                className="relative aspect-[2/3] w-full overflow-hidden rounded-md border border-line/60 bg-surface/40 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)] ring-1 ring-white/5 group-hover/poster:shadow-[0_30px_80px_-20px_color-mix(in_oklch,var(--color-frost-deep)_40%,transparent)]"
+                className="relative aspect-[2/3] w-full overflow-hidden rounded-sm border border-line/60 bg-surface/40 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.8),0_0_0_1px_rgba(255,255,255,0.04)] ring-1 ring-white/5 group-hover/poster:shadow-[0_30px_80px_-20px_color-mix(in_oklch,var(--color-frost-deep)_40%,transparent)]"
               >
                 {anime.poster ? (
                   <Image
@@ -308,26 +251,16 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
               )}
             </div>
 
-            <div
-              className="title-rise flex flex-wrap items-center gap-2 pt-1"
-              style={revealDelay(200)}
-            >
-              <RatingBadge score={anime.score} malScore={anime.malScore} />
-              {anime.rating && (
+            {anime.rating && (
+              <div
+                className="title-rise flex flex-wrap items-center gap-2 pt-1"
+                style={revealDelay(200)}
+              >
                 <span className="rounded-md border border-warning/30 bg-warning/10 px-2 py-1 text-[10px] font-semibold uppercase tracking-wider text-warning">
                   {anime.rating}
                 </span>
-              )}
-            </div>
-          </div>
-
-          {/* Quick metadata chip strip */}
-          <div
-            className="title-rise flex flex-wrap gap-1.5"
-            style={revealDelay(260)}
-          >
-            <MetaChip icon={Film}>{type}</MetaChip>
-            <MetaChip icon={Calendar}>{premiered}</MetaChip>
+              </div>
+            )}
           </div>
 
           {/* Genres — premium glass pills */}
@@ -423,21 +356,6 @@ export default function CinematicInfo({ anime, category, epNum }: CinematicInfoP
         className="pointer-events-none h-px bg-gradient-to-r from-transparent via-frost/30 to-transparent"
       />
     </section>
-  );
-}
-
-function MetaChip({
-  icon: Icon,
-  children,
-}: {
-  icon: React.ComponentType<{ className?: string }>;
-  children: React.ReactNode;
-}) {
-  return (
-    <span className="inline-flex items-center gap-1.5 rounded-md border border-line/50 bg-surface/60 px-2.5 py-1.5 text-[12px] font-medium text-snow transition-colors hover:border-frost/30 hover:bg-surface-2/50">
-      <Icon className="size-3.5 text-frost" />
-      {children}
-    </span>
   );
 }
 

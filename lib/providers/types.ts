@@ -78,6 +78,10 @@ export interface AnimeDetail {
   malScore: string | null;
   genres: string[];
   studios: string[];
+  /** Production companies returned by the provider's detail payload. Kept as
+   *  plain names (the detail endpoint has no slugs) — the richer studio /
+   *  producer credits with slugs come from the /art bundle (`staff`). */
+  producers: string[];
   episodes: EpisodeCount;
   info: Record<string, unknown>;
   recommended: AnimeCardModel[];
@@ -86,8 +90,8 @@ export interface AnimeDetail {
    *  them with zero customisation. */
   trending: AnimeCardModel[];
   /** Sibling seasons in the same franchise. order + isCurrent are display
-   *  hints; the consumer (SeasonRail) renders "current" with a frost chip
-   *  and orders by the provider-provided `order` field. */
+   *  hints; the consumer (FranchiseTimeline) renders "current" with a frost
+   *  chip and orders by the provider-provided `order` field. */
   seasons: SeasonModel[];
 }
 
@@ -241,6 +245,17 @@ export interface VoiceActorModel {
   url: string | null;
 }
 
+/**
+ * A voice actor viewed person-first: the VA plus every character they voice on
+ * this title. Derived from the character rows by `groupVoiceActors` (one VA
+ * can voice several characters, and the same character row repeats per VA), so
+ * the "Voice Actors" rail shows one card per person rather than per role.
+ */
+export interface VoiceActorProfileModel extends VoiceActorModel {
+  /** Characters this VA voices on the title, in first-appearance order. */
+  characters: { id: string | null; name: string | null; role: string | null }[];
+}
+
 export interface CharacterModel {
   id: string | null;
   slug: string | null;
@@ -249,10 +264,26 @@ export interface CharacterModel {
   /** billed role on this title, e.g. \"Main\". */
   role: string | null;
   url: string | null;
+  /** Primary billed voice actor — kept for backwards compatibility with the
+   *  existing cast grid. `voiceActors` (below), when present, is the FULL set
+   *  including this one. */
   voiceActor: VoiceActorModel | null;
+  /** All voice actors for this character, in provider order. Only set when a
+   *  character is billed more than once upstream (multiple Japanese VAs) and
+   *  the list has been collapsed by `dedupeCharacters`; for single-VA
+   *  characters this stays undefined and `voiceActor` is authoritative. */
+  voiceActors?: VoiceActorModel[];
 }
 
-/** The full /art bundle — franchise posters and cast. */
+/** A studio or production credit from the /art bundle's `artists` / `company`. */
+export interface StaffCredit {
+  name: string;
+  slug: string | null;
+  kind: "studio" | "producer";
+  url: string | null;
+}
+
+/** The full /art bundle — franchise posters, cast and production credits. */
 export interface AnimeArtBundle {
   source: string | null;
   anime: {
@@ -266,4 +297,12 @@ export interface AnimeArtBundle {
   art: ArtItem[];
   characters: CharacterModel[];
   charactersTotal: number;
+  /** Person-first view of the cast: one entry per unique voice actor across
+   *  the (deduped) character rows, each carrying the character(s) they voice.
+   *  Derived by `groupVoiceActors` — see lib/providers/hianime/cast.ts. */
+  voiceActors: VoiceActorProfileModel[];
+  /** Deduped studio + producer credits (exact name+kind pairs collapsed). */
+  staff: StaffCredit[];
+  /** The provider's primary company for the title, when returned. */
+  company: StaffCredit | null;
 }
