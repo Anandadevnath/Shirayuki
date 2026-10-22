@@ -859,7 +859,16 @@ header[data-scrolled="1"] {
    The comet is GATED behind `.laser-live`: only one element per viewport gets
    the spinning comet, while every `.laser-frame` keeps the static frost aura
    (`::before`) so the frost-edge identity is unchanged at rest. Stacking >1
-   spinning conic+filter in a viewport was a top paint cost on scroll. */
+   spinning conic+filter in a viewport was a top paint cost on scroll.
+
+   Shape note: a conic gradient distributes its angles evenly around the
+   centre, so on a very wide, short panel (the episode-meta strip) the same
+   angular wedge maps to a long smear across the top/bottom edges and almost
+   no travel on the short sides — the comet looked like it "covered only some
+   of the border". Two fixes keep it legible on any aspect ratio:
+   · the bright head is a NARROW band (a real comet, not a broad wash), and
+   · the full ring carries a faint frost base tint, so no part of the border
+     ever reads as unlit while the comet is elsewhere. */
 .laser-frame.laser-live::after {
   content: "";
   position: absolute;
@@ -869,13 +878,15 @@ header[data-scrolled="1"] {
   padding: 1.5px;
   background: conic-gradient(
     from var(--laser-angle) at 50% 50%,
-    transparent 0deg,
-    transparent 55deg,
-    color-mix(in oklch, var(--color-frost-deep) 45%, transparent) 120deg,
-    color-mix(in oklch, var(--color-frost) 70%, transparent) 145deg,
-    color-mix(in oklch, var(--color-snow) 80%, transparent) 152deg,
-    transparent 165deg,
-    transparent 360deg
+    /* Faint always-on base so the whole ring reads as a lit frost edge. */
+    color-mix(in oklch, var(--color-frost-deep) 18%, transparent) 0deg,
+    color-mix(in oklch, var(--color-frost-deep) 14%, transparent) 300deg,
+    /* Comet tail — short, faint. */
+    color-mix(in oklch, var(--color-frost) 50%, transparent) 330deg,
+    /* Bright head — narrow so it stays a comet on wide panels. */
+    color-mix(in oklch, var(--color-frost) 88%, transparent) 351deg,
+    color-mix(in oklch, var(--color-snow) 95%, transparent) 355deg,
+    color-mix(in oklch, var(--color-frost) 70%, transparent) 360deg
   );
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;

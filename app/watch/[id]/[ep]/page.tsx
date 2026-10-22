@@ -138,8 +138,10 @@ export default async function WatchPage({ params, searchParams }: Props) {
 
       {/* ============== Row 1: Player + Episode Sidebar (synced height) ============== */}
       <div className="grid items-stretch gap-6 lg:grid-cols-[1fr_360px]">
+        {/* ── Left column: player, then the episode-meta panel ─────── */}
+        <div className="flex min-w-0 flex-col gap-4">
         {/* ── Player container ──────────────────────────────────────── */}
-        <div className="laser-frame laser-live glass watch-glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
+        <div className="laser-frame glass watch-glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
           <div className="relative">
             {playerSrc && sources ? (
               <PlayerLoader
@@ -185,9 +187,17 @@ export default async function WatchPage({ params, searchParams }: Props) {
               </div>
             )}
           </div>
+        </div>
 
+        {/* ── Episode Meta panel (title + SUB/DUB + server) ────────── */}
+        {/* Separate laser-edged glass panel below the player, rather than a
+            strip inside the player frame. It carries the single `.laser-live`
+            spinning comet for this viewport (the player keeps the static
+            `laser-frame` aura), so the animated border lives here while the
+            one-comet-per-viewport paint-cost guardrail still holds. */}
+        <div className="laser-frame laser-live glass watch-glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
           {/* ── Title strip ─────────────────────────────────────────── */}
-          <div className="border-t border-white/10 bg-surface/40 px-5 py-4 backdrop-blur-sm sm:px-6">
+          <div className="border-b border-white/10 bg-surface/40 px-5 py-4 backdrop-blur-sm sm:px-6">
             <h1 className="text-title text-snow sm:text-[1.375rem]">{anime.title}</h1>
             <p className="text-meta mt-0.5 text-muted">
               Episode {epNum}
@@ -196,7 +206,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
           </div>
 
           {/* ── Server switcher (transparent + glassy) ──────────────── */}
-          <div className="space-y-3 border-t border-white/10 bg-surface/30 px-5 py-4 backdrop-blur-sm sm:px-6">
+          <div className="space-y-3 bg-surface/30 px-5 py-4 backdrop-blur-sm sm:px-6">
             <div className="flex flex-wrap items-center gap-3">
               <span className="text-caption flex items-center gap-1.5 text-faint">
                 <Captions className="size-3.5" /> Subtitles / Dub
@@ -258,6 +268,7 @@ export default async function WatchPage({ params, searchParams }: Props) {
               </div>
             )}
           </div>
+        </div>
         </div>
 
         {/* ── Episode Sidebar (height syncs with player) ──────────── */}
