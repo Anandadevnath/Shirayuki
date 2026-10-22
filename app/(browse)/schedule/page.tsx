@@ -1,11 +1,10 @@
 import { CalendarDays } from "lucide-react";
 import type { Metadata } from "next";
 import { getSchedule, withTimeout } from "@/lib/api";
-import type { AnimeCardModel, ScheduleItem, ScheduleWeekday } from "@/lib/providers/types";
-import { Grid } from "@/components/anime/Grid";
+import type { ScheduleWeekday } from "@/lib/providers/types";
 import { ErrorState } from "@/components/common/States";
-import { PageHeader, SectionHeader } from "@/components/common/SectionHeader";
-import { ScheduleCalendar, ScheduleItemRow } from "@/components/schedule/ScheduleCalendar";
+import { PageHeader } from "@/components/common/SectionHeader";
+import { ScheduleBoard } from "@/components/discovery/ScheduleBoard";
 import { WEEK_ORDER } from "@/lib/utils/schedule";
 
 export const dynamic = "force-dynamic";
@@ -14,23 +13,6 @@ export const metadata: Metadata = {
   title: "Schedule",
   description: "Weekly release calendar, upcoming premieres and currently airing anime.",
 };
-
-/** Schedule items reuse the poster-card model so the existing Grid renders
- *  them with zero customisation (cards need `episodes`; schedule items omit it). */
-function toCard(it: ScheduleItem): AnimeCardModel {
-  return {
-    id: it.id,
-    title: it.title,
-    jname: it.jname,
-    poster: it.poster,
-    type: it.type,
-    episodes: { sub: null, dub: null },
-    score: null,
-    rank: null,
-    airingTime: null,
-    episodeNumber: null,
-  };
-}
 
 export default async function SchedulePage() {
   // The schedule is a heavy scrape (~7s cold). Bound it so the route always
@@ -76,15 +58,15 @@ export default async function SchedulePage() {
       <PageHeader
         eyebrow={
           <span className="text-label flex items-center gap-2 text-frost">
-            <CalendarDays className="size-3.5" /> Release Calendar
+            <CalendarDays className="size-3.5" /> WEEKLY ANIME GUIDE
           </span>
         }
-        title="Schedule"
+        title="Anime Release Schedule"
         lede={
           <>
-            Weekday-premiere calendar for announced titles, an up-next list and the
-            currently airing crop — derived from HiAnime listing data (no broadcast
-            times are published upstream, so the calendar shows premiere days only).
+            Keep track of upcoming episodes and discover what&apos;s airing throughout
+            the week. Shown as premiere days only, since no broadcast times are
+            published upstream.
             {s.updatedAt && (
               <span className="mt-1 block font-accent text-[11px] text-faint">
                 Updated {new Date(s.updatedAt).toLocaleString()}
@@ -94,40 +76,7 @@ export default async function SchedulePage() {
         }
       />
 
-      {hasWeek && (
-        <section>
-          <SectionHeader eyebrow="Weekly" title="Premieres by weekday" />
-          <ScheduleCalendar days={orderedWeek} />
-        </section>
-      )}
-
-      {hasUpcoming && (
-        <section>
-          <SectionHeader eyebrow="Up next" title="Upcoming premieres" />
-          <div className="rounded-xl border border-line/70 bg-surface/40 p-4">
-            <ul className="-mx-2 flex flex-col gap-0.5">
-              {s.upcoming.map((it) => (
-                <ScheduleItemRow key={it.id} it={it} showComing />
-              ))}
-            </ul>
-          </div>
-        </section>
-      )}
-
-      {hasAiring && (
-        <section>
-          {/* Airing titles have no weekday upstream (their Aired window has
-              started), so they read as a poster grid rather than calendar
-              rows — same card language as the rest of the site. */}
-          <SectionHeader
-            eyebrow="Now airing"
-            title="Currently airing"
-            href="/category/top-airing"
-            seeAllLabel="More"
-          />
-          <Grid items={s.airing.map(toCard)} />
-        </section>
-      )}
+      <ScheduleBoard schedule={s} orderedWeek={orderedWeek} />
     </div>
   );
 }

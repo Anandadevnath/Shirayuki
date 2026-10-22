@@ -22,10 +22,9 @@ import { useGridColumns } from "@/lib/utils/useGridColumns";
  * overflow toggle precisely. It lives in its own "use client" module so the
  * server-only <Grid> in ./Grid.tsx stays free of hooks.
  *
- * Responsive grid: a 2→7 column track ladder — one step denser than the shared
- * <Grid>, because Top Upcoming spans the FULL board width and would otherwise
- * render posters noticeably larger than the Latest Completed cards it is
- * matched to. `visibleRows`, when set, collapses the raster to that many whole
+ * Responsive grid: uses the same 2→7 column track ladder as the shared <Grid>,
+ * so a full-width Top Upcoming row matches the poster size of every other
+ * browse grid. `visibleRows`, when set, collapses the raster to that many whole
  * rows of the ACTUAL responsive column count, so a collapsed view never shows a
  * partially cut-off row at any width. `expanded` renders everything.
  *
@@ -70,12 +69,11 @@ export function RankedGrid({
     <div
       ref={ref}
       className={cn(
-        // One step denser than the shared <Grid> tracks: Top Upcoming spans the
-        // FULL board width, so at Grid's column counts each poster came out
-        // noticeably wider/taller than the Latest Completed cards the user
-        // matched it to. QuickLists' panel is roughly half the board, so its
-        // 5-up row and this 7-up board row land at near-identical poster widths
-        // (~190px at xl). Keep this denser ladder if you touch the columns.
+        // The same ladder as the shared <Grid> (2/3/5/6/7), with the slightly
+        // wider x-gap / taller y-gap the ranked board uses. Top Upcoming spans
+        // the FULL board width; keeping these tracks identical to <Grid> means
+        // its posters match every other browse grid (~190px at xl). Keep this
+        // ladder in sync with <Grid> if you touch the columns.
         //
         // `.grid-in`: the same opacity-only one-shot entrance as <Grid>, so the
         // arriving ranked grid cross-fades in as ONE unit and masks the
@@ -96,8 +94,8 @@ export function RankedGrid({
                 #{rank}
               </span>
             }
-            // This grid is denser than the shared <Grid>, so the 3-item meta
-            // row (Watch / type / score) can run out of width. Keep it on ONE
+            // Tighter than a roomy grid, so the 3-item meta row (Watch / type /
+            // score) can run out of width. Keep it on ONE
             // line: the pills hold intrinsic width and never wrap their labels
             // mid-word. Upcoming cards carry no score, so nothing is clipped;
             // were a score present, its `ml-auto` span is the item that drops

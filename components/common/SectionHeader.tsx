@@ -1,4 +1,5 @@
 import Link from "next/link";
+import type { LucideIcon } from "lucide-react";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/utils/cn";
 
@@ -10,24 +11,38 @@ import { cn } from "@/lib/utils/cn";
  *
  * `eyebrow` renders the small frost label; `lede` is an optional muted
  * paragraph under the title. Both are optional — a bare title is valid.
+ *
+ * `icon` (optional) leads the eyebrow line. The palette has no distinct
+ * semantic accent hues, so per-page identity is expressed by icon *choice*
+ * rather than by inventing new colors.
  */
 export function PageHeader({
   title,
   eyebrow,
   lede,
+  icon: Icon,
   children,
   className,
 }: {
   title: ReactNode;
   eyebrow?: ReactNode;
   lede?: ReactNode;
+  /** decorative leading icon for the eyebrow line */
+  icon?: LucideIcon;
   /** right-aligned controls (rare on page headers) */
   children?: ReactNode;
   className?: string;
 }) {
   return (
     <header className={cn("flex flex-col gap-1.5", className)}>
-      {eyebrow && <p className="text-sm font-medium text-frost">{eyebrow}</p>}
+      {(eyebrow || Icon) && (
+        <p className="text-sm font-medium text-frost">
+          {Icon && (
+            <Icon className="mr-1.5 inline size-3.5 -translate-y-px" aria-hidden />
+          )}
+          {eyebrow}
+        </p>
+      )}
       <div className="flex items-end justify-between gap-4">
         <h1 className="text-page">{title}</h1>
         {children}

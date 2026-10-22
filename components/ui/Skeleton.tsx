@@ -84,6 +84,27 @@ export function RailSkeleton({ cards = 7 }: { cards?: number }) {
   );
 }
 
+// ── Discovery toolbar (mirrors components/discovery/DiscoveryToolbar) ─────────
+// A single glass bar with a search field, two select-shaped controls and a
+// count line, so the route skeleton reserves the toolbar's height and the
+// skeleton→board swap doesn't push the grid down. Placed ABOVE GridSkeleton.
+export function ToolbarSkeleton() {
+  return (
+    <section className="glass rounded-lg p-3 sm:p-4">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+        <Skeleton className="h-10 min-w-0 flex-1 basis-56 rounded-[var(--radius-btn)]" />
+        <Skeleton className="h-10 w-[9.5rem] rounded-[var(--radius-btn)]" />
+        <Skeleton className="h-10 w-[10.5rem] rounded-[var(--radius-btn)]" />
+        <div className="ml-auto flex gap-1">
+          <Skeleton className="size-10 rounded-[var(--radius-btn)]" />
+          <Skeleton className="size-10 rounded-[var(--radius-btn)]" />
+        </div>
+      </div>
+      <Skeleton className="mt-2.5 h-3 w-36 rounded" />
+    </section>
+  );
+}
+
 // ── Responsive poster Grid (matches components/anime/Grid) ────────────────────
 export function GridSkeleton({ count = 18 }: { count?: number }) {
   // No per-card `.reveal` stagger here. A route skeleton is a *placeholder*,
@@ -93,7 +114,7 @@ export function GridSkeleton({ count = 18 }: { count?: number }) {
   // the perceived "instant / flicker" cut. `.shimmer-loop` (on the shared
   // <Skeleton> primitive) is the only motion; the entering grid owns the fade.
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-x-3.5 gap-y-7 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
       {Array.from({ length: count }).map((_, i) => (
         <CardSkeleton key={i} />
       ))}
@@ -195,10 +216,10 @@ export function RankedGridSkeleton({
   return (
     <div
       className={cn(
-        // MUST mirror RankedGrid's denser column ladder (one step past <Grid>):
-        // Top Upcoming spans the full board, so its poster width is tuned to
-        // match the Latest Completed cards. A mismatch here makes the
-        // skeleton→board swap visibly jump.
+        // MUST mirror RankedGrid's column ladder (identical to the shared <Grid>):
+        // Top Upcoming spans the full board, so its poster width matches every
+        // other browse grid. A mismatch here makes the skeleton→board swap
+        // visibly jump.
         "grid grid-cols-2 gap-x-3.5 gap-y-7 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7",
         className,
       )}

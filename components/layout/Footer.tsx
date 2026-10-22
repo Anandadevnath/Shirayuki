@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import type { ReactNode } from "react";
+import { AZ_LETTERS, azLabel } from "@/lib/utils/format";
 
 const QUICK_LINKS = [
   { href: "/category/most-popular", label: "Popular" },
@@ -8,9 +9,6 @@ const QUICK_LINKS = [
   { href: "/schedule", label: "Release Schedule" },
   { href: "/az/all", label: "Browse A–Z" },
 ];
-
-const AZ = ["all", "0-9", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")];
-const azLabel = (l: string) => (l === "all" ? "All" : l.toUpperCase());
 
 const LEGAL = [
   { href: "/terms", label: "Terms" },
@@ -124,7 +122,7 @@ export function Footer() {
             spacing reads as one centred cluster rather than a gap where the
             chips used to be. */}
         <nav className="mt-8 flex flex-wrap justify-center gap-1.5" aria-label="Browse A–Z">
-          {AZ.map((l) => (
+          {AZ_LETTERS.map((l) => (
             <Link
               key={l}
               href={`/az/${l}`}

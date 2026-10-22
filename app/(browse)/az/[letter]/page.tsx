@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
+import { Compass } from "lucide-react";
 import { getAZ, safe } from "@/lib/api";
-import { Grid } from "@/components/anime/Grid";
+import { DiscoveryBoard } from "@/components/discovery/DiscoveryBoard";
+import { AlphabetNav } from "@/components/common/AlphabetNav";
 import { Pagination } from "@/components/common/Pagination";
 import { PageHeader } from "@/components/common/SectionHeader";
 import { EmptyState, ErrorState } from "@/components/common/States";
@@ -8,7 +10,8 @@ import { EmptyState, ErrorState } from "@/components/common/States";
 /**
  * Full-catalogue browse. AnimeX's azlist ignores the letter and returns the
  * entire library (~20k titles, ~685 pages) sorted by popularity, so we expose
- * it as a single paginated "Browse all" surface rather than dead letter tabs.
+ * it as a single paginated "Browse all" surface. The letter strip is honest
+ * navigation to the same catalogue, not a filter — see `AlphabetNav`.
  */
 
 type Props = {
@@ -31,10 +34,20 @@ export default async function BrowsePage({ params, searchParams }: Props) {
   return (
     <div className="flex flex-col gap-[var(--space-header)]">
       <PageHeader
-        eyebrow="Catalogue"
-        title="Browse all anime"
-        lede={res.ok ? `${res.data.totalPages.toLocaleString()} pages · sorted by popularity` : undefined}
+        eyebrow="THE ANIME LIBRARY"
+        icon={Compass}
+        title="Explore the Anime Universe"
+        lede="From timeless classics to the latest releases, discover anime by title."
       />
+
+      <div className="flex flex-col gap-4">
+        <AlphabetNav />
+        {res.ok && (
+          <p className="text-sm text-muted">
+            {res.data.totalPages.toLocaleString()} pages · sorted by popularity
+          </p>
+        )}
+      </div>
 
       {!res.ok ? (
         <ErrorState retryHref={`/az/${encodeURIComponent(current)}`} />
@@ -42,7 +55,7 @@ export default async function BrowsePage({ params, searchParams }: Props) {
         <EmptyState />
       ) : (
         <>
-          <Grid items={res.data.results} />
+          <DiscoveryBoard items={res.data.results} />
           <Pagination
             basePath={`/az/${encodeURIComponent(current)}`}
             currentPage={res.data.currentPage}

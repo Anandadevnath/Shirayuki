@@ -28,10 +28,17 @@ import { AnimeCard } from "./AnimeCard";
  * NOTE: the ranked sibling <RankedGrid> lives in ./RankedGrid ("use client")
  * because it measures its live column count and drives the collapse toggle; it
  * is intentionally NOT defined here so this module stays a server component.
+ *
+ * The column ladder (2/3/5/6/7) is shared with <RankedGrid> on purpose so every
+ * full-width browse grid renders posters at the same size as Top Upcoming. It
+ * is consumed by ALL grid surfaces at once — /search, the browse routes via
+ * <DiscoveryBoard>, /schedule and the home board — so this is a site-wide
+ * poster-size change, deliberately NOT tuned to QuickLists' denser panel
+ * (2/3/4/5). Keep it in lockstep with GridSkeleton and RankedGrid.
  */
 export function Grid({ items }: { items: AnimeCardModel[] }) {
   return (
-    <div className="grid-in grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+    <div className="grid-in grid grid-cols-2 gap-x-3.5 gap-y-7 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
       {items.map((a) => (
         <AnimeCard key={a.id} anime={a} />
       ))}
