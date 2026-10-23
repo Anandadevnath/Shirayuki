@@ -28,8 +28,40 @@ export interface FilterableItem {
  *  first client render matches the server markup exactly. */
 export type DiscoverySort = "default" | "title-asc" | "title-desc" | "rank";
 
-/** Type filter value: a concrete card `type` or `null` for "all". */
-export type TypeFilter = string | null;
+/** The canonical anime type taxonomy, in the order the reference bar lists it.
+ *  The upstream card `type` is uppercase (e.g. `TV`, `MOVIE`), so match
+ *  case-insensitively against these labels. */
+export const CANONICAL_TYPES: string[] = [
+  "Movie",
+  "Music",
+  "ONA",
+  "OVA",
+  "Special",
+  "TV",
+  "TV_SHORT",
+  "TV Special",
+];
+
+/** The full sort menu shown by the reference bar. Only `default`, the title
+ *  sorts and `rank` are computable from the loaded page; the rest need
+ *  catalogue-wide fields the API doesn't expose, so callers must render them
+ *  disabled (see `DiscoveryToolbar`) rather than as silent no-ops. */
+export const SORT_MENU: { value: string; label: string; supported: boolean }[] = [
+  { value: "default", label: "Default", supported: true },
+  { value: "latest-updated", label: "Latest Updated", supported: false },
+  { value: "latest-added", label: "Latest Added", supported: false },
+  { value: "score", label: "Score", supported: false },
+  { value: "title-asc", label: "Name A–Z", supported: true },
+  { value: "release-date", label: "Release Date", supported: false },
+  { value: "most-viewed", label: "Most Viewed", supported: false },
+  { value: "episodes", label: "Number of episodes", supported: false },
+];
+
+/** Type filter value: the selected concrete card `type`s, or `[]` for "all".
+ *  A union — an empty array means "no restriction", a single entry means an
+ *  exact match, and several entries mean "any of these" (the Type control is
+ *  a multi-select). */
+export type TypeFilter = string[];
 
 export interface DiscoveryFilterState {
   query: string;
@@ -78,16 +110,20 @@ export function matchesQuery(item: FilterableItem, query: string): boolean {
   return item.title.toLowerCase().includes(q);
 }
 
-/** Type filter is exact (the option values come from `distinctTypes`, so
- *  there is never a near-miss). `null` = all. */
+/** Type filter match. The menu offers the canonical taxonomy ("Movie", "TV",
+ *  "TV_SHORT"…), while the upstream card `type` is uppercase ("MOVIE", "TV"),
+ *  so the comparison is case-insensitive. An empty array = all; otherwise the
+ *  card's type must equal one of the selected types (union). */
 export function matchesType(item: FilterableItem, type: TypeFilter): boolean {
-  if (type == null) return true;
-  return (item.type?.trim() ?? "") === type;
+  if (type.length === 0) return true;
+  const cardType = (item.type?.trim() ?? "").toLowerCase();
+  return type.some((t) => t.toLowerCase() === cardType);
 }
 
-/** When either filter is set, at least one card may be hidden. */
+/** When the query is set or at least one type is selected, a card may be
+ *  hidden. */
 export function hasActiveFilters({ query, type }: DiscoveryFilterState): boolean {
-  return query.trim() !== "" || type != null;
+  return query.trim() !== "" || type.length > 0;
 }
 
 /** Apply the query + type filters in one pass, preserving input order. */

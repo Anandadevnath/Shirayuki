@@ -30,13 +30,19 @@ import { DiscoveryToolbar, type SortOption } from "./DiscoveryToolbar";
  */
 export function DiscoveryBoard({
   items,
+  genres = [],
+  totalCount,
   className,
 }: {
   items: AnimeCardModel[];
+  /** genre taxonomy for the Genre navigator (from the provider) */
+  genres?: { slug: string; name: string }[];
+  /** catalogue-wide count for the `N anime` line */
+  totalCount?: number;
   className?: string;
 }) {
   const [query, setQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string[]>([]);
   const [sort, setSort] = useState<DiscoverySort>("default");
   const [view, setView] = useState<"grid" | "list">("grid");
 
@@ -51,7 +57,7 @@ export function DiscoveryBoard({
 
   const sortOptions: SortOption[] = useMemo(() => {
     const opts: SortOption[] = [
-      { value: "default", label: "Default order" },
+      { value: "default", label: "Default" },
       { value: "title-asc", label: "Title A–Z" },
       { value: "title-desc", label: "Title Z–A" },
     ];
@@ -63,7 +69,7 @@ export function DiscoveryBoard({
 
   const clear = () => {
     setQuery("");
-    setTypeFilter(null);
+    setTypeFilter([]);
   };
 
   return (
@@ -74,6 +80,7 @@ export function DiscoveryBoard({
         types={types}
         typeFilter={typeFilter}
         onTypeChange={setTypeFilter}
+        genres={genres}
         sortOptions={sortOptions}
         sort={sort}
         onSortChange={(s) => setSort(s as DiscoverySort)}
@@ -81,6 +88,7 @@ export function DiscoveryBoard({
         onViewChange={setView}
         resultCount={sorted.length}
         totalOnPage={items.length}
+        totalCount={totalCount}
         active={active}
         onClear={clear}
       />

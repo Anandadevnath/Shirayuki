@@ -14,7 +14,7 @@ export function ViewToggle({
   onChange: (v: "grid" | "list") => void;
 }) {
   const base =
-    "grid h-10 w-10 place-items-center rounded-[var(--radius-btn)] border transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost";
+    "grid h-11 w-11 place-items-center rounded-[var(--radius-btn)] border transition-colors duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost";
 
   return (
     <div

@@ -1,32 +1,59 @@
 "use client";
 
-import { Search, X } from "lucide-react";
+import { Search, Funnel, SlidersHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { hasTypeChoice, resultCaption } from "@/lib/discovery/toolbar-utils";
-import { ToolbarSelect } from "./ToolbarSelect";
+import { CANONICAL_TYPES, resultCaption, SORT_MENU } from "@/lib/discovery/toolbar-utils";
+import { FilterPopover, type FilterOption } from "./FilterPopover";
+import { FilterLink } from "./FilterLink";
 import { ViewToggle } from "./ViewToggle";
 
 export type SortOption = { value: string; label: string };
 
+/** Airing-status options from the reference bar. The API exposes no status, so
+ *  every entry is rendered disabled — the list matches the design without
+ *  offering a filter the data can't back. */
+const STATUS_OPTIONS = ["Finished Airing", "Currently Airing", "Not yet aired"];
+
+/** The full sort menu from the reference. A sort is only enabled when the
+ *  caller's `sortOptions` actually supports it (e.g. `rank` only when a card
+ *  carries a rank); the rest are shown disabled rather than silently doing
+ *  nothing. */
+function buildSortOptions(supported: SortOption[]): FilterOption[] {
+  const supportedValues = new Set(supported.map((o) => o.value));
+  return SORT_MENU.map((o) => ({
+    value: o.value,
+    label: o.label,
+    disabled: !supportedValues.has(o.value),
+    hint: supportedValues.has(o.value)
+      ? undefined
+      : "This sort needs catalogue-wide data that isn't available on this page.",
+  }));
+}
+
 /**
- * The shared discovery toolbar: one glass panel above the poster grid with a
- * title search, an optional Type filter, a sort, an optional Grid/List toggle,
- * a real result count and a Clear-filters affordance.
+ * The shared discovery toolbar, styled to the reference design: one row of
+ * glass pills — Search, Type, Genre, Status, sort — then a sliders affordance
+ * and a warm "Filter" action pill, with a `N anime` count and the Grid/List
+ * toggle on the right of the count line.
  *
- * Every control here is backed by data the fetched page actually carries
- * (`title`, `type`, `rank`) — the upstream list API takes only `?page=`, so
- * filtering is a client-side view over the current page. The count line says
- * so ("X of N titles on this page") rather than implying a catalogue-wide
- * filter. Controls the backend can't honour (year / season / status / rating)
- * are absent by design, not stubbed.
+ * Honesty rules (repo constraint `ui_no_decorative_dead_controls`):
+ * - Search / Type / sort are REAL client-side filters over the loaded page.
+ * - Genre navigates to the working `/genre/<slug>` route (real pages).
+ * - Status has no upstream or card backing, so its trigger is rendered
+ *   disabled — the silhouette is preserved without a control that lies.
+ * - The count is real (`N anime`, catalogue total when the caller knows it).
  */
 export interface DiscoveryToolbarProps {
   query: string;
   onQueryChange: (q: string) => void;
-  /** distinct types present on the page; [] hides the Type control */
-  types: string[];
-  typeFilter: string | null;
-  onTypeChange: (t: string | null) => void;
+  /** distinct types present on the page (kept for callers; the Type menu now
+   *  shows the full canonical taxonomy, so this is no longer needed to build
+   *  the options) */
+  types?: string[];
+  typeFilter: string[];
+  onTypeChange: (t: string[]) => void;
+  /** full genre taxonomy for the Genre navigator; [] hides it */
+  genres: { slug: string; name: string }[];
   /** caller supplies only the sorts the data supports */
   sortOptions: SortOption[];
   sort: string;
@@ -34,11 +61,13 @@ export interface DiscoveryToolbarProps {
   /** omit to hide the Grid/List toggle */
   view?: "grid" | "list";
   onViewChange?: (v: "grid" | "list") => void;
-  /** real, post-filter count */
+  /** real, post-filter count on the page */
   resultCount: number;
   /** total items on the current page */
   totalOnPage: number;
-  /** any filter active → show Clear */
+  /** catalogue-wide count for the `N anime` line; falls back to page total */
+  totalCount?: number;
+  /** any filter active → the action pill becomes Clear */
   active: boolean;
   onClear: () => void;
   className?: string;
@@ -47,9 +76,9 @@ export interface DiscoveryToolbarProps {
 export function DiscoveryToolbar({
   query,
   onQueryChange,
-  types,
   typeFilter,
   onTypeChange,
+  genres,
   sortOptions,
   sort,
   onSortChange,
@@ -57,23 +86,35 @@ export function DiscoveryToolbar({
   onViewChange,
   resultCount,
   totalOnPage,
+  totalCount,
   active,
   onClear,
   className,
 }: DiscoveryToolbarProps) {
   const showView = view != null && onViewChange != null;
-  // Hide the Type control when the page has ≤1 distinct type — it would be a
-  // select with a single real option and could never change the results.
-  const showType = hasTypeChoice(types);
+  // The Type control lists the full canonical taxonomy (not just the types on
+  // this page), so it is always rendered — a fixed menu, not a page-derived
+  // one.
+  const showType = true;
+  const typeOptions: FilterOption[] = CANONICAL_TYPES.map((t) => ({
+    value: t,
+    label: t,
+  }));
+  const count = totalCount ?? totalOnPage;
 
   return (
-    <section
-      aria-label="Filter and sort results"
-      className={cn(className)}
-    >
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-        {/* Title search */}
-        <div className="relative min-w-0 flex-1 basis-56">
+    <section aria-label="Filter and sort results" className={cn(className)}>
+      {/* Count + view toggle row */}
+      <div className="mb-3 flex items-center justify-end gap-3">
+        <p className="font-accent text-[11px] text-faint" aria-live="polite">
+          {count.toLocaleString()} anime
+        </p>
+        {showView && <ViewToggle view={view} onChange={onViewChange} />}
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 lg:flex-nowrap">
+        {/* Title search — one equal cell in the row */}
+        <div className="relative min-w-0 flex-1 basis-40">
           <label htmlFor="discovery-search" className="sr-only">
             Filter by title
           </label>
@@ -86,50 +127,86 @@ export function DiscoveryToolbar({
             type="search"
             value={query}
             onChange={(e) => onQueryChange(e.target.value)}
-            placeholder="Filter this page by title…"
+            placeholder="Search…"
             autoComplete="off"
-            className="h-10 w-full rounded-[var(--radius-btn)] border border-line bg-base/40 pl-9 pr-3 text-sm text-snow outline-none transition-colors duration-200 placeholder:text-faint hover:border-frost/40 focus-visible:border-frost/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
+            className="h-11 w-full rounded-[var(--radius-btn)] border border-line bg-base/40 pl-9 pr-3 text-sm text-snow outline-none transition-colors duration-200 placeholder:text-faint hover:border-frost/40 focus-visible:border-frost/50 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
           />
         </div>
 
         {showType && (
-          <ToolbarSelect
-            id="discovery-type"
-            label="Filter by type"
-            value={typeFilter ?? ""}
-            onChange={(v) => onTypeChange(v === "" ? null : v)}
-            options={[
-              { value: "", label: "All types" },
-              ...types.map((t) => ({ value: t, label: t })),
-            ]}
-            className="min-w-[9.5rem]"
+          <FilterPopover
+            label="Type"
+            multiple
+            allLabel="All types"
+            options={typeOptions}
+            value={typeFilter}
+            onChange={onTypeChange}
+            className="min-w-0 flex-1 basis-36"
           />
         )}
 
-        <ToolbarSelect
-          id="discovery-sort"
-          label="Sort results"
-          value={sort}
-          onChange={onSortChange}
-          options={sortOptions.map((o) => ({ value: o.value, label: o.label }))}
-          className="min-w-[10.5rem]"
+        {genres.length > 0 && (
+          <FilterLink
+            label="Genre"
+            options={genres}
+            className="min-w-0 flex-1 basis-36"
+          />
+        )}
+
+        {/* Status: the upstream exposes no airing status and a card carries no
+            status field. The reference's three options are shown, each
+            disabled, so the menu matches without offering a filter that can't
+            work. */}
+        <FilterPopover
+          label="Status"
+          multiple
+          options={STATUS_OPTIONS.map((label) => ({
+            value: label,
+            label,
+            disabled: true,
+            hint: "Status filtering isn't available from this data source yet.",
+          }))}
+          value={[]}
+          onChange={() => {}}
+          className="min-w-0 flex-1 basis-36"
         />
 
-        {active && (
-          <button
-            type="button"
-            onClick={onClear}
-            className="flex h-10 shrink-0 items-center gap-1.5 rounded-[var(--radius-btn)] border border-transparent px-3 text-sm font-medium text-muted transition-colors duration-200 hover:text-frost focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
-          >
-            <X className="size-4" /> Clear
-          </button>
-        )}
+        <FilterPopover
+          label="Default"
+          options={buildSortOptions(sortOptions)}
+          value={[sort]}
+          restingValue={["default"]}
+          onChange={(v) => onSortChange(v[0] ?? sort)}
+          className="min-w-0 flex-1 basis-36"
+        />
 
-        {showView && (
-          <div className="ml-auto">
-            <ViewToggle view={view} onChange={onViewChange} />
-          </div>
-        )}
+        {/* Sliders affordance — a visual echo of the reference bar. Non-
+            interactive by design (the filter facets are the pills beside it),
+            so it is `aria-hidden` and carries no control semantics. */}
+        <span
+          aria-hidden
+          className="grid h-11 w-11 shrink-0 place-items-center rounded-[var(--radius-btn)] border border-line bg-base/40 text-muted"
+        >
+          <SlidersHorizontal className="size-4" />
+        </span>
+
+        {/* The warm action pill. Enabled and coral when a filter is active
+            (it clears them); honestly dimmed and inert at rest rather than a
+            button that pretends to submit a live filter. */}
+        <button
+          type="button"
+          onClick={onClear}
+          disabled={!active}
+          className={cn(
+            "flex h-11 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-btn)] border px-4 text-sm font-semibold transition-colors duration-200 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral",
+            active
+              ? "border-coral bg-coral on-coral press"
+              : "cursor-not-allowed border-coral/30 bg-coral/25 text-coral/70",
+          )}
+        >
+          <Funnel className="size-4" />
+          {active ? "Clear" : "Filter"}
+        </button>
       </div>
 
       <p className="mt-2.5 font-accent text-[11px] text-faint" aria-live="polite">

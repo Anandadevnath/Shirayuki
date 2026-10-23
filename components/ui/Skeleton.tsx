@@ -85,20 +85,26 @@ export function RailSkeleton({ cards = 7 }: { cards?: number }) {
 }
 
 // ── Discovery toolbar (mirrors components/discovery/DiscoveryToolbar) ─────────
-// A single glass bar with a search field, two select-shaped controls and a
-// count line, so the route skeleton reserves the toolbar's height and the
-// skeleton→board swap doesn't push the grid down. Placed ABOVE GridSkeleton.
+// A count + view-toggle row, then one wrapping row of glass pills (search,
+// four filter triggers, the sliders chip) and the action pill. Heights/gaps
+// mirror the real bar (h-11 controls, gap-2.5/3) so the route skeleton swap
+// doesn't push the grid down.
 export function ToolbarSkeleton() {
   return (
-    <section className="glass rounded-lg p-3 sm:p-4">
-      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-        <Skeleton className="h-10 min-w-0 flex-1 basis-56 rounded-[var(--radius-btn)]" />
-        <Skeleton className="h-10 w-[9.5rem] rounded-[var(--radius-btn)]" />
-        <Skeleton className="h-10 w-[10.5rem] rounded-[var(--radius-btn)]" />
-        <div className="ml-auto flex gap-1">
-          <Skeleton className="size-10 rounded-[var(--radius-btn)]" />
-          <Skeleton className="size-10 rounded-[var(--radius-btn)]" />
-        </div>
+    <section>
+      <div className="mb-3 flex items-center justify-end gap-3">
+        <Skeleton className="h-3 w-20 rounded" />
+        <Skeleton className="size-11 rounded-[var(--radius-btn)]" />
+        <Skeleton className="size-11 rounded-[var(--radius-btn)]" />
+      </div>
+      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 lg:flex-nowrap">
+        <Skeleton className="h-11 min-w-0 flex-1 basis-40 rounded-[var(--radius-btn)]" />
+        <Skeleton className="h-11 min-w-0 flex-1 basis-36 rounded-[var(--radius-btn)]" />
+        <Skeleton className="h-11 min-w-0 flex-1 basis-36 rounded-[var(--radius-btn)]" />
+        <Skeleton className="h-11 min-w-0 flex-1 basis-36 rounded-[var(--radius-btn)]" />
+        <Skeleton className="h-11 min-w-0 flex-1 basis-36 rounded-[var(--radius-btn)]" />
+        <Skeleton className="size-11 shrink-0 rounded-[var(--radius-btn)]" />
+        <Skeleton className="h-11 w-[6.5rem] shrink-0 rounded-[var(--radius-btn)]" />
       </div>
       <Skeleton className="mt-2.5 h-3 w-36 rounded" />
     </section>

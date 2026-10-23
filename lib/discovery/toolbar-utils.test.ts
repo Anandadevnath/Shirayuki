@@ -47,11 +47,11 @@ test("hasRank: true when at least one card carries a rank", () => {
   assert.equal(hasRank([card({ rank: null })]), false);
 });
 
-test("applyDiscoveryFilters: empty query + null type is a passthrough", () => {
+test("applyDiscoveryFilters: empty query + empty type is a passthrough", () => {
   const items = [card({ id: "1" }), card({ id: "2" })];
-  const out = applyDiscoveryFilters(items, { query: "", type: null });
+  const out = applyDiscoveryFilters(items, { query: "", type: [] });
   assert.equal(out, items, "returns the same array reference when inactive");
-  assert.equal(applyDiscoveryFilters(items, { query: "   ", type: null }), items);
+  assert.equal(applyDiscoveryFilters(items, { query: "   ", type: [] }), items);
 });
 
 test("applyDiscoveryFilters: title match is case-insensitive", () => {
@@ -60,11 +60,11 @@ test("applyDiscoveryFilters: title match is case-insensitive", () => {
     card({ id: "2", title: "Bleach" }),
   ];
   assert.deepEqual(
-    titles(applyDiscoveryFilters(items, { query: "NARUTO", type: null })),
+    titles(applyDiscoveryFilters(items, { query: "NARUTO", type: [] })),
     ["Naruto Shippuden"],
   );
   assert.deepEqual(
-    titles(applyDiscoveryFilters(items, { query: "  bleach ", type: null })),
+    titles(applyDiscoveryFilters(items, { query: "  bleach ", type: [] })),
     ["Bleach"],
   );
 });
@@ -76,21 +76,51 @@ test("applyDiscoveryFilters: type filter is exact and combines with query", () =
     card({ id: "3", title: "Bleach", type: "TV" }),
   ];
   assert.deepEqual(
-    titles(applyDiscoveryFilters(items, { query: "", type: "TV" })),
+    titles(applyDiscoveryFilters(items, { query: "", type: ["TV"] })),
     ["One Piece", "Bleach"],
   );
   assert.deepEqual(
-    titles(applyDiscoveryFilters(items, { query: "one", type: "TV" })),
+    titles(applyDiscoveryFilters(items, { query: "one", type: ["TV"] })),
     ["One Piece"],
   );
-  assert.deepEqual(applyDiscoveryFilters(items, { query: "one", type: "Movie" }), []);
+  assert.deepEqual(applyDiscoveryFilters(items, { query: "one", type: ["Movie"] }), []);
+});
+
+test("applyDiscoveryFilters: multiple types union", () => {
+  const items = [
+    card({ id: "1", title: "One Piece", type: "TV" }),
+    card({ id: "2", title: "One Punch", type: "OVA" }),
+    card({ id: "3", title: "Bleach", type: "TV" }),
+    card({ id: "4", title: "Akira", type: "Movie" }),
+  ];
+  assert.deepEqual(
+    titles(applyDiscoveryFilters(items, { query: "", type: ["TV", "OVA"] })),
+    ["One Piece", "One Punch", "Bleach"],
+  );
+});
+
+test("applyDiscoveryFilters: type match is case-insensitive (canonical menu vs upstream)", () => {
+  const items = [
+    card({ id: "1", title: "One Piece", type: "TV" }),
+    card({ id: "2", title: "Akira", type: "MOVIE" }),
+  ];
+  // The menu offers "Movie" (canonical), the upstream card type is "MOVIE".
+  assert.deepEqual(
+    titles(applyDiscoveryFilters(items, { query: "", type: ["Movie"] })),
+    ["Akira"],
+  );
+  assert.deepEqual(
+    titles(applyDiscoveryFilters(items, { query: "", type: ["movie"] })),
+    ["Akira"],
+  );
 });
 
 test("hasActiveFilters: whitespace query alone is not active", () => {
-  assert.equal(hasActiveFilters({ query: "", type: null }), false);
-  assert.equal(hasActiveFilters({ query: "  ", type: null }), false);
-  assert.equal(hasActiveFilters({ query: "a", type: null }), true);
-  assert.equal(hasActiveFilters({ query: "", type: "TV" }), true);
+  assert.equal(hasActiveFilters({ query: "", type: [] }), false);
+  assert.equal(hasActiveFilters({ query: "  ", type: [] }), false);
+  assert.equal(hasActiveFilters({ query: "a", type: [] }), true);
+  assert.equal(hasActiveFilters({ query: "", type: ["TV"] }), true);
+  assert.equal(hasActiveFilters({ query: "", type: ["TV", "OVA"] }), true);
 });
 
 test("sortItems: title asc/desc is stable and locale-aware, input untouched", () => {
