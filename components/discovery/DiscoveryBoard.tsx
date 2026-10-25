@@ -118,17 +118,20 @@ export function DiscoveryBoard({
   const [sort, setSort] = useState<DiscoverySort>("default");
   const [view, setView] = useState<"grid" | "list">("grid");
 
-  // Source = base page listing, replaced by an applied collection, then that
-  // intersected with an applied genre set:
-  //   collection applied → collectionItems; else baseItems.
-  //   genres applied     → keep only cards in the genre union (within the
-  //                        current collection).
+  // Source = the cards the grid shows.
+  //
+  // Genre and collection are both "which listing" selectors, and neither the
+  // genre listings nor the collection listings are guaranteed to be subsets of
+  // the route's page (e.g. az-list page 1 is the alphabetically-first 30
+  // titles, while /genre/comedy is a completely different set). So an applied
+  // selector REPLACES the base rather than intersecting with it:
+  //   · genres applied  → the OR-union of those genre listings;
+  //   · else collection → the applied collection listing;
+  //   · else            → the route's server page.
+  // Applying a collection clears any applied genres (and vice-versa) so the two
+  // never silently fight over the same slot.
   const collectionSource = collectionItems ?? baseItems;
-  const source = useMemo(() => {
-    if (genreItems === null) return collectionSource;
-    const ids = new Set(genreItems.map((c) => c.id));
-    return collectionSource.filter((c) => ids.has(c.id));
-  }, [collectionSource, genreItems]);
+  const source = genreItems ?? collectionSource;
 
   const types = useMemo(() => distinctTypes(source), [source]);
   const rankAvailable = useMemo(() => hasRank(source), [source]);
@@ -176,9 +179,27 @@ export function DiscoveryBoard({
     const token = ++applyTokenRef.current;
     setLoading(true);
     try {
-      let nextCollection = collectionItems;
-      let nextCollectionId = appliedCollection;
-      if (collectionPending) {
+      // Genres and the collection share the one "which listing" slot, so only
+      // the control the user actually changed is applied:
+      //   · a pending genre change replaces the listing with the genre union
+      //     (the collection resets to the neutral default);
+      //   · otherwise a pending collection change clears any applied genres.
+      const genresWon = genresPending;
+      const collectionWon = !genresPending && collectionPending;
+
+      let nextCollection: AnimeCardModel[] | null = genreItems
+        ? null
+        : collectionItems;
+      let nextCollectionId = genresWon ? DEFAULT_COLLECTION_ID : appliedCollection;
+      let nextGenres: AnimeCardModel[] | null = genreItems;
+      let nextAppliedGenres = appliedGenres;
+
+      if (genresWon) {
+        nextGenres = draftGenres.length
+          ? unionById(await Promise.all(draftGenres.map(fetchListing)))
+          : null;
+        nextAppliedGenres = draftGenres;
+      } else if (collectionWon) {
         const def = collectionById(draftCollection);
         if (!def || def.id === DEFAULT_COLLECTION_ID) {
           nextCollection = null; // back to the route's canonical listing
@@ -196,23 +217,19 @@ export function DiscoveryBoard({
           nextCollection = ((await res.json()) as Paginated<AnimeCardModel>).results;
         }
         nextCollectionId = def?.id ?? DEFAULT_COLLECTION_ID;
-      }
-
-      let nextGenres = genreItems;
-      if (genresPending) {
-        nextGenres = draftGenres.length
-          ? unionById(await Promise.all(draftGenres.map(fetchListing)))
-          : null;
+        // Switching collection supersedes the genre filter.
+        nextGenres = null;
+        nextAppliedGenres = [];
       }
 
       if (token !== applyTokenRef.current) return; // superseded
       setCollectionItems(nextCollection);
       setGenreItems(nextGenres);
       setAppliedCollection(nextCollectionId);
-      setAppliedGenres(draftGenres);
-
-      // Sync the URL to the applied collection so a refresh or a shared link
-      // reproduces this view without an RSC swap that would reset state.
+      setAppliedGenres(nextAppliedGenres);
+      // Keep the drafts in step with what is now applied.
+      setDraftGenres(nextAppliedGenres);
+      if (genresWon) setDraftCollection(DEFAULT_COLLECTION_ID);
       syncUrl(nextCollectionId);
     } catch {
       // Keep the previous view on failure; the drafts remain for a retry.
@@ -225,6 +242,7 @@ export function DiscoveryBoard({
     appliedCollection,
     collectionItems,
     genresPending,
+    appliedGenres,
     draftGenres,
     genreItems,
     fetchListing,
