@@ -8,7 +8,9 @@ import {
   hasRank,
   hasTypeChoice,
   resultCaption,
+  sameSelection,
   sortItems,
+  unionById,
 } from "./toolbar-utils.ts";
 import type { AnimeCardModel } from "../providers/types.ts";
 
@@ -168,4 +170,28 @@ test("resultCaption: unfiltered vs filtered wording", () => {
   assert.equal(resultCaption(1, 24), "1 of 24 titles on this page");
   assert.equal(resultCaption(0, 24), "0 of 24 titles on this page");
   assert.equal(resultCaption(0, 0), "0 titles");
+});
+
+test("sameSelection: order-independent set equality", () => {
+  assert.equal(sameSelection([], []), true);
+  assert.equal(sameSelection(["a"], ["a"]), true);
+  assert.equal(sameSelection(["a", "b"], ["b", "a"]), true);
+  assert.equal(sameSelection(["a"], ["a", "b"]), false);
+  assert.equal(sameSelection(["a", "c"], ["a", "b"]), false);
+  assert.equal(sameSelection(["a", "b"], ["a", "a"]), false);
+});
+
+test("unionById: merges genre listings, de-dupes by id, preserves first-seen order", () => {
+  const action = [card({ id: "1", title: "One" }), card({ id: "2", title: "Two" })];
+  const comedy = [card({ id: "2", title: "Two" }), card({ id: "3", title: "Three" })];
+  assert.deepEqual(
+    unionById([action, comedy]).map((c) => c.id),
+    ["1", "2", "3"],
+  );
+  assert.deepEqual(unionById([action]).map((c) => c.id), ["1", "2"]);
+  assert.deepEqual(unionById([]), []);
+  assert.deepEqual(
+    unionById([[card({ id: "9" }), card({ id: "9" })]]).map((c) => c.id),
+    ["9"],
+  );
 });

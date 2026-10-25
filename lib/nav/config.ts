@@ -5,7 +5,6 @@ import {
   Compass,
   Clapperboard,
   Film,
-  Flame,
   Home,
   Info,
   LayoutGrid,
@@ -32,8 +31,9 @@ import {
  *   drawer  — rendered in the slide-in drawer always.
  *   reach   — rendered in the drawer ONLY when the navbar rail is hidden
  *             (i.e. narrow viewports, < md). This is how the desktop-only
- *             rail destinations (Popular, Airing, …) stay reachable on a
- *             phone without ever being duplicated next to the visible rail.
+ *             rail destinations (Category, Schedule, Browse A–Z, Home) stay
+ *             reachable on a phone without ever being duplicated next to the
+ *             visible rail.
  *
  * `visibleDrawerGroups(railVisible)` resolves `reach` against the live
  * breakpoint, and `assertNavUniqueness()` proves the invariant for BOTH
@@ -64,20 +64,21 @@ export type NavGroup = {
 
 /* ── Allocation ─────────────────────────────────────────────────────────────
  *
- * Navbar rail (wide viewports):      Home · Popular · Airing · Schedule · Browse
- * Drawer "Reach" group (< md only):  the same five, so phones keep them
+ * Navbar rail (wide viewports):      Home · Category · Schedule · Browse A–Z
+ * Drawer "Reach" group (< md only):  the same four, so phones keep them
  * Drawer (all viewports):            Categories · Library · Info
  *
- * The drawer's "reach" group is spread into the drawer only when the rail is
- * hidden, so at md+ the drawer never repeats a navbar link. See
- * `visibleDrawerGroups()`.
+ * "Category" is the single entry point for every browse collection; the page's
+ * own Status control switches collections in place, so Popular/Airing are no
+ * longer separate rail destinations. The drawer's "reach" group is spread into
+ * the drawer only when the rail is hidden, so at md+ the drawer never repeats a
+ * navbar link. See `visibleDrawerGroups()`.
  * ------------------------------------------------------------------------- */
 
 /** Wide-viewport navbar rail. `reach` keeps them reachable when the rail is hidden. */
 export const NAVBAR_ITEMS: NavItem[] = [
   { id: "home", label: "Home", href: "/", icon: Home, surfaces: ["navbar", "reach"] },
-  { id: "popular", label: "Popular", href: "/category/most-popular", icon: Flame, surfaces: ["navbar", "reach"] },
-  { id: "airing", label: "Airing", href: "/category/top-airing", icon: Sparkles, surfaces: ["navbar", "reach"] },
+  { id: "category", label: "Category", href: "/category/most-popular", icon: LayoutGrid, surfaces: ["navbar", "reach"] },
   { id: "schedule", label: "Schedule", href: "/schedule", icon: CalendarClock, surfaces: ["navbar", "reach"] },
   { id: "browse", label: "Browse A–Z", href: "/az/all", icon: Compass, surfaces: ["navbar", "reach"] },
 ];

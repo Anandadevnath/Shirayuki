@@ -9,11 +9,6 @@ import { ViewToggle } from "./ViewToggle";
 
 export type SortOption = { value: string; label: string };
 
-/** Airing-status options from the reference bar. The API exposes no status, so
- *  every entry is rendered disabled — the list matches the design without
- *  offering a filter the data can't back. */
-const STATUS_OPTIONS = ["Finished Airing", "Currently Airing", "Not yet aired"];
-
 /** The full sort menu from the reference. A sort is only enabled when the
  *  caller's `sortOptions` actually supports it (e.g. `rank` only when a card
  *  carries a rank); the rest are shown disabled rather than silently doing
@@ -38,9 +33,13 @@ function buildSortOptions(supported: SortOption[]): FilterOption[] {
  *
  * Honesty rules (repo constraint `ui_no_decorative_dead_controls`):
  * - Search / Type / sort are REAL client-side filters over the loaded page.
- * - Genre navigates to the working `/genre/<slug>` route (real pages).
- * - Status has no upstream or card backing, so its trigger is rendered
- *   disabled — the silhouette is preserved without a control that lies.
+ * - Genre is a REAL multi-select: the Genre pill stages a draft (several
+ *   genres, panel stays open) and the warm pill APPLIES it — the board loads
+ *   the union of those genre listings in place (OR match). Once applied the
+ *   pill becomes Clear. Nothing navigates to /genre/<slug> from this control.
+ * - Status is a REAL collection switcher: each option maps to a distinct
+ *   upstream collection (`lib/discovery/collections`), applied in place so the
+ *   user never leaves the Category page.
  * - The count is real (`N anime`, catalogue total when the caller knows it).
  */
 export interface DiscoveryToolbarProps {
@@ -52,8 +51,31 @@ export interface DiscoveryToolbarProps {
   types?: string[];
   typeFilter: string[];
   onTypeChange: (t: string[]) => void;
-  /** full genre taxonomy for the Genre navigator; [] hides it */
+  /** full genre taxonomy for the Genre control; [] hides it */
   genres: { slug: string; name: string }[];
+  /** draft genre selection (not yet applied) */
+  genreDraft: string[];
+  /** set the full draft genre selection */
+  onGenreChange: (g: string[]) => void;
+  /** apply the draft genre selection (the warm pill, when a draft is pending) */
+  onApplyGenres: () => void;
+  /** true while an applied genre union is loading */
+  genreLoading?: boolean;
+  /** true when the draft differs from what is applied → the pill becomes
+   *  "Filter"; otherwise an applied selection makes it "Clear". */
+  genresPending?: boolean;
+  /** The current collection (Status draft): a `COLLECTIONS[].id`. */
+  collection: string;
+  /** Change the collection draft (applied via the warm pill, like genres). */
+  onCollectionChange: (id: string) => void;
+  /** Status options; supplied by the board from `lib/discovery/collections`. */
+  collectionOptions: FilterOption[];
+  /** true while a switched collection is loading */
+  collectionLoading?: boolean;
+  /** apply the pending collection change (fires with the warm pill) */
+  onApplyCollection?: () => void;
+  /** true when the collection draft differs from what is applied */
+  collectionPending?: boolean;
   /** caller supplies only the sorts the data supports */
   sortOptions: SortOption[];
   sort: string;
@@ -79,6 +101,17 @@ export function DiscoveryToolbar({
   typeFilter,
   onTypeChange,
   genres,
+  genreDraft,
+  onGenreChange,
+  onApplyGenres,
+  genreLoading = false,
+  genresPending = false,
+  collection,
+  onCollectionChange,
+  collectionOptions,
+  collectionLoading = false,
+  onApplyCollection,
+  collectionPending = false,
   sortOptions,
   sort,
   onSortChange,
@@ -101,6 +134,16 @@ export function DiscoveryToolbar({
     label: t,
   }));
   const count = totalCount ?? totalOnPage;
+
+  // The warm pill applies any pending draft (genre and/or collection) or clears
+  // active filters. `onApply` is chosen so a collection switch also goes through
+  // the same single button.
+  const pending = genresPending || collectionPending;
+  const busy = genreLoading || collectionLoading;
+  const onApply = () => {
+    if (genresPending) onApplyGenres();
+    if (collectionPending) onApplyCollection?.();
+  };
 
   return (
     <section aria-label="Filter and sort results" className={cn(className)}>
@@ -149,25 +192,23 @@ export function DiscoveryToolbar({
           <FilterLink
             label="Genre"
             options={genres}
+            value={genreDraft}
+            onChange={onGenreChange}
+            allLabel="All genres"
             className="min-w-0 flex-1 basis-36"
           />
         )}
 
-        {/* Status: the upstream exposes no airing status and a card carries no
-            status field. The reference's three options are shown, each
-            disabled, so the menu matches without offering a filter that can't
-            work. */}
+        {/* Status: switches which COLLECTION the page shows (Most Popular,
+            Airing, Trending, …). It is a single-select whose options are the
+            real collections the data backs; applying loads that collection in
+            place — the user never leaves the Category page. */}
         <FilterPopover
           label="Status"
-          multiple
-          options={STATUS_OPTIONS.map((label) => ({
-            value: label,
-            label,
-            disabled: true,
-            hint: "Status filtering isn't available from this data source yet.",
-          }))}
-          value={[]}
-          onChange={() => {}}
+          options={collectionOptions}
+          value={[collection]}
+          restingValue={[collectionOptions[0]?.value ?? collection]}
+          onChange={(v) => onCollectionChange(v[0] ?? collection)}
           className="min-w-0 flex-1 basis-36"
         />
 
@@ -190,22 +231,24 @@ export function DiscoveryToolbar({
           <SlidersHorizontal className="size-4" />
         </span>
 
-        {/* The warm action pill. Enabled and coral when a filter is active
-            (it clears them); honestly dimmed and inert at rest rather than a
-            button that pretends to submit a live filter. */}
+        {/* The warm action pill. When a genre draft or collection draft is
+            pending it APPLIES the selection ("Filter"); otherwise, with
+            filters applied, it clears them ("Clear"). At rest with nothing
+            pending or applied it is honestly dimmed and inert. */}
         <button
           type="button"
-          onClick={onClear}
-          disabled={!active}
+          onClick={pending ? onApply : onClear}
+          disabled={!pending && !active}
+          aria-busy={busy || undefined}
           className={cn(
             "flex h-11 shrink-0 items-center justify-center gap-2 rounded-[var(--radius-btn)] border px-4 text-sm font-semibold transition-colors duration-200 outline-none focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-coral",
-            active
+            pending || active
               ? "border-coral bg-coral on-coral press"
               : "cursor-not-allowed border-coral/30 bg-coral/25 text-coral/70",
           )}
         >
-          <Funnel className="size-4" />
-          {active ? "Clear" : "Filter"}
+          <Funnel className={cn("size-4", busy && "animate-pulse")} />
+          {pending ? "Filter" : active ? "Clear" : "Filter"}
         </button>
       </div>
 

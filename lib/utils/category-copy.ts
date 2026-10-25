@@ -6,6 +6,7 @@ import {
   Layers,
   ListOrdered,
   MonitorPlay,
+  RefreshCw,
   Sparkles,
   Star,
   Tv,
@@ -102,6 +103,18 @@ export const CATEGORY_HEADERS: Record<string, CategoryHeaderCopy> = {
     title: "Specials",
     lede: "Specials, recaps and one-off episodes.",
     icon: Sparkles,
+  },
+  "recently-updated": {
+    eyebrow: "JUST UPDATED",
+    title: "Recently Updated",
+    lede: "Series that just gained new episodes.",
+    icon: RefreshCw,
+  },
+  "top-upcoming": {
+    eyebrow: "COMING SOON",
+    title: "Upcoming Anime",
+    lede: "Announced and upcoming series worth marking on your calendar.",
+    icon: Clock,
   },
 };
 

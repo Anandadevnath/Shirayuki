@@ -63,6 +63,15 @@ export const SORT_MENU: { value: string; label: string; supported: boolean }[] =
  *  a multi-select). */
 export type TypeFilter = string[];
 
+/** Genre filter value: the applied genre slugs, or `[]` for "all".
+ *
+ *  Genres are NOT a per-card attribute the toolbar can match against (list
+ *  cards carry no genre field), so this list is resolved by the *data layer*:
+ *  the board fetches one `/genre/<slug>` listing per selected slug and unions
+ *  them (OR match). The pure helpers below only compare/merge; they never try
+ *  to derive a card's genre. */
+export type GenreFilter = string[];
+
 export interface DiscoveryFilterState {
   query: string;
   type: TypeFilter;
@@ -168,4 +177,32 @@ export function resultCaption(resultCount: number, totalOnPage: number): string 
   const noun = totalOnPage === 1 ? "title" : "titles";
   if (resultCount === totalOnPage) return `${totalOnPage} ${noun}`;
   return `${resultCount} of ${totalOnPage} ${noun} on this page`;
+}
+
+/** Order-independent set equality for two string selections. Single source for
+ *  "does this selection differ from its reference" (used by FilterPopover's
+ *  resting check and the discovery board's pending-genre check) so the two can
+ *  never disagree about whether a change is pending. */
+export function sameSelection(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  const set = new Set(b);
+  return a.every((v) => set.has(v));
+}
+
+/** Union several card lists into one, de-duplicating by `id` and preserving
+ *  first-seen order. Used to combine multiple genre listings (the upstream has
+ *  no multi-genre endpoint, so the board fetches one page per selected genre
+ *  and merges them) into a single grid order — the OR match the Genre control
+ *  promises. */
+export function unionById<T extends { id: string }>(lists: T[][]): T[] {
+  const seen = new Set<string>();
+  const out: T[] = [];
+  for (const list of lists) {
+    for (const item of list) {
+      if (seen.has(item.id)) continue;
+      seen.add(item.id);
+      out.push(item);
+    }
+  }
+  return out;
 }
