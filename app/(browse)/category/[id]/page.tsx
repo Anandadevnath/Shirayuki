@@ -82,16 +82,18 @@ export default async function CategoryPage({ params, searchParams }: Props) {
                 ? itemsRes.data.totalPages * PAGE_SIZE
                 : undefined
             }
+            pagination={
+              /* Pagination only applies to browse-backed collections; a home
+                 bucket is a fixed snapshot. Hidden while a genre is applied. */
+              browseDef.source === "browse" ? (
+                <Pagination
+                  basePath={`/category/${encodeURIComponent(id)}`}
+                  currentPage={itemsRes.data.currentPage}
+                  totalPages={itemsRes.data.totalPages}
+                />
+              ) : undefined
+            }
           />
-          {/* Pagination only applies to browse-backed collections; a home
-              bucket is a fixed snapshot. */}
-          {browseDef.source === "browse" && (
-            <Pagination
-              basePath={`/category/${encodeURIComponent(id)}`}
-              currentPage={itemsRes.data.currentPage}
-              totalPages={itemsRes.data.totalPages}
-            />
-          )}
           {showScheduleLink && (
             <Link
               href="/schedule"

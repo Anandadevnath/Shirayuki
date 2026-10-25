@@ -1,6 +1,13 @@
 "use client";
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import type { ReactNode } from "react";
+import {
+  ChevronLeft,
+  ChevronRight,
+  ChevronsLeft,
+  ChevronsRight,
+} from "lucide-react";
 import type { AnimeCardModel, Paginated } from "@/lib/providers/types";
 import { Grid } from "@/components/anime/Grid";
 import { AnimeCard } from "@/components/anime/AnimeCard";
@@ -53,6 +60,7 @@ export function DiscoveryBoard({
   showHeader = true,
   showCollection = true,
   showToolbar = true,
+  pagination,
   className,
 }: {
   items: AnimeCardModel[];
@@ -72,14 +80,20 @@ export function DiscoveryBoard({
   /** Render the whole filter/sort toolbar. Off for routes that just list the
    *  catalogue without client-side filtering (e.g. Browse A–Z). */
   showToolbar?: boolean;
+  /** The route's own server <Pagination>. Rendered only while no genre is
+   *  applied (a genre listing pages itself, client-side, with its own count). */
+  pagination?: ReactNode;
   className?: string;
 }) {
   // The server page's listing, kept as the base to restore when filters clear.
   const [baseItems, setBaseItems] = useState(items);
   // Cards a collection switch resolved to (null → the route's own collection).
   const [collectionItems, setCollectionItems] = useState<AnimeCardModel[] | null>(null);
-  // Cards the genre filter resolved to (null → no genre applied).
+  // The genre listing (OR-union of the selected genres) for the current genre
+  // page, plus that page's pagination — null when no genre is applied.
   const [genreItems, setGenreItems] = useState<AnimeCardModel[] | null>(null);
+  const [genrePage, setGenrePage] = useState(1);
+  const [genreTotalPages, setGenreTotalPages] = useState(1);
 
   const [appliedCollection, setAppliedCollection] = useState(collectionId);
   const [draftCollection, setDraftCollection] = useState(collectionId);
@@ -105,6 +119,8 @@ export function DiscoveryBoard({
     setBaseItems(items);
     setCollectionItems(null);
     setGenreItems(null);
+    setGenrePage(1);
+    setGenreTotalPages(1);
     setAppliedCollection(collectionId);
     setDraftCollection(collectionId);
     setAppliedGenres([]);
@@ -169,11 +185,35 @@ export function DiscoveryBoard({
     document.title = `${header.title} · Shirayuki`;
   }, [header.title]);
 
-  const fetchListing = useCallback(async (slug: string) => {
-    const res = await fetch(`/api/browse?genre=${encodeURIComponent(slug)}`);
-    if (!res.ok) throw new Error(String(res.status));
-    return ((await res.json()) as Paginated<AnimeCardModel>).results;
-  }, []);
+  /**
+   * Fetch the OR-union of the given genres' listings for one page.
+   *
+   * A single genre is paginated exactly as the upstream reports it. For
+   * multiple genres (no multi-genre endpoint) we fetch the same page number of
+   * each and union the results, and report the MAX page count so the controls
+   * never promise more than one of the genres can serve.
+   */
+  const loadGenrePage = useCallback(
+    async (
+      slugs: string[],
+      page: number,
+    ): Promise<{ results: AnimeCardModel[]; totalPages: number }> => {
+      const pages = await Promise.all(
+        slugs.map(async (slug) => {
+          const res = await fetch(
+            `/api/browse?genre=${encodeURIComponent(slug)}&page=${page}`,
+          );
+          if (!res.ok) throw new Error(String(res.status));
+          return (await res.json()) as Paginated<AnimeCardModel>;
+        }),
+      );
+      return {
+        results: unionById(pages.map((p) => p.results)),
+        totalPages: Math.max(1, ...pages.map((p) => p.totalPages)),
+      };
+    },
+    [],
+  );
 
   const applyDrafts = useCallback(async () => {
     const token = ++applyTokenRef.current;
@@ -193,11 +233,17 @@ export function DiscoveryBoard({
       let nextCollectionId = genresWon ? DEFAULT_COLLECTION_ID : appliedCollection;
       let nextGenres: AnimeCardModel[] | null = genreItems;
       let nextAppliedGenres = appliedGenres;
+      let nextGenreTotalPages = genreTotalPages;
 
       if (genresWon) {
-        nextGenres = draftGenres.length
-          ? unionById(await Promise.all(draftGenres.map(fetchListing)))
-          : null;
+        if (draftGenres.length) {
+          const page = await loadGenrePage(draftGenres, 1);
+          nextGenres = page.results;
+          nextGenreTotalPages = page.totalPages;
+        } else {
+          nextGenres = null;
+          nextGenreTotalPages = 1;
+        }
         nextAppliedGenres = draftGenres;
       } else if (collectionWon) {
         const def = collectionById(draftCollection);
@@ -220,11 +266,14 @@ export function DiscoveryBoard({
         // Switching collection supersedes the genre filter.
         nextGenres = null;
         nextAppliedGenres = [];
+        nextGenreTotalPages = 1;
       }
 
       if (token !== applyTokenRef.current) return; // superseded
       setCollectionItems(nextCollection);
       setGenreItems(nextGenres);
+      setGenrePage(1);
+      setGenreTotalPages(nextGenreTotalPages);
       setAppliedCollection(nextCollectionId);
       setAppliedGenres(nextAppliedGenres);
       // Keep the drafts in step with what is now applied.
@@ -245,9 +294,34 @@ export function DiscoveryBoard({
     appliedGenres,
     draftGenres,
     genreItems,
-    fetchListing,
+    genreTotalPages,
+    loadGenrePage,
     syncUrl,
   ]);
+
+  /** Move to another page of the applied genre listing, in place. */
+  const goToGenrePage = useCallback(
+    async (page: number) => {
+      if (!appliedGenres.length) return;
+      const target = Math.max(1, Math.min(page, genreTotalPages));
+      if (target === genrePage) return;
+      const token = ++applyTokenRef.current;
+      setLoading(true);
+      try {
+        const next = await loadGenrePage(appliedGenres, target);
+        if (token !== applyTokenRef.current) return;
+        setGenreItems(next.results);
+        setGenrePage(target);
+        setGenreTotalPages(next.totalPages);
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      } catch {
+        // Keep the current page on failure.
+      } finally {
+        if (token === applyTokenRef.current) setLoading(false);
+      }
+    },
+    [appliedGenres, genrePage, genreTotalPages, loadGenrePage],
+  );
 
   const sortOptions: SortOption[] = useMemo(() => {
     const opts: SortOption[] = [
@@ -276,7 +350,11 @@ export function DiscoveryBoard({
     setTypeFilter([]);
     setDraftGenres([]);
     setDraftCollection(DEFAULT_COLLECTION_ID);
-    if (hasGenreFilter) setGenreItems(null);
+    if (hasGenreFilter) {
+      setGenreItems(null);
+      setGenrePage(1);
+      setGenreTotalPages(1);
+    }
     if (hasCollectionFilter) {
       setCollectionItems(null);
       setAppliedCollection(DEFAULT_COLLECTION_ID);
@@ -373,6 +451,113 @@ export function DiscoveryBoard({
           </button>
         </div>
       )}
+
+      {/* Genre pagination. The route's own <Pagination> describes the server
+          listing (e.g. az-list's 342 pages), which is wrong once a genre is
+          applied — the genre listing has its own page count (Action = 130). So
+          the board pages the genre listing itself, in place. */}
+      {hasGenreFilter && genreTotalPages > 1 && !loading && (
+        <GenrePager
+          currentPage={genrePage}
+          totalPages={genreTotalPages}
+          onPage={goToGenrePage}
+        />
+      )}
+
+      {/* The route's server pagination, shown only while no genre overrides the
+          listing. */}
+      {!hasGenreFilter && pagination && <div className="mt-10">{pagination}</div>}
     </div>
+  );
+}
+
+/**
+ * Client-side pager for an applied genre listing. Mirrors the shared
+ * <Pagination> visuals, but drives a callback (fetch page N in place) instead of
+ * navigating to a route whose listing no longer matches the applied genres.
+ */
+function GenrePager({
+  currentPage,
+  totalPages,
+  onPage,
+}: {
+  currentPage: number;
+  totalPages: number;
+  onPage: (page: number) => void;
+}) {
+  const windowSize = 5;
+  const start = Math.max(
+    1,
+    Math.min(currentPage - 2, totalPages - windowSize + 1),
+  );
+  const pages = Array.from(
+    { length: Math.min(windowSize, totalPages) },
+    (_, i) => start + i,
+  ).filter((p) => p >= 1 && p <= totalPages);
+
+  const btn =
+    "grid h-9 min-w-9 place-items-center rounded-sm border border-line px-2 text-sm transition-[color,border-color,transform,background-color] duration-200 ease-out active:scale-95 hover:-translate-y-px";
+
+  return (
+    <nav
+      className="mt-10 flex flex-wrap items-center justify-center gap-1.5"
+      aria-label="Genre pagination"
+    >
+      {currentPage > 2 && (
+        <button
+          type="button"
+          onClick={() => onPage(1)}
+          className={`${btn} text-muted hover:text-snow`}
+          aria-label="First page"
+        >
+          <ChevronsLeft className="size-4" />
+        </button>
+      )}
+      {currentPage > 1 && (
+        <button
+          type="button"
+          onClick={() => onPage(currentPage - 1)}
+          className={btn}
+          aria-label="Previous page"
+        >
+          <ChevronLeft className="size-4" />
+        </button>
+      )}
+      {pages.map((p) => (
+        <button
+          key={p}
+          type="button"
+          onClick={() => onPage(p)}
+          aria-current={p === currentPage ? "page" : undefined}
+          className={`${btn} ${
+            p === currentPage
+              ? "border-frost/50 bg-frost-soft text-frost"
+              : "text-muted hover:text-snow"
+          }`}
+        >
+          {p}
+        </button>
+      ))}
+      {currentPage < totalPages && (
+        <button
+          type="button"
+          onClick={() => onPage(currentPage + 1)}
+          className={btn}
+          aria-label="Next page"
+        >
+          <ChevronRight className="size-4" />
+        </button>
+      )}
+      {currentPage < totalPages - 1 && (
+        <button
+          type="button"
+          onClick={() => onPage(totalPages)}
+          className={`${btn} text-muted hover:text-snow`}
+          aria-label="Last page"
+        >
+          <ChevronsRight className="size-4" />
+        </button>
+      )}
+    </nav>
   );
 }

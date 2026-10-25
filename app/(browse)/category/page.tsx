@@ -63,14 +63,16 @@ export default async function CategoryBrowsePage({ searchParams }: Props) {
             totalCount={
               def.source === "browse" ? itemsRes.data.totalPages * PAGE_SIZE : undefined
             }
+            pagination={
+              def.source === "browse" ? (
+                <Pagination
+                  basePath="/category"
+                  currentPage={itemsRes.data.currentPage}
+                  totalPages={itemsRes.data.totalPages}
+                />
+              ) : undefined
+            }
           />
-          {def.source === "browse" && (
-            <Pagination
-              basePath="/category"
-              currentPage={itemsRes.data.currentPage}
-              totalPages={itemsRes.data.totalPages}
-            />
-          )}
         </>
       )}
     </div>

@@ -74,11 +74,13 @@ export default async function BrowsePage({ params, searchParams }: Props) {
               showHeader={false}
               showCollection={false}
               showToolbar={false}
-            />
-            <Pagination
-              basePath={`/az/${encodeURIComponent(current)}`}
-              currentPage={res.data.currentPage}
-              totalPages={res.data.totalPages}
+              pagination={
+                <Pagination
+                  basePath={`/az/${encodeURIComponent(current)}`}
+                  currentPage={res.data.currentPage}
+                  totalPages={res.data.totalPages}
+                />
+              }
             />
           </div>
         )}
