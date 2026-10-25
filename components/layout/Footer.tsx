@@ -4,7 +4,7 @@ import type { ReactNode } from "react";
 import { AZ_LETTERS, azLabel } from "@/lib/utils/format";
 
 const QUICK_LINKS = [
-  { href: "/category/most-popular", label: "Category" },
+  { href: "/category", label: "Category" },
   { href: "/schedule", label: "Release Schedule" },
   { href: "/az/all", label: "Browse A–Z" },
 ];

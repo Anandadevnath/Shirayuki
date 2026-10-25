@@ -78,7 +78,7 @@ export type NavGroup = {
 /** Wide-viewport navbar rail. `reach` keeps them reachable when the rail is hidden. */
 export const NAVBAR_ITEMS: NavItem[] = [
   { id: "home", label: "Home", href: "/", icon: Home, surfaces: ["navbar", "reach"] },
-  { id: "category", label: "Category", href: "/category/most-popular", icon: LayoutGrid, surfaces: ["navbar", "reach"] },
+  { id: "category", label: "Category", href: "/category", icon: LayoutGrid, surfaces: ["navbar", "reach"] },
   { id: "schedule", label: "Schedule", href: "/schedule", icon: CalendarClock, surfaces: ["navbar", "reach"] },
   { id: "browse", label: "Browse A–Z", href: "/az/all", icon: Compass, surfaces: ["navbar", "reach"] },
 ];

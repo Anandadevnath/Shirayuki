@@ -3,6 +3,7 @@ import {
   CalendarClock,
   Clock,
   Flame,
+  LayoutGrid,
   ListOrdered,
   RefreshCw,
   Sparkles,
@@ -51,19 +52,20 @@ export interface CollectionDef {
 
 /**
  * Ordered exactly as the Status menu renders. "All Anime" is the resting
- * option (the page's canonical collection) so it never appears as an active
- * deviation.
+ * option and maps to the FULL catalogue (`az-list`) with a neutral header — it
+ * is NOT the Popular collection, so the default Category view never reads as
+ * "Most Popular".
  */
 export const COLLECTIONS: CollectionDef[] = [
   {
     id: "all",
     label: "All Anime",
     source: "browse",
-    key: "most-popular",
-    eyebrow: "DISCOVER SHIRAYUKI",
-    title: "Most Popular Anime",
-    lede: "Discover fan favorites, all-time classics, and the anime everyone is talking about.",
-    icon: Flame,
+    key: "az-list",
+    eyebrow: "THE WHOLE CATALOGUE",
+    title: "Browse Anime",
+    lede: "Explore anime by genre, type, release status, and more.",
+    icon: LayoutGrid,
   },
   {
     id: "popular",
@@ -101,7 +103,7 @@ export const COLLECTIONS: CollectionDef[] = [
     source: "home",
     key: "trending",
     eyebrow: "WHAT'S HOT",
-    title: "Trending Now",
+    title: "Trending Anime",
     lede: "The titles gaining the most momentum across the community right now.",
     icon: TrendingUp,
   },
@@ -151,7 +153,7 @@ export const COLLECTIONS: CollectionDef[] = [
     source: "browse",
     key: "latest-completed",
     eyebrow: "FINISHED SERIES",
-    title: "Latest Completed",
+    title: "Completed Anime",
     lede: "Series that have wrapped — binge the full story without waiting for new episodes.",
     icon: ListOrdered,
   },
@@ -215,15 +217,19 @@ export function homeBucket(
   }
 }
 
-/** The canonical `/category/<browse-slug>` the default collections live at
- *  (the navbar "Category" destination). */
-export const CANONICAL_CATEGORY_PATH = `/category/${defaultCollection().key}`;
+/** The canonical general-browsing route — the navbar "Category" destination and
+ *  the neutral "All Anime" default. */
+export const CANONICAL_CATEGORY_PATH = "/category";
 
 /**
- * The shareable URL a collection corresponds to. Browse-backed collections map
- * to their own `/category/<key>` route (refreshable, server-rendered); the
- * home-backed ones keep the canonical path and carry a `?collection=<id>` param
- * (the page seeds the board from it). Returns a path (no origin).
+ * The shareable URL a collection corresponds to.
+ *
+ *   · "All Anime" (default) → the neutral `/category` route.
+ *   · Popular / Airing / …  → their own `/category/<browse-key>` route
+ *                             (refreshable, server-rendered).
+ *   · home-backed           → `/category?collection=<id>`.
+ *
+ * Returns a path (no origin).
  */
 export function collectionPath(id: string): string {
   const def = BY_ID.get(id);

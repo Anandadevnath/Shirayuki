@@ -16,11 +16,14 @@ test("collections: ids are unique", () => {
   assert.equal(new Set(ids).size, ids.length);
 });
 
-test("collections: the default exists and is the canonical most-popular", () => {
+test("collections: the default is the neutral All Anime catalogue", () => {
   const def = defaultCollection();
   assert.equal(def.id, DEFAULT_COLLECTION_ID);
-  assert.equal(def.source, "browse");
-  assert.equal(def.key, "most-popular");
+  assert.equal(def.label, "All Anime");
+  assert.equal(def.title, "Browse Anime");
+  // The neutral default is the full catalogue, NOT the Popular collection.
+  assert.equal(def.key, "az-list");
+  assert.notEqual(def.key, "most-popular");
 });
 
 test("collections: every option has a non-empty label, key and header copy", () => {
@@ -63,19 +66,21 @@ test("collections: homeBucket maps every home-backed key", () => {
 });
 
 test("collections: collectionPath gives canonical + shareable URLs", () => {
-  assert.equal(collectionPath("all"), "/category/most-popular");
+  // The neutral default lives at the bare /category route.
+  assert.equal(collectionPath("all"), "/category");
   assert.equal(collectionPath("popular"), "/category/most-popular");
   assert.equal(collectionPath("airing"), "/category/top-airing");
   // Home-backed collections keep the canonical path and carry a param.
-  assert.equal(collectionPath("trending"), "/category/most-popular?collection=trending");
+  assert.equal(collectionPath("trending"), "/category?collection=trending");
   assert.equal(
     collectionPath("latest-episodes"),
-    "/category/most-popular?collection=latest-episodes",
+    "/category?collection=latest-episodes",
   );
 });
 
 test("collections: browse keys resolve back to their collection (first wins)", () => {
-  assert.equal(collectionForBrowseKey("most-popular")?.id, "all");
+  assert.equal(collectionForBrowseKey("az-list")?.id, "all");
+  assert.equal(collectionForBrowseKey("most-popular")?.id, "popular");
   assert.equal(collectionForBrowseKey("most-favorite")?.id, "most-favorite");
   assert.equal(collectionForBrowseKey("nonexistent"), undefined);
 });
