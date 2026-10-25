@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { Compass } from "lucide-react";
-import { getAZ, getGenres, safe } from "@/lib/api";
+import { getAZ, safe } from "@/lib/api";
 import { DiscoveryBoard } from "@/components/discovery/DiscoveryBoard";
 import { AlphabetNav } from "@/components/common/AlphabetNav";
 import { Pagination } from "@/components/common/Pagination";
@@ -12,10 +12,10 @@ import { EmptyState, ErrorState } from "@/components/common/States";
  * it as a single paginated "Browse all" surface. The letter strip is honest
  * navigation to the same catalogue, not a filter — see `AlphabetNav`.
  *
- * This page owns its hero, so the shared `DiscoveryBoard` is rendered WITHOUT
- * its own header (`showHeader={false}`) and without the collection/Status
- * switcher (`showCollection={false}`) — the two headers would otherwise
- * duplicate ("THE ANIME LIBRARY" + "THE WHOLE CATALOGUE").
+ * This page owns its hero and shows the raw catalogue listing, so the shared
+ * `DiscoveryBoard` is rendered WITHOUT its header (`showHeader={false}`), its
+ * collection/Status switcher (`showCollection={false}`) or its filter toolbar
+ * (`showToolbar={false}`). The letter strip + pagination are the only controls.
  */
 
 type Props = {
@@ -33,11 +33,7 @@ export default async function BrowsePage({ params, searchParams }: Props) {
   const current = decodeURIComponent(letter);
   const { page = "1" } = await searchParams;
   const pageNum = Math.max(1, Number(page) || 1);
-  const [res, genres] = await Promise.all([
-    safe(() => getAZ(current, pageNum)),
-    safe(() => getGenres()),
-  ]);
-  const genreList = genres.ok ? genres.data : [];
+  const res = await safe(() => getAZ(current, pageNum));
 
   return (
     <div className="flex flex-col">
@@ -75,9 +71,9 @@ export default async function BrowsePage({ params, searchParams }: Props) {
           <div className="flex flex-col gap-8">
             <DiscoveryBoard
               items={res.data.results}
-              genres={genreList}
               showHeader={false}
               showCollection={false}
+              showToolbar={false}
             />
             <Pagination
               basePath={`/az/${encodeURIComponent(current)}`}
@@ -90,3 +86,4 @@ export default async function BrowsePage({ params, searchParams }: Props) {
     </div>
   );
 }
+

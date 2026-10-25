@@ -52,6 +52,7 @@ export function DiscoveryBoard({
   totalCount,
   showHeader = true,
   showCollection = true,
+  showToolbar = true,
   className,
 }: {
   items: AnimeCardModel[];
@@ -68,6 +69,9 @@ export function DiscoveryBoard({
   /** Offer the Status/collection switcher. Off for routes whose scope is a
    *  single fixed catalogue (e.g. Browse A–Z). */
   showCollection?: boolean;
+  /** Render the whole filter/sort toolbar. Off for routes that just list the
+   *  catalogue without client-side filtering (e.g. Browse A–Z). */
+  showToolbar?: boolean;
   className?: string;
 }) {
   // The server page's listing, kept as the base to restore when filters clear.
@@ -273,42 +277,45 @@ export function DiscoveryBoard({
         />
       )}
 
-      <div className={showHeader ? "mt-[var(--space-header)]" : undefined}>
-        <DiscoveryToolbar
-          query={query}
-          onQueryChange={setQuery}
-          types={types}
-          typeFilter={typeFilter}
-          onTypeChange={setTypeFilter}
-          genres={genres}
-          genreDraft={draftGenres}
-          onGenreChange={setDraftGenres}
-          onApplyGenres={applyDrafts}
-          genreLoading={loading}
-          genresPending={genresPending}
-          collection={draftCollection}
-          onCollectionChange={setDraftCollection}
-          collectionOptions={collectionOptions}
-          collectionLoading={loading}
-          onApplyCollection={applyDrafts}
-          collectionPending={collectionPending}
-          showCollection={showCollection}
-          sortOptions={sortOptions}
-          sort={sort}
-          onSortChange={(s) => setSort(s as DiscoverySort)}
-          view={view}
-          onViewChange={setView}
-          resultCount={sorted.length}
-          totalOnPage={source.length}
-          totalCount={totalCount}
-          active={active}
-          onClear={clear}
-        />
-      </div>
+      {showToolbar && (
+        <div className={showHeader ? "mt-[var(--space-header)]" : undefined}>
+          <DiscoveryToolbar
+            query={query}
+            onQueryChange={setQuery}
+            types={types}
+            typeFilter={typeFilter}
+            onTypeChange={setTypeFilter}
+            genres={genres}
+            genreDraft={draftGenres}
+            onGenreChange={setDraftGenres}
+            onApplyGenres={applyDrafts}
+            genreLoading={loading}
+            genresPending={genresPending}
+            collection={draftCollection}
+            onCollectionChange={setDraftCollection}
+            collectionOptions={collectionOptions}
+            collectionLoading={loading}
+            onApplyCollection={applyDrafts}
+            collectionPending={collectionPending}
+            showCollection={showCollection}
+            sortOptions={sortOptions}
+            sort={sort}
+            onSortChange={(s) => setSort(s as DiscoverySort)}
+            view={view}
+            onViewChange={setView}
+            resultCount={sorted.length}
+            totalOnPage={source.length}
+            totalCount={totalCount}
+            active={active}
+            onClear={clear}
+          />
+        </div>
+      )}
 
       <div
         className={
-          "mt-5 transition-opacity duration-200 " +
+          (showToolbar ? "mt-5 " : "") +
+          "transition-opacity duration-200 " +
           (loading ? "pointer-events-none opacity-50" : "opacity-100")
         }
         aria-busy={loading || undefined}
