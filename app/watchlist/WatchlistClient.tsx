@@ -8,15 +8,87 @@ import { formatTime } from "@/lib/utils/format";
 import { SmartImage } from "@/components/ui/SmartImage";
 
 /**
- * Client island for the /watchlist page. Renders every in-progress title
- * from localStorage, with a progress bar and a remove button. Same UX as
- * the home-page Continue Watching rail, just un-paginated.
+ * Client island for the /watchlist page. Renders every in-progress title,
+ * with a progress bar and a remove button. Same UX as the home-page Continue
+ * Watching rail, just un-paginated.
+ *
+ * Data source: local-first (as before). When the visitor is signed in AND cloud
+ * tracking is enabled, the server history is the source of truth and is merged
+ * over the local list in the SAME shape — the visual shell is unchanged.
  */
+
+interface ServerHistoryItem {
+  animeId: string;
+  title: string;
+  poster: string | null;
+  episodeId: string;
+  episodeNumber: number;
+  category: string;
+  server: string;
+  seconds: number;
+  duration: number;
+  progressPct: number;
+  updatedAt: string;
+}
+
+/** Convert a server history row into the local WatchEntry shape the UI renders. */
+function fromServer(item: ServerHistoryItem): WatchEntry {
+  return {
+    animeId: item.animeId,
+    title: item.title,
+    poster: item.poster,
+    episodeId: item.episodeId,
+    episodeNumber: item.episodeNumber,
+    category: item.category,
+    server: item.server,
+    seconds: item.seconds,
+    duration: item.duration,
+    updatedAt: new Date(item.updatedAt).getTime(),
+  };
+}
+
+/** Server-first merge keyed by animeId, newest first. */
+function mergeWindows(local: WatchEntry[], server: WatchEntry[]): WatchEntry[] {
+  const byAnime = new Map<string, WatchEntry>();
+  for (const e of local) byAnime.set(e.animeId, e);
+  for (const e of server) byAnime.set(e.animeId, e); // server wins
+  return [...byAnime.values()]
+    .filter((e) => e.duration > 0 && e.seconds / e.duration < 0.97)
+    .sort((a, b) => b.updatedAt - a.updatedAt);
+}
+
 export function WatchlistClient() {
   const [items, setItems] = useState<WatchEntry[] | null>(null);
 
   useEffect(() => {
-    setItems(listProgress());
+    let cancelled = false;
+    // Local-first: render immediately.
+    const local = listProgress();
+    setItems(local);
+
+    // Then upgrade to server history when signed in + tracking enabled.
+    (async () => {
+      try {
+        const [sessionRes, capsRes] = await Promise.all([
+          fetch("/api/auth/session", { cache: "no-store" }),
+          fetch("/api/capabilities", { cache: "no-store" }),
+        ]);
+        const session = sessionRes.ok ? ((await sessionRes.json()) as { user?: unknown }) : null;
+        const caps = capsRes.ok ? ((await capsRes.json()) as { database?: boolean }) : null;
+        if (!session?.user || !caps?.database) return;
+        const histRes = await fetch("/api/history", { cache: "no-store" });
+        if (!histRes.ok) return;
+        const json = (await histRes.json()) as { items?: ServerHistoryItem[] };
+        if (cancelled || !json.items) return;
+        setItems(mergeWindows(local, json.items.map(fromServer)));
+      } catch {
+        /* keep the local list */
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   if (items === null) {

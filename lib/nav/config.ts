@@ -12,6 +12,7 @@ import {
   MonitorPlay,
   Layers,
   ShieldCheck,
+  Settings,
   Sparkles,
   Star,
   Tv,
@@ -117,6 +118,7 @@ export const DRAWER_GROUPS: NavGroup[] = [
     items: [
       { id: "watchlist", label: "My Watchlist", href: "/watchlist", icon: ListOrdered, surfaces: ["drawer"], hint: "Continue watching" },
       { id: "genres", label: "Genres", href: "/genre/action", icon: LayoutGrid, surfaces: ["drawer"], hint: "Browse by genre" },
+      { id: "settings", label: "Settings", href: "/settings", icon: Settings, surfaces: ["drawer"], hint: "Account, playback & sync" },
     ],
   },
   {

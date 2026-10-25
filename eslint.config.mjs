@@ -22,6 +22,8 @@ const config = [
       ".next/**",
       "node_modules/**",
       "graphify-out/**",
+      // Generated Prisma client — regenerated on install, not hand-edited.
+      "lib/generated/**",
       // Vendored agent skills / generated artifacts — not app code.
       ".agents/**",
       ".claude/**",
@@ -36,6 +38,8 @@ const config = [
     files: ["**/*.test.ts"],
     rules: {
       "@typescript-eslint/no-explicit-any": "off",
+      // Test doubles implement interfaces with params they intentionally ignore.
+      "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
     },
   },
 ];

@@ -8,7 +8,8 @@ import {
   Keyboard, X, RotateCcw,
 } from "lucide-react";
 import { usePrefs } from "@/lib/stores/prefs";
-import { saveProgress, getEpisodeSeconds, type WatchEntry } from "@/lib/progress/local";
+import { getEpisodeSeconds, type WatchEntry } from "@/lib/progress/local";
+import { recordProgress, flushProgress } from "@/lib/tracking/client";
 import { formatTime } from "@/lib/utils/format";
 import { cn } from "@/lib/utils/cn";
 import { SubtitleOverlay } from "@/components/player/SubtitleOverlay";
@@ -374,12 +375,14 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
   }, [ready, meta.episodeId, activeSrc]);
 
   // ── Persist progress every 5s ───────────────────────────────────────
+  // Goes through the tracking layer: local write first (unchanged behavior),
+  // then a throttled server mirror when signed in. Never awaited by playback.
   useEffect(() => {
     const v = videoRef.current;
     if (!v) return;
     const id = setInterval(() => {
       if (v.duration > 0 && v.currentTime > 1) {
-        saveProgress({
+        recordProgress({
           ...meta,
           seconds: v.currentTime,
           duration: v.duration,
@@ -388,6 +391,28 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
       }
     }, 5000);
     return () => clearInterval(id);
+  }, [meta]);
+
+  // ── Final write on unload / tab hide ────────────────────────────────
+  // The 5s interval may not have fired for the last few seconds; flush the
+  // exact playhead with `keepalive` so a closed tab keeps its position.
+  useEffect(() => {
+    const flush = () => {
+      const v = videoRef.current;
+      if (v && v.duration > 0 && v.currentTime > 1) {
+        flushProgress({ ...meta, seconds: v.currentTime, duration: v.duration, updatedAt: Date.now() });
+      }
+    };
+    const onVisibility = () => {
+      if (document.visibilityState === "hidden") flush();
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", onVisibility);
+      flush();
+    };
   }, [meta]);
 
   // Native <track> rendering was removed in favour of a custom React overlay

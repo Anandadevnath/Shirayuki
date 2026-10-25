@@ -6,9 +6,9 @@ Anime streaming client: Next.js 15 (App Router, RSC), React 19, TypeScript 5.7 s
 
 ```bash
 npm run dev          # http://localhost:3000
-npm run build        # next build — run before claiming a routing/config change is safe
+npm run build        # prisma generate && next build — run before claiming a routing/config change is safe
 npm run typecheck    # tsc --noEmit
-npm test             # node --test "lib/**/*.test.ts" "app/**/*.test.ts" (122 tests)
+npm test             # node --test "lib/**/*.test.ts" "app/**/*.test.ts" "backend/**/*.test.ts" (~260 tests)
 npm run lint         # eslint . (ESLint 9 flat config in eslint.config.mjs)
 node --test lib/api/proxy-guard.test.ts   # single file — node:test, NOT jest/vitest
 npm run bundle:check   # scripts/check-bundle-size.mjs — needs a prior `next build`
@@ -21,7 +21,7 @@ npm run verify:cache     # scripts/verify-cache-headers.mjs — needs a LIVE dep
 
 ## Environment
 
-- `API_BASE_URL` (required, server-side only — never `NEXT_PUBLIC_`) points at the upstream scraper. It lives in the gitignored `.env` (`.gitignore` ignores `.env*` except `.env.example`, which does not exist).
+- `API_BASE_URL` (required, server-side only — never `NEXT_PUBLIC_`) points at the upstream scraper. It lives in the gitignored `.env` (`.gitignore` ignores `.env*` except `.env.example`, which now exists and documents every backend var — see the Backend section).
 - Must be strict `KEY=VALUE` form and **no trailing slash**: the client prepends `/api/v2/...`, so a trailing slash double-slashes and 308-redirects. A bare-URL line is silently ignored by Next's dotenv loader, and the client falls back to a disabled legacy domain.
 
 ## Data layer (read before touching fetches)
@@ -61,3 +61,19 @@ Two animation systems coexist on purpose; adding to the wrong one is the easiest
 - **Home board reveals as ONE unit** (`app/page.tsx`): `HomePage` starts `getHome()` + `getSchedule()` concurrently, then `HomeBoard` awaits **both** (`Promise.all`) before rendering any section, and the schedule renders inline (no `<Suspense>` island). Sections must NOT be wrapped in the viewport-`Reveal` wrapper — that made them fade in one-by-one on scroll ("sections loading late"). The route skeleton (`app/loading.tsx`) → board swap is one crossfade; inner card/rail cascades still stagger. Keep the two `withTimeout` deadlines (home 20s, schedule 12s) so a slow upstream can't hang the board forever.
 - **The home page is edge-cached via route-level ISR**, not a `headers()` rule: `app/page.tsx` sets `export const revalidate = 60`, so Next emits the shared `s-maxage=60, stale-while-revalidate=…` directive itself. A `next.config.ts` `headers()` rule cannot achieve this — the framework's own `Cache-Control` wins for a dynamically-rendered route (a former `headers()` rule for `/` was silently ineffective and has been removed). `/watch/*` is NOT cached: it sits under an unbounded dynamic segment and resolves ephemeral stream tokens, so it stays dynamic by necessity. Don't "restore" a `headers()` cache rule for `/` or `/watch/*` — re-read the comments in `next.config.ts` and `app/page.tsx` first.
 - Most tracked files are not app code: `.agents/`, `.claude/`, `.kilo/` and `skills-lock.json` hold vendored agent skills, and `graphify-out/` is a generated knowledge graph. Don't edit these during feature work.
+
+## Backend (accounts, tracking, AniList sync)
+
+All backend business logic lives in a root-level `backend/` directory; route handlers in `app/api/*` are thin (validate → `requireUser()` → call a service). The full reference is `backend/README.md` — read it before touching anything here.
+
+- **Everything is optional and must degrade.** Browsing/playback work with no backend env. Missing `DATABASE_URL` → routes return 503 `DB_NOT_CONFIGURED`; missing AniList/email vars → the relevant panel shows an explicit disabled state. Never present a form that silently does nothing. `backend/config/capabilities.ts` is the single source for what's enabled; `/api/capabilities` exposes booleans (never secrets).
+- **Prisma 7 specifics.** Connection URLs are NOT in `prisma/schema.prisma` — they live in `prisma.config.ts` (CLI uses `DIRECT_URL`) and the runtime client uses the **driver adapter** (`@prisma/adapter-pg`) with the pooled `DATABASE_URL`. `lib/db.ts` is the app layer's ONLY Prisma import site (global-cached in dev). The generated client goes to `lib/generated/prisma` (git-ignored; `npm run build` runs `prisma generate`).
+- **Two hand-written partial unique indexes** in the migrations enforce the AniList mapping model (one verified mapping per provider; one verified provider per `anilistId`, both `WHERE status='VERIFIED'`) — Prisma's DSL can't express them; don't remove them.
+- **Identity comes only from `requireUser()`** (`backend/services/session.ts`). No route accepts a user id from the request body. `sessionEpoch` invalidates older JWTs on password change.
+- **Argon2id is `@node-rs/argon2`** (prebuilt, no node-gyp). Every route touching Prisma/Argon2/Auth is `export const runtime = "nodejs"` — **never edge**; `backend/services/deployment.test.ts` asserts this.
+- **Pure logic is separated for `node --test`.** `*.rules.ts` / `*.match.ts` / `*.policy.ts` / `backend/jobs/sync-queue.ts` have no DB or framework imports; services are thin shells over a repository interface. Backend leaf tests must follow the same relative-`.ts` import rule as the rest of the repo, and must NOT transitively import `next/headers`, `next-auth`, or the Prisma client (Node can't resolve them) — keep capability/config logic pure instead. Node's strip-only mode also rejects TS **parameter properties** (`constructor(public x: T)`) — assign fields explicitly.
+- **Sync queue claiming is subtle**: a fresh job's `leaseExpiresAt` is NULL and `NULL < now` is falsy, so the claim predicate must explicitly allow NULL. `backend/jobs/sync-queue.ts` holds the tested logic; `sync-queue.prisma.ts` is the atomic `updateMany` implementation.
+- **Client tracking is local-first**: `lib/tracking/client.ts` always writes localStorage + dispatches the existing `shirayuki:*` events, then mirrors to the server only when signed in. `TrackingProvider` (in the root layout) seeds it via same-origin probes; the root layout stays a SYNC component so the home page keeps its ISR.
+- **AniList is a linked OAuth connection, never a login identity.** OAuth is server-side redirect + server-side code exchange (authorization-code, **no PKCE**; the CSP forbids browser calls to `anilist.co`, so all AniList traffic goes through `/api/integrations/anilist/*`). Tokens are AES-256-GCM encrypted with `TOKEN_ENCRYPTION_KEY`. No scraping, no browser automation, no passwords.
+- **Env**: `.env.example` documents every var and marks which are required-to-build vs optional-at-runtime. `API_BASE_URL` is the only var the app needs to function at all.
+

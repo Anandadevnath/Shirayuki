@@ -4,12 +4,13 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Search } from "lucide-react";
+import { Search, UserRound } from "lucide-react";
 import dynamic from "next/dynamic";
 import { cn } from "@/lib/utils/cn";
 // Eagerly import only the tiny prefetch helper; the full CommandPalette stays
 // in a lazy chunk and no longer inflates the initial Nav bundle.
 import { prefetchSearchIndex } from "@/lib/search";
+import { useSessionUser } from "@/lib/auth/use-session-user";
 import { NAVBAR_ITEMS, isActive } from "@/lib/nav/config";
 import { NavDrawer } from "@/components/layout/NavDrawer";
 
@@ -42,6 +43,12 @@ export function Nav() {
   const headerRef = useRef<HTMLElement>(null);
   // Focus target for the drawer — restored when the drawer closes.
   const drawerTriggerRef = useRef<HTMLButtonElement>(null);
+
+  // Signed-in identity for the account affordance (client probe; renders the
+  // signed-out icon until it resolves).
+  const { user: sessionUser } = useSessionUser();
+  const accountLabel = sessionUser?.name?.trim() || sessionUser?.email?.split("@")[0] || "Account";
+  const accountInitial = (accountLabel[0] ?? "A").toUpperCase();
 
   const openPalette = useCallback(() => {
     setPaletteMounted(true);
@@ -188,6 +195,40 @@ export function Nav() {
                 ⌘K
               </kbd>
             </button>
+
+            {/* Account / settings affordance. Deep-links to the Account tab of
+                /settings (which itself renders an explicit "auth not
+                configured" state when the backend is absent). Shows the signed
+                in user's avatar + name; falls back to a generic icon when
+                signed out. Not a nav-config entry, so it never collides with
+                the rail/drawer invariant. */}
+            <Link
+              href="/settings?tab=account"
+              className="nav-cta-glass group flex items-center gap-2 rounded-sm border border-line/70 px-2.5 py-2 text-faint transition-[border-color,color,background-color,backdrop-filter] duration-200 ease-out hover:border-frost/50 hover:text-muted focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-frost"
+              aria-label={sessionUser ? `Signed in as ${accountLabel}` : "Account & settings"}
+            >
+              {sessionUser?.image ? (
+                <Image
+                  src={sessionUser.image}
+                  alt=""
+                  width={20}
+                  height={20}
+                  className="size-5 rounded-full object-cover ring-1 ring-line/70"
+                />
+              ) : sessionUser ? (
+                <span
+                  aria-hidden="true"
+                  className="grid size-5 place-items-center rounded-full bg-frost/20 font-accent text-[10px] font-semibold uppercase text-frost"
+                >
+                  {accountInitial}
+                </span>
+              ) : (
+                <UserRound className="size-4 transition-colors duration-200 group-hover:text-frost" />
+              )}
+              <span className="text-meta hidden max-w-[9rem] truncate lg:inline">
+                {sessionUser ? accountLabel : "Account"}
+              </span>
+            </Link>
 
             {/* Hamburger — ALWAYS visible at every breakpoint (desktop, tablet,
                 mobile). It opens the drawer, which supplies secondary

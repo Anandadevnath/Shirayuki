@@ -5,6 +5,8 @@ import { MotionProvider } from "@/components/motion/MotionProvider";
 import { Nav } from "@/components/layout/Nav";
 import { Footer } from "@/components/layout/Footer";
 import { RootEffects } from "@/components/layout/RootEffects";
+import { TrackingProvider } from "@/components/layout/TrackingProvider";
+import { AuthSessionProvider } from "@/components/layout/AuthSessionProvider";
 
 // ── Typography system ─────────────────────────────────────────────────────
 // Three self-hosted Google faces, each with ONE job (no duplicates):
@@ -148,7 +150,9 @@ export default function RootLayout({
             component below it (the CSS catch-all in globals.css cannot reach
             JS-driven animations). Children still stream in as RSC. */}
         <MotionProvider>
-          <RootEffects />
+          <AuthSessionProvider>
+            <TrackingProvider />
+            <RootEffects />
           <Nav />
           {/* <main> is intentionally full-width and acts as the page size
               container (`container-type: inline-size`), so `cqw` units inside it
@@ -166,6 +170,7 @@ export default function RootLayout({
             </div>
           </main>
           <Footer />
+          </AuthSessionProvider>
         </MotionProvider>
       </body>
     </html>
