@@ -84,6 +84,33 @@ export function RailSkeleton({ cards = 7 }: { cards?: number }) {
   );
 }
 
+// ── Discovery toolbar (mirrors components/discovery/DiscoveryToolbar) ─────────
+// A count + view-toggle row, then one wrapping row of glass pills (search,
+// four filter triggers, the sliders chip) and the action pill. Heights/gaps
+// mirror the real bar (h-11 controls, gap-2.5/3) so the route skeleton swap
+// doesn't push the grid down.
+export function ToolbarSkeleton() {
+  return (
+    <section>
+      <div className="mb-3 flex items-center justify-end gap-3">
+        <Skeleton className="h-3 w-20 rounded" />
+        <Skeleton className="size-11 rounded-[var(--radius-btn)]" />
+        <Skeleton className="size-11 rounded-[var(--radius-btn)]" />
+      </div>
+      <div className="flex flex-wrap items-center gap-2.5 sm:gap-3 lg:flex-nowrap">
+        <Skeleton className="h-11 min-w-0 flex-1 basis-40 rounded-[var(--radius-btn)]" />
+        <Skeleton className="h-11 min-w-0 flex-1 basis-36 rounded-[var(--radius-btn)]" />
+        <Skeleton className="h-11 min-w-0 flex-1 basis-36 rounded-[var(--radius-btn)]" />
+        <Skeleton className="h-11 min-w-0 flex-1 basis-36 rounded-[var(--radius-btn)]" />
+        <Skeleton className="h-11 min-w-0 flex-1 basis-36 rounded-[var(--radius-btn)]" />
+        <Skeleton className="size-11 shrink-0 rounded-[var(--radius-btn)]" />
+        <Skeleton className="h-11 w-[6.5rem] shrink-0 rounded-[var(--radius-btn)]" />
+      </div>
+      <Skeleton className="mt-2.5 h-3 w-36 rounded" />
+    </section>
+  );
+}
+
 // ── Responsive poster Grid (matches components/anime/Grid) ────────────────────
 export function GridSkeleton({ count = 18 }: { count?: number }) {
   // No per-card `.reveal` stagger here. A route skeleton is a *placeholder*,
@@ -93,7 +120,7 @@ export function GridSkeleton({ count = 18 }: { count?: number }) {
   // the perceived "instant / flicker" cut. `.shimmer-loop` (on the shared
   // <Skeleton> primitive) is the only motion; the entering grid owns the fade.
   return (
-    <div className="grid grid-cols-2 gap-x-3 gap-y-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+    <div className="grid grid-cols-2 gap-x-3.5 gap-y-7 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7">
       {Array.from({ length: count }).map((_, i) => (
         <CardSkeleton key={i} />
       ))}
@@ -195,10 +222,10 @@ export function RankedGridSkeleton({
   return (
     <div
       className={cn(
-        // MUST mirror RankedGrid's denser column ladder (one step past <Grid>):
-        // Top Upcoming spans the full board, so its poster width is tuned to
-        // match the Latest Completed cards. A mismatch here makes the
-        // skeleton→board swap visibly jump.
+        // MUST mirror RankedGrid's column ladder (identical to the shared <Grid>):
+        // Top Upcoming spans the full board, so its poster width matches every
+        // other browse grid. A mismatch here makes the skeleton→board swap
+        // visibly jump.
         "grid grid-cols-2 gap-x-3.5 gap-y-7 sm:grid-cols-3 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-7",
         className,
       )}

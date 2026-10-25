@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { getGenre, safe } from "@/lib/api";
 import { titleize } from "@/lib/utils/format";
-import { Grid } from "@/components/anime/Grid";
+import { DiscoveryBoard } from "@/components/discovery/DiscoveryBoard";
 import { Pagination } from "@/components/common/Pagination";
 import { PageHeader } from "@/components/common/SectionHeader";
 import { EmptyState, ErrorState } from "@/components/common/States";
@@ -31,7 +31,7 @@ export default async function GenrePage({ params, searchParams }: Props) {
         <EmptyState />
       ) : (
         <>
-          <Grid items={res.data.results} />
+          <DiscoveryBoard items={res.data.results} />
           <Pagination
             basePath={`/genre/${encodeURIComponent(id)}`}
             currentPage={res.data.currentPage}

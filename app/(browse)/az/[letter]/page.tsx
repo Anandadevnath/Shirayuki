@@ -1,14 +1,21 @@
 import type { Metadata } from "next";
+import { Compass } from "lucide-react";
 import { getAZ, safe } from "@/lib/api";
-import { Grid } from "@/components/anime/Grid";
+import { DiscoveryBoard } from "@/components/discovery/DiscoveryBoard";
+import { AlphabetNav } from "@/components/common/AlphabetNav";
 import { Pagination } from "@/components/common/Pagination";
-import { PageHeader } from "@/components/common/SectionHeader";
 import { EmptyState, ErrorState } from "@/components/common/States";
 
 /**
  * Full-catalogue browse. AnimeX's azlist ignores the letter and returns the
- * entire library (~20k titles, ~685 pages) sorted by popularity, so we expose
- * it as a single paginated "Browse all" surface rather than dead letter tabs.
+ * entire library (~20k titles, ~342 pages) sorted by popularity, so we expose
+ * it as a single paginated "Browse all" surface. The letter strip is honest
+ * navigation to the same catalogue, not a filter — see `AlphabetNav`.
+ *
+ * This page owns its hero and shows the raw catalogue listing, so the shared
+ * `DiscoveryBoard` is rendered WITHOUT its header (`showHeader={false}`), its
+ * collection/Status switcher (`showCollection={false}`) or its filter toolbar
+ * (`showToolbar={false}`). The letter strip + pagination are the only controls.
  */
 
 type Props = {
@@ -29,27 +36,56 @@ export default async function BrowsePage({ params, searchParams }: Props) {
   const res = await safe(() => getAZ(current, pageNum));
 
   return (
-    <div className="flex flex-col gap-[var(--space-header)]">
-      <PageHeader
-        eyebrow="Catalogue"
-        title="Browse all anime"
-        lede={res.ok ? `${res.data.totalPages.toLocaleString()} pages · sorted by popularity` : undefined}
-      />
+    <div className="flex flex-col">
+      {/* ── Hero + alphabet, one centred block ── */}
+      <header className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1.5">
+          <p className="text-label flex items-center gap-1.5 text-frost">
+            <Compass className="size-3.5" aria-hidden />
+            THE ANIME LIBRARY
+          </p>
+          <h1 className="text-page">Explore the Anime Universe</h1>
+          <p className="max-w-2xl text-desc text-muted">
+            From timeless classics to the latest releases, discover anime by title.
+          </p>
+        </div>
 
-      {!res.ok ? (
-        <ErrorState retryHref={`/az/${encodeURIComponent(current)}`} />
-      ) : !res.data.results.length ? (
-        <EmptyState />
-      ) : (
-        <>
-          <Grid items={res.data.results} />
-          <Pagination
-            basePath={`/az/${encodeURIComponent(current)}`}
-            currentPage={res.data.currentPage}
-            totalPages={res.data.totalPages}
-          />
-        </>
-      )}
+        <div className="flex flex-col gap-2.5">
+          <AlphabetNav />
+          {res.ok && (
+            <p className="text-caption text-faint">
+              Page {res.data.currentPage.toLocaleString()} of{" "}
+              {res.data.totalPages.toLocaleString()} · sorted by popularity
+            </p>
+          )}
+        </div>
+      </header>
+
+      {/* ── Listing ── */}
+      <div className="mt-6">
+        {!res.ok ? (
+          <ErrorState retryHref={`/az/${encodeURIComponent(current)}`} />
+        ) : !res.data.results.length ? (
+          <EmptyState />
+        ) : (
+          <div className="flex flex-col gap-8">
+            <DiscoveryBoard
+              items={res.data.results}
+              showHeader={false}
+              showCollection={false}
+              showToolbar={false}
+              pagination={
+                <Pagination
+                  basePath={`/az/${encodeURIComponent(current)}`}
+                  currentPage={res.data.currentPage}
+                  totalPages={res.data.totalPages}
+                />
+              }
+            />
+          </div>
+        )}
+      </div>
     </div>
   );
 }
+

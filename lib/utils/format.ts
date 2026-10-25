@@ -27,6 +27,14 @@ export function titleize(s: string): string {
   return s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
 }
 
+/** The `/az/{letter}` browse segments: "all", "0-9", then A–Z. */
+export const AZ_LETTERS: string[] = ["all", "0-9", ..."ABCDEFGHIJKLMNOPQRSTUVWXYZ".split("")];
+
+/** Display label for an A–Z segment, e.g. "all" → "All", "a" → "A". */
+export function azLabel(letter: string): string {
+  return letter === "all" ? "All" : letter.toUpperCase();
+}
+
 /** Any display string → kebab-case URL slug, e.g. "Sci-Fi & Fantasy" → "sci-fi-fantasy". */
 export function slugify(s: string): string {
   return s
