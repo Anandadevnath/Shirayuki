@@ -50,6 +50,8 @@ export function DiscoveryBoard({
   collectionId = DEFAULT_COLLECTION_ID,
   genres = [],
   totalCount,
+  showHeader = true,
+  showCollection = true,
   className,
 }: {
   items: AnimeCardModel[];
@@ -60,6 +62,12 @@ export function DiscoveryBoard({
   genres?: { slug: string; name: string }[];
   /** catalogue-wide count for the `N anime` line */
   totalCount?: number;
+  /** Render the board's own page header. Off for routes that own their hero
+   *  (e.g. Browse A–Z), so the two headers can't duplicate. */
+  showHeader?: boolean;
+  /** Offer the Status/collection switcher. Off for routes whose scope is a
+   *  single fixed catalogue (e.g. Browse A–Z). */
+  showCollection?: boolean;
   className?: string;
 }) {
   // The server page's listing, kept as the base to restore when filters clear.
@@ -256,14 +264,16 @@ export function DiscoveryBoard({
 
   return (
     <div className={className}>
-      <PageHeader
-        eyebrow={header.eyebrow}
-        icon={header.icon}
-        title={header.title}
-        lede={header.lede}
-      />
+      {showHeader && (
+        <PageHeader
+          eyebrow={header.eyebrow}
+          icon={header.icon}
+          title={header.title}
+          lede={header.lede}
+        />
+      )}
 
-      <div className="mt-[var(--space-header)]">
+      <div className={showHeader ? "mt-[var(--space-header)]" : undefined}>
         <DiscoveryToolbar
           query={query}
           onQueryChange={setQuery}
@@ -282,6 +292,7 @@ export function DiscoveryBoard({
           collectionLoading={loading}
           onApplyCollection={applyDrafts}
           collectionPending={collectionPending}
+          showCollection={showCollection}
           sortOptions={sortOptions}
           sort={sort}
           onSortChange={(s) => setSort(s as DiscoverySort)}

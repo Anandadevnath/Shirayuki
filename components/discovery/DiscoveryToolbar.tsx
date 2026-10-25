@@ -76,6 +76,9 @@ export interface DiscoveryToolbarProps {
   onApplyCollection?: () => void;
   /** true when the collection draft differs from what is applied */
   collectionPending?: boolean;
+  /** Render the Status/collection pill. Off for routes scoped to one fixed
+   *  catalogue (e.g. Browse A–Z). */
+  showCollection?: boolean;
   /** caller supplies only the sorts the data supports */
   sortOptions: SortOption[];
   sort: string;
@@ -112,6 +115,7 @@ export function DiscoveryToolbar({
   collectionLoading = false,
   onApplyCollection,
   collectionPending = false,
+  showCollection = true,
   sortOptions,
   sort,
   onSortChange,
@@ -202,15 +206,18 @@ export function DiscoveryToolbar({
         {/* Status: switches which COLLECTION the page shows (Most Popular,
             Airing, Trending, …). It is a single-select whose options are the
             real collections the data backs; applying loads that collection in
-            place — the user never leaves the Category page. */}
-        <FilterPopover
-          label="Status"
-          options={collectionOptions}
-          value={[collection]}
-          restingValue={[collectionOptions[0]?.value ?? collection]}
-          onChange={(v) => onCollectionChange(v[0] ?? collection)}
-          className="min-w-0 flex-1 basis-36"
-        />
+            place — the user never leaves the Category page. Hidden on routes
+            scoped to a single fixed catalogue (Browse A–Z). */}
+        {showCollection && (
+          <FilterPopover
+            label="Status"
+            options={collectionOptions}
+            value={[collection]}
+            restingValue={[collectionOptions[0]?.value ?? collection]}
+            onChange={(v) => onCollectionChange(v[0] ?? collection)}
+            className="min-w-0 flex-1 basis-36"
+          />
+        )}
 
         <FilterPopover
           label="Default"
