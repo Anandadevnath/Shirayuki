@@ -73,8 +73,10 @@ export interface AnimeDetail {
    *  separately from `info` so the page doesn't have to duck-type the
    *  raw provider record. */
   aired: string | null;
-  /** Raw MAL score as a string (e.g. "8.42") so the page can render the
-   *  "MAL" chip without re-parsing the provider's `info["mal score"]`. */
+  /** Raw provider-supplied MAL score as a string (e.g. "8.42"), taken from the
+   *  upstream record's `info["mal score"]` field (this is the scraper's field
+   *  name, unrelated to our AniList integration) so the score chip can render
+   *  without re-parsing it. */
   malScore: string | null;
   genres: string[];
   studios: string[];
