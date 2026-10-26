@@ -12,6 +12,7 @@ import { EpisodeSidebar } from "@/components/details/EpisodeSidebar";
 import { DetailBackdrop } from "@/components/details/DetailBackdrop";
 import { FranchiseTimeline } from "@/components/details/FranchiseTimeline";
 import { PlayerLoader } from "@/components/player/PlayerLoader";
+import { WatchStage } from "@/components/watch/WatchStage";
 import { cn } from "@/lib/utils/cn";
 
 // Dynamic by necessity (SEC-02): this route resolves an ephemeral stream URL
@@ -83,7 +84,9 @@ export default async function WatchPage({ params, searchParams }: Props) {
 
   const currentIdx = episodes.findIndex((e) => e.episodeId === episodeId);
   const nextEp = currentIdx >= 0 ? episodes[currentIdx + 1] : undefined;
+  const prevEp = currentIdx > 0 ? episodes[currentIdx - 1] : undefined;
   const nextHref = nextEp ? `/watch/${id}/${encodeURIComponent(nextEp.episodeId)}` : null;
+  const prevHref = prevEp ? `/watch/${id}/${encodeURIComponent(prevEp.episodeId)}` : null;
 
   const ordered = preferred
     ? [preferred, ...pool.filter((s) => s.nameId !== preferred.nameId)]
@@ -137,10 +140,19 @@ export default async function WatchPage({ params, searchParams }: Props) {
       <DetailBackdrop src={backgroundSrc} />
 
       {/* ============== Row 1: Player + Episode Sidebar (synced height) ============== */}
-      <div className="grid items-stretch gap-6 lg:grid-cols-[1fr_360px]">
-        {/* ── Left column: player, then the episode-meta panel ─────── */}
-        <div className="flex min-w-0 flex-col gap-4">
-        {/* ── Player container ──────────────────────────────────────── */}
+      <WatchStage
+        anime={{
+          id,
+          title: anime.title,
+          poster: anime.poster,
+          type: anime.type ?? null,
+          totalEpisodes: episodes.length || null,
+        }}
+        prevHref={prevHref}
+        nextHref={nextHref}
+        skipAvailable={{ intro: Boolean(sources?.intro), outro: Boolean(sources?.outro) }}
+        report={{ episodeId, episodeNumber: epNum, server: chosen?.name ?? null, audio: category }}
+        player={
         <div className="laser-frame glass watch-glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
           <div className="relative">
             {playerSrc && sources ? (
@@ -188,14 +200,12 @@ export default async function WatchPage({ params, searchParams }: Props) {
             )}
           </div>
         </div>
-
-        {/* ── Episode Meta panel (title + SUB/DUB + server) ────────── */}
-        {/* Separate laser-edged glass panel below the player, rather than a
-            strip inside the player frame. It carries the single `.laser-live`
-            spinning comet for this viewport (the player keeps the static
-            `laser-frame` aura), so the animated border lives here while the
-            one-comet-per-viewport paint-cost guardrail still holds. */}
-        <div className="laser-frame laser-live glass watch-glass relative flex min-w-0 flex-col overflow-hidden rounded-md">
+        }
+        metaContent={
+        <>
+          {/* Episode-meta INNER content. WatchStage wraps this in the meta
+              panel (`laser-frame laser-live glass …`) and renders the toolbar at
+              the top of that same container. */}
           {/* ── Title strip ─────────────────────────────────────────── */}
           <div className="border-b border-white/10 bg-surface/40 px-5 py-4 backdrop-blur-sm sm:px-6">
             <h1 className="text-title text-snow sm:text-[1.375rem]">{anime.title}</h1>
@@ -268,10 +278,10 @@ export default async function WatchPage({ params, searchParams }: Props) {
               </div>
             )}
           </div>
-        </div>
-        </div>
-
-        {/* ── Episode Sidebar (height syncs with player) ──────────── */}
+        </>
+        }
+        sidebar={
+        /* ── Episode Sidebar (height syncs with player) ──────────── */
         <EpisodeSidebar
           animeId={id}
           episodes={episodes}
@@ -282,7 +292,8 @@ export default async function WatchPage({ params, searchParams }: Props) {
           subHref={servers.sub.length ? swHref("sub", preferred?.nameId) : null}
           dubHref={servers.dub.length ? swHref("dub", preferred?.nameId) : null}
         />
-      </div>
+        }
+      />
 
       {/* ============== Rows 2+: franchise, details ============== */}
       <div className="section-stack mt-[var(--space-section)]">

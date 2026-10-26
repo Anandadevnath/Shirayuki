@@ -1,5 +1,15 @@
 @import "tailwindcss";
 
+/* Explicit source roots. Tailwind v4's automatic content detection treats
+   `.gitignore` patterns as exclusions — which silently dropped utility classes
+   from files that are gitignored but still app code (e.g. the backend-wired
+   Nav/layout files), producing missing `z-40`/`gap-*` utilities and a navbar
+   that rendered under the hero. Declaring the roots here makes the scan
+   authoritative and independent of `.gitignore`. */
+@source "../app";
+@source "../components";
+@source "../lib";
+
 /* ─────────────────────────────────────────────────────────────
    Sode no Shirayuki — design tokens (see docs/04-design-system.md)
    Dark-first. Glacial slate surfaces. One frost accent. Snow text.

@@ -4,14 +4,38 @@
  * button can re-read its state without prop drilling.
  */
 
-import { isSafeStorageKey, parseStorageRecord, safeFiniteNumber } from "@/lib/storage/sanitize";
+import { isSafeStorageKey, parseStorageRecord, safeFiniteNumber } from "../storage/sanitize.ts";
+
+/** Watchlist statuses — mirrors the server enum
+ *  (`backend/repositories/watchlist.repo.ts` → `WatchlistStatus`). The local
+ *  store is the signed-out fallback; when signed in the same values are
+ *  mirrored to `/api/watchlist`. */
+export type ListStatus = "WATCHING" | "PLANNING" | "COMPLETED" | "ON_HOLD" | "DROPPED";
+
+export const LIST_STATUSES: { value: ListStatus; label: string }[] = [
+  { value: "WATCHING", label: "Watching" },
+  { value: "PLANNING", label: "Planned" },
+  { value: "COMPLETED", label: "Watched" },
+  { value: "ON_HOLD", label: "On-Hold" },
+  { value: "DROPPED", label: "Dropped" },
+];
 
 export interface ListEntry {
   id: string;
   title: string;
   poster: string | null;
   type: string | null;
+  /** Optional for backward compatibility — entries written before statuses
+   *  existed have none; `getStatus` treats a missing value as "WATCHING". */
+  status?: ListStatus;
+  totalEpisodes?: number | null;
   addedAt: number;
+}
+
+const STATUS_VALUES = new Set<string>(LIST_STATUSES.map((s) => s.value));
+
+function coerceStatus(v: unknown): ListStatus | undefined {
+  return typeof v === "string" && STATUS_VALUES.has(v) ? (v as ListStatus) : undefined;
 }
 
 const KEY = "shirayuki:watchlist:v1";
@@ -37,6 +61,11 @@ function read(): Record<string, ListEntry> {
         title: e.title,
         poster: typeof e.poster === "string" ? e.poster : null,
         type: typeof e.type === "string" ? e.type : null,
+        status: coerceStatus(e.status),
+        totalEpisodes:
+          typeof e.totalEpisodes === "number" && Number.isFinite(e.totalEpisodes)
+            ? e.totalEpisodes
+            : null,
         addedAt: safeFiniteNumber(e.addedAt),
       };
     }
@@ -85,4 +114,33 @@ export function toggleList(item: Omit<ListEntry, "addedAt">): boolean {
   map[item.id] = { ...item, addedAt: Date.now() };
   write(map);
   return true;
+}
+
+/** The stored status for a title, or null when it is not on the list. */
+export function getStatus(id: string): ListStatus | null {
+  if (!isSafeStorageKey(id)) return null;
+  const entry = read()[id];
+  if (!entry) return null;
+  return entry.status ?? "WATCHING";
+}
+
+/**
+ * Set (or add with) a status for a title. Always SAVES the entry — this is the
+ * "Edit List" action, so a status change also adds the title. Returns the entry.
+ */
+export function setStatus(
+  item: Omit<ListEntry, "addedAt" | "status">,
+  status: ListStatus,
+): ListEntry | null {
+  if (!isSafeStorageKey(item.id)) return null;
+  const map = read();
+  const existing = map[item.id];
+  const next: ListEntry = {
+    ...item,
+    status,
+    addedAt: existing?.addedAt ?? Date.now(),
+  };
+  map[item.id] = next;
+  write(map);
+  return next;
 }

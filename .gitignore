@@ -48,16 +48,3 @@ next-env.d.ts
 /.agents/skills/neon/
 /.agents/skills/neon-postgres/
 /.agents/skills/neon-postgres-branches/
-
-# Tracked files edited only to wire up the backend. Ignoring a tracked file has
-# no effect on Git, so these are excluded from the push by simply leaving their
-# local modifications uncommitted.
-/app/layout.tsx
-/lib/nav/config.ts
-/components/layout/Nav.tsx
-/app/watchlist/WatchlistClient.tsx
-/components/player/Player.tsx
-/package.json
-/package-lock.json
-/eslint.config.mjs
-/AGENTS.md

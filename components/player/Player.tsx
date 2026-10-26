@@ -86,6 +86,9 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
   // Timestamp to restore on the next source (set when a mid-play failure is
   // detected so the user resumes where they were on the alternate server).
   const resumeAtRef = useRef<number | null>(null);
+  // Guarantees the AutoPlay attempt runs at most ONCE per mounted source, so a
+  // policy-rejected play() is never retried in a loop.
+  const autoplayAttemptRef = useRef(false);
 
   // Re-sync when the parent renders a genuinely new episode. Keyed on the
   // episode id (a primitive) rather than the object props, so a re-render that
@@ -233,6 +236,8 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
     let destroyed = false;
     setReady(false);
     setFatalError(false);
+    // A new source is a fresh autoplay opportunity.
+    autoplayAttemptRef.current = false;
 
     async function attach() {
       const { default: Hls } = await import("hls.js");
@@ -370,6 +375,14 @@ export function Player({ src, poster, tracks, intro, outro, meta, nextHref, refe
     } else {
       const saved = getEpisodeSeconds(meta.episodeId);
       if (saved > 5) v.currentTime = saved;
+    }
+    // AutoPlay (per-episode): attempt ONE play when the source becomes ready.
+    // Browser autoplay policy may reject it (no gesture) — that rejection is
+    // swallowed, never retried, so it can never loop. `autoplayAttemptRef`
+    // ensures we only ever try once per mounted source.
+    if (prefs.autoPlay && !autoplayAttemptRef.current && v.paused) {
+      autoplayAttemptRef.current = true;
+      v.play().catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [ready, meta.episodeId, activeSrc]);

@@ -9,6 +9,10 @@ interface Prefs {
   autoSkipIntro: boolean;
   autoSkipOutro: boolean;
   autoPlayNext: boolean;
+  /** Attempt to start playback automatically when an episode opens. Distinct
+   *  from `autoPlayNext` (which advances at the END of an episode). Honours
+   *  browser autoplay policy — a rejected play() is swallowed, never retried. */
+  autoPlay: boolean;
   captions: boolean;
   volume: number;
   muted: boolean;
@@ -25,6 +29,7 @@ export const usePrefs = create<Prefs>()(
       autoSkipIntro: true,
       autoSkipOutro: true,
       autoPlayNext: true,
+      autoPlay: false,
       captions: true,
       volume: 1,
       muted: false,
